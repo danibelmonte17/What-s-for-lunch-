@@ -26,8 +26,8 @@ El material de `uxdocs/` es **orientativo** (`P16`) y sus tokens YAML mandan sob
 | Datos locales | Room (SQLite) | Duradero en dispositivo, estándar Android | SQLDelight | **Candidato** |
 | Cliente HTTP | Retrofit + OkHttp | Estándar para APIs REST desde Android | Ktor client | **Candidato** |
 | Voz (locución y comandos) | `SpeechRecognizer` + `TextToSpeech` nativos | Equivalente nativo a la Web Speech API del PRD | Whisper on-device | **Candidato** |
-| Arquitectura | MVVM + StateFlow, un módulo `app` con capas `ui`/`domain`/`data` | MVP de uso personal; separa reglas de negocio de la UI | MVI, multi-módulo | **Candidato** |
-| DI | Hilt | Estándar con Jetpack | Koin, inyección manual | **Candidato** |
+| Arquitectura | MVVM + StateFlow, un módulo `app` con capas `ui`/`domain`/`data` | MVP de uso personal; separa reglas de negocio de la UI | MVI, multi-módulo | **Confirmado** |
+| DI | Koin | Ligero y sin procesado de anotaciones; elegido en Q-arrancar-app-en-mis-recetas-4 | Hilt, inyección manual | **Confirmado** |
 | Build | Gradle (Kotlin DSL) + Android Gradle Plugin | Estándar Android | — | **Candidato** |
 | Interfaz | Compose + Material 3 adaptado a los tokens de `uxdocs/DESIGN.md` | Material orientativo | XML Views | **Candidato** |
 
@@ -68,6 +68,7 @@ flowchart LR
 - Accesibilidad: contraste WCAG 2.1 AA general y AAA en Modo Cocina; áreas táctiles ≥ 48×48 px.
 - Offline: toda la app funciona sin red salvo el Pinche y las Sugerencias (requieren OpenRouter).
 - Internacionalización: es y en vía `strings.xml`, sin más regionalización (`P12` eliminó precios).
+- Plataforma: **Android 11 (API 30) o superior**, solo móviles (Q-arrancar-app-en-mis-recetas-2).
 
 ## Seguridad y datos sensibles
 

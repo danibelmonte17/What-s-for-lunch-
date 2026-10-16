@@ -1,0 +1,5 @@
+<resources>
+    <!-- Sistema visual «Warm Culinary Craft»: tokens de uxdocs/DESIGN.md. -->
+    <color name="warm_surface">#FBF9F5</color>
+    <color name="ic_launcher_background">#A83212</color>
+</resources>

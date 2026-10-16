@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuración de lint del proyecto.
+
+  `local.properties` lo genera init.ps1 (script del harness, intocable) con la ruta del
+  SDK sin escapar el separador ':' de la letra de unidad. Es configuración del entorno de
+  desarrollo, no código del proyecto, así que lo excluimos de la regla PropertyEscape.
+  Las rutas se resuelven relativas a la raíz del proyecto.
+-->
+<lint>
+    <issue id="PropertyEscape">
+        <ignore path="local.properties" />
+        <ignore path="**/local.properties" />
+    </issue>
+</lint>

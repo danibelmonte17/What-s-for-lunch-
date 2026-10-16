@@ -1,0 +1,10 @@
+<resources>
+    <!-- Español: idioma por defecto. Si el dispositivo no es es ni en, se muestra este. -->
+    <string name="app_name">What\'s for Lunch?</string>
+    <string name="mis_recetas_title">Mis Recetas</string>
+    <string name="mis_recetas_empty_title">Todavía no tienes recetas</string>
+    <string name="mis_recetas_empty_message">Crea tu primera receta o escanea la Despensa para empezar.</string>
+    <string name="action_create_recipe">Crear receta</string>
+    <string name="action_scan_pantry">Escanear la Despensa</string>
+    <string name="action_back">Volver</string>
+</resources>
