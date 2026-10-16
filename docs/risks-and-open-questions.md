@@ -12,6 +12,14 @@ El banco de descubrimiento (37 preguntas, `P1`-`P37`) quedó **resuelto** en la 
 
 Ninguna.
 
+| ID | Pregunta | Origen | Bloqueante | Estado |
+|---|---|---|---|---|
+| Q-arrancar-app-en-mis-recetas-1 | ¿Confirmamos la estructura prevista en `CONTEXT.md` (módulo único `app` con capas `ui`/`domain`/`data`, MVVM + StateFlow, Gradle Kotlin DSL y comandos `./gradlew`)? | `docs/specs/arrancar-app-en-mis-recetas.md` (⚠ S06) | no | resuelta (confirmada la estructura y los comandos de `CONTEXT.md`) |
+| Q-arrancar-app-en-mis-recetas-2 | ¿Qué versión mínima de Android (minSdk) fijamos para la app? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (API 30 / Android 11) |
+| Q-arrancar-app-en-mis-recetas-3 | Las acciones del estado vacío apuntan al formulario y al Escáner, que llegan en features posteriores: ¿qué hacen ahora al pulsarlas? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (pantallas provisionales con título y vuelta atrás) |
+| Q-arrancar-app-en-mis-recetas-4 | ¿El scaffold incluye framework de inyección de dependencias y cuál? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (Koin desde el scaffold, en lugar de Hilt) |
+| Q-arrancar-app-en-mis-recetas-5 | ¿Quién fija el copy del estado vacío (laguna RK04)? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (lo propone la spec y se valida en la revisión visual) |
+
 ## Supuestos
 
 Decisiones tomadas sin confirmación explícita, incluidas las tomadas para desbloquear preguntas pendientes.
