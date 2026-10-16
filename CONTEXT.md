@@ -47,7 +47,7 @@ _No confundir con_: Escaneo, la captura concreta.
 
 ## Arquitectura
 
-Estructura prevista (el repo aún no tiene código — `⚠ S06`):
+Estructura del scaffold Android ya creado (S06 confirmado en Q-arrancar-app-en-mis-recetas-1):
 
 - `app/src/main/java/.../ui/`: pantallas Compose (Mis Recetas, Escáner, Detalle, Modo Cocina, Pinche, Formulario, Lista de la Compra, Ajustes).
 - `app/src/main/java/.../domain/`: modelos y reglas de negocio (Coincidencia, Raciones, estados de Receta); no depende de la UI.
@@ -63,7 +63,8 @@ Detalle y flujos: `docs/technical-discovery.md`.
 - Kotlin + Jetpack Compose (Confirmado) con Material 3 adaptado a los tokens de `uxdocs/DESIGN.md`.
 - Room para datos locales; Retrofit/OkHttp para OpenRouter (API compatible con OpenAI); MediaPipe (Google AI Edge) para detección on-device.
 - Voz con `SpeechRecognizer`/`TextToSpeech` nativos (`⚠ S04`).
-- Patrón previsto: MVVM + StateFlow con capas `ui`/`domain`/`data` (`⚠ S06`).
+- Patrón: MVVM + StateFlow con capas `ui`/`domain`/`data` (S06 confirmado en Q-arrancar-app-en-mis-recetas-1).
+- Inyección de dependencias: Koin desde el scaffold (Q-arrancar-app-en-mis-recetas-4).
 
 ## Convenciones
 
@@ -73,7 +74,7 @@ Detalle y flujos: `docs/technical-discovery.md`.
 
 ## Comandos
 
-Previstos con Gradle (`⚠ S06`; los scripts `init`/`lint`/`unit`/`e2e` los generará `harness-starter`):
+Con Gradle Kotlin DSL y el wrapper del repo (los scripts `init`/`lint`/`unit`/`e2e` ya existen):
 
 - Arrancar (compilar e instalar en dispositivo/emulador): `./gradlew installDebug`
 - Compilar: `./gradlew assembleDebug`

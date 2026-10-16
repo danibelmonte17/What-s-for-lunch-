@@ -1,0 +1,6 @@
+<resources>
+    <!-- Tema base sin ActionBar: toda la interfaz es Compose + Material 3. -->
+    <style name="Theme.WhatsForLunch" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/warm_surface</item>
+    </style>
+</resources>

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">What\'s for Lunch?</string>
+    <string name="mis_recetas_title">My Recipes</string>
+    <string name="mis_recetas_empty_title">No recipes yet</string>
+    <string name="mis_recetas_empty_message">Create your first recipe or scan your Pantry to get started.</string>
+    <string name="action_create_recipe">Create recipe</string>
+    <string name="action_scan_pantry">Scan your Pantry</string>
+    <string name="action_back">Back</string>
+</resources>
