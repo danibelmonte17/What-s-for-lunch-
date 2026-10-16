@@ -175,13 +175,13 @@ Todos los textos visibles viven en `strings.xml`: `values/` (español, por defec
 
 ## Plan y tareas
 
-- [ ] T1: Crear el scaffold Gradle (wrapper, `settings`/`build.gradle.kts`, JDK 17, AGP 8.x, Kotlin 2.x + Compose) con el módulo `app` (`applicationId` `com.whatsforlunch.app`, `minSdk 30`, `compileSdk`/`targetSdk` 35) y los paquetes `ui`/`domain`/`data` (RF-1, RF-2).
-- [ ] T2: Configurar Koin (módulos de DI y `Application` de Compose con su arranque) (RF-2; Q-arrancar-app-en-mis-recetas-4).
-- [ ] T3: Implementar el tema «Warm Culinary Craft» en Compose desde los tokens YAML de `uxdocs/DESIGN.md`, con las fuentes Plus Jakarta Sans e Inter empaquetadas en `res/font/` (RF-3).
-- [ ] T4: Implementar Mis Recetas con su estado vacío y sus acciones bajo MVVM + StateFlow, la navegación a los destinos provisionales (formulario de Receta y Escáner) y la vuelta atrás (RF-4, RF-5, RF-6, RF-7, RF-8).
-- [ ] T5: Configurar `strings.xml` (`values/` es, `values-en/` en) con el copy propuesto y sin textos hardcodeados en el código (RF-9, RF-10, RF-11).
-- [ ] T6: Añadir la suite E2E instrumentada Compose: verify 1, verify 2, aserciones de RF-9 (todos los textos visibles, incluidos los destinos provisionales, afirmados en español y en inglés), escenarios de RF-6, RF-7, RF-8 y RF-11; y el test unitario de humo de `domain/` (RF-2).
-- [ ] T7: Ejecutar `init`, `lint` y `unit` en verde y actualizar `CONTEXT.md` y `docs/technical-discovery.md` (Q-arrancar-app-en-mis-recetas-1, Q-arrancar-app-en-mis-recetas-2, Q-arrancar-app-en-mis-recetas-4).
+- [x] T1: Crear el scaffold Gradle (wrapper, `settings`/`build.gradle.kts`, JDK 17, AGP 8.x, Kotlin 2.x + Compose) con el módulo `app` (`applicationId` `com.whatsforlunch.app`, `minSdk 30`, `compileSdk`/`targetSdk` 35) y los paquetes `ui`/`domain`/`data` (RF-1, RF-2).
+- [x] T2: Configurar Koin (módulos de DI y `Application` de Compose con su arranque) (RF-2; Q-arrancar-app-en-mis-recetas-4).
+- [x] T3: Implementar el tema «Warm Culinary Craft» en Compose desde los tokens YAML de `uxdocs/DESIGN.md`, con las fuentes Plus Jakarta Sans e Inter empaquetadas en `res/font/` (RF-3).
+- [x] T4: Implementar Mis Recetas con su estado vacío y sus acciones bajo MVVM + StateFlow, la navegación a los destinos provisionales (formulario de Receta y Escáner) y la vuelta atrás (RF-4, RF-5, RF-6, RF-7, RF-8).
+- [x] T5: Configurar `strings.xml` (`values/` es, `values-en/` en) con el copy propuesto y sin textos hardcodeados en el código (RF-9, RF-10, RF-11).
+- [x] T6: Añadir la suite E2E instrumentada Compose: verify 1, verify 2, aserciones de RF-9 (todos los textos visibles, incluidos los destinos provisionales, afirmados en español y en inglés), escenarios de RF-6, RF-7, RF-8 y RF-11; y el test unitario de humo de `domain/` (RF-2).
+- [x] T7: Ejecutar `init`, `lint` y `unit` en verde y actualizar `CONTEXT.md` y `docs/technical-discovery.md` (Q-arrancar-app-en-mis-recetas-1, Q-arrancar-app-en-mis-recetas-2, Q-arrancar-app-en-mis-recetas-4).
 
 ## Plan de verificación
 
@@ -202,13 +202,13 @@ Todos los textos visibles viven en `strings.xml`: `values/` (español, por defec
 
 ## Checklist del validador
 
-- [ ] La implementación se queda dentro del alcance de esta spec.
-- [ ] Cada RF de la tabla de trazabilidad pasa su verificación.
-- [ ] La evidencia está presente, dentro del presupuesto (≤4) y solo de esta feature.
-- [ ] UI: evidencia visual (hasta 2 capturas de estados clave) y fidelidad a los tokens YAML de `uxdocs/DESIGN.md` y a las pautas de `DESIGN.md` (capturas de emulador API 30+).
-- [ ] Cobertura E2E añadida: suite instrumentada Compose con los `verify` de la feature.
-- [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
-- [ ] No se añadió comportamiento ni trabajo de otras features.
+- [x] La implementación se queda dentro del alcance de esta spec.
+- [x] Cada RF de la tabla de trazabilidad pasa su verificación.
+- [x] La evidencia está presente, dentro del presupuesto (≤4) y solo de esta feature.
+- [x] UI: evidencia visual (hasta 2 capturas de estados clave) y fidelidad a los tokens YAML de `uxdocs/DESIGN.md` y a las pautas de `DESIGN.md` (capturas de emulador API 30+).
+- [x] Cobertura E2E añadida: suite instrumentada Compose con los `verify` de la feature.
+- [x] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
+- [x] No se añadió comportamiento ni trabajo de otras features.
 
 ## Clarificación — 2026-10-16 — veredicto: A RETRABAJAR (intento 1 de 3)
 

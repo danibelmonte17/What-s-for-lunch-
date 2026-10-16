@@ -17,7 +17,7 @@
         "E2E: instalar la app en el emulador, abrirla y comprobar que se muestra la pantalla Mis Recetas con su estado vacío",
         "E2E: con el idioma en inglés, comprobar que los textos visibles cambian"
       ],
-      "status": "passing"
+      "status": "validated"
     },
     {
       "id": "crear-receta",

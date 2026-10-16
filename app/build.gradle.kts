@@ -37,6 +37,12 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        // La configuración vive en la raíz del proyecto para poder excluir del análisis
+        // local.properties (generado por init.ps1 sin escapar el separador ':').
+        lintConfig = rootProject.file("lint.xml")
+    }
 }
 
 kotlin {
