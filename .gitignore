@@ -1,0 +1,9 @@
+# Registros y artefactos locales del harness
+.harness/
+
+# Configuración local del SDK de Android (ruta de la máquina)
+local.properties
+
+# Salidas de Gradle y del build
+.gradle/
+build/

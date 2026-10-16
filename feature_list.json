@@ -1,0 +1,354 @@
+{
+  "project": "What's for Lunch?",
+  "version": 1,
+  "features": [
+    {
+      "id": "arrancar-app-en-mis-recetas",
+      "category": "funcional",
+      "description": "La app abre en Mis Recetas mostrando el estado vacío con sus acciones.",
+      "depends_on": [],
+      "steps": [
+        "Crear el proyecto Android con Gradle y el módulo app con las capas ui, domain y data",
+        "Aplicar el tema Warm Culinary Craft desde los tokens YAML de uxdocs/DESIGN.md en Compose",
+        "Implementar la pantalla Mis Recetas con su estado vacío y sus acciones hacia el formulario y el Escáner",
+        "Configurar los recursos strings.xml con los textos en español e inglés"
+      ],
+      "verify": [
+        "E2E: instalar la app en el emulador, abrirla y comprobar que se muestra la pantalla Mis Recetas con su estado vacío",
+        "E2E: con el idioma en inglés, comprobar que los textos visibles cambian"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "crear-receta",
+      "category": "funcional",
+      "description": "El usuario crea una receta propia desde el formulario de alta.",
+      "depends_on": ["arrancar-app-en-mis-recetas"],
+      "steps": [
+        "Implementar el formulario con título, historia, momento culinario, tiempos, dificultad, raciones base y foto opcional",
+        "Implementar el gestor dinámico de ingredientes con cantidad, unidad y marca de opcional",
+        "Implementar la definición de pasos con texto y temporizador opcional",
+        "Guardar la receta como Borrador o Publicada según la regla S07"
+      ],
+      "verify": [
+        "E2E: crear una receta con dos ingredientes y dos pasos, publicarla y comprobar que aparece en Mis Recetas",
+        "E2E: guardar el mismo formulario como Borrador y comprobar que la receta queda marcada como Borrador",
+        "Unit: no se publica una receta sin al menos un ingrediente y un paso"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "editar-receta",
+      "category": "funcional",
+      "description": "El usuario modifica una receta existente sin perder su estado.",
+      "depends_on": ["crear-receta"],
+      "steps": [
+        "Precargar el formulario con los datos de la receta existente",
+        "Guardar los cambios manteniendo el estado Borrador o Publicada"
+      ],
+      "verify": [
+        "E2E: editar el título de una receta publicada y comprobar que Mis Recetas muestra el nuevo título"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "eliminar-receta",
+      "category": "funcional",
+      "description": "El usuario borra una receta tras confirmar la acción.",
+      "depends_on": ["crear-receta"],
+      "steps": [
+        "Mostrar una confirmación con el nombre de la receta antes de borrar",
+        "Borrar la receta de forma definitiva sin papelera según RD04"
+      ],
+      "verify": [
+        "E2E: eliminar una receta, confirmar y comprobar que desaparece de Mis Recetas",
+        "E2E: cancelar la confirmación y comprobar que la receta sigue en Mis Recetas"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "buscar-y-filtrar-recetas",
+      "category": "funcional",
+      "description": "El usuario localiza recetas combinando búsqueda textual con filtro de momento culinario.",
+      "depends_on": ["crear-receta"],
+      "steps": [
+        "Implementar el buscador con debounce sobre título e ingredientes",
+        "Implementar el filtro por momento culinario: Desayuno, Almuerzo, Cena, Postre"
+      ],
+      "verify": [
+        "E2E: con tres recetas de distinto momento, filtrar por Cena y comprobar que solo aparece la receta de Cena",
+        "E2E: escribir un ingrediente en el buscador y comprobar que aparecen las recetas que lo contienen"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "gestionar-alimentos-de-la-despensa",
+      "category": "funcional",
+      "description": "El usuario mantiene el listado de alimentos disponibles en la Despensa.",
+      "depends_on": ["arrancar-app-en-mis-recetas"],
+      "steps": [
+        "Implementar el listado de la Despensa con alta, edición y baja de Alimentos",
+        "Persistir los Alimentos en Room"
+      ],
+      "verify": [
+        "E2E: añadir el alimento Tomate fresco y comprobar que aparece en la Despensa",
+        "E2E: eliminar un alimento y comprobar que desaparece del listado"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "mostrar-badge-de-coincidencia",
+      "category": "funcional",
+      "description": "Cada receta muestra su porcentaje de coincidencia con la Despensa.",
+      "depends_on": ["crear-receta", "gestionar-alimentos-de-la-despensa"],
+      "steps": [
+        "Calcular la Coincidencia según RD01 y RD10 sobre los ingredientes obligatorios",
+        "Mostrar el badge de coincidencia en las tarjetas de Mis Recetas según RD02"
+      ],
+      "verify": [
+        "E2E: con la mitad de los ingredientes obligatorios en la Despensa, comprobar que la tarjeta muestra el porcentaje calculado",
+        "Unit: los ingredientes opcionales no alteran el porcentaje"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "escanear-despensa-con-camara",
+      "category": "funcional",
+      "description": "El usuario llena la Despensa escaneando alimentos con la cámara.",
+      "depends_on": ["gestionar-alimentos-de-la-despensa"],
+      "steps": [
+        "Mostrar el visor de cámara con las etiquetas de detección",
+        "Detectar Alimentos con MediaPipe en el dispositivo",
+        "Ofrecer chips editables para confirmar, quitar o añadir Alimentos antes de guardarlos en la Despensa",
+        "Descartar la foto tras la inferencia según RD06"
+      ],
+      "verify": [
+        "E2E: con una imagen de prueba inyectada, comprobar que aparecen chips de alimentos detectados con su confianza",
+        "E2E: confirmar los chips y comprobar que los Alimentos aparecen en la Despensa"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "mostrar-recetas-compatibles",
+      "category": "funcional",
+      "description": "El Escáner lista recetas compatibles ordenadas por coincidencia.",
+      "depends_on": ["mostrar-badge-de-coincidencia", "escanear-despensa-con-camara"],
+      "steps": [
+        "Calcular la coincidencia de las recetas de Mis Recetas frente a la Despensa",
+        "Mostrar el carrusel de recetas compatibles en el Escáner con los badges 100% y 85% según RD02"
+      ],
+      "verify": [
+        "E2E: con una receta al 100% y otra al 85%, comprobar que el carrusel las ordena y etiqueta según su coincidencia"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "configurar-acceso-a-ia",
+      "category": "seguridad",
+      "description": "El usuario registra su API key de IA en Ajustes con aviso de privacidad.",
+      "depends_on": ["arrancar-app-en-mis-recetas"],
+      "steps": [
+        "Crear la pantalla Ajustes con el campo para la API key del proveedor de IA",
+        "Guardar la API key cifrada en el dispositivo sin escribirla nunca en el repositorio según S05",
+        "Mostrar el aviso de privacidad del tratamiento de datos según P27"
+      ],
+      "verify": [
+        "E2E: introducir una API key de prueba en Ajustes y comprobar que queda guardada cifrada",
+        "E2E: borrar la API key y comprobar que las funciones de IA piden configurarla"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "sugerir-recetas-con-ia",
+      "category": "funcional",
+      "description": "La IA propone recetas nuevas basadas en el contenido de la Despensa.",
+      "depends_on": ["mostrar-recetas-compatibles", "configurar-acceso-a-ia"],
+      "steps": [
+        "Enviar el contenido de la Despensa al proveedor de IA compatible con OpenAI",
+        "Mostrar las Sugerencias como recetas propuestas con su coincidencia"
+      ],
+      "verify": [
+        "E2E: con el cliente de IA simulado, pedir sugerencias y comprobar que se listan recetas propuestas",
+        "E2E: sin API key configurada, comprobar que se pide configurarla en Ajustes"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "aceptar-sugerencia-de-receta",
+      "category": "funcional",
+      "description": "El usuario guarda una sugerencia de la IA como receta propia.",
+      "depends_on": ["sugerir-recetas-con-ia"],
+      "steps": [
+        "Guardar la Sugerencia aceptada como Receta con origen Sugerencia según RD07",
+        "Descartar la Sugerencia sin guardar nada"
+      ],
+      "verify": [
+        "E2E: aceptar una sugerencia y comprobar que la receta aparece en Mis Recetas con origen Sugerencia",
+        "E2E: aceptar la misma sugerencia dos veces y comprobar que no se duplica la receta"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "degradar-ante-fallo-de-ia",
+      "category": "tecnica",
+      "description": "La app avisa del fallo de la IA ofreciendo la entrada manual.",
+      "depends_on": ["sugerir-recetas-con-ia"],
+      "steps": [
+        "Detectar el fallo de la red o del proveedor de IA y mostrar un aviso claro",
+        "Ofrecer la entrada manual por chips sin bloquear el flujo según RD05"
+      ],
+      "verify": [
+        "E2E: con el cliente de IA simulado en modo fallo, comprobar que aparece el aviso y se puede añadir un ingrediente manualmente"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "ver-detalle-de-receta",
+      "category": "funcional",
+      "description": "El usuario consulta la ficha completa de una receta.",
+      "depends_on": ["crear-receta"],
+      "steps": [
+        "Mostrar el hero con badge de coincidencia, métricas de tiempo, dificultad y calorías con los utensilios",
+        "Mostrar el checklist de ingredientes con obligatorios y opcionales junto a los pasos resumidos",
+        "Ofrecer la acción destacada hacia el Modo Cocina"
+      ],
+      "verify": [
+        "E2E: abrir una receta y comprobar que muestra sus métricas, ingredientes y pasos"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "escalar-raciones",
+      "category": "funcional",
+      "description": "Las cantidades de la receta se recalculan al cambiar las raciones.",
+      "depends_on": ["ver-detalle-de-receta"],
+      "steps": [
+        "Implementar el selector de raciones con límites 1-12",
+        "Recalcular las cantidades de los ingredientes según RD03"
+      ],
+      "verify": [
+        "E2E: con una receta de cuatro raciones, bajar a dos y comprobar que las cantidades se reducen a la mitad",
+        "Unit: el escalado no permite valores fuera de 1-12"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "cocinar-paso-a-paso",
+      "category": "funcional",
+      "description": "El usuario cocina siguiendo la receta paso a paso con la pantalla de Modo Cocina.",
+      "depends_on": ["ver-detalle-de-receta"],
+      "steps": [
+        "Implementar la pantalla de Modo Cocina con alto contraste y tipografía grande",
+        "Mostrar la barra de avance Paso X de Y junto al drawer de ingredientes del paso activo"
+      ],
+      "verify": [
+        "E2E: iniciar el Modo Cocina y comprobar que se muestra el paso 1 con sus ingredientes",
+        "E2E: avanzar de paso y comprobar que la barra de avance se actualiza"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "gestionar-temporizador-de-paso",
+      "category": "funcional",
+      "description": "El usuario controla el temporizador del paso incluida su alarma.",
+      "depends_on": ["cocinar-paso-a-paso"],
+      "steps": [
+        "Implementar el temporizador circular con cuenta atrás para el paso activo",
+        "Reproducir la alarma al llegar a cero y ofrecer la ampliación de un minuto"
+      ],
+      "verify": [
+        "E2E: lanzar el temporizador de un paso corto y comprobar que la alarma suena al llegar a cero",
+        "E2E: ampliar un minuto y comprobar que la cuenta atrás se extiende"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "controlar-cocina-con-voz",
+      "category": "funcional",
+      "description": "El usuario avanza la receta con comandos de voz en Modo Cocina.",
+      "depends_on": ["cocinar-paso-a-paso"],
+      "steps": [
+        "Locutar cada paso con la síntesis de voz del sistema según S04",
+        "Reconocer los comandos de voz Siguiente, Repetir y Pausar tiempo según S04"
+      ],
+      "verify": [
+        "E2E: emitir el comando Siguiente y comprobar que el Modo Cocina avanza de paso"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "resolver-dudas-con-pinche",
+      "category": "funcional",
+      "description": "El usuario conversa con el Pinche para resolver dudas de cocina.",
+      "depends_on": ["configurar-acceso-a-ia", "aceptar-sugerencia-de-receta"],
+      "steps": [
+        "Implementar la conversación del Pinche con chips de sugerencias",
+        "Mostrar cards ejecutables de receta con acceso al Modo Cocina",
+        "Permitir el dictado por voz de la consulta según S04"
+      ],
+      "verify": [
+        "E2E: con el cliente de IA simulado, consultar por texto y comprobar que se muestra la respuesta con su card de receta",
+        "E2E: pulsar una card y comprobar que abre la receta propuesta"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "anadir-faltantes-a-la-lista",
+      "category": "funcional",
+      "description": "La app añade a la Lista de la Compra los ingredientes que faltan.",
+      "depends_on": ["crear-receta", "gestionar-alimentos-de-la-despensa"],
+      "steps": [
+        "Detectar los ingredientes obligatorios ausentes al ver una receta o tras un escaneo",
+        "Crear los ítems de la Lista de la Compra con su Origen según RD09"
+      ],
+      "verify": [
+        "E2E: abrir una receta con ingredientes ausentes y comprobar que sus ítems aparecen en la Lista con el badge de origen",
+        "E2E: repetir la acción y comprobar que no se duplican los ítems"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "anadir-item-a-la-lista",
+      "category": "funcional",
+      "description": "El usuario añade artículos a la Lista de la Compra por texto o voz.",
+      "depends_on": ["anadir-faltantes-a-la-lista"],
+      "steps": [
+        "Permitir el alta manual de artículos con cantidad y Pasillo",
+        "Permitir el alta por dictado de voz según S04"
+      ],
+      "verify": [
+        "E2E: añadir un artículo a mano y comprobar que aparece en la Lista de la Compra"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "agrupar-y-completar-la-lista",
+      "category": "funcional",
+      "description": "La Lista de la Compra se agrupa por pasillo o por receta con progreso.",
+      "depends_on": ["anadir-faltantes-a-la-lista"],
+      "steps": [
+        "Agrupar los ítems por Pasillo o por Receta según el tab elegido",
+        "Marcar los ítems como completados con checkbox y mostrar la barra de progreso"
+      ],
+      "verify": [
+        "E2E: con ítems de dos recetas, agrupar por Receta y comprobar que cada ítem queda bajo su receta",
+        "E2E: completar la mitad de los ítems y comprobar que la barra de progreso refleja la mitad"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "cambiar-idioma-de-la-interfaz",
+      "category": "funcional",
+      "description": "El usuario cambia el idioma de la interfaz entre español e inglés.",
+      "depends_on": ["configurar-acceso-a-ia"],
+      "steps": [
+        "Mostrar el selector de idioma español e inglés en Ajustes",
+        "Aplicar el idioma elegido en los textos de todas las pantallas"
+      ],
+      "verify": [
+        "E2E: cambiar a inglés y comprobar que las pantallas cambian sus textos sin reiniciar"
+      ],
+      "status": "not_started"
+    }
+  ]
+}
