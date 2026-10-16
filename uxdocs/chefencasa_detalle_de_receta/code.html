@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-fixed": "#ffdcc3", "secondary-fixed-dim": "#68dba9", "on-secondary-fixed": "#002114", "outline-variant": "#e0bfb7", "surface-container-high": "#eae8e4", "on-primary-fixed": "#3c0800", "surface-container-lowest": "#ffffff", "surface-container-low": "#f5f3ef", "inverse-surface": "#30312e", "surface-container-highest": "#e4e2de", "error": "#ba1a1a", "surface-tint": "#ab3514", "primary-fixed": "#ffdbd2", "surface-container": "#efeeea", "on-primary-fixed-variant": "#891e00", "error-container": "#ffdad6", "background": "#fbf9f5", "secondary-fixed": "#85f8c4", "tertiary-fixed-dim": "#ffb77d", "tertiary-container": "#b15f00", "on-secondary-container": "#00714e", "on-secondary": "#ffffff", "on-tertiary": "#ffffff", "surface-dim": "#dbdad6", "on-primary-container": "#fffbff", "primary-container": "#ca4a29", "primary": "#a83212", "surface-variant": "#e4e2de", "on-tertiary-container": "#fffbff", "inverse-primary": "#ffb4a1", "inverse-on-surface": "#f2f0ed", "on-surface": "#1b1c1a", "secondary": "#006c4a", "on-primary": "#ffffff", "on-surface-variant": "#59413b", "outline": "#8c716a", "tertiary": "#8d4b00", "on-error": "#ffffff", "on-tertiary-fixed": "#2f1500", "on-error-container": "#93000a", "on-tertiary-fixed-variant": "#6e3900", "surface": "#fbf9f5", "surface-bright": "#fbf9f5", "primary-fixed-dim": "#ffb4a1", "on-secondary-fixed-variant": "#005137", "on-background": "#1b1c1a", "secondary-container": "#82f5c1" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "3rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem", "gutter": "1rem", "margin-tablet": "2rem" }, fontFamily: { "headline-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "body-md": ["Inter"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "display-mobile": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display": ["Plus Jakarta Sans"] }, fontSize: { "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }], "display-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-lg": ["15px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-lg": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }], "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_4px_20px_rgba(30,41,59,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="ChefEnCasa Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XOoJEWCpBBt3gyliW7kCfl05RNVEtEI1LcYaj2XllMMUGpk1oP1qq4978h8iHeXkD06gW2hTS9LT4Uy3eo8XKiC3b_OH-pnTnYu1mNtE5nrcPPaApMAv3bNBmZuU_1kenC5DSfMw62jgY8O5p-Yf-U8SOZfHrBopwDA-5IEqNl_guszMF8-pnT5Mwacn67Dnl734arng3bH2xM1tdHCncDYYawDyB0ugFdsUehoOmJiY5KZXccsZTBAByG"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">ChefEnCasa</span><span class="text-[11px] font-label-sm text-on-surface-variant opacity-60 leading-none hidden">Recetas</span></div><span class="font-label-sm text-[10px] text-on-surface-variant font-normal leading-tight">Tu pinche de cocina inteligente</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Perfil de usuario" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAN46m8rYJJOMrfRrwYfYIC6MvjFFlUspO6kSB5KkGTtO5w0Slt4Np41JdyVORZHBsIcqpGum1_IIx41Bum5eB4v6Acnvxr6yoe43YEkP9Tazihn3K6Qtn8AqkaME9Qaz_A1ySH_nFXRpZjdCtCYFn-ESZS-iiNsdSk8mi3uDRsEBBXS-SG9dbdCqmBS9D-sCno7KmdVSoMl5tn7TI2vcQ2jNOkZ3TsGodvffIAZxYlQOW529uRZncpkA"/></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full pb-28">
+<!-- Top Navigation & Actions Bar -->
+<div class="px-margin pt-space-xs pb-space-sm flex items-center justify-between">
+<a aria-label="Volver a Mis Recetas" class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors active:scale-95 shadow-sm" href="#">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</a>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Compartir receta" class="w-11 h-11 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[22px]">share</span>
+</button>
+<button aria-label="Favorito" class="w-11 h-11 rounded-full bg-primary-fixed flex items-center justify-center text-primary hover:bg-primary-fixed-dim transition-all active:scale-95 shadow-sm" id="fav-btn" onclick="toggleFavorite()">
+<span class="material-symbols-outlined text-[24px]" id="fav-icon" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+<div class="relative">
+<button aria-label="Más opciones" class="w-11 h-11 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors active:scale-95 shadow-sm" id="menu-btn" onclick="toggleRecipeMenu()">
+<span class="material-symbols-outlined text-[22px]">more_vert</span>
+</button>
+<!-- Dropdown menu -->
+<div class="hidden absolute right-0 top-12 w-52 bg-surface-container-lowest rounded-xl shadow-xl py-space-xs z-30 transition-all" id="recipe-dropdown">
+<a class="flex items-center gap-space-sm px-space-md py-space-sm hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-primary">edit</span>
+            Editar receta
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-tertiary">content_copy</span>
+            Duplicar receta
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-secondary">print</span>
+            Exportar a PDF
+          </a>
+</div>
+</div>
+</div>
+</div>
+<!-- Hero Media Card -->
+<div class="px-margin mb-space-md">
+<div class="relative w-full h-72 rounded-2xl overflow-hidden shadow-md">
+<img class="w-full h-full object-cover" data-alt="Close up warm shot of a gourmet Spanish omelette tortilla de patatas with creamy runny juicy golden center cut open on a rustic artisan ceramic plate with caramelized onions, warm afternoon kitchen sunbeam, olive oil shine, garnished with micro herbs, terracotta toned ambiance" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcKyZ13U3wa92tz5sdeLGvH1HKqcz8Z8h8PnjMNyeGUpj1CqznXvWUBo3kKf7XqPt6HQu7rMJqX5Itmii3n0_UYj9odT1pc9ylKHXA-SdP6MEUYEyrlYPx_WMRhtopdRRK6bjQOhdNZQ6CRljNE1xnJulCpgyDxPmWRZHq5ZirgHIC8ooDGHQz28CVyBHeqJLABHdXkWt_tPLTLqOLQxAOKDtsKYgjAvqbwY9CxyE1zIbR_2fhpjJqTQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/75 via-transparent to-black/10 pointer-events-none"></div>
+<!-- Top badges -->
+<div class="absolute top-space-sm left-space-sm right-space-sm flex items-center justify-between pointer-events-none">
+<span class="bg-surface-container-lowest/90 backdrop-blur-md text-on-surface px-space-sm py-1 rounded-full font-label-sm text-label-sm shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-tertiary">dinner_dining</span>
+          Almuerzo / Cena
+        </span>
+<span class="bg-secondary text-on-secondary px-space-sm py-1 rounded-full font-label-sm text-label-sm shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">inventory_2</span>
+          Nevera: 100%
+        </span>
+</div>
+<!-- Bottom overlay on hero -->
+<div class="absolute bottom-space-sm left-space-sm right-space-sm flex items-end justify-between text-surface-container-lowest">
+<div class="flex items-center gap-1.5 bg-inverse-surface/80 backdrop-blur-sm px-2.5 py-1 rounded-full">
+<span class="material-symbols-outlined text-[18px] text-tertiary-fixed" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-surface-bright">4.9</span>
+<span class="font-body-sm text-body-sm text-surface-dim opacity-80">(38 opiniones)</span>
+</div>
+<span class="bg-primary/90 backdrop-blur-sm text-on-primary font-label-sm text-label-sm px-2.5 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">psychology</span>
+          Receta Clásica
+        </span>
+</div>
+</div>
+</div>
+<!-- Title & Narrative -->
+<div class="px-margin mb-space-md">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight leading-tight mb-space-xs">
+      Tortilla Española Jugosa con Cebolla Pochada
+    </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+      La clásica tortilla de patata pochada lentamente durante 20 minutos con cebolla dulce. Textura melosa y jugosa por dentro con un sutil dorado exterior.
+    </p>
+</div>
+<!-- Key Metrics 4-Grid Cards -->
+<div class="px-margin mb-space-lg">
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed/60 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">timer</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tiempo total</span>
+<span class="block font-headline-sm text-headline-sm text-on-surface truncate">35 min</span>
+<span class="block font-body-sm text-[11px] text-outline truncate">20m prep · 15m cocción</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed/60 text-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">equalizer</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Dificultad</span>
+<span class="block font-headline-sm text-headline-sm text-on-surface">Media</span>
+<span class="block font-body-sm text-[11px] text-tertiary truncate">Nivel 2 de 3</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">local_fire_department</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Energía</span>
+<span class="block font-headline-sm text-headline-sm text-on-surface truncate">280 kcal</span>
+<span class="block font-body-sm text-[11px] text-outline truncate">Por ración individual</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">euro</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Coste aprox.</span>
+<span class="block font-headline-sm text-headline-sm text-on-surface truncate">~3.50 €</span>
+<span class="block font-body-sm text-[11px] text-secondary truncate">Económico y casero</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Servings Interactive Scaler -->
+<div class="px-margin mb-space-lg">
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm">
+<div class="flex items-center justify-between mb-space-xs">
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface block">Raciones a preparar</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cantidades adaptadas a tu mesa</span>
+</div>
+<div class="flex items-center bg-surface-container-low rounded-xl p-1 gap-space-xs">
+<button aria-label="Disminuir raciones" class="w-9 h-9 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center active:scale-95 shadow-xs hover:bg-surface-container" onclick="adjustServings(-1)">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<div class="w-14 text-center">
+<span class="font-headline-sm text-headline-sm text-primary font-bold" id="servings-count">4</span>
+<span class="block font-label-sm text-[10px] text-on-surface-variant leading-none">pers.</span>
+</div>
+<button aria-label="Aumentar raciones" class="w-9 h-9 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center active:scale-95 shadow-xs hover:bg-surface-container" onclick="adjustServings(1)">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<div class="mt-space-xs flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[16px]">sync_alt</span>
+<p class="font-label-sm text-label-sm">Cantidades actualizadas en vivo según la selección.</p>
+</div>
+</div>
+</div>
+<!-- Ingredients Checklist & Pantry Status -->
+<div class="px-margin mb-space-lg">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Ingredientes</h2>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full font-bold">5 de 5</span>
+</div>
+<button class="font-label-sm text-label-sm text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[16px]">playlist_add</span>
+        Lista de compra
+      </button>
+</div>
+<!-- Status Banner -->
+<div class="mb-space-sm bg-secondary/10 p-space-sm rounded-xl flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-secondary font-bold">¡Tienes el 100% de ingredientes en casa!</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Detectados por tu Escáner IA y despensa sincronizada.</p>
+</div>
+</div>
+<!-- Ingredient Items -->
+<div class="flex flex-col gap-space-xs" id="ingredients-list">
+<!-- Item 1 -->
+<label class="flex items-center justify-between p-space-sm bg-surface-container-lowest rounded-xl shadow-xs cursor-pointer active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="w-5 h-5 rounded-md accent-secondary text-on-secondary cursor-pointer" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface block">
+<span class="ing-amount" data-base="700">700</span> <span class="ing-unit">g</span> Patata agria de secano
+            </span>
+<span class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Disponible en despensa
+            </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">nutrition</span>
+</label>
+<!-- Item 2 -->
+<label class="flex items-center justify-between p-space-sm bg-surface-container-lowest rounded-xl shadow-xs cursor-pointer active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="w-5 h-5 rounded-md accent-secondary text-on-secondary cursor-pointer" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface block">
+<span class="ing-amount" data-base="6">6</span> <span class="ing-unit">uds</span> Huevos camperos XL
+            </span>
+<span class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Disponibles en nevera
+            </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">egg</span>
+</label>
+<!-- Item 3 -->
+<label class="flex items-center justify-between p-space-sm bg-surface-container-lowest rounded-xl shadow-xs cursor-pointer active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="w-5 h-5 rounded-md accent-secondary text-on-secondary cursor-pointer" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface block">
+<span class="ing-amount" data-base="1">1</span> <span class="ing-unit">ud</span> Cebolla blanca dulce grande
+            </span>
+<span class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Disponible en despensa
+            </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">spa</span>
+</label>
+<!-- Item 4 -->
+<label class="flex items-center justify-between p-space-sm bg-surface-container-lowest rounded-xl shadow-xs cursor-pointer active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="w-5 h-5 rounded-md accent-secondary text-on-secondary cursor-pointer" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface block">
+<span class="ing-amount" data-base="200">200</span> <span class="ing-unit">ml</span> Aceite de Oliva Virgen Extra
+            </span>
+<span class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Disponible en vinagrera
+            </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">opacity</span>
+</label>
+<!-- Item 5 -->
+<label class="flex items-center justify-between p-space-sm bg-surface-container-lowest rounded-xl shadow-xs cursor-pointer active:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="w-5 h-5 rounded-md accent-secondary text-on-secondary cursor-pointer" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface block">
+<span class="ing-amount" data-base="1">1</span> pizca Sal fina marina al gusto
+            </span>
+<span class="font-body-sm text-body-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+              Disponible en especiero
+            </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">grain</span>
+</label>
+</div>
+</div>
+<!-- Utensils Quick Bar -->
+<div class="px-margin mb-space-lg">
+<div class="flex items-center gap-1.5 mb-space-sm">
+<span class="material-symbols-outlined text-tertiary text-[20px]">soup_kitchen</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Utensilios necesarios</h2>
+</div>
+<div class="flex flex-wrap gap-space-xs">
+<span class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-outline">skillet</span>
+        Sartén antiadherente 24-26cm
+      </span>
+<span class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-outline">save_as</span>
+        Bol amplio
+      </span>
+<span class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-outline">radio_button_unchecked</span>
+        Plato llano para voltear
+      </span>
+<span class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-outline">filter_list</span>
+        Espumadera
+      </span>
+</div>
+</div>
+<!-- Steps Preview -->
+<div class="px-margin mb-space-lg">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[22px]">format_list_numbered</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Pasos clave de elaboración</h2>
+</div>
+<span class="font-label-sm text-label-sm text-outline">3 fases</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Step 1 -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-xs">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-space-xs">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">1</span>
+<h3 class="font-label-lg text-label-lg text-on-surface">Pelar y pochar a fuego lento</h3>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 18 min
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Corta las patatas en rodajas finas irregulares y la cebolla en juliana fina. Confita en abundante AOVE a fuego medio-bajo sin que se tuesten.
+        </p>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-xs">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-space-xs">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">2</span>
+<h3 class="font-label-lg text-label-lg text-on-surface">Batido y reposo de la mezcla</h3>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 5 min reposo
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Bate los huevos suavemente sin meter demasiado aire. Escurre la patata y cebolla caliente y viértelas en el huevo. Deja que absorban durante 5 minutos.
+        </p>
+</div>
+<!-- Step 3 -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-xs">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-space-xs">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">3</span>
+<h3 class="font-label-lg text-label-lg text-on-surface">Cuajado y volteo maestro</h3>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 2.5 min sellado
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Sartén bien caliente con una gota de aceite. Vierte la masa, redondea los bordes durante 1 minuto y voltea con decisión con el plato llano. Dora 45 segundos más.
+        </p>
+</div>
+</div>
+<!-- Chef's Pro Tip Card -->
+<div class="mt-space-sm bg-tertiary-fixed/30 p-space-md rounded-2xl flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">lightbulb</span>
+</div>
+<div>
+<h4 class="font-label-lg text-label-lg text-on-tertiary-fixed font-bold">Consejo de ChefEnCasa</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Humedece ligeramente la superficie del plato llano antes del volteo para que la tortilla resbale con suavidad de vuelta a la sartén sin romperse.
+        </p>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Cook Mode CTA Trigger -->
+<div class="fixed bottom-16 left-0 right-0 z-40 px-margin py-space-sm bg-surface/90 backdrop-blur-xl shadow-xl">
+<div class="max-w-md mx-auto flex flex-col gap-1">
+<a class="w-full h-14 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-space-sm shadow-lg shadow-primary/25 active:scale-[0.98] transition-all hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined text-[24px]">skillet</span>
+<span>Empezar Modo Cocina (Paso a Paso)</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</a>
+<div class="flex items-center justify-center gap-space-sm text-on-surface-variant text-[11px] font-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">mic</span> Manos libres guiado
+        </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">timer</span> Temporizadores auto
+        </span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  let servings = 4;
+  const baseServings = 4;
+
+  function adjustServings(delta) {
+    servings = Math.max(1, Math.min(12, servings + delta));
+    document.getElementById('servings-count').innerText = servings;
+
+    const amounts = document.querySelectorAll('.ing-amount');
+    amounts.forEach(el => {
+      const base = parseFloat(el.getAttribute('data-base'));
+      if (!isNaN(base)) {
+        const scaled = (base * (servings / baseServings));
+        el.innerText = scaled % 1 === 0 ? scaled : scaled.toFixed(1);
+      }
+    });
+  }
+
+  function toggleFavorite() {
+    const btn = document.getElementById('fav-btn');
+    const icon = document.getElementById('fav-icon');
+    const isFilled = icon.style.fontVariationSettings.includes("'FILL' 1");
+
+    if (isFilled) {
+      icon.style.fontVariationSettings = "'FILL' 0";
+      btn.classList.remove('text-primary');
+      btn.classList.add('text-on-surface-variant');
+    } else {
+      icon.style.fontVariationSettings = "'FILL' 1";
+      btn.classList.add('text-primary');
+      btn.classList.remove('text-on-surface-variant');
+    }
+  }
+
+  function toggleRecipeMenu() {
+    const menu = document.getElementById('recipe-dropdown');
+    menu.classList.toggle('hidden');
+  }
+
+  // Close dropdown on tap outside
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('recipe-dropdown');
+    const btn = document.getElementById('menu-btn');
+    if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,41,59,0.06)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="recetas" href="#"><span class="material-symbols-outlined text-[24px]">menu_book</span><span class="font-label-sm text-[11px]">Recetas</span></a><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="escaner-ia" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">document_scanner</span><span class="absolute -top-1 -right-3 bg-secondary text-on-secondary font-label-sm text-[9px] px-1 py-0.2 rounded-full font-bold shadow-sm">IA</span></div><span class="font-label-sm text-[11px]">Escáner IA</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="modo-cocina" href="#"><span class="material-symbols-outlined text-[24px]">skillet</span><span class="font-label-sm text-[11px]">Modo Cocina</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="pinche-chat" href="#"><span class="material-symbols-outlined text-[24px]">smart_toy</span><span class="font-label-sm text-[11px]">Pinche Chat</span></a></div></nav></body></html>

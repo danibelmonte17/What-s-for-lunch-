@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-fixed": "#ffdcc3", "secondary-fixed-dim": "#68dba9", "on-secondary-fixed": "#002114", "outline-variant": "#e0bfb7", "surface-container-high": "#eae8e4", "on-primary-fixed": "#3c0800", "surface-container-lowest": "#ffffff", "surface-container-low": "#f5f3ef", "inverse-surface": "#30312e", "surface-container-highest": "#e4e2de", "error": "#ba1a1a", "surface-tint": "#ab3514", "primary-fixed": "#ffdbd2", "surface-container": "#efeeea", "on-primary-fixed-variant": "#891e00", "error-container": "#ffdad6", "background": "#fbf9f5", "secondary-fixed": "#85f8c4", "tertiary-fixed-dim": "#ffb77d", "tertiary-container": "#b15f00", "on-secondary-container": "#00714e", "on-secondary": "#ffffff", "on-tertiary": "#ffffff", "surface-dim": "#dbdad6", "on-primary-container": "#fffbff", "primary-container": "#ca4a29", "primary": "#a83212", "surface-variant": "#e4e2de", "on-tertiary-container": "#fffbff", "inverse-primary": "#ffb4a1", "inverse-on-surface": "#f2f0ed", "on-surface": "#1b1c1a", "secondary": "#006c4a", "on-primary": "#ffffff", "on-surface-variant": "#59413b", "outline": "#8c716a", "tertiary": "#8d4b00", "on-error": "#ffffff", "on-tertiary-fixed": "#2f1500", "on-error-container": "#93000a", "on-tertiary-fixed-variant": "#6e3900", "surface": "#fbf9f5", "surface-bright": "#fbf9f5", "primary-fixed-dim": "#ffb4a1", "on-secondary-fixed-variant": "#005137", "on-background": "#1b1c1a", "secondary-container": "#82f5c1" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "3rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem", "gutter": "1rem", "margin-tablet": "2rem" }, fontFamily: { "headline-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "body-md": ["Inter"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "display-mobile": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display": ["Plus Jakarta Sans"] }, fontSize: { "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }], "display-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-lg": ["15px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-lg": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }], "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_4px_20px_rgba(30,41,59,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="ChefEnCasa Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XOoJEWCpBBt3gyliW7kCfl05RNVEtEI1LcYaj2XllMMUGpk1oP1qq4978h8iHeXkD06gW2hTS9LT4Uy3eo8XKiC3b_OH-pnTnYu1mNtE5nrcPPaApMAv3bNBmZuU_1kenC5DSfMw62jgY8O5p-Yf-U8SOZfHrBopwDA-5IEqNl_guszMF8-pnT5Mwacn67Dnl734arng3bH2xM1tdHCncDYYawDyB0ugFdsUehoOmJiY5KZXccsZTBAByG"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">ChefEnCasa</span><span class="text-[11px] font-label-sm text-on-surface-variant opacity-60 leading-none hidden">Recetas</span></div><span class="font-label-sm text-[10px] text-on-surface-variant font-normal leading-tight">Tu pinche de cocina inteligente</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Perfil de usuario" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAN46m8rYJJOMrfRrwYfYIC6MvjFFlUspO6kSB5KkGTtO5w0Slt4Np41JdyVORZHBsIcqpGum1_IIx41Bum5eB4v6Acnvxr6yoe43YEkP9Tazihn3K6Qtn8AqkaME9Qaz_A1ySH_nFXRpZjdCtCYFn-ESZS-iiNsdSk8mi3uDRsEBBXS-SG9dbdCqmBS9D-sCno7KmdVSoMl5tn7TI2vcQ2jNOkZ3TsGodvffIAZxYlQOW529uRZncpkA"/></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full pb-10">
+<!-- Modal Top Bar / Actions Header -->
+<div class="sticky top-0 z-40 bg-surface/95 backdrop-blur-md px-margin py-space-sm flex items-center justify-between shadow-sm">
+<button aria-label="Cerrar modal" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">Crear Receta</span>
+<span class="bg-primary/10 text-primary text-[10px] font-label-sm px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Borrador</span>
+</div>
+<span class="font-label-sm text-on-surface-variant text-[11px]">Paso a paso con IA</span>
+</div>
+<button class="flex items-center gap-1 px-3.5 py-2 bg-primary text-on-primary rounded-xl font-label-md text-label-md shadow-md shadow-primary/20 hover:bg-primary-container transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px]">bookmark_heart</span>
+<span>Guardar</span>
+</button>
+</div>
+<form class="flex flex-col gap-space-lg px-margin pt-space-md" id="recipeForm" onsubmit="event.preventDefault();">
+<!-- Recipe Hero Cover Upload Section -->
+<div class="relative w-full rounded-2xl overflow-hidden bg-surface-container shadow-sm group">
+<div class="h-60 w-full relative overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Close up artisanal culinary photography of a golden creamy Spanish omelette with caramelized onions served on a warm rustic ceramic plate, surrounded by fresh organic eggs, earthy potatoes, and virgin olive oil bottle under soft warm sunlight, appetizing, masterchef quality, warm terracotta and sage tones" id="dishPreview" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIkeptwZpH3EZQFA7--hD1GstqOfaKuMwzr4ZySfXnlzK5SrsGWYz74wO85aqXylUS6GZhYKoocYyPSLfqsHPUWUu5eKjS1d-f-fxsiwNVwTmkE8ICYnNfXKN1gP_4UjG-8LUtE6ujNp2Z0x8KGjwEpFxIFmZWe2MAetL7f6dTrt-2z9NA0aggwf_9ESndWTXksI3FyQTUU0Dloh5t2eIcZL1ojdyPj0FJSajh6A3SiU8pbFQvRriQgA"/>
+<!-- Subtle Top Scrim Gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-inverse-surface/20 to-transparent pointer-events-none"></div>
+<!-- AI Assistant Floating Sparkle Pill -->
+<div class="absolute top-3 left-3 flex items-center gap-1.5 bg-surface-container-lowest/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-sm text-label-sm text-on-surface">Reconocimiento Activo</span>
+</div>
+<!-- Dietary Highlights on Image -->
+<div class="absolute top-3 right-3 flex items-center gap-1">
+<span class="bg-secondary/90 backdrop-blur-md text-on-secondary px-2.5 py-1 rounded-full font-label-sm text-[11px] shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">spa</span> Vegetariano
+          </span>
+</div>
+<!-- Bottom Action Pill Bar within cover -->
+<div class="absolute bottom-3 inset-x-3 flex items-center justify-between gap-2">
+<button class="flex-1 py-2 px-3 bg-surface-container-lowest/90 backdrop-blur-md hover:bg-surface-container-lowest text-on-surface rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary">add_a_photo</span>
+<span>Cambiar foto</span>
+</button>
+<button class="flex-1 py-2 px-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all shadow-md shadow-primary/30 hover:bg-primary-container active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px]">magic_button</span>
+<span>Generar con IA</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Section: Basic Information -->
+<div class="flex flex-col gap-space-sm bg-surface-container-lowest p-space-md rounded-2xl shadow-sm">
+<div class="flex items-center justify-between">
+<label class="font-label-lg text-label-lg text-on-surface" for="recipeTitle">Título del plato</label>
+<span class="text-[11px] font-label-sm text-on-surface-variant font-normal">Obligatorio</span>
+</div>
+<input class="w-full px-space-md py-3 rounded-xl bg-surface-container-low text-on-surface font-headline-sm text-headline-sm placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary transition-all" id="recipeTitle" placeholder="Ej. Lentejas de la abuela, Arroz meloso..." type="text" value="Tortilla Española Jugosa con Cebolla Pochada"/>
+<div class="mt-2 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface-variant" for="recipeDescription">Historia o descripción breve</label>
+<textarea class="w-full px-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface font-body-sm text-body-sm placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none" id="recipeDescription" placeholder="Cuéntanos el secreto de tu versión, su textura o para qué ocasión es perfecta..." rows="2">Tortilla tradicional de patatas con cebolla pochada a fuego lento durante 20 minutos, punto meloso en el centro y sellado rápido con aceite de oliva virgen extra.</textarea>
+</div>
+<!-- Categories Pills -->
+<div class="mt-3 flex flex-col gap-2">
+<span class="font-label-md text-label-md text-on-surface">Momento culinario</span>
+<div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors shrink-0" type="button">
+            ☀️ Desayuno
+          </button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-primary text-on-primary shadow-sm shrink-0 flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+            🥘 Almuerzo
+          </button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors shrink-0" type="button">
+            🌙 Cena
+          </button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors shrink-0" type="button">
+            🍰 Postre
+          </button>
+<button class="px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors shrink-0" type="button">
+            🥪 Aperitivo
+          </button>
+</div>
+</div>
+</div>
+<!-- Section: Cooking Metrics (Time, Difficulty, Portions) -->
+<div class="grid grid-cols-3 gap-2.5">
+<!-- Time -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl flex flex-col items-center justify-between shadow-sm">
+<span class="font-label-sm text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">timer</span> Tiempo
+        </span>
+<div class="my-1.5 flex items-baseline gap-0.5">
+<span class="font-headline-md text-headline-md text-on-surface">35</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">min</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-on-surface text-xs font-bold active:scale-95" type="button">-</button>
+<button class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-on-surface text-xs font-bold active:scale-95" type="button">+</button>
+</div>
+</div>
+<!-- Difficulty -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl flex flex-col items-center justify-between shadow-sm">
+<span class="font-label-sm text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">bar_chart</span> Nivel
+        </span>
+<div class="my-1.5 flex flex-col items-center">
+<span class="font-headline-sm text-headline-sm text-secondary">Media</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="w-2 h-2 rounded-full bg-surface-container-highest"></span>
+</div>
+</div>
+<button class="font-label-sm text-[11px] text-primary hover:underline" type="button">Cambiar</button>
+</div>
+<!-- Portions Counter -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl flex flex-col items-center justify-between shadow-sm">
+<span class="font-label-sm text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">groups</span> Raciones
+        </span>
+<div class="my-1.5 flex items-baseline gap-0.5">
+<span class="font-headline-md text-headline-md text-on-surface" id="portionVal">4</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">pers</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-on-surface text-xs font-bold active:scale-95" onclick="const p = document.getElementById('portionVal'); let v = parseInt(p.innerText); if(v &gt; 1) p.innerText = v - 1;" type="button">-</button>
+<button class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-on-surface text-xs font-bold active:scale-95" onclick="const p = document.getElementById('portionVal'); let v = parseInt(p.innerText); p.innerText = v + 1;" type="button">+</button>
+</div>
+</div>
+</div>
+<!-- Section: Dynamic Ingredients -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">grocery</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Ingredientes</h2>
+<span class="bg-secondary/10 text-secondary px-2 py-0.5 rounded-full font-label-sm text-[11px]">4 ítems</span>
+</div>
+<button class="flex items-center gap-1 font-label-sm text-[12px] text-secondary hover:text-on-secondary-container bg-secondary-container/40 px-2.5 py-1.5 rounded-lg transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+<span>Escanear con IA</span>
+</button>
+</div>
+<!-- Ingredient Items List -->
+<div class="flex flex-col gap-2.5 mt-1" id="ingredientsList">
+<!-- Item 1 -->
+<div class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl group transition-all">
+<span class="material-symbols-outlined text-[18px] text-outline cursor-grab">drag_indicator</span>
+<div class="flex-1 flex flex-col">
+<input class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none" type="text" value="Patata agria de secano"/>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-body-sm text-[12px] text-on-surface-variant">Para freír / pochar</span>
+<span class="text-outline-variant">•</span>
+<label class="flex items-center gap-1 cursor-pointer">
+<input class="w-3.5 h-3.5 rounded text-secondary focus:ring-0 accent-secondary" type="checkbox"/>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Opcional</span>
+</label>
+</div>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-10 text-right font-label-md text-label-md text-on-surface bg-transparent focus:outline-none" type="text" value="700"/>
+<span class="font-label-sm text-label-sm text-on-surface-variant">g</span>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl group transition-all">
+<span class="material-symbols-outlined text-[18px] text-outline cursor-grab">drag_indicator</span>
+<div class="flex-1 flex flex-col">
+<input class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none" type="text" value="Huevos camperos XL"/>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-body-sm text-[12px] text-secondary font-medium">Reconocido por IA</span>
+<span class="text-outline-variant">•</span>
+<label class="flex items-center gap-1 cursor-pointer">
+<input class="w-3.5 h-3.5 rounded text-secondary focus:ring-0 accent-secondary" type="checkbox"/>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Opcional</span>
+</label>
+</div>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-8 text-right font-label-md text-label-md text-on-surface bg-transparent focus:outline-none" type="text" value="6"/>
+<span class="font-label-sm text-label-sm text-on-surface-variant">uds</span>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl group transition-all">
+<span class="material-symbols-outlined text-[18px] text-outline cursor-grab">drag_indicator</span>
+<div class="flex-1 flex flex-col">
+<input class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none" type="text" value="Cebolla blanca dulce"/>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-body-sm text-[12px] text-on-surface-variant">Corte juliana fina</span>
+<span class="text-outline-variant">•</span>
+<label class="flex items-center gap-1 cursor-pointer">
+<input checked="" class="w-3.5 h-3.5 rounded text-secondary focus:ring-0 accent-secondary" type="checkbox"/>
+<span class="font-label-sm text-[10px] text-secondary font-semibold">Opcional</span>
+</label>
+</div>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-8 text-right font-label-md text-label-md text-on-surface bg-transparent focus:outline-none" type="text" value="1"/>
+<span class="font-label-sm text-label-sm text-on-surface-variant">grande</span>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+<!-- Item 4 -->
+<div class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl group transition-all">
+<span class="material-symbols-outlined text-[18px] text-outline cursor-grab">drag_indicator</span>
+<div class="flex-1 flex flex-col">
+<input class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none" type="text" value="Aceite de Oliva Virgen Extra"/>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-body-sm text-[12px] text-on-surface-variant">Variedad arbequina o picual</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-10 text-right font-label-md text-label-md text-on-surface bg-transparent focus:outline-none" type="text" value="200"/>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ml</span>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Add Ingredient Button -->
+<button class="mt-2 w-full py-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md flex items-center justify-center gap-2 transition-all active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>Añadir Ingrediente</span>
+</button>
+</div>
+<!-- Section: Cooking Steps & Integrated Timers -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">skillet</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Pasos de Elaboración</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 Pasos definidos</span>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Step 1 -->
+<div class="p-3.5 bg-surface-container-low rounded-xl flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center shadow-sm">1</span>
+<span class="font-label-md text-label-md text-on-surface">Pelar y pochar lentamente</span>
+</div>
+<button class="text-outline hover:text-error p-1" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<textarea class="w-full bg-surface-container-lowest p-2.5 rounded-lg text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none" rows="2">Cortar las patatas en láminas irregulares y la cebolla en juliana fina. Pochar en abundante aceite de oliva a fuego medio-bajo hasta que estén tiernas y ligeramente doradas.</textarea>
+<!-- Step Metadata Pill Bar: Timer & Chef Tip -->
+<div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+<!-- Active Step Timer Token -->
+<div class="flex items-center gap-1.5 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1.5 rounded-full font-label-sm text-[12px] shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-bold">Temporizador: 18 min</span>
+<button class="text-on-tertiary-fixed/70 hover:text-on-tertiary-fixed ml-1" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span>
+</button>
+</div>
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-secondary bg-secondary-container/40 px-2.5 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px]">tips_and_updates</span>
+<span>Fuego suave para no tostar</span>
+</div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="p-3.5 bg-surface-container-low rounded-xl flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center shadow-sm">2</span>
+<span class="font-label-md text-label-md text-on-surface">Batir y reposar la mezcla</span>
+</div>
+<button class="text-outline hover:text-error p-1" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<textarea class="w-full bg-surface-container-lowest p-2.5 rounded-lg text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none" rows="2">Escurrir el exceso de aceite de las patatas. Batir los 6 huevos camperos sin hacer demasiada espuma, añadir sal y mezclar con la patata caliente. Dejar reposar 5 minutos para que absorba el huevo.</textarea>
+<!-- Timer toggle chip -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1.5 rounded-full font-label-sm text-[12px] shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary" style="font-variation-settings: 'FILL' 1;">hourglass_bottom</span>
+<span class="font-bold">Reposo: 5 min</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant">Clave para la jugosidad</span>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="p-3.5 bg-surface-container-low rounded-xl flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center shadow-sm">3</span>
+<span class="font-label-md text-label-md text-on-surface">Cuajado y volteo maestro</span>
+</div>
+<button class="text-outline hover:text-error p-1" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<textarea class="w-full bg-surface-container-lowest p-2.5 rounded-lg text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none" rows="2">En sartén antiadherente bien caliente con unas gotas de aceite, verter la mezcla. Cocinar 1 minuto y medio a fuego vivo, dar la vuelta con un plato plano y sellar 1 minuto más por el otro lado.</textarea>
+<div class="flex items-center gap-1.5 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1.5 rounded-full font-label-sm text-[12px] shadow-sm self-start">
+<span class="material-symbols-outlined text-[16px] text-tertiary" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-bold">Sellado: 2.5 min</span>
+</div>
+</div>
+</div>
+<!-- Add Step Button -->
+<button class="w-full py-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md flex items-center justify-center gap-2 transition-all active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>Añadir Nuevo Paso</span>
+</button>
+</div>
+<!-- Section: Dietary Tags & Preferences -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[20px]">nutrition</span>
+<span class="font-label-lg text-label-lg text-on-surface">Etiquetas y Dieta</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-[11px]">Sugerencias de filtro</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="px-3 py-1.5 rounded-full font-label-sm text-label-sm bg-secondary-container text-on-secondary-container flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span>Sin Gluten</span>
+</button>
+<button class="px-3 py-1.5 rounded-full font-label-sm text-label-sm bg-secondary-container text-on-secondary-container flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span>Vegetariana</span>
+</button>
+<button class="px-3 py-1.5 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant hover:bg-surface-container-high" type="button">
+          + Alta en Proteína
+        </button>
+<button class="px-3 py-1.5 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant hover:bg-surface-container-high" type="button">
+          + Bajas Calorías
+        </button>
+<button class="px-3 py-1.5 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant hover:bg-surface-container-high" type="button">
+          + Plato Rápido
+        </button>
+</div>
+<!-- Favorite / Private Switch -->
+<div class="mt-2 pt-2 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Marcar en Mis Favoritas</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant">Acceso directo en tu biblioteca</span>
+</div>
+</div>
+<input checked="" class="w-5 h-5 rounded-md text-primary focus:ring-0 accent-primary cursor-pointer" type="checkbox"/>
+</div>
+</div>
+<!-- Floating Sticky Action Dock for Mobile Creation -->
+<div class="sticky bottom-4 z-40 bg-surface-container-lowest/95 backdrop-blur-xl p-3 rounded-2xl shadow-xl flex items-center gap-3">
+<button class="flex-1 py-3 px-4 bg-surface-container text-on-surface-variant hover:bg-surface-container-high rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px]">drafts</span>
+<span>Guardar Borrador</span>
+</button>
+<button class="flex-[1.5] py-3 px-4 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-lg shadow-primary/30 hover:bg-primary-container transition-all active:scale-95" type="submit">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+<span>Publicar Receta</span>
+</button>
+</div>
+<!-- Gentle Human Microcopy Footnote -->
+<div class="flex items-center justify-center gap-1.5 py-2 text-on-surface-variant opacity-75">
+<span class="material-symbols-outlined text-[14px]">cloud_sync</span>
+<span class="font-label-sm text-[11px]">Cambios sincronizados localmente</span>
+</div>
+</form>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,41,59,0.06)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="recetas" href="#"><span class="material-symbols-outlined text-[24px]">menu_book</span><span class="font-label-sm text-[11px]">Recetas</span></a><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="escaner-ia" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">document_scanner</span><span class="absolute -top-1 -right-3 bg-secondary text-on-secondary font-label-sm text-[9px] px-1 py-0.2 rounded-full font-bold shadow-sm">IA</span></div><span class="font-label-sm text-[11px]">Escáner IA</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="modo-cocina" href="#"><span class="material-symbols-outlined text-[24px]">skillet</span><span class="font-label-sm text-[11px]">Modo Cocina</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="pinche-chat" href="#"><span class="material-symbols-outlined text-[24px]">smart_toy</span><span class="font-label-sm text-[11px]">Pinche Chat</span></a></div></nav></body></html>

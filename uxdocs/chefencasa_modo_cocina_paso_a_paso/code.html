@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-fixed": "#ffdcc3", "secondary-fixed-dim": "#68dba9", "on-secondary-fixed": "#002114", "outline-variant": "#e0bfb7", "surface-container-high": "#eae8e4", "on-primary-fixed": "#3c0800", "surface-container-lowest": "#ffffff", "surface-container-low": "#f5f3ef", "inverse-surface": "#30312e", "surface-container-highest": "#e4e2de", "error": "#ba1a1a", "surface-tint": "#ab3514", "primary-fixed": "#ffdbd2", "surface-container": "#efeeea", "on-primary-fixed-variant": "#891e00", "error-container": "#ffdad6", "background": "#fbf9f5", "secondary-fixed": "#85f8c4", "tertiary-fixed-dim": "#ffb77d", "tertiary-container": "#b15f00", "on-secondary-container": "#00714e", "on-secondary": "#ffffff", "on-tertiary": "#ffffff", "surface-dim": "#dbdad6", "on-primary-container": "#fffbff", "primary-container": "#ca4a29", "primary": "#a83212", "surface-variant": "#e4e2de", "on-tertiary-container": "#fffbff", "inverse-primary": "#ffb4a1", "inverse-on-surface": "#f2f0ed", "on-surface": "#1b1c1a", "secondary": "#006c4a", "on-primary": "#ffffff", "on-surface-variant": "#59413b", "outline": "#8c716a", "tertiary": "#8d4b00", "on-error": "#ffffff", "on-tertiary-fixed": "#2f1500", "on-error-container": "#93000a", "on-tertiary-fixed-variant": "#6e3900", "surface": "#fbf9f5", "surface-bright": "#fbf9f5", "primary-fixed-dim": "#ffb4a1", "on-secondary-fixed-variant": "#005137", "on-background": "#1b1c1a", "secondary-container": "#82f5c1" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "3rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem", "gutter": "1rem", "margin-tablet": "2rem" }, fontFamily: { "headline-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "body-md": ["Inter"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "display-mobile": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display": ["Plus Jakarta Sans"] }, fontSize: { "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }], "display-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-lg": ["15px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-lg": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }], "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_4px_20px_rgba(30,41,59,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="ChefEnCasa Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XOoJEWCpBBt3gyliW7kCfl05RNVEtEI1LcYaj2XllMMUGpk1oP1qq4978h8iHeXkD06gW2hTS9LT4Uy3eo8XKiC3b_OH-pnTnYu1mNtE5nrcPPaApMAv3bNBmZuU_1kenC5DSfMw62jgY8O5p-Yf-U8SOZfHrBopwDA-5IEqNl_guszMF8-pnT5Mwacn67Dnl734arng3bH2xM1tdHCncDYYawDyB0ugFdsUehoOmJiY5KZXccsZTBAByG"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">ChefEnCasa</span><span class="text-[11px] font-label-sm text-on-surface-variant opacity-60 leading-none hidden">Modo Cocina</span></div><span class="font-label-sm text-[10px] text-on-surface-variant font-normal leading-tight">Tu pinche de cocina inteligente</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Perfil de usuario" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAN46m8rYJJOMrfRrwYfYIC6MvjFFlUspO6kSB5KkGTtO5w0Slt4Np41JdyVORZHBsIcqpGum1_IIx41Bum5eB4v6Acnvxr6yoe43YEkP9Tazihn3K6Qtn8AqkaME9Qaz_A1ySH_nFXRpZjdCtCYFn-ESZS-iiNsdSk8mi3uDRsEBBXS-SG9dbdCqmBS9D-sCno7KmdVSoMl5tn7TI2vcQ2jNOkZ3TsGodvffIAZxYlQOW529uRZncpkA"/></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Progress & Context Header -->
+<div class="px-margin pt-space-sm pb-space-xs flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-fixed text-primary font-label-md text-label-md">
+          3
+        </span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Modo Cocina Guiado</span>
+<h1 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Tortilla Española Jugosa</h1>
+</div>
+</div>
+<!-- Audio Toggle Status -->
+<button aria-label="Control por voz activado" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container shadow-sm active:scale-95 transition-all" id="voiceToggleBtn" onclick="toggleVoiceMode()">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="material-symbols-outlined text-[18px]">record_voice_over</span>
+<span class="font-label-sm text-label-sm font-bold">Voz Activa</span>
+</button>
+</div>
+<!-- Step Progress Bar -->
+<div class="flex items-center gap-2 mt-1">
+<div class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden flex">
+<div class="bg-primary h-full rounded-full transition-all duration-500 ease-out" style="width: 50%;"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold whitespace-nowrap">Paso 3 de 6</span>
+</div>
+</div>
+<!-- Main Countertop-Friendly Step Display Card -->
+<div class="px-margin mt-space-sm flex flex-col gap-space-md">
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_rgba(30,41,59,0.08)] p-space-md flex flex-col gap-space-md relative overflow-hidden">
+<!-- Decorative Warm Corner Accents -->
+<div class="absolute -top-12 -right-12 w-28 h-28 rounded-full bg-tertiary-fixed/30 pointer-events-none blur-xl"></div>
+<!-- Step Badge & Audio Speak Button -->
+<div class="flex items-center justify-between">
+<span class="px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-md text-label-md uppercase tracking-wide">
+          Paso 3 • Fuego Medio-Bajo
+        </span>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-primary active:scale-95 transition-all shadow-sm" onclick="speakCurrentStep()" title="Escuchar este paso en voz alta">
+<span class="material-symbols-outlined text-[18px]">volume_up</span>
+<span class="font-label-sm text-label-sm">Escuchar</span>
+</button>
+</div>
+<!-- High Legibility Step Title -->
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-extrabold tracking-tight">
+          Pochado lento de las patatas y la cebolla
+        </h2>
+</div>
+<!-- Step Image Visual Anchor -->
+<div class="w-full h-44 rounded-xl overflow-hidden relative shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Close-up of golden sliced potatoes and sweet diced onions gently simmering in shimmering rich Spanish extra virgin olive oil inside a rustic cast iron skillet, soft steam rising, warm Mediterranean kitchen light with terracotta and cream kitchen tiles." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmeDGJ489gRRErPv3tCeBFyPdo2LuYcDeNwwDqVuYtcBGoHYi4BcVBqLMPlDznDuB44-Haxo5AG2v32iTKi_GDj6OQkFwfBZTFanOIKEHxffYPCYRNpukmSKa4gXdFPRzkNFlx0bK6p0ixBHWXj94Mw6NELKyZxZ1eQImtlCSyZGqRBH5S1lVc6CjBve5A_PiqFmq5pDjh1t5FVt5qiLYE3B-fp_jBBki3tcIOiZq208ma9eGqI8x7ww"/>
+<div class="absolute bottom-2 left-2 bg-inverse-surface/80 text-inverse-on-surface px-2.5 py-1 rounded-full text-label-sm font-label-sm backdrop-blur-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">skillet</span>
+<span>Sartén 26cm</span>
+</div>
+</div>
+<!-- Primary Hands-Free High-Contrast Instruction -->
+<div class="bg-surface-container-low rounded-xl p-space-md">
+<p class="font-headline-md text-headline-md text-on-surface font-medium leading-relaxed" id="stepInstructionText">
+          Baja el fuego a nivel medio-bajo. Añade las patatas cortadas finas y la cebolla picada a la sartén con abundante aceite de oliva. Deja pochar despacio durante <span class="font-bold text-primary">12 minutos</span> hasta que estén tiernas y ligeramente doradas.
+        </p>
+</div>
+<!-- Chef Pro Tip Callout -->
+<div class="bg-tertiary-fixed/35 rounded-xl p-space-sm flex items-start gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-tertiary text-[22px] shrink-0 mt-0.5">lightbulb</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-tertiary">Consejo del Chef</span>
+<p class="font-body-md text-body-md text-on-surface leading-snug">
+            No dejes que se tuesten en exceso; buscamos una textura confitada y sedosa que se funda con el huevo.
+          </p>
+</div>
+</div>
+</section>
+<!-- Built-in Kitchen Timer Widget -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_rgba(30,41,59,0.06)] p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[22px]">timer</span>
+<span class="font-label-lg text-label-lg font-bold">Temporizador de Pochado</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold" id="timerStatus">
+          En Marcha
+        </span>
+</div>
+<!-- Circular Progress & Oversized Clock Display -->
+<div class="flex items-center justify-center gap-space-md py-space-xs">
+<div class="relative w-28 h-28 flex items-center justify-center shrink-0">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-surface-container-high" cx="50" cy="50" fill="none" r="42" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary transition-all duration-1000 ease-linear" cx="50" cy="50" fill="none" id="timerProgressRing" r="42" stroke="currentColor" stroke-dasharray="264" stroke-dashoffset="30" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="material-symbols-outlined text-primary text-[20px] animate-pulse">local_fire_department</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Restante</span>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="font-display text-display font-extrabold text-on-surface tracking-tight" id="digitalTimer">
+            11:45
+          </div>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Meta original: 12:00 min</span>
+</div>
+</div>
+<!-- Timer Control Micro-Interactions -->
+<div class="grid grid-cols-3 gap-space-xs mt-1">
+<button class="h-12 flex items-center justify-center gap-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md active:scale-95 transition-all" id="pausePlayBtn" onclick="toggleTimer()">
+<span class="material-symbols-outlined text-[20px]" id="pauseIcon">pause</span>
+<span id="pauseBtnLabel">Pausar</span>
+</button>
+<button class="h-12 flex items-center justify-center gap-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md active:scale-95 transition-all" onclick="resetTimer()">
+<span class="material-symbols-outlined text-[20px]">restart_alt</span>
+<span>Reiniciar</span>
+</button>
+<button class="h-12 flex items-center justify-center gap-1.5 rounded-lg bg-primary-fixed hover:bg-primary-fixed-dim text-on-primary-fixed font-label-md text-label-md active:scale-95 transition-all" onclick="addOneMinute()">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>+1 min</span>
+</button>
+</div>
+</section>
+<!-- Ingredients Drawer Accordion -->
+<details class="group bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden transition-all duration-300">
+<summary class="flex items-center justify-between p-space-md cursor-pointer list-none select-none hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[22px]">grocery</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Ingredientes para este paso</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">3 de 5</span>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</div>
+</summary>
+<div class="px-space-md pb-space-md flex flex-col gap-space-xs pt-1">
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-space-xs">
+<input checked="" class="w-5 h-5 rounded accent-secondary cursor-pointer" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface font-medium line-through opacity-70">Patatas Monalisa (cortadas finas)</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">750 g</span>
+</label>
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-space-xs">
+<input checked="" class="w-5 h-5 rounded accent-secondary cursor-pointer" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface font-medium line-through opacity-70">Cebolla dulce (en juliana)</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">1 grande</span>
+</label>
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-space-xs">
+<input checked="" class="w-5 h-5 rounded accent-secondary cursor-pointer" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface font-medium line-through opacity-70">Aceite de oliva virgen extra</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">300 ml</span>
+</label>
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer opacity-50">
+<div class="flex items-center gap-space-xs">
+<input class="w-5 h-5 rounded accent-secondary cursor-not-allowed" disabled="" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Huevos camperos (Paso 4)</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">6 unidades</span>
+</label>
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer opacity-50">
+<div class="flex items-center gap-space-xs">
+<input class="w-5 h-5 rounded accent-secondary cursor-not-allowed" disabled="" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Sal marina fina (Paso 4)</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant font-bold">Al gusto</span>
+</label>
+</div>
+</details>
+<!-- Hands-Free Voice Cue Bar -->
+<div class="bg-secondary/10 rounded-xl p-space-sm flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">mic</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary font-bold">Comandos de voz activos</span>
+<span class="font-body-sm text-body-sm text-on-surface">Di: <strong class="font-bold">"Siguiente"</strong> o <strong class="font-bold">"Pausar reloj"</strong></span>
+</div>
+</div>
+<button aria-label="Repetir audio" class="w-10 h-10 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-md active:scale-95" onclick="speakCurrentStep()">
+<span class="material-symbols-outlined text-[20px]">volume_up</span>
+</button>
+</div>
+</div>
+<!-- Big Sticky Countertop Kitchen Navigation Controls -->
+<div class="sticky bottom-0 mt-space-lg bg-surface-container-lowest/95 backdrop-blur-xl p-space-md shadow-[0_-8px_30px_rgba(30,41,59,0.08)] flex flex-col gap-space-xs z-30">
+<div class="flex items-center gap-space-sm">
+<!-- Back Step (Minimum 52px high for wet cooking fingers) -->
+<button class="h-14 px-space-md rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-lg text-label-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all shrink-0" onclick="prevStep()">
+<span class="material-symbols-outlined text-[22px]">arrow_back</span>
+<span class="hidden sm:inline">Paso Anterior</span>
+</button>
+<!-- Primary Next Action (Terracotta highlight, generous touch zone) -->
+<button class="h-14 flex-1 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(168,50,18,0.25)] active:scale-98 transition-all" onclick="nextStep()">
+<span>Siguiente: Batir los Huevos</span>
+<span class="material-symbols-outlined text-[22px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  let secondsRemaining = 705; // 11:45
+  let totalSeconds = 720; // 12:00
+  let timerInterval = null;
+  let isTimerRunning = true;
+  let voiceRecognitionActive = true;
+
+  function updateTimerDisplay() {
+    const min = Math.floor(secondsRemaining / 60);
+    const sec = secondsRemaining % 60;
+    const formatted = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    const timerElem = document.getElementById('digitalTimer');
+    if (timerElem) timerElem.innerText = formatted;
+
+    const ring = document.getElementById('timerProgressRing');
+    if (ring) {
+      const circumference = 264;
+      const fraction = secondsRemaining / totalSeconds;
+      const offset = circumference * (1 - fraction);
+      ring.style.strokeDashoffset = offset;
+    }
+  }
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (secondsRemaining > 0) {
+        secondsRemaining--;
+        updateTimerDisplay();
+      } else {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        alert("¡Tiempo cumplido! Las patatas y cebolla están tiernas.");
+      }
+    }, 1000);
+  }
+
+  function toggleTimer() {
+    const icon = document.getElementById('pauseIcon');
+    const label = document.getElementById('pauseBtnLabel');
+    const status = document.getElementById('timerStatus');
+
+    if (isTimerRunning) {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      if (icon) icon.innerText = 'play_arrow';
+      if (label) label.innerText = 'Reanudar';
+      if (status) {
+        status.innerText = 'Pausado';
+        status.className = 'font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-bold';
+      }
+    } else {
+      startTimer();
+      isTimerRunning = true;
+      if (icon) icon.innerText = 'pause';
+      if (label) label.innerText = 'Pausar';
+      if (status) {
+        status.innerText = 'En Marcha';
+        status.className = 'font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold';
+      }
+    }
+  }
+
+  function resetTimer() {
+    secondsRemaining = totalSeconds;
+    updateTimerDisplay();
+    if (!isTimerRunning) toggleTimer();
+  }
+
+  function addOneMinute() {
+    secondsRemaining += 60;
+    totalSeconds += 60;
+    updateTimerDisplay();
+  }
+
+  function speakCurrentStep() {
+    const textElem = document.getElementById('stepInstructionText');
+    if (!textElem) return;
+    
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(textElem.innerText);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Lectura por voz activada: " + textElem.innerText);
+    }
+  }
+
+  function toggleVoiceMode() {
+    voiceRecognitionActive = !voiceRecognitionActive;
+    const btn = document.getElementById('voiceToggleBtn');
+    if (!btn) return;
+
+    if (voiceRecognitionActive) {
+      btn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container shadow-sm active:scale-95 transition-all';
+      btn.innerHTML = `
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+        </span>
+        <span class="material-symbols-outlined text-[18px]">record_voice_over</span>
+        <span class="font-label-sm text-label-sm font-bold">Voz Activa</span>
+      `;
+    } else {
+      btn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant shadow-sm active:scale-95 transition-all';
+      btn.innerHTML = `
+        <span class="material-symbols-outlined text-[18px]">mic_off</span>
+        <span class="font-label-sm text-label-sm font-bold">Voz Silenciada</span>
+      `;
+    }
+  }
+
+  function nextStep() {
+    if ('speechSynthesis' in window) {
+      const msg = new SpeechSynthesisUtterance("Pasando al paso 4: Batir los huevos");
+      msg.lang = 'es-ES';
+      window.speechSynthesis.speak(msg);
+    }
+    alert("Navegando al Paso 4: Batir los Huevos y Escurrir");
+  }
+
+  function prevStep() {
+    alert("Volviendo al Paso 2: Corte y preparación");
+  }
+
+  // Initialize Timer
+  startTimer();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,41,59,0.06)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="recetas" href="#"><span class="material-symbols-outlined text-[24px]">menu_book</span><span class="font-label-sm text-[11px]">Recetas</span></a><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="escaner-ia" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">document_scanner</span><span class="absolute -top-1 -right-3 bg-secondary text-on-secondary font-label-sm text-[9px] px-1 py-0.2 rounded-full font-bold shadow-sm">IA</span></div><span class="font-label-sm text-[11px]">Escáner IA</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 transition-colors text-primary font-bold" data-path="modo-cocina" href="#"><span class="material-symbols-outlined text-[24px]">skillet</span><span class="font-label-sm text-[11px]">Modo Cocina</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="pinche-chat" href="#"><span class="material-symbols-outlined text-[24px]">smart_toy</span><span class="font-label-sm text-[11px]">Pinche Chat</span></a></div></nav></body></html>

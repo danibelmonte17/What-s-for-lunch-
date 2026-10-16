@@ -1,0 +1,410 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "tertiary-fixed": "#ffdcc3", "secondary-fixed-dim": "#68dba9", "on-secondary-fixed": "#002114", "outline-variant": "#e0bfb7", "surface-container-high": "#eae8e4", "on-primary-fixed": "#3c0800", "surface-container-lowest": "#ffffff", "surface-container-low": "#f5f3ef", "inverse-surface": "#30312e", "surface-container-highest": "#e4e2de", "error": "#ba1a1a", "surface-tint": "#ab3514", "primary-fixed": "#ffdbd2", "surface-container": "#efeeea", "on-primary-fixed-variant": "#891e00", "error-container": "#ffdad6", "background": "#fbf9f5", "secondary-fixed": "#85f8c4", "tertiary-fixed-dim": "#ffb77d", "tertiary-container": "#b15f00", "on-secondary-container": "#00714e", "on-secondary": "#ffffff", "on-tertiary": "#ffffff", "surface-dim": "#dbdad6", "on-primary-container": "#fffbff", "primary-container": "#ca4a29", "primary": "#a83212", "surface-variant": "#e4e2de", "on-tertiary-container": "#fffbff", "inverse-primary": "#ffb4a1", "inverse-on-surface": "#f2f0ed", "on-surface": "#1b1c1a", "secondary": "#006c4a", "on-primary": "#ffffff", "on-surface-variant": "#59413b", "outline": "#8c716a", "tertiary": "#8d4b00", "on-error": "#ffffff", "on-tertiary-fixed": "#2f1500", "on-error-container": "#93000a", "on-tertiary-fixed-variant": "#6e3900", "surface": "#fbf9f5", "surface-bright": "#fbf9f5", "primary-fixed-dim": "#ffb4a1", "on-secondary-fixed-variant": "#005137", "on-background": "#1b1c1a", "secondary-container": "#82f5c1" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "3rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-sm": "0.5rem", "gutter-desktop": "1.5rem", "gutter": "1rem", "margin-tablet": "2rem" }, fontFamily: { "headline-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "body-md": ["Inter"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "display-mobile": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display": ["Plus Jakarta Sans"] }, fontSize: { "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }], "display-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-lg": ["15px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-lg": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }], "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_4px_20px_rgba(30,41,59,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="ChefEnCasa Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XOoJEWCpBBt3gyliW7kCfl05RNVEtEI1LcYaj2XllMMUGpk1oP1qq4978h8iHeXkD06gW2hTS9LT4Uy3eo8XKiC3b_OH-pnTnYu1mNtE5nrcPPaApMAv3bNBmZuU_1kenC5DSfMw62jgY8O5p-Yf-U8SOZfHrBopwDA-5IEqNl_guszMF8-pnT5Mwacn67Dnl734arng3bH2xM1tdHCncDYYawDyB0ugFdsUehoOmJiY5KZXccsZTBAByG"><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">ChefEnCasa</span><span class="text-[11px] font-label-sm text-on-surface-variant opacity-60 leading-none hidden">Recetas</span></div><span class="font-label-sm text-[10px] text-on-surface-variant font-normal leading-tight">Tu pinche de cocina inteligente</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Perfil de usuario" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAN46m8rYJJOMrfRrwYfYIC6MvjFFlUspO6kSB5KkGTtO5w0Slt4Np41JdyVORZHBsIcqpGum1_IIx41Bum5eB4v6Acnvxr6yoe43YEkP9Tazihn3K6Qtn8AqkaME9Qaz_A1ySH_nFXRpZjdCtCYFn-ESZS-iiNsdSk8mi3uDRsEBBXS-SG9dbdCqmBS9D-sCno7KmdVSoMl5tn7TI2vcQ2jNOkZ3TsGodvffIAZxYlQOW529uRZncpkA"></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full pb-8">
+<!-- Top Screen Context Banner -->
+<div class="px-margin pt-4 pb-2">
+<div class="flex items-center justify-between mb-1">
+<div class="flex flex-col">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Lista de la Compra</h1>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold tracking-wide uppercase">Sincronizada con Nevera &amp; Recetas</span>
+</div>
+</div>
+<!-- Quick Actions (Share & Clear) -->
+<div class="flex items-center gap-1.5">
+<button aria-label="Compartir lista por WhatsApp" class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors shadow-sm active:scale-95" id="btn-share">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+<button aria-label="Limpiar comprados" class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors shadow-sm active:scale-95" id="btn-clear-completed" title="Limpiar comprados">
+<span class="material-symbols-outlined text-[20px]">cleaning_services</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Smart Add Input Bar -->
+<section class="px-margin my-3">
+<div class="bg-surface-container-lowest p-2 rounded-xl shadow-sm flex items-center gap-2">
+<div class="pl-2 flex items-center text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[22px]">search</span>
+</div>
+<input class="flex-1 bg-transparent py-2.5 px-1 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none min-w-0" id="smart-item-input" placeholder="Añade un ingrediente o producto..." type="text">
+<button aria-label="Dictar por voz" class="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed transition-colors active:scale-95 shrink-0" id="btn-voice-input">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button aria-label="Agregar ingrediente" class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm active:scale-95 shrink-0" id="btn-add-item">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+</div>
+<!-- AI Suggestion Chips -->
+<div class="flex items-center gap-1.5 overflow-x-auto py-2.5 no-scrollbar">
+<span class="font-label-sm text-label-sm text-on-surface-variant/70 shrink-0 flex items-center gap-1 pl-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">auto_awesome</span> Sugerencias:
+      </span>
+<button class="suggestion-chip shrink-0 px-3 py-1 bg-surface-container text-on-surface font-label-md text-label-md rounded-full shadow-xs hover:bg-surface-container-high active:scale-95 transition-all">
+        + Ajo morado
+      </button>
+<button class="suggestion-chip shrink-0 px-3 py-1 bg-surface-container text-on-surface font-label-md text-label-md rounded-full shadow-xs hover:bg-surface-container-high active:scale-95 transition-all">
+        + Mantequilla sin sal
+      </button>
+<button class="suggestion-chip shrink-0 px-3 py-1 bg-surface-container text-on-surface font-label-md text-label-md rounded-full shadow-xs hover:bg-surface-container-high active:scale-95 transition-all">
+        + Orégano seco
+      </button>
+</div>
+</section>
+<!-- Auto-Sync Notification Card -->
+<section class="px-margin mb-4">
+<div class="relative overflow-hidden bg-primary-fixed/40 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">document_scanner</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">Escáner IA en Nevera</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant opacity-75">Hace 20 min</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-0.5">
+            Se agregaron automáticamente <strong>2 ingredientes</strong> necesarios para cocinar <span class="text-primary font-semibold">"Pechuga Gratinada al Horno"</span>.
+          </p>
+<div class="flex items-center gap-3 mt-2.5">
+<a class="font-label-md text-label-md text-primary font-bold hover:underline flex items-center gap-0.5" href="#">
+              Ver receta <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">
+              Deshacer
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Summary Metric & Progress Card -->
+<section class="px-margin mb-4">
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex flex-col gap-3">
+
+<!-- Progress bar -->
+<div>
+<div class="flex justify-between items-center mb-1.5 font-label-md text-label-md">
+<span class="text-on-surface font-semibold" id="progress-text">6 de 14 artículos en la cesta</span>
+<span class="text-secondary font-bold" id="progress-percent">43%</span>
+</div>
+<div class="w-full h-2.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full transition-all duration-500 ease-out" id="progress-bar-fill" style="width: 43%;"></div>
+</div>
+</div>
+<!-- Category Filter / Sort Toggle -->
+<div class="pt-2 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Agrupar por:</span>
+<div class="bg-surface-container p-0.5 rounded-lg flex gap-1">
+<button class="px-2.5 py-1 rounded-md bg-surface-container-lowest shadow-xs text-on-surface font-label-md text-label-md font-semibold">
+            Pasillo de Super
+          </button>
+<button class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors">
+            Por Receta
+          </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Grocery Aisle Sections -->
+<section class="flex flex-col gap-4 px-margin mb-6">
+<!-- 1. Verduras & Frescos -->
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between pb-2 mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">eco</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Verduras &amp; Frescos</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">3 ítems</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Item 1: Orégano -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-transparent hover:text-outline active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="item-title font-body-md text-body-md text-on-surface truncate font-medium">Orégano seco (1 bote)</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="inline-flex items-center gap-0.5 text-primary bg-primary-fixed/30 font-label-sm text-[11px] px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">skillet</span> Para: Pechuga Gratinada
+                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/50 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Item 2: Pimientos -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-transparent hover:text-outline active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="item-title font-body-md text-body-md text-on-surface truncate font-medium">Pimientos rojos para asar (2 uds)</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="inline-flex items-center gap-0.5 text-tertiary bg-tertiary-fixed/40 font-label-sm text-[11px] px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">inventory_2</span> Despensa baja
+                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/50 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Item 3: Cebolla dulce (Completado) -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg bg-surface-container/30 opacity-60">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+
+<span class="font-label-sm text-[11px] text-on-surface-variant/70">En la cesta</span>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/40 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Carnes, Pescados & Huevos -->
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between pb-2 mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-primary-fixed/50 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">set_meal</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Carnes, Pescados &amp; Huevos</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">2 ítems</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Item 1: Pechuga de pollo -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-transparent hover:text-outline active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="item-title font-body-md text-body-md text-on-surface truncate font-medium">Pechuga de pollo de corral (500 g)</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="inline-flex items-center gap-0.5 text-primary bg-primary-fixed/30 font-label-sm text-[11px] px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">skillet</span> Para: Pechuga Gratinada
+                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/50 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Item 2: Huevos camperos (Completado) -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg bg-surface-container/30 opacity-60">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+
+<span class="font-label-sm text-[11px] text-on-surface-variant/70">En la cesta</span>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/40 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Lácteos & Quesos -->
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between pb-2 mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-tertiary-fixed/50 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]">egg</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Lácteos &amp; Quesos</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">2 ítems</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Item 1: Queso Parmesano -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-transparent hover:text-outline active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="item-title font-body-md text-body-md text-on-surface truncate font-medium">Queso Parmesano rallado (100 g)</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant">Marca recomendada de calidad</span>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/50 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Item 2: Leche entera (Completado) -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg bg-surface-container/30 opacity-60">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+
+<span class="font-label-sm text-[11px] text-on-surface-variant/70">En la cesta</span>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/40 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. Despensa & Aceites -->
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between pb-2 mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">oil_barrel</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Despensa &amp; Aceites</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">1 ítem</span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Item 1: AOVE -->
+<div class="grocery-item flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-3 min-w-0">
+<button class="item-checkbox w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-transparent hover:text-outline active:scale-90 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="item-title font-body-md text-body-md text-on-surface truncate font-medium">Aceite de Oliva Virgen Extra (1L)</span>
+<div class="flex items-center gap-2 mt-0.5">
+
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 ml-2">
+
+<button class="w-7 h-7 flex items-center justify-center text-on-surface-variant/50 hover:text-error transition-colors rounded-full">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sticky Bottom Controls for Shopping Workflow -->
+<section class="sticky bottom-16 left-0 right-0 z-30 px-margin pt-2 pb-3 bg-surface/90 backdrop-blur-md">
+
+<!-- Smart Waste Minimization Note -->
+<div class="flex items-center justify-center gap-1.5 mt-2.5">
+<span class="material-symbols-outlined text-[14px] text-secondary">energy_savings_leaf</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant">Cantidades optimizadas para evitar el desperdicio de comida</span>
+</div>
+</section>
+</div>
+<script>
+  // Dynamic interaction handling for shopping list
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('smart-item-input');
+    const addBtn = document.getElementById('btn-add-item');
+    const chips = document.querySelectorAll('.suggestion-chip');
+
+    // Add item by clicking suggestion chips
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const text = chip.textContent.replace('+', '').trim();
+        input.value = text;
+        input.focus();
+      });
+    });
+
+    // Checkbox toggling micro-interaction
+    const items = document.querySelectorAll('.grocery-item');
+    items.forEach(item => {
+      const checkbox = item.querySelector('.item-checkbox');
+      const title = item.querySelector('.item-title');
+      
+      if (checkbox) {
+        checkbox.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isDone = checkbox.classList.contains('bg-secondary');
+          if (isDone) {
+            checkbox.classList.remove('bg-secondary', 'text-on-secondary');
+            checkbox.classList.add('bg-surface-container', 'text-transparent');
+            item.classList.remove('opacity-60', 'bg-surface-container/30');
+            title.classList.remove('line-through', 'text-on-surface-variant');
+            title.classList.add('text-on-surface');
+          } else {
+            checkbox.classList.add('bg-secondary', 'text-on-secondary');
+            checkbox.classList.remove('bg-surface-container', 'text-transparent');
+            item.classList.add('opacity-60', 'bg-surface-container/30');
+            title.classList.add('line-through', 'text-on-surface-variant');
+            title.classList.remove('text-on-surface');
+          }
+        });
+      }
+    });
+
+    // Add new custom item
+    if (addBtn && input) {
+      addBtn.addEventListener('click', () => {
+        if (input.value.trim().length > 0) {
+          input.value = '';
+          input.placeholder = '¡Añadido con éxito! Escribe otro...';
+          setTimeout(() => {
+            input.placeholder = 'Añade un ingrediente o producto...';
+          }, 2000);
+        }
+      });
+    }
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_24px_rgba(30,41,59,0.06)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="recetas" href="#"><span class="material-symbols-outlined text-[24px]">menu_book</span><span class="font-label-sm text-[11px]">Recetas</span></a><a class="flex flex-col items-center justify-center relative min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="escaner-ia" href="#"><div class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">document_scanner</span><span class="absolute -top-1 -right-3 bg-secondary text-on-secondary font-label-sm text-[9px] px-1 py-0.2 rounded-full font-bold shadow-sm">IA</span></div><span class="font-label-sm text-[11px]">Escáner IA</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="modo-cocina" href="#"><span class="material-symbols-outlined text-[24px]">skillet</span><span class="font-label-sm text-[11px]">Modo Cocina</span></a><a class="flex flex-col items-center justify-center gap-0.5 min-w-[56px] h-12 text-on-surface-variant hover:text-primary transition-colors" data-path="pinche-chat" href="#"><span class="material-symbols-outlined text-[24px]">smart_toy</span><span class="font-label-sm text-[11px]">Pinche Chat</span></a></div></nav>
+
+</body></html>
