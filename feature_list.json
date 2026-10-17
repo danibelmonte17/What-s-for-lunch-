@@ -35,7 +35,7 @@
         "E2E: guardar el mismo formulario como Borrador y comprobar que la receta queda marcada como Borrador",
         "Unit: no se publica una receta sin al menos un ingrediente y un paso"
       ],
-      "status": "not_started"
+      "status": "ready"
     },
     {
       "id": "editar-receta",

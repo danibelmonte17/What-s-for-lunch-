@@ -8,11 +8,11 @@ Solo lo comprobado, no lo que se cree.
 - Funcionalidades `passing`: ninguna
 - Funcionalidades `in_progress`: ninguna
 - `arrancar-app-en-mis-recetas`: B-1, B-2 y B-3 resueltos y verificados; los 11 RF pasan su verificación (e2e + `unit` + `uiautomator` + capturas es/en). Evidencia en `docs/evidence/arrancar-app-en-mis-recetas/`
-- `crear-receta`: spec redactada en `docs/specs/crear-receta.md` (estado `draft`); dudas Q-crear-receta-1 a Q-crear-receta-7 resueltas con el usuario y registradas. Sin cambios de código
+- `crear-receta`: spec auditada de forma independiente con APTA (intento 3 de 3) y cerrada en `ready`; `feature_list.json` la marca `ready`. Hallazgos 1-2 de los intentos 1-2 resueltos (bloqueo de Publicar unificado en RF-8/RF-12/RF-17 y `validateForPublish`); 7 menores quedan como observaciones sin bloqueo. Sin cambios de código
 - Roto o pendiente de arreglar: nada conocido
 
 ## Siguiente paso
-Auditar de forma independiente la spec de `crear-receta` (`docs/specs/crear-receta.md`, `draft`) y, con APTA, implementarla. Recordar el escenario de checkout fresco: `init` regenera `local.properties` sin escapar (`lint.xml` ya lo excluye de `PropertyEscape`).
+Implementar `crear-receta` (`docs/specs/crear-receta.md`, `ready`) con `feature-implementer` hasta `passing`. Recordar el escenario de checkout fresco: `init` regenera `local.properties` sin escapar (`lint.xml` ya lo excluye de `PropertyEscape`).
 
 ## Riesgos y preguntas abiertas
 El detalle está en `docs/risks-and-open-questions.md`. Afectan a la implementación: RK02 (el modelo de detección MediaPipe está por validar), S05 (la API key vive en el dispositivo), S07 (validaciones del formulario de receta). S06 queda confirmado con el scaffold real (Q-arrancar-app-en-mis-recetas-1).
