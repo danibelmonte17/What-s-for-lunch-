@@ -143,13 +143,13 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 
 ## Plan y tareas
 
-- [ ] T1: contenedor de sección, chip de selección y campos rellenos con los roles de token correctos. (cubre RF-9 a RF-13)
-- [ ] T2: dependencia de iconos (`material-icons-extended`) y textos es/en; prerrequisito de T3 y T5. (cubre NFR-1)
-- [ ] T3: rediseño estructural del formulario (cabecera con «Guardar», portada, métricas, ingredientes, pasos, favorito y dock). (cubre RF-1 a RF-8, RF-21)
-- [ ] T4: estado «puede publicar», botón deshabilitado y lista junto al dock. (cubre RF-14 a RF-16)
-- [ ] T5: tarjetas de Mis Recetas con foto, metadatos, píldora y badge sin foto. (cubre RF-17 a RF-20, RF-22)
+- [x] T1: contenedor de sección, chip de selección y campos rellenos con los roles de token correctos. (cubre RF-9 a RF-13)
+- [x] T2: dependencia de iconos (`material-icons-extended`) y textos es/en; prerrequisito de T3 y T5. (cubre NFR-1)
+- [x] T3: rediseño estructural del formulario (cabecera con «Guardar», portada, métricas, ingredientes, pasos, favorito y dock). (cubre RF-1 a RF-8, RF-21)
+- [x] T4: estado «puede publicar», botón deshabilitado y lista junto al dock. (cubre RF-14 a RF-16)
+- [x] T5: tarjetas de Mis Recetas con foto, metadatos, píldora y badge sin foto. (cubre RF-17 a RF-20, RF-22)
 - [ ] T6: adaptar la spec y los tests E2E de `crear-receta` y re-ejecutar su regresión. (cubre el criterio de finalización)
-- [ ] T7: tests E2E de fidelidad, estado deshabilitado y tarjeta sin foto. (cubre el plan de verificación)
+- [x] T7: tests E2E de fidelidad, estado deshabilitado y tarjeta sin foto. (cubre el plan de verificación)
 
 ## Plan de verificación
 
@@ -165,13 +165,13 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 
 ## Checklist del validador
 
-- [ ] La implementación se queda dentro del alcance de esta spec.
-- [ ] Cada RF de la tabla de trazabilidad pasa su verificación.
-- [ ] La evidencia está presente, dentro del presupuesto (≤ 4) y solo de esta feature.
-- [ ] UI: 2 capturas de estados clave y fidelidad a los prototipos y a `DESIGN.md`.
-- [ ] Cobertura E2E añadida o actualizada y regresión de `crear-receta` en verde.
-- [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
-- [ ] No se añadió comportamiento ni trabajo de otras features.
+- [x] La implementación se queda dentro del alcance de esta spec.
+- [x] Cada RF de la tabla de trazabilidad pasa su verificación.
+- [x] La evidencia está presente, dentro del presupuesto (≤ 4) y solo de esta feature.
+- [x] UI: 2 capturas de estados clave y fidelidad a los prototipos y a `DESIGN.md`.
+- [x] Cobertura E2E añadida o actualizada y regresión de `crear-receta` en verde.
+- [x] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
+- [x] No se añadió comportamiento ni trabajo de otras features.
 
 ## Clarificación — 2026-10-17 — veredicto: A RETRABAJAR (intento 1 de 3)
 
