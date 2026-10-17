@@ -38,6 +38,22 @@
       "status": "validated"
     },
     {
+      "id": "afinar-fidelidad-visual-del-formulario",
+      "category": "funcional",
+      "description": "El formulario de alta de receta es 1:1 con el prototipo de uxdocs.",
+      "depends_on": ["crear-receta"],
+      "steps": [
+        "Comparar atributo a atributo el formulario con uxdocs/chefencasa_registrar_y_editar_receta/code.html y los tokens de uxdocs/DESIGN.md",
+        "Corregir las divergencias de rol de token detectadas al validar crear-receta (campos y chips en superficie #E4E2DE y chip seleccionado en primary en lugar de secondaryContainer)",
+        "Alinear las tarjetas de Mis Recetas con uxdocs/chefencasa_mis_recetas_y_crud/code.html"
+      ],
+      "verify": [
+        "E2E: capturar el formulario y Mis Recetas en emulador API 30+ y comprobar por muestreo de píxeles que los colores coinciden con los roles del prototipo",
+        "E2E: comprobar con uiautomator que existen los bloques, textos, iconos y controles del prototipo y que el estado deshabilitado es distinguible"
+      ],
+      "status": "ready"
+    },
+    {
       "id": "editar-receta",
       "category": "funcional",
       "description": "El usuario modifica una receta existente sin perder su estado.",
