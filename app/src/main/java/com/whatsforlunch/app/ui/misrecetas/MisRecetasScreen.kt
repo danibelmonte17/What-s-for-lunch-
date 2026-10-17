@@ -3,21 +3,31 @@ package com.whatsforlunch.app.ui.misrecetas
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Equalizer
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -25,20 +35,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.misrecetas.MisRecetasState
+import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeStatus
+import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
+import com.whatsforlunch.app.ui.theme.warmShadow
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
 object MisRecetasTestTags {
@@ -51,6 +66,11 @@ object MisRecetasTestTags {
     const val RECIPE_CARD = "mis_recetas_card"
     const val RECIPE_STATUS = "mis_recetas_card_status"
     const val RECIPE_MOMENT = "mis_recetas_card_moment"
+    const val RECIPE_PHOTO = "mis_recetas_card_photo"
+    const val RECIPE_TITLE = "mis_recetas_card_title"
+    const val RECIPE_TIME = "mis_recetas_card_time"
+    const val RECIPE_DIFFICULTY = "mis_recetas_card_difficulty"
+    const val RECIPE_SERVINGS = "mis_recetas_card_servings"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -171,47 +191,175 @@ private fun RecipeList(
     }
 }
 
+// RF-17 a RF-20 y RF-22: tarjeta con portada y badge de momento superpuesto (o
+// junto al título sin foto), título, metadatos con iconos y píldora de estado
+// sobre surface-container-lowest con esquinas de 0.75rem y sombra cálida.
+private val CardShape: Shape = RoundedCornerShape(WarmRadius.md)
+private val PillShape: Shape = RoundedCornerShape(50)
+
 @Composable
 private fun RecipeCard(recipe: Recipe) {
-    Card(modifier = Modifier.fillMaxWidth().testTag(MisRecetasTestTags.RECIPE_CARD)) {
-        Column(modifier = Modifier.padding(WarmSpacing.md)) {
+    Surface(
+        shape = CardShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = Modifier
+            .fillMaxWidth()
+            .warmShadow(shape = CardShape)
+            .testTag(MisRecetasTestTags.RECIPE_CARD),
+    ) {
+        Column {
             val bitmap = rememberBitmap(recipe.photoPath)
             if (bitmap != null) {
-                Image(
-                    bitmap = bitmap,
-                    contentDescription = recipe.title,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 140.dp)
-                        .clip(RoundedCornerShape(WarmSpacing.sm)),
-                )
+                        .height(176.dp),
+                ) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = recipe.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag(MisRecetasTestTags.RECIPE_PHOTO),
+                    )
+                    MomentBadge(
+                        mealMoment = recipe.mealMoment,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(WarmSpacing.md),
+                    )
+                }
             }
-            Text(
-                text = recipe.title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = WarmSpacing.xs),
-            )
-            Row(
-                modifier = Modifier.padding(top = WarmSpacing.xs),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.md),
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.padding(WarmSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
             ) {
-                Text(
-                    text = stringResource(recipe.mealMoment.labelRes()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.testTag(MisRecetasTestTags.RECIPE_MOMENT),
-                )
-                Text(
-                    text = stringResource(recipe.status.labelRes()),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.testTag(MisRecetasTestTags.RECIPE_STATUS),
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (bitmap == null) {
+                        // RF-22: sin foto, el badge del momento va junto al título.
+                        MomentBadge(mealMoment = recipe.mealMoment)
+                        Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                    }
+                    Text(
+                        text = recipe.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(MisRecetasTestTags.RECIPE_TITLE),
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                    StatusPill(status = recipe.status)
+                }
+                if (recipe.story.isNotBlank()) {
+                    Text(
+                        text = recipe.story,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                MetadataRow(recipe = recipe)
             }
         }
+    }
+}
+
+// RF-18: fila de metadatos con el tiempo total (preparación + cocción), la
+// dificultad y las raciones, cada uno con su icono. Siempre visible.
+@Composable
+private fun MetadataRow(recipe: Recipe) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(WarmSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MetadataItem(
+            icon = Icons.Outlined.Schedule,
+            iconTint = MaterialTheme.colorScheme.tertiary,
+            text = stringResource(
+                R.string.mis_recetas_card_time,
+                recipe.prepMinutes + recipe.cookMinutes,
+            ),
+            testTag = MisRecetasTestTags.RECIPE_TIME,
+        )
+        MetadataItem(
+            icon = Icons.Outlined.Equalizer,
+            iconTint = MaterialTheme.colorScheme.secondary,
+            text = stringResource(recipe.difficulty.labelRes()),
+            testTag = MisRecetasTestTags.RECIPE_DIFFICULTY,
+        )
+        MetadataItem(
+            icon = Icons.Outlined.Group,
+            iconTint = MaterialTheme.colorScheme.primary,
+            text = stringResource(R.string.mis_recetas_card_servings, recipe.baseServings),
+            testTag = MisRecetasTestTags.RECIPE_SERVINGS,
+        )
+    }
+}
+
+@Composable
+private fun MetadataItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: androidx.compose.ui.graphics.Color,
+    text: String,
+    testTag: String,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.testTag(testTag),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+// Badge de momento culinario en píldora (superpuesto a la portada o junto al título).
+@Composable
+private fun MomentBadge(mealMoment: MealMoment, modifier: Modifier = Modifier) {
+    Surface(
+        shape = PillShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.95f),
+        contentColor = MaterialTheme.colorScheme.primary,
+        modifier = modifier.testTag(MisRecetasTestTags.RECIPE_MOMENT),
+    ) {
+        Text(
+            text = stringResource(mealMoment.labelRes()),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
+        )
+    }
+}
+
+// RF-19: distintivo de estado (Borrador/Publicada) como píldora.
+@Composable
+private fun StatusPill(status: RecipeStatus) {
+    Surface(
+        shape = PillShape,
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+        contentColor = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.testTag(MisRecetasTestTags.RECIPE_STATUS),
+    ) {
+        Text(
+            text = stringResource(status.labelRes()),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
+        )
     }
 }
 
@@ -227,6 +375,12 @@ private fun MealMoment.labelRes(): Int = when (this) {
     MealMoment.LUNCH -> R.string.momento_almuerzo
     MealMoment.DINNER -> R.string.momento_cena
     MealMoment.DESSERT -> R.string.momento_postre
+}
+
+private fun Difficulty.labelRes(): Int = when (this) {
+    Difficulty.EASY -> R.string.dificultad_facil
+    Difficulty.MEDIUM -> R.string.dificultad_media
+    Difficulty.HARD -> R.string.dificultad_dificil
 }
 
 private fun RecipeStatus.labelRes(): Int = when (this) {

@@ -67,7 +67,10 @@ data class CrearRecetaUiState(
     val ingredients: List<IngredientFieldUiState> = emptyList(),
     val steps: List<StepFieldUiState> = emptyList(),
     val titleError: Boolean = false,
+    // Requisitos incumplidos de Publicar, en vivo (fuente única:
+    // RecipeValidation.validateForPublish) y si el formulario ya los cumple.
     val publishErrors: Set<RecipeRequirement> = emptySet(),
+    val canPublish: Boolean = false,
     val notice: CrearRecetaNotice? = null,
     val isPhotoLoading: Boolean = false,
     val saved: Boolean = false,
@@ -82,7 +85,7 @@ class CrearRecetaViewModel(
 
     private val recipeId: String = UUID.randomUUID().toString()
 
-    private val _uiState = MutableStateFlow(CrearRecetaUiState())
+    private val _uiState = MutableStateFlow(withPublishState(CrearRecetaUiState()))
     val uiState: StateFlow<CrearRecetaUiState> = _uiState.asStateFlow()
 
     // La Route inyecta la implementación real (con los lanzadores del sistema);
@@ -93,21 +96,21 @@ class CrearRecetaViewModel(
         photoAcquirer = acquirer
     }
 
-    fun onTitleChange(value: String) = _uiState.update { it.copy(title = value, titleError = false) }
+    fun onTitleChange(value: String) = mutate { it.copy(title = value, titleError = false) }
 
-    fun onStoryChange(value: String) = _uiState.update { it.copy(story = value) }
+    fun onStoryChange(value: String) = mutate { it.copy(story = value) }
 
-    fun onMealMomentChange(moment: MealMoment) = _uiState.update { it.copy(mealMoment = moment) }
+    fun onMealMomentChange(moment: MealMoment) = mutate { it.copy(mealMoment = moment) }
 
-    fun onPrepMinutesChange(value: String) = _uiState.update { it.copy(prepMinutes = value) }
+    fun onPrepMinutesChange(value: String) = mutate { it.copy(prepMinutes = value) }
 
-    fun onCookMinutesChange(value: String) = _uiState.update { it.copy(cookMinutes = value) }
+    fun onCookMinutesChange(value: String) = mutate { it.copy(cookMinutes = value) }
 
-    fun onDifficultyChange(difficulty: Difficulty) = _uiState.update { it.copy(difficulty = difficulty) }
+    fun onDifficultyChange(difficulty: Difficulty) = mutate { it.copy(difficulty = difficulty) }
 
-    fun onCaloriesChange(value: String) = _uiState.update { it.copy(caloriesPerServing = value) }
+    fun onCaloriesChange(value: String) = mutate { it.copy(caloriesPerServing = value) }
 
-    fun onServingsChange(value: Int) = _uiState.update {
+    fun onServingsChange(value: Int) = mutate {
         it.copy(
             baseServings = value.coerceIn(
                 RecipeValidation.MIN_BASE_SERVINGS,
@@ -116,9 +119,9 @@ class CrearRecetaViewModel(
         )
     }
 
-    fun onFavoriteToggle() = _uiState.update { it.copy(favorite = !it.favorite) }
+    fun onFavoriteToggle() = mutate { it.copy(favorite = !it.favorite) }
 
-    fun onAddIngredient() = _uiState.update {
+    fun onAddIngredient() = mutate {
         it.copy(ingredients = it.ingredients + IngredientFieldUiState(key = nextKey()))
     }
 
@@ -130,11 +133,11 @@ class CrearRecetaViewModel(
 
     fun onIngredientOptionalChange(key: Long, value: Boolean) = updateIngredient(key) { it.copy(optional = value) }
 
-    fun onRemoveIngredient(key: Long) = _uiState.update { state ->
+    fun onRemoveIngredient(key: Long) = mutate { state ->
         state.copy(ingredients = state.ingredients.filterNot { it.key == key })
     }
 
-    fun onAddStep() = _uiState.update {
+    fun onAddStep() = mutate {
         it.copy(steps = it.steps + StepFieldUiState(key = nextKey()))
     }
 
@@ -142,7 +145,7 @@ class CrearRecetaViewModel(
 
     fun onStepTimerChange(key: Long, value: String) = updateStep(key) { it.copy(timerMinutes = value) }
 
-    fun onRemoveStep(key: Long) = _uiState.update { state ->
+    fun onRemoveStep(key: Long) = mutate { state ->
         state.copy(steps = state.steps.filterNot { it.key == key })
     }
 
@@ -154,48 +157,47 @@ class CrearRecetaViewModel(
 
     fun onRemovePhoto() {
         val current = _uiState.value.photoPath
-        _uiState.update { it.copy(photoPath = null) }
+        mutate { it.copy(photoPath = null) }
         if (current != null) viewModelScope.launch { photoStore.delete(current) }
     }
 
-    fun onDismissNotice() = _uiState.update { it.copy(notice = null) }
+    fun onDismissNotice() = mutate { it.copy(notice = null) }
 
     fun onSaveDraft() {
-        val recipe = buildRecipe(status = RecipeStatus.DRAFT)
+        val recipe = buildRecipe(_uiState.value, RecipeStatus.DRAFT)
         if (RecipeRequirement.TITLE in RecipeValidation.validateForDraft(recipe)) {
-            _uiState.update { it.copy(titleError = true) }
+            mutate { it.copy(titleError = true) }
         } else {
             persist(recipe)
         }
     }
 
     fun onPublish() {
-        val recipe = buildRecipe(status = RecipeStatus.PUBLISHED)
+        val recipe = buildRecipe(_uiState.value, RecipeStatus.PUBLISHED)
         val unmet = RecipeValidation.validateForPublish(recipe)
         if (unmet.isEmpty()) {
             persist(recipe)
         } else {
-            _uiState.update {
-                it.copy(titleError = RecipeRequirement.TITLE in unmet, publishErrors = unmet)
-            }
+            // Defensivo: el botón llega deshabilitado mientras haya requisitos incumplidos.
+            mutate { it.copy(titleError = RecipeRequirement.TITLE in unmet) }
         }
     }
 
     private fun acquirePhoto(acquire: suspend () -> PhotoResult) {
-        _uiState.update { it.copy(isPhotoLoading = true, notice = null) }
+        mutate { it.copy(isPhotoLoading = true, notice = null) }
         viewModelScope.launch {
             when (val result = acquire()) {
                 is PhotoResult.Success -> {
                     val path = photoStore.save(recipeId, result.bytes)
-                    _uiState.update { it.copy(photoPath = path, isPhotoLoading = false) }
+                    mutate { it.copy(photoPath = path, isPhotoLoading = false) }
                 }
-                PhotoResult.Cancelled -> _uiState.update { it.copy(isPhotoLoading = false) }
+                PhotoResult.Cancelled -> mutate { it.copy(isPhotoLoading = false) }
                 PhotoResult.CameraPermissionDenied ->
-                    _uiState.update { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.CAMERA_PERMISSION_DENIED) }
+                    mutate { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.CAMERA_PERMISSION_DENIED) }
                 PhotoResult.MissingApiKey ->
-                    _uiState.update { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.AI_KEY_MISSING) }
+                    mutate { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.AI_KEY_MISSING) }
                 PhotoResult.GenerationFailed ->
-                    _uiState.update { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.AI_GENERATION_FAILED) }
+                    mutate { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.AI_GENERATION_FAILED) }
             }
         }
     }
@@ -203,7 +205,7 @@ class CrearRecetaViewModel(
     private fun persist(recipe: Recipe) {
         viewModelScope.launch {
             repository.saveRecipe(recipe)
-            _uiState.update { it.copy(saved = true) }
+            mutate { it.copy(saved = true) }
         }
     }
 
@@ -222,8 +224,7 @@ class CrearRecetaViewModel(
         }
     }
 
-    private fun buildRecipe(status: RecipeStatus): Recipe {
-        val state = _uiState.value
+    private fun buildRecipe(state: CrearRecetaUiState, status: RecipeStatus): Recipe {
         return Recipe(
             id = recipeId,
             title = state.title.trim(),
@@ -260,19 +261,28 @@ class CrearRecetaViewModel(
         )
     }
 
+    // Cualquier cambio recalcula los requisitos incumplidos de Publicar y si el
+    // formulario puede publicar (RF-14 a RF-16); fuente única de verdad: validateForPublish.
+    private fun mutate(transform: (CrearRecetaUiState) -> CrearRecetaUiState) {
+        _uiState.update { withPublishState(transform(it)) }
+    }
+
+    private fun withPublishState(state: CrearRecetaUiState): CrearRecetaUiState {
+        val unmet = RecipeValidation.validateForPublish(buildRecipe(state, RecipeStatus.PUBLISHED))
+        return state.copy(publishErrors = unmet, canPublish = unmet.isEmpty())
+    }
+
     private fun updateIngredient(key: Long, transform: (IngredientFieldUiState) -> IngredientFieldUiState) =
-        _uiState.update { state ->
+        mutate { state ->
             state.copy(
                 ingredients = state.ingredients.map { if (it.key == key) transform(it) else it },
-                publishErrors = emptySet(),
             )
         }
 
     private fun updateStep(key: Long, transform: (StepFieldUiState) -> StepFieldUiState) =
-        _uiState.update { state ->
+        mutate { state ->
             state.copy(
                 steps = state.steps.map { if (it.key == key) transform(it) else it },
-                publishErrors = emptySet(),
             )
         }
 
