@@ -145,17 +145,17 @@ para poder verlos en Mis Recetas y más adelante cocinarlos paso a paso.
 - `AGENTS.md`: no necesario — no cambian estructura, comandos ni convenciones.
 - Otros: `docs/domain-model.md` — actualizar la validación de Publicar (Q-crear-receta-1: foto obligatoria, revisando `⚠ S07`); `docs/risks-and-open-questions.md` — reflejar esa revisión de S07.
 ## Plan y tareas
-- [ ] T1: modelo de dominio ampliado y validaciones puras. (cubre RF-1 a RF-4, RF-8, RF-12, RF-15, RF-16)
-- [ ] T2: Room, `RoomRecipeRepository` y Koin. (cubre RF-18)
-- [ ] T3: pantalla del formulario, ViewModel y navegación. (cubre RF-1, RF-26)
-- [ ] T4: gestor dinámico de ingredientes. (cubre RF-5, RF-6, RF-7, RF-8)
-- [ ] T5: definición de pasos con temporizador. (cubre RF-9, RF-10, RF-11, RF-12)
-- [ ] T6: foto por galería, cámara y «Generar con IA» con sus avisos. (cubre RF-19 a RF-23)
-- [ ] T7: favorito y guardado Borrador/Publicar. (cubre RF-13 a RF-17, RF-24)
-- [ ] T8: tarjetas de Receta en Mis Recetas. (cubre RF-25)
-- [ ] T9: textos es/en de todo lo nuevo. (cubre NFR-1)
-- [ ] T10: tests unit y E2E con fakes de foto e IA. (cubre el plan de verificación)
-- [ ] T11: actualizar `docs/domain-model.md` y el supuesto `⚠ S07`. (cubre criterio de finalización)
+- [x] T1: modelo de dominio ampliado y validaciones puras. (cubre RF-1 a RF-4, RF-8, RF-12, RF-15, RF-16)
+- [x] T2: Room, `RoomRecipeRepository` y Koin. (cubre RF-18)
+- [x] T3: pantalla del formulario, ViewModel y navegación. (cubre RF-1, RF-26)
+- [x] T4: gestor dinámico de ingredientes. (cubre RF-5, RF-6, RF-7, RF-8)
+- [x] T5: definición de pasos con temporizador. (cubre RF-9, RF-10, RF-11, RF-12)
+- [x] T6: foto por galería, cámara y «Generar con IA» con sus avisos. (cubre RF-19 a RF-23)
+- [x] T7: favorito y guardado Borrador/Publicar. (cubre RF-13 a RF-17, RF-24)
+- [x] T8: tarjetas de Receta en Mis Recetas. (cubre RF-25)
+- [x] T9: textos es/en de todo lo nuevo. (cubre NFR-1)
+- [x] T10: tests unit y E2E con fakes de foto e IA. (cubre el plan de verificación)
+- [x] T11: actualizar `docs/domain-model.md` y el supuesto `⚠ S07`. (cubre criterio de finalización)
 ## Plan de verificación
 - `./lint.sh` → exit 0 sin errores; `./unit.sh` → exit 0.
 - Unit (verify 3): «no se publica una receta sin al menos un ingrediente y un paso», más las validaciones de RF-3, RF-4, RF-8 y RF-12.
@@ -167,13 +167,13 @@ para poder verlos en Mis Recetas y más adelante cocinarlos paso a paso.
 - `docs/evidence/crear-receta/informe-validacion.md` con la salida de `lint`, `unit` y `e2e`, la verificación por RF y la comparación visual.
 - UI: `docs/evidence/crear-receta/formulario-receta.png` y `docs/evidence/crear-receta/mis-recetas-con-recetas.png` (emulador API 30+, es).
 ## Checklist del validador
-- [ ] La implementación se queda dentro del alcance de esta spec.
-- [ ] Cada RF de la tabla de trazabilidad pasa su verificación.
-- [ ] La evidencia está presente, dentro del presupuesto (≤ 4) y solo de esta feature.
-- [ ] UI: 2 capturas de estados clave y fidelidad al prototipo y a `DESIGN.md`.
-- [ ] Cobertura E2E añadida o actualizada para los flujos observables (hay harness E2E).
-- [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
-- [ ] No se añadió comportamiento ni trabajo de otras features.
+- [x] La implementación se queda dentro del alcance de esta spec.
+- [x] Cada RF de la tabla de trazabilidad pasa su verificación.
+- [x] La evidencia está presente, dentro del presupuesto (≤ 4) y solo de esta feature.
+- [x] UI: 2 capturas de estados clave y fidelidad al prototipo y a `DESIGN.md`.
+- [x] Cobertura E2E añadida o actualizada para los flujos observables (hay harness E2E).
+- [x] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
+- [x] No se añadió comportamiento ni trabajo de otras features.
 ## Clarificación — 2026-10-17 — veredicto: A RETRABAJAR (intento 1 de 3)
 
 ### Hallazgos

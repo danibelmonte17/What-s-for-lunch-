@@ -21,7 +21,7 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 ## Ciclo de vida
 
 ### Receta
-- `Borrador` → `Publicada`: el usuario pulsa «Publicar Receta» (con al menos 1 Ingrediente y 1 Paso — `⚠ S07`).
+- `Borrador` → `Publicada`: el usuario pulsa «Publicar Receta» con título, foto y al menos 1 Ingrediente y 1 Paso válidos, y sin filas de Ingrediente ni Pasos inválidos (`⚠ S07`, Q-crear-receta-1).
 - `Publicada` → `Borrador`: no hay vuelta atrás en el MVP; editar una Receta publicada la mantiene publicada.
 - Cualquier estado → eliminada: solo con confirmación explícita y de forma definitiva (RD04).
 
@@ -59,7 +59,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Raciones: entero entre 1 y 12 (RD03).
 - Cantidades de IngredienteReceta: mayores que 0.
 - Título de la Receta: obligatorio.
-- Publicar una Receta: al menos 1 Ingrediente y 1 Paso; la foto es opcional (`⚠ S07`).
+- Publicar una Receta: título y foto obligatorios, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila de Ingrediente ni Paso inválidos (Q-crear-receta-1, que revisa `⚠ S07`: la foto pasa a ser obligatoria).
 - Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan.
 
 ## Roles y permisos de negocio
@@ -83,7 +83,7 @@ Un único rol en el MVP: el **Usuario** propietario del dispositivo. No hay invi
 | Ingrediente detectado duplicado | Se fusiona en un solo Alimento |
 | Raciones fuera de límite | El escalador no permite valores fuera de 1-12 |
 | Edición concurrente desde dos dispositivos | No aplica: datos locales, un solo Usuario (P31) |
-| Receta sin foto o sin ingredientes suficientes | Foto opcional; sin 1 Ingrediente y 1 Paso no se puede Publicar (`⚠ S07`) |
+| Receta sin foto o sin ingredientes suficientes | Sin título, foto, 1 Ingrediente y 1 Paso válidos no se puede Publicar (Q-crear-receta-1, `⚠ S07`) |
 | Lista de la Compra vacía | Estado vacío con CTA para escanear la Despensa o añadir ítems |
 | Colección de Recetas vacía | Estado vacío con CTA para crear una Receta o escanear la Despensa |
 
