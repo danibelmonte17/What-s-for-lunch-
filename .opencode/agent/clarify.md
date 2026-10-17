@@ -1,7 +1,7 @@
 ---
 description: Audita una spec y la cierra en `ready` si es APTA.
 mode: subagent
-model: opencode-go/gpt-6-luna
+model: devexpert/chat-pro
 permission:
   read: allow
   glob: allow

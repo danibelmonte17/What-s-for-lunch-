@@ -1,7 +1,7 @@
 ---
 description: Implementa una feature desde su spec y la deja en `passing`.
 mode: subagent
-model: opencode-go/kimi-k2.7-code
+model: devexpert/chat
 permission:
   read: allow
   glob: allow

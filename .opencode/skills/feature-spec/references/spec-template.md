@@ -2,6 +2,8 @@
 
 Usa esta estructura para `docs/specs/<feature-id>.md`. Objetivo orientativo: 100-150 líneas, prosa mínima (tablas > párrafos). Las secciones marcadas *(solo si aplica)* se omiten por completo cuando no aplican; no las dejes vacías.
 
+Regla de fuente única: cada dato se define una sola vez en su sección canónica y el resto referencia con `ver §X`; prohibido copiar la misma aserción en Trazabilidad, Enfoque, Tareas y Verificación. Los `Q-<feature-id>-<n>` solo se definen en «Dudas abiertas» y `docs/risks-and-open-questions.md`; el resto del doc los cita sin re-explicar la decisión.
+
 ````md
 ---
 feature: <feature-id>
@@ -66,6 +68,8 @@ para poder <resultado esperado>.
 
 ## Trazabilidad
 
+> Apunta, no describe: ≤15 palabras por celda; la aserción completa vive una sola vez en «Plan de verificación» o «Enfoque técnico».
+
 | RF | Origen | Verificación | Evidencia |
 |---|---|---|---|
 | RF-1 | `description`: <ítem> o `steps`: <paso> | <una de las `verify` o escenario propio> | <qué se registra> |
@@ -73,7 +77,7 @@ para poder <resultado esperado>.
 
 ## Registro de iteraciones *(solo si la Parte A cambió tras empezar la Parte B)*
 
-- <Qué cambió en el contrato y por qué.>
+- <1 línea por cambio contractual y por qué; sin repetir el detalle de Parte B ni de `## Clarificación`.>
 
 # PARTE B · PLAN
 
@@ -125,6 +129,8 @@ Si `DESIGN.md` o el prototipo de la pantalla faltan y se necesitan, márcalo com
 
 ## Plan y tareas
 
+> Solo qué + `(cubre RF-n)`; el cómo vive en «Enfoque técnico», no lo re-expliques aquí.
+
 - [ ] T1: <tarea pequeña y ejecutable.> (cubre RF-n)
 - [ ] T2: <tarea pequeña y ejecutable.> (cubre RF-n)
 - [ ] T3: <integración o actualización final.>
@@ -140,7 +146,7 @@ Si `DESIGN.md` o el prototipo de la pantalla faltan y se necesitan, márcalo com
 
 ## Evidencia a capturar
 
-> Presupuesto: **≤4 artefactos y solo de esta feature** (1 informe + ≤2 capturas + ≤1 E2E). Al revalidar se reemplaza el set anterior. El informe resume lint/unit/e2e y la fidelidad.
+> Presupuesto: **≤4 artefactos y solo de esta feature** (1 informe + ≤2 capturas + ≤1 E2E). Al revalidar se reemplaza el set anterior. El informe resume lint/unit/e2e y la fidelidad. La lista de capturas y rutas vive solo aquí; «Impacto visual» y «Plan de verificación» la referencian sin copiarla.
 
 - <Salida de comando, nombre de test, captura o resultado manual a registrar en el informe de la feature.>
 - UI: hasta 2 capturas de los estados clave, capturadas por el validador.

@@ -25,7 +25,7 @@ Numera cada hallazgo y clasifícalo `bloqueante` (el implementador tendría que 
 
 ## Escritura y cierre
 
-No reescribas la spec. Solo crea/anexa `## Clarificación` al final; nunca alteres Parte A/B, dudas, trazabilidad, checkboxes ni entradas anteriores. Formato:
+No reescribas la spec. Solo crea/anexa `## Clarificación` al final; nunca alteres Parte A/B, dudas, trazabilidad, checkboxes ni entradas anteriores. No repitas en `## Clarificación` el detalle ya incorporado al cuerpo ni dupliques `## Registro de iteraciones`: 1 línea por hallazgo resuelto con `ver §X`. Formato:
 
 ```md
 ## Clarificación — AAAA-MM-DD — veredicto: APTA | A RETRABAJAR (intento N de 3)

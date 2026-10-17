@@ -6,10 +6,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-// Implementación sin persistencia: la app nace sin Recetas. La persistencia
-// real llega con la feature crear-receta.
+// Implementación en memoria, útil para pruebas rápidas sin Room. La app usa
+// RoomRecipeRepository; esta se conserva como alternativa sin persistencia (RF-18).
 class InMemoryRecipeRepository : RecipeRepository {
     private val recipes = MutableStateFlow<List<Recipe>>(emptyList())
 
     override fun observeRecipes(): Flow<List<Recipe>> = recipes.asStateFlow()
+
+    override suspend fun saveRecipe(recipe: Recipe) {
+        recipes.value = recipes.value.filterNot { it.id == recipe.id } + recipe
+    }
 }

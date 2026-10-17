@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.ui.crearreceta.CrearRecetaRoute
 import com.whatsforlunch.app.ui.misrecetas.MisRecetasRoute
 
 // Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18).
@@ -34,11 +35,7 @@ fun WhatsForLunchApp(
             )
         }
         composable(AppRoutes.CREAR_RECETA) {
-            ProvisionalScreen(
-                title = stringResource(R.string.action_create_recipe),
-                testTag = ProvisionalTestTags.FORM_SCREEN,
-                onBack = { navController.popBackStack() },
-            )
+            CrearRecetaRoute(onDone = { navController.popBackStack() })
         }
         composable(AppRoutes.ESCANEAR_DESPENSA) {
             ProvisionalScreen(

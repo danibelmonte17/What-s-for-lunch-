@@ -19,6 +19,13 @@ Ninguna.
 | Q-arrancar-app-en-mis-recetas-3 | Las acciones del estado vacío apuntan al formulario y al Escáner, que llegan en features posteriores: ¿qué hacen ahora al pulsarlas? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (pantallas provisionales con título y vuelta atrás) |
 | Q-arrancar-app-en-mis-recetas-4 | ¿El scaffold incluye framework de inyección de dependencias y cuál? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (Koin desde el scaffold, en lugar de Hilt) |
 | Q-arrancar-app-en-mis-recetas-5 | ¿Quién fija el copy del estado vacío (laguna RK04)? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (lo propone la spec y se valida en la revisión visual) |
+| Q-crear-receta-1 | Para «Publicar Receta», además de ≥1 Ingrediente y ≥1 Paso (`⚠ S07`), ¿qué campos son obligatorios? | `docs/specs/crear-receta.md` | no | resuelta (título y foto obligatorios; revisa `⚠ S07` en su punto «la foto es opcional») |
+| Q-crear-receta-2 | ¿Qué exige «Guardar Borrador»? | `docs/specs/crear-receta.md` | no | resuelta (solo título; el resto del formulario puede quedar incompleto) |
+| Q-crear-receta-3 | ¿Desde dónde puede elegir el usuario la foto del formulario? | `docs/specs/crear-receta.md` | no | resuelta (galería, cámara o «Generar con IA») |
+| Q-crear-receta-4 | ¿El formulario incluye el campo de calorías por porción que mostrará el Detalle? | `docs/specs/crear-receta.md` | no | resuelta (sí, como campo opcional) |
+| Q-crear-receta-5 | ¿Se incluye el toggle de favorito del prototipo pese a no figurar en los pasos? | `docs/specs/crear-receta.md` | no | resuelta (sí, toggle simple) |
+| Q-crear-receta-6 | «Generar con IA» necesita API key, que se registra en `configurar-acceso-a-ia`: ¿cómo se resuelve aquí? | `docs/specs/crear-receta.md` | sí | resuelta (condicionada a la API key del dispositivo: sin key, aviso y el formulario sigue usable; la pantalla de Ajustes llega en `configurar-acceso-a-ia`) |
+| Q-crear-receta-7 | ¿Cómo se pide la imagen generada por IA? | `docs/specs/crear-receta.md` | no | resuelta (prompt construido automáticamente con la información del plato: título e historia) |
 
 ## Supuestos
 
@@ -32,7 +39,7 @@ Decisiones tomadas sin confirmación explícita, incluidas las tomadas para desb
 | S04 | La voz (locución de pasos, comandos, dictado) usa las APIs nativas de Android (`SpeechRecognizer`/`TextToSpeech`) | Sustituye la Web Speech API del PRD al pasar de PWA a Android nativo (`P35`, `P20`) | Habría que integrar otro motor de voz (p. ej. Whisper on-device) | Probar precisión de reconocimiento en español con las APIs nativas |
 | S05 | La API key de OpenRouter la introduce el usuario en Ajustes, se guarda cifrada en el dispositivo y la app llama directamente al proveedor (sin backend) | Deriva de «sin backend» (`P33`) + IA real en el MVP (`P4`) | Si se requiere ocultar la key, haría falta el proxy FastAPI previsto como fase posterior (`P34`) | Decidir si una key en el dispositivo es aceptable para el usuario |
 | S06 | La estructura de carpetas, la arquitectura MVVM por capas y los comandos Gradle descritos en `CONTEXT.md` son los previstos | El repo está vacío: no hay código que inspeccionar | Se ajusta `CONTEXT.md` cuando exista el proyecto real | Al crear el proyecto Android (primer `build.gradle`) |
-| S07 | Para publicar una Receta hace falta al menos 1 Ingrediente y 1 Paso, y la foto es opcional | Ninguna pregunta del banco cubrió las validaciones mínimas del formulario (`uxdocs/chefencasa_registrar_y_editar_receta/` no las define) | Cambian las validaciones del formulario y los casos límite de `docs/domain-model.md` | Preguntar al usuario qué campos son obligatorios para publicar |
+| S07 | Para publicar una Receta hace falta título y foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila de Ingrediente ni Paso inválidos | Ninguna pregunta del banco cubrió las validaciones mínimas del formulario (`uxdocs/chefencasa_registrar_y_editar_receta/` no las define); revisado por Q-crear-receta-1 y Q-crear-receta-2 | Cambian las validaciones del formulario y los casos límite de `docs/domain-model.md` | Preguntar al usuario qué campos son obligatorios para publicar |
 
 ## Riesgos
 
