@@ -19,6 +19,13 @@ Ninguna.
 | Q-arrancar-app-en-mis-recetas-3 | Las acciones del estado vacío apuntan al formulario y al Escáner, que llegan en features posteriores: ¿qué hacen ahora al pulsarlas? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (pantallas provisionales con título y vuelta atrás) |
 | Q-arrancar-app-en-mis-recetas-4 | ¿El scaffold incluye framework de inyección de dependencias y cuál? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (Koin desde el scaffold, en lugar de Hilt) |
 | Q-arrancar-app-en-mis-recetas-5 | ¿Quién fija el copy del estado vacío (laguna RK04)? | `docs/specs/arrancar-app-en-mis-recetas.md` | no | resuelta (lo propone la spec y se valida en la revisión visual) |
+| Q-crear-receta-1 | Para «Publicar Receta», además de ≥1 Ingrediente y ≥1 Paso (`⚠ S07`), ¿qué campos son obligatorios? | `docs/specs/crear-receta.md` | no | resuelta (título y foto obligatorios; revisa `⚠ S07` en su punto «la foto es opcional») |
+| Q-crear-receta-2 | ¿Qué exige «Guardar Borrador»? | `docs/specs/crear-receta.md` | no | resuelta (solo título; el resto del formulario puede quedar incompleto) |
+| Q-crear-receta-3 | ¿Desde dónde puede elegir el usuario la foto del formulario? | `docs/specs/crear-receta.md` | no | resuelta (galería, cámara o «Generar con IA») |
+| Q-crear-receta-4 | ¿El formulario incluye el campo de calorías por porción que mostrará el Detalle? | `docs/specs/crear-receta.md` | no | resuelta (sí, como campo opcional) |
+| Q-crear-receta-5 | ¿Se incluye el toggle de favorito del prototipo pese a no figurar en los pasos? | `docs/specs/crear-receta.md` | no | resuelta (sí, toggle simple) |
+| Q-crear-receta-6 | «Generar con IA» necesita API key, que se registra en `configurar-acceso-a-ia`: ¿cómo se resuelve aquí? | `docs/specs/crear-receta.md` | sí | resuelta (condicionada a la API key del dispositivo: sin key, aviso y el formulario sigue usable; la pantalla de Ajustes llega en `configurar-acceso-a-ia`) |
+| Q-crear-receta-7 | ¿Cómo se pide la imagen generada por IA? | `docs/specs/crear-receta.md` | no | resuelta (prompt construido automáticamente con la información del plato: título e historia) |
 
 ## Supuestos
 

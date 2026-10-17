@@ -79,3 +79,10 @@ Entradas de sesión en orden cronológico (solo se añaden, nunca se borran). No
 - B-1, B-2 y B-3 resueltos y verificados. Checkboxes de la spec (T1-T7 y checklist del validador) marcados.
 - Veredicto: `validated`. Evidencia: `docs/evidence/arrancar-app-en-mis-recetas/`. Siguiente: implementar `crear-receta`.
 - Nota: no se ejecutaron `gradlew`, scripts del harness, tests, builds ni `adb` (regla de esta skill).
+
+### Sesión 8: spec de `crear-receta` (feature-spec, modo redacción)
+- Feature seleccionada: `crear-receta`, primera `not_started` con campos completos y dependencias `validated`. Spec nueva en `docs/specs/crear-receta.md` (estado `draft`), 25 RF EARS + Parte B; Gate A y Gate B pasados (170 líneas).
+- Dudas resueltas con el usuario antes de redactar y registradas como `Q-crear-receta-1` a `Q-crear-receta-7` en `docs/risks-and-open-questions.md`: publicar exige título, foto, ≥1 ingrediente y ≥1 paso (revisa `⚠ S07`, cuya foto «opcional» deja de valer para Publicar); «Guardar Borrador» exige solo título; foto desde galería, cámara o «Generar con IA»; campo opcional de calorías por porción; toggle de favorito incluido; generación de imagen condicionada a la API key del dispositivo (sin key, aviso que no bloquea; la pantalla de Ajustes llega en `configurar-acceso-a-ia`) con prompt automático desde título e historia.
+- Decisiones asumidas sin consulta (fijadas en los RF): unidad de ingrediente en texto libre, dificultad Fácil/Media/Difícil (por defecto Media), tiempos en minutos, los cuatro momentos culinarios del dominio y raciones base por defecto 4.
+- Impacto documental pendiente para la implementación (T11 de la spec): `docs/domain-model.md` y el supuesto `⚠ S07` con la foto obligatoria para Publicar.
+- No se ejecutaron `gradlew`, scripts del harness, tests, builds ni `adb` (regla de esta skill). Siguiente: auditoría independiente de la spec (APTA / A RETRABAJAR).
