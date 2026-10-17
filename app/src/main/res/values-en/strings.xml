@@ -6,4 +6,71 @@
     <string name="action_create_recipe">Create recipe</string>
     <string name="action_scan_pantry">Scan your Pantry</string>
     <string name="action_back">Back</string>
+    <string name="action_dismiss">Dismiss</string>
+
+    <!-- My Recipes: cards -->
+    <string name="mis_recetas_status_draft">Draft</string>
+    <string name="mis_recetas_status_published">Published</string>
+
+    <!-- Meal moment -->
+    <string name="momento_desayuno">Breakfast</string>
+    <string name="momento_almuerzo">Lunch</string>
+    <string name="momento_cena">Dinner</string>
+    <string name="momento_postre">Dessert</string>
+
+    <!-- Difficulty -->
+    <string name="dificultad_facil">Easy</string>
+    <string name="dificultad_media">Medium</string>
+    <string name="dificultad_dificil">Hard</string>
+
+    <!-- Recipe creation form -->
+    <string name="crear_receta_title">Create recipe</string>
+    <string name="crear_receta_photo_section">Photo</string>
+    <string name="crear_receta_photo_preview">Recipe photo</string>
+    <string name="crear_receta_photo_none">No photo (optional)</string>
+    <string name="crear_receta_photo_loading">Preparing the photo…</string>
+    <string name="crear_receta_photo_gallery">Gallery</string>
+    <string name="crear_receta_photo_camera">Camera</string>
+    <string name="crear_receta_photo_generate">Generate with AI</string>
+    <string name="crear_receta_photo_remove">Remove photo</string>
+    <string name="crear_receta_basic_section">Basic information</string>
+    <string name="crear_receta_title_label">Dish title</string>
+    <string name="crear_receta_title_required">Title is required</string>
+    <string name="crear_receta_story_label">Story or short description</string>
+    <string name="crear_receta_moment_label">Meal moment</string>
+    <string name="crear_receta_metrics_section">Cooking details</string>
+    <string name="crear_receta_prep_label">Prep time (min)</string>
+    <string name="crear_receta_cook_label">Cook time (min)</string>
+    <string name="crear_receta_difficulty_label">Difficulty</string>
+    <string name="crear_receta_servings_label">Base servings</string>
+    <string name="crear_receta_servings_decrease">−</string>
+    <string name="crear_receta_servings_increase">+</string>
+    <string name="crear_receta_calories_label">Calories per serving (optional)</string>
+    <string name="crear_receta_ingredients_title">Ingredients</string>
+    <string name="crear_receta_add_ingredient">Add Ingredient</string>
+    <string name="crear_receta_ingredient_name">Name</string>
+    <string name="crear_receta_ingredient_quantity">Quantity</string>
+    <string name="crear_receta_ingredient_unit">Unit</string>
+    <string name="crear_receta_ingredient_optional">Optional</string>
+    <string name="crear_receta_ingredient_invalid">Check the name or the quantity (greater than 0)</string>
+    <string name="crear_receta_remove">Remove</string>
+    <string name="crear_receta_steps_title">Cooking Steps</string>
+    <string name="crear_receta_add_step">Add New Step</string>
+    <string name="crear_receta_step_number">Step %1$d</string>
+    <string name="crear_receta_step_text">Step text</string>
+    <string name="crear_receta_step_timer">Timer (min, optional)</string>
+    <string name="crear_receta_step_invalid">The step needs text</string>
+    <string name="crear_receta_favorite">Mark as Favorite</string>
+    <string name="crear_receta_save_draft">Save Draft</string>
+    <string name="crear_receta_publish">Publish Recipe</string>
+    <string name="crear_receta_publish_blocked">Cannot publish yet:</string>
+    <string name="crear_receta_publish_error_title">Title is missing</string>
+    <string name="crear_receta_publish_error_photo">Photo is missing</string>
+    <string name="crear_receta_publish_error_ingredient">Add at least one ingredient</string>
+    <string name="crear_receta_publish_error_step">Add at least one step</string>
+    <string name="crear_receta_publish_error_invalid_ingredient">Some ingredients have no name or an invalid quantity</string>
+    <string name="crear_receta_publish_error_invalid_step">Some steps have no text</string>
+    <string name="crear_receta_notice_ai_key_missing">Set your AI API key in Settings to generate images.</string>
+    <string name="crear_receta_notice_ai_failed">The image could not be generated. You can pick a photo manually.</string>
+    <string name="crear_receta_notice_camera_denied">Camera permission denied. You can use the gallery or generate with AI.</string>
 </resources>

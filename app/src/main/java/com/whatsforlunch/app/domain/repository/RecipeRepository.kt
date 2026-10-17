@@ -7,4 +7,7 @@ import kotlinx.coroutines.flow.Flow
 // almacenamiento concreto (RF-2).
 interface RecipeRepository {
     fun observeRecipes(): Flow<List<Recipe>>
+
+    // Guarda (crea o actualiza) una Receta y sus Ingredientes y Pasos.
+    suspend fun saveRecipe(recipe: Recipe)
 }

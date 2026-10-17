@@ -10,11 +10,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.ui.crearreceta.CrearRecetaTestTags
 import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
 import com.whatsforlunch.app.ui.nav.ProvisionalTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +28,11 @@ class MisRecetasLocalizationE2ETest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Before
+    fun clearDatabase() {
+        E2eDatabase.clear()
+    }
 
     private fun showApp(locale: Locale) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
@@ -73,10 +80,10 @@ class MisRecetasLocalizationE2ETest {
     }
 
     @Test
-    fun createRecipeOpensProvisionalFormAndReturns() {
+    fun createRecipeOpensFormAndReturns() {
         showApp(Locale("es", "ES"))
         composeRule.onNodeWithTag(MisRecetasTestTags.CREATE_RECIPE).performClick()
-        composeRule.onNodeWithTag(ProvisionalTestTags.FORM_SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Crear receta").assertIsDisplayed()
         composeRule.onNodeWithText("Volver").performClick()
         composeRule.onNodeWithTag(MisRecetasTestTags.EMPTY_TITLE).assertIsDisplayed()
@@ -98,7 +105,7 @@ class MisRecetasLocalizationE2ETest {
     fun englishDestinationsShowEnglishTexts() {
         showApp(Locale.ENGLISH)
         composeRule.onNodeWithTag(MisRecetasTestTags.CREATE_RECIPE).performClick()
-        composeRule.onNodeWithTag(ProvisionalTestTags.FORM_SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Create recipe").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()

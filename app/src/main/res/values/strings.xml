@@ -7,4 +7,71 @@
     <string name="action_create_recipe">Crear receta</string>
     <string name="action_scan_pantry">Escanear la Despensa</string>
     <string name="action_back">Volver</string>
+    <string name="action_dismiss">Cerrar</string>
+
+    <!-- Mis Recetas: tarjetas -->
+    <string name="mis_recetas_status_draft">Borrador</string>
+    <string name="mis_recetas_status_published">Publicada</string>
+
+    <!-- Momento culinario -->
+    <string name="momento_desayuno">Desayuno</string>
+    <string name="momento_almuerzo">Almuerzo</string>
+    <string name="momento_cena">Cena</string>
+    <string name="momento_postre">Postre</string>
+
+    <!-- Dificultad -->
+    <string name="dificultad_facil">Fácil</string>
+    <string name="dificultad_media">Media</string>
+    <string name="dificultad_dificil">Difícil</string>
+
+    <!-- Formulario de alta de Receta -->
+    <string name="crear_receta_title">Crear receta</string>
+    <string name="crear_receta_photo_section">Foto</string>
+    <string name="crear_receta_photo_preview">Foto de la receta</string>
+    <string name="crear_receta_photo_none">Sin foto (opcional)</string>
+    <string name="crear_receta_photo_loading">Preparando la foto…</string>
+    <string name="crear_receta_photo_gallery">Galería</string>
+    <string name="crear_receta_photo_camera">Cámara</string>
+    <string name="crear_receta_photo_generate">Generar con IA</string>
+    <string name="crear_receta_photo_remove">Quitar foto</string>
+    <string name="crear_receta_basic_section">Información básica</string>
+    <string name="crear_receta_title_label">Título del plato</string>
+    <string name="crear_receta_title_required">El título es obligatorio</string>
+    <string name="crear_receta_story_label">Historia o descripción breve</string>
+    <string name="crear_receta_moment_label">Momento culinario</string>
+    <string name="crear_receta_metrics_section">Detalles de cocina</string>
+    <string name="crear_receta_prep_label">Tiempo de preparación (min)</string>
+    <string name="crear_receta_cook_label">Tiempo de cocción (min)</string>
+    <string name="crear_receta_difficulty_label">Dificultad</string>
+    <string name="crear_receta_servings_label">Raciones base</string>
+    <string name="crear_receta_servings_decrease">−</string>
+    <string name="crear_receta_servings_increase">+</string>
+    <string name="crear_receta_calories_label">Calorías por porción (opcional)</string>
+    <string name="crear_receta_ingredients_title">Ingredientes</string>
+    <string name="crear_receta_add_ingredient">Añadir Ingrediente</string>
+    <string name="crear_receta_ingredient_name">Nombre</string>
+    <string name="crear_receta_ingredient_quantity">Cantidad</string>
+    <string name="crear_receta_ingredient_unit">Unidad</string>
+    <string name="crear_receta_ingredient_optional">Opcional</string>
+    <string name="crear_receta_ingredient_invalid">Revisa el nombre o la cantidad (mayor que 0)</string>
+    <string name="crear_receta_remove">Eliminar</string>
+    <string name="crear_receta_steps_title">Pasos de Elaboración</string>
+    <string name="crear_receta_add_step">Añadir Nuevo Paso</string>
+    <string name="crear_receta_step_number">Paso %1$d</string>
+    <string name="crear_receta_step_text">Texto del paso</string>
+    <string name="crear_receta_step_timer">Temporizador (min, opcional)</string>
+    <string name="crear_receta_step_invalid">El paso necesita texto</string>
+    <string name="crear_receta_favorite">Marcar en Mis Favoritas</string>
+    <string name="crear_receta_save_draft">Guardar Borrador</string>
+    <string name="crear_receta_publish">Publicar Receta</string>
+    <string name="crear_receta_publish_blocked">No se puede publicar todavía:</string>
+    <string name="crear_receta_publish_error_title">Falta el título</string>
+    <string name="crear_receta_publish_error_photo">Falta la foto</string>
+    <string name="crear_receta_publish_error_ingredient">Añade al menos un ingrediente</string>
+    <string name="crear_receta_publish_error_step">Añade al menos un paso</string>
+    <string name="crear_receta_publish_error_invalid_ingredient">Hay ingredientes sin nombre o con cantidad inválida</string>
+    <string name="crear_receta_publish_error_invalid_step">Hay pasos sin texto</string>
+    <string name="crear_receta_notice_ai_key_missing">Configura tu API key de IA en Ajustes para generar imágenes.</string>
+    <string name="crear_receta_notice_ai_failed">No se pudo generar la imagen. Puedes elegir una foto manualmente.</string>
+    <string name="crear_receta_notice_camera_denied">Permiso de cámara denegado. Puedes usar la galería o generar con IA.</string>
 </resources>

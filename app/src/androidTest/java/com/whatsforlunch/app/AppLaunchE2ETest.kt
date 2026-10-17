@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,6 +17,11 @@ class AppLaunchE2ETest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun clearDatabase() {
+        E2eDatabase.clear()
+    }
 
     @Test
     fun appOpensInMisRecetasWithEmptyState() {
