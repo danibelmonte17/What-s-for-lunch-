@@ -1,7 +1,7 @@
 ---
 description: Redacta o retrabaja la spec de una feature y la deja en borrador.
 mode: subagent
-model: opencode-go/deepseek-v4-pro
+model: devexpert/chat-pro
 permission:
   read: allow
   glob: allow
