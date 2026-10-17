@@ -14,6 +14,7 @@
 - [ ] Verificación usa comandos existentes; E2E está añadido o justificado; verificación visual completa si hay UI (`fase-b.md`).
 - [ ] Documentación duradera explícita; el plan no añade comportamiento fuera de Parte A.
 - [ ] Cada duda aparece en «Carencias actuales», «Enfoque técnico» (provisional donde aplique) y «Fuera de alcance». Si UI necesita `DESIGN.md` ausente, declara planning gap; no inventes estilo.
+- [ ] Sin duplicados (menor): ninguna aserción copiada en 3+ secciones; Trazabilidad con celdas ≤15 palabras; spec >170 líneas o con párrafos repetidos literales retrabaja por verbosidad.
 
 ## Gates para auditoría
 

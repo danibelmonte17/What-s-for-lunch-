@@ -20,7 +20,7 @@ Los casos límite, los errores y las condiciones de concurrencia también son RF
 
 ## Trazabilidad
 
-La tabla enlaza cada RF con su origen (campo de la entrada de `feature_list.json` —`description` o `steps`—, o «derivado: caso límite»), con cómo se verifica (una de las `verify` de la feature o un escenario propio) y con la evidencia esperada. Ningún RF sin verificación; ningún comportamiento de `description` ni de `steps` sin RF.
+La tabla enlaza cada RF con su origen (campo de la entrada de `feature_list.json` —`description` o `steps`—, o «derivado: caso límite»), con cómo se verifica (una de las `verify` de la feature o `ver Plan de verificación`) y con la evidencia esperada. Ningún RF sin verificación; ningún comportamiento de `description` ni de `steps` sin RF. Celdas cortas (≤15 palabras): apunta, no describas la aserción completa.
 
 ## Registro de aclaraciones en `docs/risks-and-open-questions.md`
 
