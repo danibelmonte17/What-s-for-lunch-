@@ -28,6 +28,10 @@ Ninguna.
 | Q-crear-receta-7 | ¿Cómo se pide la imagen generada por IA? | `docs/specs/crear-receta.md` | no | resuelta (prompt construido automáticamente con la información del plato: título e historia) |
 | Q-afinar-fidelidad-visual-del-formulario-1 | ¿Cómo se replica el asa de arrastre de las filas de Ingrediente del prototipo si el reordenado sigue fuera de alcance? | `docs/specs/afinar-fidelidad-visual-del-formulario.md` | no | resuelta (asa decorativa no interactiva; el reordenado sigue fuera de alcance) |
 | Q-afinar-fidelidad-visual-del-formulario-2 | ¿Se implementa el botón «Guardar» de la cabecera del prototipo? | `docs/specs/afinar-fidelidad-visual-del-formulario.md` | no | resuelta (se implementa como guardado de Borrador, igual que «Guardar Borrador» del dock) |
+| Q-editar-receta-1 | Al editar una Receta Publicada (sin vuelta a Borrador), ¿qué muestra el dock del formulario? | `docs/specs/editar-receta.md` | sí | resuelta (única acción primaria «Guardar cambios», que guarda manteniendo Publicada; RF-5) |
+| Q-editar-receta-2 | ¿Está «Publicar Receta» disponible al editar un Borrador (transición Borrador → Publicada con `⚠ S07`)? | `docs/specs/editar-receta.md` | sí | resuelta (sí, con las mismas reglas que el alta; RF-8 y RF-10) |
+| Q-editar-receta-3 | Si al editar una Publicada deja de cumplir `⚠ S07`, ¿qué pasa al guardar los cambios? | `docs/specs/editar-receta.md` | sí | resuelta (se bloquea el guardado: «Guardar cambios» deshabilitado, lista de requisitos junto al dock y nada se guarda; RF-7) |
+| Q-editar-receta-4 | El pie de la tarjeta dibuja «Editar», «Eliminar» y «Cocinar Ahora»: ¿qué toca esta feature? | `docs/specs/editar-receta.md` | no | resuelta (solo «Editar receta»; «Eliminar» es `eliminar-receta` y «Cocinar Ahora» de otras features; RF-4) |
 
 ## Supuestos
 
