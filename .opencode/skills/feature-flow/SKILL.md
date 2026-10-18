@@ -11,12 +11,12 @@ Delega cada etapa en su subagente; el orquestador solo controla transiciones y g
 feature-flow (agente primario build)
   └─ por cada feature, en orden:
        subagent → planner (feature-spec/redacción) → spec draft (JSON sigue not_started)
-          │  ¿dudas abiertas y sin --auto? → preguntas al humano → planner (retrabajo: las resuelve)  ↺ máx 2
+          │  ¿dudas abiertas y sin --auto? → 1 ronda de preguntas al humano → planner (retrabajo: las resuelve)
        subagent → clarify (feature-spec/auditoría) → ready | A RETRABAJAR
-                  ↺ planner ⇄ clarify (máx 3; clarify cierra en ready)
+                  ↺ planner ⇄ clarify (máx 3; reintentos en delta; clarify cierra en ready)
        subagent → implementer (feature-implementer) → passing
        subagent → validator (feature-validate) → validated | in_progress
-                  ↺ reintento implement→validate (máx 3)
+                  ↺ reintento implement→validate (máx 3; revalidación en delta)
        si validated → commit + push + gh pr create → borra worktree
 ```
 
@@ -65,22 +65,22 @@ Selección: **con ids**, comprueba que existen y no están `validated`, sin depe
 
 **b. Sembrar los locales gitignored.** Copia al worktree `local.properties` y `secrets.properties` si existen en el checkout principal (Gradle y `feature-validate` los necesitan). No los versiones ni los edites.
 
-**c. Spec (planner ⇄ auditoría).** Solo si no existe `docs/specs/<feature-id>.md` o el estado es `not_started`. `MAX_CLARIFY = 3` (entradas `veredicto: A RETRABAJAR` en `## Clarificación`):
+**c. Spec (planner ⇄ auditoría).** Solo si no existe `docs/specs/<feature-id>.md` o el estado es `not_started`. `MAX_CLARIFY = 3` (entradas `veredicto: A RETRABAJAR` en los bloques `## Clarificación` de la spec + `docs/specs/<feature-id>-clarificacion.md`):
 
-1. Invoca `planner` con `$feature-spec` modo redacción; deja la spec en borrador. Primer pase en sesión limpia; en retrabajo, intenta continuar su sesión con `sessionID` y pasa solo el delta (fallback §4).
-2. **Preguntas (solo dudas abiertas):** localiza en spec y registro las dudas abiertas de esta feature con grep. Si hay humano y no `--auto`, pregúntalas (opción asumida primero; hasta dos rondas) y re-invoca planner en modo continuar con las respuestas `Q-<id>: <respuesta>`; intenta reutilizar su sesión. Nunca edites tú la spec. Con `--auto`/sin humano, anota en `PROGRESS.md` y continúa.
-3. Invoca `clarify` con `$feature-spec` modo auditoría (id y ruta en el prompt; pases posteriores intentan continuar su sesión). APTA cierra en `ready`.
+1. Invoca `planner` con `$feature-spec` modo redacción; deja la spec en borrador. Primer pase en sesión limpia. En retrabajo: antes de invocar, copia la spec a `.harness/spec-<feature-id>-<intento>.md` (gitignored); continúa su sesión con `sessionID` (fallback §4) y pasa solo el delta. Al volver, calcula el delta con salida contenida (`git diff --no-index <snapshot> <spec>` —el exit 1 solo indica diferencias, no es un fallo— o comparación de cabeceras de sección) y guárdalo para la auditoría.
+2. **Preguntas (solo dudas abiertas):** localiza en spec y registro las dudas abiertas de esta feature con grep. Si hay humano y no `--auto`, pregúntalas en **una sola ronda** (bloqueantes primero; en las no bloqueantes, valor asumido primero) y re-invoca planner en modo continuar con las respuestas `Q-<id>: <respuesta>`; segunda ronda solo si una respuesta abre una duda bloqueante nueva. Continúa su sesión. Nunca edites tú la spec. Con `--auto`/sin humano, anota en `PROGRESS.md` y continúa.
+3. Invoca `clarify` con `$feature-spec` modo auditoría (id, ruta y, en intentos 2+, el delta + hallazgos previos pendientes en el prompt; continúa su sesión). Sin delta, indica auditoría completa. APTA cierra en `ready`.
 4. Lee el `status` de la entrada en `.worktrees/<feature-id>/feature_list.json`: `ready` → continúa con la implementación; `not_started` con menos de 3 `A RETRABAJAR` → vuelve al paso 1 (retrabajo); `not_started` con 3 → «Cierre en fallo de spec» (§3.4).
 
 **d. Implementación.** Invoca a `implementer` con `$feature-implementer` (sesión limpia la primera vez). Debe dejar la feature en `passing`. Si no está en `ready` al llegar aquí, para y reporta la incoherencia.
 
 **e. Validación con reintentos.** `MAX_VALIDACIONES = 3`:
 
-1. Invoca a `validator` con `$feature-validate` (sesión limpia la primera vez).
+1. Invoca a `validator` con `$feature-validate` (sesión limpia la primera vez). En revalidación, continúa su sesión con `sessionID` y pásale el informe de bugs previo y el delta de la corrección —`git -C .worktrees/<feature-id> status --porcelain` + `git diff` contenido, con las rutas nuevas—; el validator elige completa o delta (válvula en §3.0 de su skill).
 2. Lee el `status` de la entrada en `.worktrees/<feature-id>/feature_list.json`:
    - `validated` → salir del bucle.
    - `passing` (no verificable: sin AVD, red o clave) → **no reintentes**; para el flujo y reporta los prerrequisitos exactos.
-   - `in_progress` (bug demostrado) → si quedan intentos, re-invoca a `implementer` pasándole el informe de bugs del validator —**intentando continuar la sesión previa del implementer con su `sessionID`** y aplicando el fallback de §4 si corresponde— y vuelve a validar (**intentando continuar también la sesión del validator** con el mismo criterio). Agotados los 3 ciclos → «Cierre en fallo» (§3.4).
+   - `in_progress` (bug demostrado) → si quedan intentos, re-invoca a `implementer` con el informe de bugs, **continuando su sesión con `sessionID`** (fallback §4); al volver, revalida en delta (paso 1). Agotados los 3 ciclos → «Cierre en fallo» (§3.4).
 
 **f. Cierre en éxito** (solo con `validated`): actualiza en el worktree `PROGRESS.md` y, si falta, la entrada del Historial en `docs/progress-history.md` (el subagente ya lo hace; añade solo el resumen del flujo). Commitea con Conventional Commits (`feat(<feature-id>): <resumen>`, `docs(<feature-id>): spec y estado`, `test(<feature-id>): evidencia de validación`). `git -C .worktrees/<feature-id> push -u origin feature/<feature-id>`. Crea el PR:
 
@@ -115,9 +115,9 @@ Ejecuta la feature <feature-id> tratando el directorio
 Sigue tu skill al pie de la letra. Devuelve el resumen final que define tu skill.
 ```
 
-Para `clarify`, indica id, ruta y modo auditoría. APTA cierra en `ready`.
+Para `clarify`, indica id, ruta, modo auditoría y, en intentos 2+, el delta + hallazgos previos. APTA cierra en `ready`.
 
-Sesión nueva en el primer pase. En retrabajo, intenta continuar el mismo subagente con `sessionID` y pasa solo el delta. Si no hay sesión/cache utilizable, usa sesión nueva con el delta y rutas necesarias.
+Sesión nueva en el primer pase. En retrabajo o revalidación, continúa el mismo subagente con su `sessionID` y pasa solo el delta; indica que no relea lo ya leído (solo el delta y lo que este cite). Usa sesión nueva únicamente si no hay sesión utilizable (fallback), pasando el delta y las rutas necesarias. Ordena el prompt para cache: preámbulo fijo del worktree primero; delta variable al final.
 
 Al volver de cada subagente, comprueba la transición con grep de la entrada en `.worktrees/<feature-id>/feature_list.json` (nunca el texto del subagente). Si el `status` no es el esperado, para y reporta la incoherencia.
 
@@ -129,7 +129,7 @@ Al volver de cada subagente, comprueba la transición con grep de la entrada en 
 | Rama o worktree previo del flujo | Parar y pedir resolverlo |
 | Features con dependencia mutua en la corrida | Parar y advertir |
 | Dudas abiertas | §3.3.c: preguntar y pasar respuestas al planner; con `--auto`/sin humano, anotar y continuar |
-| Dudas siguen tras 2 rondas | Continuar a auditoría y reportar |
+| Dudas siguen tras la ronda de preguntas | Continuar a auditoría y reportar |
 | 3 auditorías sin APTA | Dejar `not_started`, conservar worktree y parar |
 | Validación falla 3 veces | Deja `passing`, conserva worktree, parar |
 | No verificable (sin AVD/red/clave) | No reintenta; deja `passing`, reporta desbloqueo |
@@ -138,13 +138,13 @@ Al volver de cada subagente, comprueba la transición con grep de la entrada en 
 
 ## 5. Salida
 
-Reporta (≤10 líneas): Features procesadas (en orden) y estado final `<id: validated|passing|not_started>`; Preguntas al humano por feature `<n preguntadas / n resueltas>` y rondas; Revisiones de clarify y validaciones por feature con RF validados; PR de cada feature validada `<URL>` (o por qué no se creó); Worktrees `<eliminados>` / `<conservados → ruta>`; Bloqueos y prerrequisitos para desbloquear; Procesos de Gradle o emuladores pendientes y temporales sin versionar.
+Reporta (≤10 líneas): Features procesadas (en orden) y estado final `<id: validated|passing|not_started>`; Preguntas al humano por feature `<n preguntadas / n resueltas>` y rondas; Revisiones de clarify y validaciones por feature (`completa|delta` por intento) con RF validados; PR de cada feature validada `<URL>` (o por qué no se creó); Worktrees `<eliminados>` / `<conservados → ruta>`; Bloqueos y prerrequisitos para desbloquear; Procesos de Gradle o emuladores pendientes y temporales sin versionar.
 
 **Checklist:**
 
 - [ ] Preflight limpio: sin cambios, rebase/merge, worktrees ni ramas previas.
 - [ ] Cada transición leída de `feature_list.json` del worktree (grep de la entrada), no del texto del subagente.
-- [ ] En reintentos y retrabajos intenté continuar la sesión anterior del subagente con `sessionID` y solo el delta; inicié una sesión limpia únicamente cuando aplica el fallback de §4.
+- [ ] En reintentos y retrabajos continué la sesión anterior del subagente con `sessionID`, pasé solo el delta (a auditoría/validación incluido) e inicié una sesión limpia únicamente cuando aplica el fallback de §4.
 - [ ] Cada feature termina `validated` (con PR) o el flujo se detiene con el bloqueo anotado.
 - [ ] Ningún PR abierto sin `validated`; worktrees limpiados o conservados con justificación.
 - [ ] `PROGRESS.md` y `docs/progress-history.md` actualizados y sin secretos ni temporales sin versionar.

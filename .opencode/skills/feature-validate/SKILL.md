@@ -25,15 +25,21 @@ Lee por ventanas; nunca traigas a tu contexto lo que no necesites:
 
 - `AGENTS.md` y solo la cabecera de `PROGRESS.md` (*Estado verificado*, *Siguiente paso*, *Riesgos*); el Historial vive en `docs/progress-history.md` (como mucho su última entrada).
 - `feature_list.json`: solo la entrada de esta feature.
-- La spec: Parte A completa y, de la Parte B, solo las secciones de verificación (*Plan de verificación*, *Evidencia a capturar*, *Checklist del validador*, *Archivos esperados*, *Impacto visual*, *Plan y tareas*). Localízalas con `grep -n '^#'` y léelas con `Read` `offset/limit`.
+- La spec: Parte A completa —en modo delta (§3.0), solo las ventanas afectadas— y, de la Parte B, solo las secciones de verificación (*Plan de verificación*, *Evidencia a capturar*, *Checklist del validador*, *Archivos esperados*, *Impacto visual*, *Plan y tareas*). Localízalas con `grep -n '^#'` y léelas con `Read` `offset/limit`.
 - Docs de contexto (`CONTEXT.md`, `DESIGN.md`, `docs/build-brief.md`, `docs/risks-and-open-questions.md` —sobre todo S06—, `docs/technical-discovery.md`) y el prototipo UX: solo si la spec o el tipo de verificación los requieren.
 - `local.properties` solo si la Parte B pide E2E, y solo para resolver la ruta del SDK (nunca su contenido sensible).
 - Archivos de la app: solo los que marque «Archivos esperados» (confirmar alcance).
 - **Nunca `Read` de PNG, capturas ni logs enteros.** Las capturas se comprueban con `uiautomator` y muestreo de píxeles y quedan para revisión humana; la salida de `adb`/`gradlew` se filtra (§3.2).
+- **En continuación de sesión, no releas lo ya leído:** lee solo el delta (informe de bugs previo, resumen de cambios del implementador y lo que citen) y las ventanas que necesites.
 
 Rutas relativas a la raíz del repo (o al worktree del prompt padre), no a la skill.
 
 ## 3. Procedimiento
+
+### 3.0 Modo: completa o delta
+
+- **Completa (por defecto):** primera validación de la feature, o cualquier revalidación sin informe de bugs previo; recorre §3.1–§3.7 sin recortes.
+- **Delta (reintento tras bug):** solo con informe de bugs previo y resumen de cambios del implementador. Verifica cada RF/check fallido y haz smoke de `init/lint/unit` con salida contenida; actualiza solo las filas afectadas del mismo informe y limita la fidelidad visual a las pantallas tocadas. **Válvula:** si el cambio toca archivos o comportamiento fuera de los RF fallidos, o falta el informe previo, usa la validación completa.
 
 ### 3.1 Preflight
 
@@ -106,6 +112,7 @@ Reporta en forma compacta, sin repetir la matriz completa: Feature `<id>` — sp
 - [ ] Ejecuté `./init.sh`, `./lint.sh` y `./unit.sh` con códigos de salida registrados y salida contenida.
 - [ ] Ejecuté `./e2e.sh` + recorrido `adb` solo si la Parte B lo pide (o dejé «no verificable» documentado sin rebajar).
 - [ ] Evidencia dentro del presupuesto (≤4 artefactos, solo de esta feature; set anterior reemplazado).
+- [ ] Modo elegido (completa o delta) y, en delta, válvula comprobada (cambio dentro de los RF fallidos e informe previo presente).
 - [ ] Matriz de trazabilidad completa (cada RF con resultado); fidelidad 1:1 verificada si la Parte B declara UI.
 - [ ] `git diff`: sin comportamiento fuera de alcance, sin secretos ni fotos reales.
 - [ ] Estado escrito una sola vez, en el Cierre; checkboxes marcados solo con `validated`.

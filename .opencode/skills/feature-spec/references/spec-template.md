@@ -1,6 +1,6 @@
 # Plantilla de spec
 
-Usa esta estructura para `docs/specs/<feature-id>.md`. Objetivo orientativo: 100-150 líneas, prosa mínima (tablas > párrafos). Las secciones marcadas *(solo si aplica)* se omiten por completo cuando no aplican; no las dejes vacías.
+Usa esta estructura para `docs/specs/<feature-id>.md`. Escríbela optimizada en tokens (regla común en `SKILL.md`): prosa mínima y tablas > párrafos. Sin objetivo de líneas: la extensión la fija el contenido. Las secciones marcadas *(solo si aplica)* se omiten por completo cuando no aplican; no las dejes vacías.
 
 Regla de fuente única: cada dato se define una sola vez en su sección canónica y el resto referencia con `ver §X`; prohibido copiar la misma aserción en Trazabilidad, Enfoque, Tareas y Verificación. Los `Q-<feature-id>-<n>` solo se definen en «Dudas abiertas» y `docs/risks-and-open-questions.md`; el resto del doc los cita sin re-explicar la decisión.
 

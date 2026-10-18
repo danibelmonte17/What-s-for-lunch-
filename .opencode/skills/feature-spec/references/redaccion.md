@@ -6,7 +6,7 @@ Usa para crear, actualizar, continuar o retrabajar la spec de UNA feature. Modos
 
 Con id explícito, acepta `not_started` o una `in_progress` bloqueada por implementer; `ready` solo se rehace con petición explícita. Sin id, selecciona la primera `not_started` en orden con campos `id`, `category`, `description`, `depends_on`, `steps` y `verify` completos y dependencias satisfechas (cada id existe y está `validated`; si falta `depends_on`, usa `[]`). Prefiere una con aclaraciones pendientes. Salta y reporta las bloqueadas; si la entrada seleccionada está incompleta, para y enumera los campos.
 
-Lee `AGENTS.md` y cabecera de `PROGRESS.md`; `feature_list.json`; `docs/constitution.md` y solo las specs previas relevantes; además de los documentos de contexto que la feature exija (`CONTEXT.md`, `docs/build-brief.md`, `docs/domain-model.md`, `docs/technical-discovery.md`, `docs/risks-and-open-questions.md`, `docs/adr/*.md`, `DESIGN.md`). Lee la spec existente en retrabajo. Archivos de app solo durante Fase B. Usa `grep`/`glob` y ventanas de hasta 80 líneas.
+Lee `AGENTS.md` y cabecera de `PROGRESS.md`; `feature_list.json`; `docs/constitution.md` y solo las specs previas relevantes; además de los documentos de contexto que la feature exija (`CONTEXT.md`, `docs/build-brief.md`, `docs/domain-model.md`, `docs/technical-discovery.md`, `docs/risks-and-open-questions.md`, `docs/adr/*.md`, `DESIGN.md`). Lee la spec existente en retrabajo (solo las secciones afectadas si continúas sesión). Archivos de app solo durante Fase B. Usa `grep`/`glob` y ventanas de hasta 80 líneas; en continuación de sesión, no releas lo ya leído: lee solo el delta y lo que este cite.
 
 ## Fase A · Contrato
 
@@ -14,7 +14,7 @@ Carga `fase-a.md` y `spec-template.md` antes de redactar.
 
 1. Deriva RF EARS de `description` y `steps`, con trazabilidad de origen.
 2. Identifica casos límite, errores, permisos y alcance. Clasifica cada duda como bloqueante (cambia lo que se construye, sin valor por defecto razonable) o no bloqueante (asume explícitamente un valor obvio).
-3. Descarta dudas obvias. Con humano, pregunta las restantes de una en una o en una llamada interactiva (máximo 6 por ronda; una segunda ronda si quedan). Recomienda como primera opción el valor asumido en las no bloqueantes. No propongas soluciones técnicas. En ejecución autónoma, no preguntes: deja dudas marcadas y enuméralas en el reporte.
+3. Descarta dudas obvias. Con humano, pregunta todas las restantes en una única llamada interactiva (máximo 6), primero las bloqueantes, y con el valor asumido como primera opción en las no bloqueantes; segunda ronda solo si una respuesta abre una duda bloqueante nueva. No propongas soluciones técnicas. En ejecución autónoma, no preguntes: deja dudas marcadas y enuméralas en el reporte.
 4. Redacta todas las secciones de la Parte A, incluyendo «Fuera de alcance» y trazabilidad. Registra cada `[NECESITA ACLARACIÓN: …]` tanto en la spec como en `docs/risks-and-open-questions.md`, siguiendo `fase-a.md`.
 5. Pasa el Gate A de `gates.md`; corrige hasta 3 iteraciones. Si aún falla, conserva las incógnitas explícitas, continúa con la spec y reporta el gap.
 
@@ -33,8 +33,8 @@ Solo tras Gate A. Carga `fase-b.md` antes de redactar.
 
 ## Cierre, seguridad y salida
 
-Escribe dudas en `docs/risks-and-open-questions.md` y deja `status: draft` (o `needs-clarification` con dudas bloqueantes). Nunca cambies `feature_list.json` ni escribas `ready`. En retrabajo, resuelve cada hallazgo bloqueante con cambio trazado o réplica justificada y conserva las entradas anteriores de `## Clarificación`. Solo escribe `docs/specs/<id>.md` y las filas de dudas; nunca borres ni reordenes contenido existente del registro.
+Escribe dudas en `docs/risks-and-open-questions.md` y deja `status: draft` (o `needs-clarification` con dudas bloqueantes). Nunca cambies `feature_list.json` ni escribas `ready`. **Retrabajo = parche mínimo:** toca solo las secciones con hallazgos y resuelve cada uno con cambio trazado o réplica justificada; prohibido reescribir o reemitir las secciones no afectadas y no alteres las entradas anteriores de `## Clarificación` (su archivado compete a la auditoría). Solo escribe `docs/specs/<id>.md` y las filas de dudas; nunca borres ni reordenes contenido existente del registro.
 
-Reporte en ≤8 líneas: feature/spec; nº RF e iteraciones Gate A; dudas bloqueantes/no bloqueantes y supuestos; preguntas humanas pendientes; riesgos clave; estado sin cambios en `feature_list.json`; siguiente acción: auditoría independiente.
+Reporte en ≤8 líneas: feature/spec; nº RF e iteraciones Gate A; dudas bloqueantes/no bloqueantes y supuestos; preguntas humanas pendientes; riesgos clave; en retrabajo, secciones tocadas (1 línea cada una); estado sin cambios en `feature_list.json`; siguiente acción: auditoría independiente.
 
 `example-spec.md` es opcional y se carga solo si hace falta calibrar el nivel de detalle.
