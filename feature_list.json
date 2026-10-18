@@ -58,6 +58,24 @@
       "status": "validated"
     },
     {
+      "id": "sincronizar-spec-de-crear-receta",
+      "category": "tecnica",
+      "description": "La spec de crear-receta refleja el Publicar deshabilitado con la lista de requisitos junto al dock, en línea con el producto ya entregado.",
+      "depends_on": [
+        "afinar-fidelidad-visual-del-formulario"
+      ],
+      "steps": [
+        "Actualizar RF-15 y RF-16 de docs/specs/crear-receta.md al comportamiento de Publicar deshabilitado con la lista de requisitos junto al dock",
+        "Alinear Casos límite, Plan de verificación y Trazabilidad de docs/specs/crear-receta.md con ese comportamiento",
+        "Marcar la tarea T6 en docs/specs/afinar-fidelidad-visual-del-formulario.md"
+      ],
+      "verify": [
+        "Revisar que RF-15, RF-16, Casos límite, Plan de verificación y Trazabilidad de docs/specs/crear-receta.md describen Publicar deshabilitado con la lista de requisitos, sin contradicción con CrearRecetaE2ETest",
+        "Comprobar que el checkbox T6 de docs/specs/afinar-fidelidad-visual-del-formulario.md queda marcado"
+      ],
+      "status": "not_started"
+    },
+    {
       "id": "editar-receta",
       "category": "funcional",
       "description": "El usuario modifica una receta existente sin perder su estado.",
@@ -71,7 +89,7 @@
       "verify": [
         "E2E: editar el título de una receta publicada y comprobar que Mis Recetas muestra el nuevo título"
       ],
-      "status": "not_started"
+      "status": "ready"
     },
     {
       "id": "eliminar-receta",
