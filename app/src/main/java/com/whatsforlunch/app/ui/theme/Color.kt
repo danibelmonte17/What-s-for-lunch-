@@ -46,6 +46,11 @@ val OnError = Color(0xFFFFFFFF)
 val ErrorContainer = Color(0xFFFFDAD6)
 val OnErrorContainer = Color(0xFF93000A)
 
+// Sombra cálida ámbar-carbón (uxdocs/DESIGN.md §Ambient Shadow Character):
+// rgba(30, 41, 59, 0.06) con una dispersión cálida rgba(224, 90, 55, 0.04).
+val WarmShadowSpot = Color(0x0F1E293B)
+val WarmShadowAmbient = Color(0x0AE05A37)
+
 // Fondo
 val Background = Color(0xFFFBF9F5)
 val OnBackground = Color(0xFF1B1C1A)

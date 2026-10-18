@@ -23,7 +23,9 @@
       "id": "crear-receta",
       "category": "funcional",
       "description": "El usuario crea una receta propia desde el formulario de alta.",
-      "depends_on": ["arrancar-app-en-mis-recetas"],
+      "depends_on": [
+        "arrancar-app-en-mis-recetas"
+      ],
       "steps": [
         "Implementar el formulario con título, historia, momento culinario, tiempos, dificultad, raciones base y foto opcional",
         "Implementar el gestor dinámico de ingredientes con cantidad, unidad y marca de opcional",
@@ -38,10 +40,30 @@
       "status": "validated"
     },
     {
+      "id": "afinar-fidelidad-visual-del-formulario",
+      "category": "funcional",
+      "description": "El formulario de alta de receta es 1:1 con el prototipo de uxdocs.",
+      "depends_on": [
+        "crear-receta"
+      ],
+      "steps": [
+        "Comparar atributo a atributo el formulario con uxdocs/chefencasa_registrar_y_editar_receta/code.html y los tokens de uxdocs/DESIGN.md",
+        "Corregir las divergencias de rol de token detectadas al validar crear-receta (campos y chips en superficie #E4E2DE y chip seleccionado en primary en lugar de secondaryContainer)",
+        "Alinear las tarjetas de Mis Recetas con uxdocs/chefencasa_mis_recetas_y_crud/code.html"
+      ],
+      "verify": [
+        "E2E: capturar el formulario y Mis Recetas en emulador API 30+ y comprobar por muestreo de píxeles que los colores coinciden con los roles del prototipo",
+        "E2E: comprobar con uiautomator que existen los bloques, textos, iconos y controles del prototipo y que el estado deshabilitado es distinguible"
+      ],
+      "status": "validated"
+    },
+    {
       "id": "editar-receta",
       "category": "funcional",
       "description": "El usuario modifica una receta existente sin perder su estado.",
-      "depends_on": ["crear-receta"],
+      "depends_on": [
+        "crear-receta"
+      ],
       "steps": [
         "Precargar el formulario con los datos de la receta existente",
         "Guardar los cambios manteniendo el estado Borrador o Publicada"
@@ -55,7 +77,9 @@
       "id": "eliminar-receta",
       "category": "funcional",
       "description": "El usuario borra una receta tras confirmar la acción.",
-      "depends_on": ["crear-receta"],
+      "depends_on": [
+        "crear-receta"
+      ],
       "steps": [
         "Mostrar una confirmación con el nombre de la receta antes de borrar",
         "Borrar la receta de forma definitiva sin papelera según RD04"
@@ -70,7 +94,9 @@
       "id": "buscar-y-filtrar-recetas",
       "category": "funcional",
       "description": "El usuario localiza recetas combinando búsqueda textual con filtro de momento culinario.",
-      "depends_on": ["crear-receta"],
+      "depends_on": [
+        "crear-receta"
+      ],
       "steps": [
         "Implementar el buscador con debounce sobre título e ingredientes",
         "Implementar el filtro por momento culinario: Desayuno, Almuerzo, Cena, Postre"
@@ -85,7 +111,9 @@
       "id": "gestionar-alimentos-de-la-despensa",
       "category": "funcional",
       "description": "El usuario mantiene el listado de alimentos disponibles en la Despensa.",
-      "depends_on": ["arrancar-app-en-mis-recetas"],
+      "depends_on": [
+        "arrancar-app-en-mis-recetas"
+      ],
       "steps": [
         "Implementar el listado de la Despensa con alta, edición y baja de Alimentos",
         "Persistir los Alimentos en Room"
@@ -100,7 +128,10 @@
       "id": "mostrar-badge-de-coincidencia",
       "category": "funcional",
       "description": "Cada receta muestra su porcentaje de coincidencia con la Despensa.",
-      "depends_on": ["crear-receta", "gestionar-alimentos-de-la-despensa"],
+      "depends_on": [
+        "crear-receta",
+        "gestionar-alimentos-de-la-despensa"
+      ],
       "steps": [
         "Calcular la Coincidencia según RD01 y RD10 sobre los ingredientes obligatorios",
         "Mostrar el badge de coincidencia en las tarjetas de Mis Recetas según RD02"
@@ -115,7 +146,9 @@
       "id": "escanear-despensa-con-camara",
       "category": "funcional",
       "description": "El usuario llena la Despensa escaneando alimentos con la cámara.",
-      "depends_on": ["gestionar-alimentos-de-la-despensa"],
+      "depends_on": [
+        "gestionar-alimentos-de-la-despensa"
+      ],
       "steps": [
         "Mostrar el visor de cámara con las etiquetas de detección",
         "Detectar Alimentos con MediaPipe en el dispositivo",
@@ -132,7 +165,10 @@
       "id": "mostrar-recetas-compatibles",
       "category": "funcional",
       "description": "El Escáner lista recetas compatibles ordenadas por coincidencia.",
-      "depends_on": ["mostrar-badge-de-coincidencia", "escanear-despensa-con-camara"],
+      "depends_on": [
+        "mostrar-badge-de-coincidencia",
+        "escanear-despensa-con-camara"
+      ],
       "steps": [
         "Calcular la coincidencia de las recetas de Mis Recetas frente a la Despensa",
         "Mostrar el carrusel de recetas compatibles en el Escáner con los badges 100% y 85% según RD02"
@@ -146,7 +182,9 @@
       "id": "configurar-acceso-a-ia",
       "category": "seguridad",
       "description": "El usuario registra su API key de IA en Ajustes con aviso de privacidad.",
-      "depends_on": ["arrancar-app-en-mis-recetas"],
+      "depends_on": [
+        "arrancar-app-en-mis-recetas"
+      ],
       "steps": [
         "Crear la pantalla Ajustes con el campo para la API key del proveedor de IA",
         "Guardar la API key cifrada en el dispositivo sin escribirla nunca en el repositorio según S05",
@@ -162,7 +200,10 @@
       "id": "sugerir-recetas-con-ia",
       "category": "funcional",
       "description": "La IA propone recetas nuevas basadas en el contenido de la Despensa.",
-      "depends_on": ["mostrar-recetas-compatibles", "configurar-acceso-a-ia"],
+      "depends_on": [
+        "mostrar-recetas-compatibles",
+        "configurar-acceso-a-ia"
+      ],
       "steps": [
         "Enviar el contenido de la Despensa al proveedor de IA compatible con OpenAI",
         "Mostrar las Sugerencias como recetas propuestas con su coincidencia"
@@ -177,7 +218,9 @@
       "id": "aceptar-sugerencia-de-receta",
       "category": "funcional",
       "description": "El usuario guarda una sugerencia de la IA como receta propia.",
-      "depends_on": ["sugerir-recetas-con-ia"],
+      "depends_on": [
+        "sugerir-recetas-con-ia"
+      ],
       "steps": [
         "Guardar la Sugerencia aceptada como Receta con origen Sugerencia según RD07",
         "Descartar la Sugerencia sin guardar nada"
@@ -192,7 +235,9 @@
       "id": "degradar-ante-fallo-de-ia",
       "category": "tecnica",
       "description": "La app avisa del fallo de la IA ofreciendo la entrada manual.",
-      "depends_on": ["sugerir-recetas-con-ia"],
+      "depends_on": [
+        "sugerir-recetas-con-ia"
+      ],
       "steps": [
         "Detectar el fallo de la red o del proveedor de IA y mostrar un aviso claro",
         "Ofrecer la entrada manual por chips sin bloquear el flujo según RD05"
@@ -206,7 +251,9 @@
       "id": "ver-detalle-de-receta",
       "category": "funcional",
       "description": "El usuario consulta la ficha completa de una receta.",
-      "depends_on": ["crear-receta"],
+      "depends_on": [
+        "crear-receta"
+      ],
       "steps": [
         "Mostrar el hero con badge de coincidencia, métricas de tiempo, dificultad y calorías con los utensilios",
         "Mostrar el checklist de ingredientes con obligatorios y opcionales junto a los pasos resumidos",
@@ -221,7 +268,9 @@
       "id": "escalar-raciones",
       "category": "funcional",
       "description": "Las cantidades de la receta se recalculan al cambiar las raciones.",
-      "depends_on": ["ver-detalle-de-receta"],
+      "depends_on": [
+        "ver-detalle-de-receta"
+      ],
       "steps": [
         "Implementar el selector de raciones con límites 1-12",
         "Recalcular las cantidades de los ingredientes según RD03"
@@ -236,7 +285,9 @@
       "id": "cocinar-paso-a-paso",
       "category": "funcional",
       "description": "El usuario cocina siguiendo la receta paso a paso con la pantalla de Modo Cocina.",
-      "depends_on": ["ver-detalle-de-receta"],
+      "depends_on": [
+        "ver-detalle-de-receta"
+      ],
       "steps": [
         "Implementar la pantalla de Modo Cocina con alto contraste y tipografía grande",
         "Mostrar la barra de avance Paso X de Y junto al drawer de ingredientes del paso activo"
@@ -251,7 +302,9 @@
       "id": "gestionar-temporizador-de-paso",
       "category": "funcional",
       "description": "El usuario controla el temporizador del paso incluida su alarma.",
-      "depends_on": ["cocinar-paso-a-paso"],
+      "depends_on": [
+        "cocinar-paso-a-paso"
+      ],
       "steps": [
         "Implementar el temporizador circular con cuenta atrás para el paso activo",
         "Reproducir la alarma al llegar a cero y ofrecer la ampliación de un minuto"
@@ -266,7 +319,9 @@
       "id": "controlar-cocina-con-voz",
       "category": "funcional",
       "description": "El usuario avanza la receta con comandos de voz en Modo Cocina.",
-      "depends_on": ["cocinar-paso-a-paso"],
+      "depends_on": [
+        "cocinar-paso-a-paso"
+      ],
       "steps": [
         "Locutar cada paso con la síntesis de voz del sistema según S04",
         "Reconocer los comandos de voz Siguiente, Repetir y Pausar tiempo según S04"
@@ -280,7 +335,10 @@
       "id": "resolver-dudas-con-pinche",
       "category": "funcional",
       "description": "El usuario conversa con el Pinche para resolver dudas de cocina.",
-      "depends_on": ["configurar-acceso-a-ia", "aceptar-sugerencia-de-receta"],
+      "depends_on": [
+        "configurar-acceso-a-ia",
+        "aceptar-sugerencia-de-receta"
+      ],
       "steps": [
         "Implementar la conversación del Pinche con chips de sugerencias",
         "Mostrar cards ejecutables de receta con acceso al Modo Cocina",
@@ -296,7 +354,10 @@
       "id": "anadir-faltantes-a-la-lista",
       "category": "funcional",
       "description": "La app añade a la Lista de la Compra los ingredientes que faltan.",
-      "depends_on": ["crear-receta", "gestionar-alimentos-de-la-despensa"],
+      "depends_on": [
+        "crear-receta",
+        "gestionar-alimentos-de-la-despensa"
+      ],
       "steps": [
         "Detectar los ingredientes obligatorios ausentes al ver una receta o tras un escaneo",
         "Crear los ítems de la Lista de la Compra con su Origen según RD09"
@@ -311,7 +372,9 @@
       "id": "anadir-item-a-la-lista",
       "category": "funcional",
       "description": "El usuario añade artículos a la Lista de la Compra por texto o voz.",
-      "depends_on": ["anadir-faltantes-a-la-lista"],
+      "depends_on": [
+        "anadir-faltantes-a-la-lista"
+      ],
       "steps": [
         "Permitir el alta manual de artículos con cantidad y Pasillo",
         "Permitir el alta por dictado de voz según S04"
@@ -325,7 +388,9 @@
       "id": "agrupar-y-completar-la-lista",
       "category": "funcional",
       "description": "La Lista de la Compra se agrupa por pasillo o por receta con progreso.",
-      "depends_on": ["anadir-faltantes-a-la-lista"],
+      "depends_on": [
+        "anadir-faltantes-a-la-lista"
+      ],
       "steps": [
         "Agrupar los ítems por Pasillo o por Receta según el tab elegido",
         "Marcar los ítems como completados con checkbox y mostrar la barra de progreso"
@@ -340,7 +405,9 @@
       "id": "cambiar-idioma-de-la-interfaz",
       "category": "funcional",
       "description": "El usuario cambia el idioma de la interfaz entre español e inglés.",
-      "depends_on": ["configurar-acceso-a-ia"],
+      "depends_on": [
+        "configurar-acceso-a-ia"
+      ],
       "steps": [
         "Mostrar el selector de idioma español e inglés en Ajustes",
         "Aplicar el idioma elegido en los textos de todas las pantallas"

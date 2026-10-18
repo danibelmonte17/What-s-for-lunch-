@@ -2,28 +2,59 @@ package com.whatsforlunch.app.ui.crearreceta
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DragIndicator
+import androidx.compose.material.icons.outlined.Drafts
+import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.RestaurantMenu
+import androidx.compose.material.icons.outlined.ShoppingBasket
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -33,18 +64,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.crearreceta.RecipeRequirement
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
+import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
+import com.whatsforlunch.app.ui.theme.warmShadow
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
 object CrearRecetaTestTags {
@@ -77,6 +115,20 @@ object CrearRecetaTestTags {
     const val NOTICE = "crear_receta_notice"
     const val PUBLISH_ERRORS = "crear_receta_publish_errors"
 
+    // Bloques y controles del rediseño fiel al prototipo (RF-1 a RF-8, RF-21).
+    const val HEADER_SAVE = "crear_receta_header_save"
+    const val STATUS_BADGE = "crear_receta_status_badge"
+    const val COVER = "crear_receta_cover"
+    const val BASIC_SECTION = "crear_receta_basic_section"
+    const val METRICS_GRID = "crear_receta_metrics_grid"
+    const val METRICS_TIME = "crear_receta_metrics_time"
+    const val METRICS_DIFFICULTY = "crear_receta_metrics_difficulty"
+    const val METRICS_SERVINGS = "crear_receta_metrics_servings"
+    const val INGREDIENTS_SECTION = "crear_receta_ingredients_section"
+    const val STEPS_SECTION = "crear_receta_steps_section"
+    const val FAVORITE_SECTION = "crear_receta_favorite_section"
+    const val ACTION_DOCK = "crear_receta_action_dock"
+
     fun ingredientName(index: Int) = "crear_receta_ingredient_name_$index"
 
     fun ingredientQuantity(index: Int) = "crear_receta_ingredient_quantity_$index"
@@ -92,6 +144,8 @@ object CrearRecetaTestTags {
     fun stepTimer(index: Int) = "crear_receta_step_timer_$index"
 
     fun removeStep(index: Int) = "crear_receta_remove_step_$index"
+
+    fun stepNumber(index: Int) = "crear_receta_step_number_$index"
 }
 
 // Acciones del formulario, agrupadas para no saturar la firma de la pantalla.
@@ -125,6 +179,12 @@ class CrearRecetaActions(
     val onDismissNotice: () -> Unit = {},
 )
 
+// Formas del sistema visual: 1rem en secciones, 0.75rem en campos y píldora en
+// chips y badges (RF-13).
+private val SectionShape: Shape = RoundedCornerShape(WarmRadius.lg)
+private val FieldShape: Shape = RoundedCornerShape(WarmRadius.md)
+private val PillShape: Shape = RoundedCornerShape(50)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrearRecetaScreen(
@@ -135,23 +195,8 @@ fun CrearRecetaScreen(
     Scaffold(
         modifier = modifier.testTag(CrearRecetaTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.crear_receta_title)) },
-                navigationIcon = {
-                    TextButton(
-                        onClick = actions.onBack,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Text(text = stringResource(R.string.action_back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-            )
-        },
+        topBar = { FormHeader(actions = actions) },
+        bottomBar = { ActionDock(uiState = uiState, actions = actions) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -159,29 +204,109 @@ fun CrearRecetaScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = WarmSpacing.md)
-                .padding(bottom = WarmSpacing.xl),
+                .padding(bottom = WarmSpacing.md),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
         ) {
             uiState.notice?.let { notice ->
                 NoticeBanner(notice = notice, onDismiss = actions.onDismissNotice)
             }
-            if (uiState.publishErrors.isNotEmpty()) {
-                PublishErrors(errors = uiState.publishErrors)
-            }
-            PhotoSection(uiState = uiState, actions = actions)
+            PhotoCover(uiState = uiState, actions = actions)
             BasicInfoSection(uiState = uiState, actions = actions)
-            MetricsSection(uiState = uiState, actions = actions)
+            MetricsGrid(uiState = uiState, actions = actions)
             IngredientsSection(uiState = uiState, actions = actions)
             StepsSection(uiState = uiState, actions = actions)
             FavoriteSection(uiState = uiState, actions = actions)
-            ActionDock(actions = actions)
         }
+    }
+}
+
+// RF-3: cabecera con el título del formulario, el distintivo de estado y «Guardar».
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FormHeader(actions: CrearRecetaActions) {
+    TopAppBar(
+        navigationIcon = {
+            TextButton(
+                onClick = actions.onBack,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Text(text = stringResource(R.string.action_back))
+            }
+        },
+        title = {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.crear_receta_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                    StatusBadge()
+                }
+                Text(
+                    text = stringResource(R.string.crear_receta_header_subtitle),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        actions = {
+            Button(
+                onClick = actions.onSaveDraft,
+                shape = FieldShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                modifier = Modifier
+                    .padding(end = WarmSpacing.sm)
+                    .heightIn(min = 48.dp)
+                    .testTag(CrearRecetaTestTags.HEADER_SAVE),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.BookmarkBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                Text(text = stringResource(R.string.action_save))
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+    )
+}
+
+// Distintivo de estado de la Receta (Borrador/Publicada) en píldora (RF-3, RF-13).
+@Composable
+private fun StatusBadge() {
+    Surface(
+        shape = PillShape,
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+        contentColor = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.testTag(CrearRecetaTestTags.STATUS_BADGE),
+    ) {
+        Text(
+            text = stringResource(R.string.mis_recetas_status_draft),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
+        )
     }
 }
 
 @Composable
 private fun NoticeBanner(notice: CrearRecetaNotice, onDismiss: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.NOTICE)) {
+    Surface(
+        shape = SectionShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = Modifier
+            .fillMaxWidth()
+            .warmShadow(shape = SectionShape)
+            .testTag(CrearRecetaTestTags.NOTICE),
+    ) {
         Row(
             modifier = Modifier.padding(WarmSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
@@ -199,6 +324,7 @@ private fun NoticeBanner(notice: CrearRecetaNotice, onDismiss: () -> Unit) {
     }
 }
 
+// RF-15: junto al dock se enumeran los requisitos incumplidos que impiden Publicar.
 @Composable
 private fun PublishErrors(errors: Set<RecipeRequirement>) {
     Column(modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.PUBLISH_ERRORS)) {
@@ -217,29 +343,49 @@ private fun PublishErrors(errors: Set<RecipeRequirement>) {
     }
 }
 
+// RF-2: portada de foto a ancho completo con los controles de foto al pie.
 @Composable
-private fun PhotoSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(WarmSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+private fun PhotoCover(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+    val bitmap = rememberBitmap(uiState.photoPath)
+    val coverLabel = stringResource(R.string.crear_receta_photo_section)
+    Surface(
+        shape = SectionShape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier
+            .fillMaxWidth()
+            .warmShadow(shape = SectionShape)
+            .semantics { contentDescription = coverLabel }
+            .testTag(CrearRecetaTestTags.COVER),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp),
         ) {
-            Text(
-                text = stringResource(R.string.crear_receta_photo_section),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            val bitmap = rememberBitmap(uiState.photoPath)
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap,
                     contentDescription = stringResource(R.string.crear_receta_photo_preview),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 160.dp)
-                        .clip(RoundedCornerShape(WarmSpacing.sm))
+                        .fillMaxSize()
+                        .clip(SectionShape)
                         .testTag(CrearRecetaTestTags.PHOTO_PREVIEW),
                 )
+                TextButton(
+                    onClick = actions.onRemovePhoto,
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.9f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(WarmSpacing.sm)
+                        .heightIn(min = 48.dp)
+                        .testTag(CrearRecetaTestTags.PHOTO_REMOVE),
+                ) {
+                    Text(text = stringResource(R.string.crear_receta_photo_remove))
+                }
             } else {
                 Text(
                     text = stringResource(
@@ -251,386 +397,841 @@ private fun PhotoSection(uiState: CrearRecetaUiState, actions: CrearRecetaAction
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(WarmSpacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
             ) {
-                FilledTonalButton(
+                PhotoControlButton(
+                    labelRes = R.string.crear_receta_photo_gallery,
+                    icon = Icons.Outlined.PhotoLibrary,
                     onClick = actions.onPickPhotoFromGallery,
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(CrearRecetaTestTags.PHOTO_GALLERY),
-                ) {
-                    Text(text = stringResource(R.string.crear_receta_photo_gallery))
-                }
-                FilledTonalButton(
+                    testTag = CrearRecetaTestTags.PHOTO_GALLERY,
+                    modifier = Modifier.weight(1f),
+                )
+                PhotoControlButton(
+                    labelRes = R.string.crear_receta_photo_camera,
+                    icon = Icons.Outlined.PhotoCamera,
                     onClick = actions.onTakePhoto,
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(CrearRecetaTestTags.PHOTO_CAMERA),
-                ) {
-                    Text(text = stringResource(R.string.crear_receta_photo_camera))
-                }
-            }
-            Button(
-                onClick = actions.onGeneratePhoto,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(CrearRecetaTestTags.PHOTO_GENERATE),
-            ) {
-                Text(text = stringResource(R.string.crear_receta_photo_generate))
-            }
-            if (uiState.photoPath != null) {
-                TextButton(
-                    onClick = actions.onRemovePhoto,
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(CrearRecetaTestTags.PHOTO_REMOVE),
-                ) {
-                    Text(text = stringResource(R.string.crear_receta_photo_remove))
-                }
+                    testTag = CrearRecetaTestTags.PHOTO_CAMERA,
+                    modifier = Modifier.weight(1f),
+                )
+                PhotoControlButton(
+                    labelRes = R.string.crear_receta_photo_generate,
+                    icon = Icons.Outlined.AutoAwesome,
+                    onClick = actions.onGeneratePhoto,
+                    testTag = CrearRecetaTestTags.PHOTO_GENERATE,
+                    modifier = Modifier.weight(1.3f),
+                    primary = true,
+                )
             }
         }
     }
 }
 
+@Composable
+private fun RowScope.PhotoControlButton(
+    labelRes: Int,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    primary: Boolean = false,
+) {
+    Button(
+        onClick = onClick,
+        shape = FieldShape,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = WarmSpacing.xs,
+            vertical = WarmSpacing.xs,
+        ),
+        colors = if (primary) {
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        } else {
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            )
+        },
+        modifier = modifier.heightIn(min = 48.dp).testTag(testTag),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (primary) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.primary
+            },
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+        Text(text = stringResource(labelRes), style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+// RF-4 e información básica: título, historia y fila de chips de momento culinario.
 @Composable
 private fun BasicInfoSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(WarmSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-        ) {
+    SectionCard(testTag = CrearRecetaTestTags.BASIC_SECTION) {
+        Text(
+            text = stringResource(R.string.crear_receta_basic_section),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.crear_receta_basic_section),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            OutlinedTextField(
-                value = uiState.title,
-                onValueChange = actions.onTitleChange,
-                label = { Text(text = stringResource(R.string.crear_receta_title_label)) },
-                isError = uiState.titleError,
-                supportingText = if (uiState.titleError) {
-                    { Text(text = stringResource(R.string.crear_receta_title_required)) }
-                } else {
-                    null
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.TITLE_FIELD),
-            )
-            OutlinedTextField(
-                value = uiState.story,
-                onValueChange = actions.onStoryChange,
-                label = { Text(text = stringResource(R.string.crear_receta_story_label)) },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.STORY_FIELD),
-            )
-            Text(
-                text = stringResource(R.string.crear_receta_moment_label),
+                text = stringResource(R.string.crear_receta_title_label),
                 style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            Spacer(modifier = Modifier.weight(1f))
+            Surface(
+                shape = PillShape,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ) {
-                MealMoment.entries.forEach { moment ->
-                    FilterChip(
-                        selected = uiState.mealMoment == moment,
-                        onClick = { actions.onMealMomentChange(moment) },
-                        label = { Text(text = stringResource(moment.labelRes())) },
-                        modifier = Modifier.heightIn(min = 48.dp).testTag(moment.testTag()),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MetricsSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(WarmSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-        ) {
-            Text(
-                text = stringResource(R.string.crear_receta_metrics_section),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            OutlinedTextField(
-                value = uiState.prepMinutes,
-                onValueChange = actions.onPrepMinutesChange,
-                label = { Text(text = stringResource(R.string.crear_receta_prep_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.PREP_MINUTES_FIELD),
-            )
-            OutlinedTextField(
-                value = uiState.cookMinutes,
-                onValueChange = actions.onCookMinutesChange,
-                label = { Text(text = stringResource(R.string.crear_receta_cook_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.COOK_MINUTES_FIELD),
-            )
-            Text(
-                text = stringResource(R.string.crear_receta_difficulty_label),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
-                Difficulty.entries.forEach { difficulty ->
-                    FilterChip(
-                        selected = uiState.difficulty == difficulty,
-                        onClick = { actions.onDifficultyChange(difficulty) },
-                        label = { Text(text = stringResource(difficulty.labelRes())) },
-                        modifier = Modifier.heightIn(min = 48.dp).testTag(difficulty.testTag()),
-                    )
-                }
-            }
-            Text(
-                text = stringResource(R.string.crear_receta_servings_label),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(
-                    onClick = {
-                        actions.onServingsChange(uiState.baseServings - 1)
-                    },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(CrearRecetaTestTags.SERVINGS_DECREASE),
-                ) {
-                    Text(text = stringResource(R.string.crear_receta_servings_decrease))
-                }
                 Text(
-                    text = uiState.baseServings.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(horizontal = WarmSpacing.md).testTag(CrearRecetaTestTags.SERVINGS_VALUE),
+                    text = stringResource(R.string.crear_receta_required_badge),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(
+                        horizontal = WarmSpacing.sm,
+                        vertical = 2.dp,
+                    ),
                 )
-                TextButton(
-                    onClick = {
-                        actions.onServingsChange(uiState.baseServings + 1)
-                    },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(CrearRecetaTestTags.SERVINGS_INCREASE),
-                ) {
-                    Text(text = stringResource(R.string.crear_receta_servings_increase))
-                }
             }
-            OutlinedTextField(
-                value = uiState.caloriesPerServing,
-                onValueChange = actions.onCaloriesChange,
-                label = { Text(text = stringResource(R.string.crear_receta_calories_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.CALORIES_FIELD),
+        }
+        OutlinedTextField(
+            value = uiState.title,
+            onValueChange = actions.onTitleChange,
+            placeholder = { Text(text = stringResource(R.string.crear_receta_title_placeholder)) },
+            isError = uiState.titleError,
+            supportingText = if (uiState.titleError) {
+                { Text(text = stringResource(R.string.crear_receta_title_required)) }
+            } else {
+                null
+            },
+            singleLine = true,
+            shape = FieldShape,
+            colors = warmFieldColors(),
+            modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.TITLE_FIELD),
+        )
+        Text(
+            text = stringResource(R.string.crear_receta_story_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        OutlinedTextField(
+            value = uiState.story,
+            onValueChange = actions.onStoryChange,
+            placeholder = { Text(text = stringResource(R.string.crear_receta_story_placeholder)) },
+            minLines = 2,
+            shape = FieldShape,
+            colors = warmFieldColors(),
+            modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.STORY_FIELD),
+        )
+        OutlinedTextField(
+            value = uiState.caloriesPerServing,
+            onValueChange = actions.onCaloriesChange,
+            placeholder = { Text(text = stringResource(R.string.crear_receta_calories_label)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            shape = FieldShape,
+            colors = warmFieldColors(),
+            modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.CALORIES_FIELD),
+        )
+        Text(
+            text = stringResource(R.string.crear_receta_moment_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        ) {
+            MealMoment.entries.forEach { moment ->
+                SelectionChip(
+                    selected = uiState.mealMoment == moment,
+                    onClick = { actions.onMealMomentChange(moment) },
+                    label = stringResource(moment.labelRes()),
+                    testTag = moment.testTag(),
+                )
+            }
+        }
+    }
+}
+
+// RF-5: rejilla de tres bloques (tiempo, dificultad y raciones) con icono y control.
+@Composable
+private fun MetricsGrid(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+    Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
+        Text(
+            text = stringResource(R.string.crear_receta_metrics_section),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CrearRecetaTestTags.METRICS_GRID),
+            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        ) {
+            TimeMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
+            DifficultyMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
+            ServingsMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun TimeMetricBlock(
+    uiState: CrearRecetaUiState,
+    actions: CrearRecetaActions,
+    modifier: Modifier = Modifier,
+) {
+    MetricBlock(
+        label = R.string.crear_receta_metrics_time,
+        icon = Icons.Outlined.Timer,
+        iconTint = MaterialTheme.colorScheme.primary,
+        testTag = CrearRecetaTestTags.METRICS_TIME,
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(R.string.crear_receta_prep_short_label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = uiState.prepMinutes,
+            onValueChange = actions.onPrepMinutesChange,
+            placeholder = { Text(text = "0") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            shape = FieldShape,
+            colors = warmFieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .testTag(CrearRecetaTestTags.PREP_MINUTES_FIELD),
+        )
+        Text(
+            text = stringResource(R.string.crear_receta_cook_short_label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = uiState.cookMinutes,
+            onValueChange = actions.onCookMinutesChange,
+            placeholder = { Text(text = "0") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            shape = FieldShape,
+            colors = warmFieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .testTag(CrearRecetaTestTags.COOK_MINUTES_FIELD),
+        )
+        Text(
+            text = stringResource(R.string.crear_receta_metrics_time_unit),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun DifficultyMetricBlock(
+    uiState: CrearRecetaUiState,
+    actions: CrearRecetaActions,
+    modifier: Modifier = Modifier,
+) {
+    MetricBlock(
+        label = R.string.crear_receta_metrics_difficulty,
+        icon = Icons.Outlined.BarChart,
+        iconTint = MaterialTheme.colorScheme.secondary,
+        testTag = CrearRecetaTestTags.METRICS_DIFFICULTY,
+        modifier = modifier,
+    ) {
+        Difficulty.entries.forEach { difficulty ->
+            SelectionChip(
+                selected = uiState.difficulty == difficulty,
+                onClick = { actions.onDifficultyChange(difficulty) },
+                label = stringResource(difficulty.labelRes()),
+                testTag = difficulty.testTag(),
             )
         }
     }
 }
 
 @Composable
-private fun IngredientsSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    val showRowError = RecipeRequirement.INVALID_INGREDIENT in uiState.publishErrors
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(WarmSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+private fun ServingsMetricBlock(
+    uiState: CrearRecetaUiState,
+    actions: CrearRecetaActions,
+    modifier: Modifier = Modifier,
+) {
+    MetricBlock(
+        label = R.string.crear_receta_metrics_servings,
+        icon = Icons.Outlined.Groups,
+        iconTint = MaterialTheme.colorScheme.tertiary,
+        testTag = CrearRecetaTestTags.METRICS_SERVINGS,
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom,
         ) {
             Text(
-                text = stringResource(R.string.crear_receta_ingredients_title),
+                text = uiState.baseServings.toString(),
                 style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.testTag(CrearRecetaTestTags.SERVINGS_VALUE),
             )
-            uiState.ingredients.forEachIndexed { index, row ->
-                IngredientRow(
-                    row = row,
-                    index = index,
-                    showError = showRowError && !row.isValid,
-                    actions = actions,
-                )
-            }
-            FilledTonalButton(
-                onClick = actions.onAddIngredient,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(CrearRecetaTestTags.ADD_INGREDIENT),
-            ) {
-                Text(text = stringResource(R.string.crear_receta_add_ingredient))
-            }
+            Text(
+                text = stringResource(R.string.crear_receta_metrics_servings_unit),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            StepperButton(
+                symbol = stringResource(R.string.crear_receta_servings_decrease),
+                testTag = CrearRecetaTestTags.SERVINGS_DECREASE,
+                onClick = { actions.onServingsChange(uiState.baseServings - 1) },
+            )
+            StepperButton(
+                symbol = stringResource(R.string.crear_receta_servings_increase),
+                testTag = CrearRecetaTestTags.SERVINGS_INCREASE,
+                onClick = { actions.onServingsChange(uiState.baseServings + 1) },
+            )
         }
     }
 }
 
 @Composable
-private fun IngredientRow(
-    row: IngredientFieldUiState,
-    index: Int,
-    showError: Boolean,
-    actions: CrearRecetaActions,
+private fun MetricBlock(
+    label: Int,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card {
+    Surface(
+        shape = SectionShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = modifier
+            .warmShadow(shape = SectionShape)
+            .testTag(testTag),
+    ) {
         Column(
             modifier = Modifier.padding(WarmSpacing.sm),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = stringResource(label),
+                    tint = iconTint,
+                    modifier = Modifier.size(14.dp),
+                )
+                Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                Text(
+                    text = stringResource(label),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            content()
+        }
+    }
+}
+
+@Composable
+private fun StepperButton(symbol: String, testTag: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(onClick = onClick)
+            .testTag(testTag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = symbol,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+// Chip de selección con los roles de token del prototipo: seleccionado en
+// primary/on-primary y no seleccionado en surface-container-low (RF-10, RF-11).
+@Composable
+private fun SelectionChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: String,
+    testTag: String,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+            )
+        },
+        shape = PillShape,
+        border = null,
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        modifier = Modifier.heightIn(min = 48.dp).testTag(testTag),
+    )
+}
+
+// RF-6: cada fila de Ingrediente en línea (asa decorativa sin reordenado,
+// Q-afinar-fidelidad-visual-del-formulario-1).
+@Composable
+private fun IngredientsSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+    SectionCard(testTag = CrearRecetaTestTags.INGREDIENTS_SECTION) {
+        SectionHeader(
+            icon = Icons.Outlined.ShoppingBasket,
+            iconTint = MaterialTheme.colorScheme.secondary,
+            title = R.string.crear_receta_ingredients_title,
+            trailing = {
+                CountBadge(
+                    text = stringResource(R.string.crear_receta_ingredients_count, uiState.ingredients.size),
+                )
+            },
+        )
+        uiState.ingredients.forEachIndexed { index, row ->
+            IngredientRow(row = row, index = index, actions = actions)
+        }
+        AddRowButton(
+            onClick = actions.onAddIngredient,
+            label = R.string.crear_receta_add_ingredient,
+            testTag = CrearRecetaTestTags.ADD_INGREDIENT,
+        )
+    }
+}
+
+@Composable
+private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: CrearRecetaActions) {
+    val optionalLabel = stringResource(R.string.crear_receta_ingredient_optional)
+    val quantityLabel = stringResource(R.string.crear_receta_ingredient_quantity)
+    Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.DragIndicator,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(18.dp),
+            )
             OutlinedTextField(
                 value = row.name,
                 onValueChange = { actions.onIngredientNameChange(row.key, it) },
-                label = { Text(text = stringResource(R.string.crear_receta_ingredient_name)) },
+                placeholder = { Text(text = stringResource(R.string.crear_receta_ingredient_name)) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.ingredientName(index)),
+                shape = FieldShape,
+                colors = warmFieldColors(),
+                modifier = Modifier
+                    .weight(1.5f)
+                    .heightIn(min = 48.dp)
+                    .testTag(CrearRecetaTestTags.ingredientName(index)),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
-                OutlinedTextField(
-                    value = row.quantity,
-                    onValueChange = { actions.onIngredientQuantityChange(row.key, it) },
-                    label = { Text(text = stringResource(R.string.crear_receta_ingredient_quantity)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f).testTag(CrearRecetaTestTags.ingredientQuantity(index)),
-                )
-                OutlinedTextField(
-                    value = row.unit,
-                    onValueChange = { actions.onIngredientUnitChange(row.key, it) },
-                    label = { Text(text = stringResource(R.string.crear_receta_ingredient_unit)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f).testTag(CrearRecetaTestTags.ingredientUnit(index)),
+            OutlinedTextField(
+                value = row.quantity,
+                onValueChange = { actions.onIngredientQuantityChange(row.key, it) },
+                placeholder = { Text(text = "0") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = FieldShape,
+                colors = warmFieldColors(),
+                modifier = Modifier
+                    .weight(0.7f)
+                    .heightIn(min = 48.dp)
+                    .semantics { contentDescription = quantityLabel }
+                    .testTag(CrearRecetaTestTags.ingredientQuantity(index)),
+            )
+            OutlinedTextField(
+                value = row.unit,
+                onValueChange = { actions.onIngredientUnitChange(row.key, it) },
+                placeholder = { Text(text = stringResource(R.string.crear_receta_ingredient_unit)) },
+                singleLine = true,
+                shape = FieldShape,
+                colors = warmFieldColors(),
+                modifier = Modifier
+                    .weight(0.8f)
+                    .heightIn(min = 48.dp)
+                    .testTag(CrearRecetaTestTags.ingredientUnit(index)),
+            )
+            Checkbox(
+                checked = row.optional,
+                onCheckedChange = { actions.onIngredientOptionalChange(row.key, it) },
+                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .semantics { contentDescription = optionalLabel }
+                    .testTag(CrearRecetaTestTags.ingredientOptional(index)),
+            )
+            IconButton(
+                onClick = { actions.onRemoveIngredient(row.key) },
+                modifier = Modifier.testTag(CrearRecetaTestTags.removeIngredient(index)),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = stringResource(R.string.crear_receta_remove),
+                    tint = MaterialTheme.colorScheme.outline,
                 )
             }
-            if (showError) {
-                Text(
-                    text = stringResource(R.string.crear_receta_ingredient_invalid),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = row.optional,
-                    onCheckedChange = { actions.onIngredientOptionalChange(row.key, it) },
-                    modifier = Modifier.testTag(CrearRecetaTestTags.ingredientOptional(index)),
-                )
-                Text(
-                    text = stringResource(R.string.crear_receta_ingredient_optional),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                TextButton(
-                    onClick = { actions.onRemoveIngredient(row.key) },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(CrearRecetaTestTags.removeIngredient(index)),
-                ) {
-                    Text(text = stringResource(R.string.crear_receta_remove))
-                }
-            }
+        }
+        if (!row.isValid) {
+            Text(
+                text = stringResource(R.string.crear_receta_ingredient_invalid),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }
 
+// RF-7: cada Paso con su número en un círculo destacado, su texto y su temporizador.
 @Composable
 private fun StepsSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    val showRowError = RecipeRequirement.INVALID_STEP in uiState.publishErrors
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(WarmSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-        ) {
-            Text(
-                text = stringResource(R.string.crear_receta_steps_title),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            uiState.steps.forEachIndexed { index, row ->
-                StepRow(
-                    row = row,
-                    index = index,
-                    showError = showRowError && !row.isValid,
-                    actions = actions,
+    SectionCard(testTag = CrearRecetaTestTags.STEPS_SECTION) {
+        SectionHeader(
+            icon = Icons.Outlined.FormatListNumbered,
+            iconTint = MaterialTheme.colorScheme.primary,
+            title = R.string.crear_receta_steps_title,
+            trailing = {
+                CountBadge(
+                    text = stringResource(R.string.crear_receta_steps_count, uiState.steps.size),
                 )
-            }
-            FilledTonalButton(
-                onClick = actions.onAddStep,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(CrearRecetaTestTags.ADD_STEP),
-            ) {
-                Text(text = stringResource(R.string.crear_receta_add_step))
-            }
+            },
+        )
+        uiState.steps.forEachIndexed { index, row ->
+            StepRow(row = row, index = index, actions = actions)
         }
+        AddRowButton(
+            onClick = actions.onAddStep,
+            label = R.string.crear_receta_add_step,
+            testTag = CrearRecetaTestTags.ADD_STEP,
+        )
     }
 }
 
 @Composable
-private fun StepRow(
-    row: StepFieldUiState,
-    index: Int,
-    showError: Boolean,
-    actions: CrearRecetaActions,
-) {
-    Card {
+private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActions) {
+    val stepLabel = stringResource(R.string.crear_receta_step_number, index + 1)
+    Surface(
+        shape = FieldShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         Column(
             modifier = Modifier.padding(WarmSpacing.sm),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
         ) {
-            Text(
-                text = stringResource(R.string.crear_receta_step_number, index + 1),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            OutlinedTextField(
-                value = row.text,
-                onValueChange = { actions.onStepTextChange(row.key, it) },
-                label = { Text(text = stringResource(R.string.crear_receta_step_text)) },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.stepText(index)),
-            )
-            OutlinedTextField(
-                value = row.timerMinutes,
-                onValueChange = { actions.onStepTimerChange(row.key, it) },
-                label = { Text(text = stringResource(R.string.crear_receta_step_timer)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.stepTimer(index)),
-            )
-            if (showError) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .semantics { contentDescription = stepLabel }
+                        .testTag(CrearRecetaTestTags.stepNumber(index)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = (index + 1).toString(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
+                OutlinedTextField(
+                    value = row.text,
+                    onValueChange = { actions.onStepTextChange(row.key, it) },
+                    placeholder = { Text(text = stringResource(R.string.crear_receta_step_text)) },
+                    minLines = 2,
+                    shape = FieldShape,
+                    colors = warmFieldColors(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(CrearRecetaTestTags.stepText(index)),
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            ) {
+                OutlinedTextField(
+                    value = row.timerMinutes,
+                    onValueChange = { actions.onStepTimerChange(row.key, it) },
+                    placeholder = { Text(text = stringResource(R.string.crear_receta_step_timer)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = FieldShape,
+                    colors = warmFieldColors(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .testTag(CrearRecetaTestTags.stepTimer(index)),
+                )
+                IconButton(
+                    onClick = { actions.onRemoveStep(row.key) },
+                    modifier = Modifier.testTag(CrearRecetaTestTags.removeStep(index)),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = stringResource(R.string.crear_receta_remove),
+                        tint = MaterialTheme.colorScheme.outline,
+                    )
+                }
+            }
+            if (!row.isValid) {
                 Text(
                     text = stringResource(R.string.crear_receta_step_invalid),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            TextButton(
-                onClick = { actions.onRemoveStep(row.key) },
-                modifier = Modifier.heightIn(min = 48.dp).testTag(CrearRecetaTestTags.removeStep(index)),
-            ) {
-                Text(text = stringResource(R.string.crear_receta_remove))
-            }
         }
     }
 }
 
+// Bloque de favorito con su control de marcado (RF-1; control según el prototipo).
 @Composable
 private fun FavoriteSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(WarmSpacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.crear_receta_favorite),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
+    SectionCard(testTag = CrearRecetaTestTags.FAVORITE_SECTION) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp),
             )
-            Switch(
+            Spacer(modifier = Modifier.width(WarmSpacing.sm))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.crear_receta_favorite),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(R.string.crear_receta_favorite_subtitle),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Checkbox(
                 checked = uiState.favorite,
                 onCheckedChange = { actions.onFavoriteToggle() },
+                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.testTag(CrearRecetaTestTags.FAVORITE_TOGGLE),
             )
         }
     }
 }
 
+// RF-8, RF-14, RF-15 y RF-16: dock siempre visible con «Guardar Borrador» y
+// «Publicar Receta», deshabilitado (estilo distinguible) mientras falten requisitos,
+// que se enumeran junto al dock.
 @Composable
-private fun ActionDock(actions: CrearRecetaActions) {
-    Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
-        FilledTonalButton(
-            onClick = actions.onSaveDraft,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(CrearRecetaTestTags.SAVE_DRAFT),
+private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = Modifier
+            .fillMaxWidth()
+            .warmShadow(shape = RoundedCornerShape(0.dp))
+            .testTag(CrearRecetaTestTags.ACTION_DOCK),
+    ) {
+        Column(
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
-            Text(text = stringResource(R.string.crear_receta_save_draft))
-        }
-        Button(
-            onClick = actions.onPublish,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(CrearRecetaTestTags.PUBLISH),
-        ) {
-            Text(text = stringResource(R.string.crear_receta_publish))
+            if (uiState.publishErrors.isNotEmpty()) {
+                PublishErrors(errors = uiState.publishErrors)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            ) {
+                FilledTonalButton(
+                    onClick = actions.onSaveDraft,
+                    shape = FieldShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 52.dp)
+                        .testTag(CrearRecetaTestTags.SAVE_DRAFT),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Drafts,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                    Text(text = stringResource(R.string.crear_receta_save_draft))
+                }
+                Button(
+                    onClick = actions.onPublish,
+                    enabled = uiState.canPublish,
+                    shape = FieldShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                    modifier = Modifier
+                        .weight(1.5f)
+                        .heightIn(min = 52.dp)
+                        .testTag(CrearRecetaTestTags.PUBLISH),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.RestaurantMenu,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.crear_receta_publish),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
         }
     }
 }
+
+@Composable
+private fun SectionCard(testTag: String, content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        shape = SectionShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = Modifier
+            .fillMaxWidth()
+            .warmShadow(shape = SectionShape)
+            .testTag(testTag),
+    ) {
+        Column(
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    title: Int,
+    trailing: @Composable () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(title),
+            tint = iconTint,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.sm))
+        Text(
+            text = stringResource(title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        trailing()
+    }
+}
+
+@Composable
+private fun CountBadge(text: String) {
+    Surface(
+        shape = PillShape,
+        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
+        contentColor = MaterialTheme.colorScheme.secondary,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
+        )
+    }
+}
+
+@Composable
+private fun AddRowButton(onClick: () -> Unit, label: Int, testTag: String) {
+    Button(
+        onClick = onClick,
+        shape = FieldShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.primary,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .testTag(testTag),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.AddCircle,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.sm))
+        Text(text = stringResource(label), style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+// Campos rellenos en surface-container-low con anillo de foco primary (RF-10, RF-12).
+@Composable
+private fun warmFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    errorBorderColor = MaterialTheme.colorScheme.error,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    cursorColor = MaterialTheme.colorScheme.primary,
+)
 
 @Composable
 private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {

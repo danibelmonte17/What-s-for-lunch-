@@ -26,6 +26,8 @@ Ninguna.
 | Q-crear-receta-5 | ¿Se incluye el toggle de favorito del prototipo pese a no figurar en los pasos? | `docs/specs/crear-receta.md` | no | resuelta (sí, toggle simple) |
 | Q-crear-receta-6 | «Generar con IA» necesita API key, que se registra en `configurar-acceso-a-ia`: ¿cómo se resuelve aquí? | `docs/specs/crear-receta.md` | sí | resuelta (condicionada a la API key del dispositivo: sin key, aviso y el formulario sigue usable; la pantalla de Ajustes llega en `configurar-acceso-a-ia`) |
 | Q-crear-receta-7 | ¿Cómo se pide la imagen generada por IA? | `docs/specs/crear-receta.md` | no | resuelta (prompt construido automáticamente con la información del plato: título e historia) |
+| Q-afinar-fidelidad-visual-del-formulario-1 | ¿Cómo se replica el asa de arrastre de las filas de Ingrediente del prototipo si el reordenado sigue fuera de alcance? | `docs/specs/afinar-fidelidad-visual-del-formulario.md` | no | resuelta (asa decorativa no interactiva; el reordenado sigue fuera de alcance) |
+| Q-afinar-fidelidad-visual-del-formulario-2 | ¿Se implementa el botón «Guardar» de la cabecera del prototipo? | `docs/specs/afinar-fidelidad-visual-del-formulario.md` | no | resuelta (se implementa como guardado de Borrador, igual que «Guardar Borrador» del dock) |
 
 ## Supuestos
 

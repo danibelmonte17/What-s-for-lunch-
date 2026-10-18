@@ -11,6 +11,8 @@
     <!-- My Recipes: cards -->
     <string name="mis_recetas_status_draft">Draft</string>
     <string name="mis_recetas_status_published">Published</string>
+    <string name="mis_recetas_card_time">%1$d min</string>
+    <string name="mis_recetas_card_servings">%1$d servings</string>
 
     <!-- Meal moment -->
     <string name="momento_desayuno">Breakfast</string>
@@ -25,6 +27,18 @@
 
     <!-- Recipe creation form -->
     <string name="crear_receta_title">Create recipe</string>
+    <string name="crear_receta_header_subtitle">Step by step with AI</string>
+    <string name="action_save">Save</string>
+    <string name="crear_receta_required_badge">Required</string>
+    <string name="crear_receta_title_placeholder">e.g. Grandma\'s lentils, Creamy rice…</string>
+    <string name="crear_receta_story_placeholder">Tell us the secret of your version, its texture or the perfect occasion…</string>
+    <string name="crear_receta_metrics_time">Time</string>
+    <string name="crear_receta_metrics_time_unit">min</string>
+    <string name="crear_receta_metrics_difficulty">Level</string>
+    <string name="crear_receta_metrics_servings">Servings</string>
+    <string name="crear_receta_metrics_servings_unit">serv</string>
+    <string name="crear_receta_prep_short_label">Preparation</string>
+    <string name="crear_receta_cook_short_label">Cooking</string>
     <string name="crear_receta_photo_section">Photo</string>
     <string name="crear_receta_photo_preview">Recipe photo</string>
     <string name="crear_receta_photo_none">No photo (optional)</string>
@@ -39,10 +53,6 @@
     <string name="crear_receta_story_label">Story or short description</string>
     <string name="crear_receta_moment_label">Meal moment</string>
     <string name="crear_receta_metrics_section">Cooking details</string>
-    <string name="crear_receta_prep_label">Prep time (min)</string>
-    <string name="crear_receta_cook_label">Cook time (min)</string>
-    <string name="crear_receta_difficulty_label">Difficulty</string>
-    <string name="crear_receta_servings_label">Base servings</string>
     <string name="crear_receta_servings_decrease">−</string>
     <string name="crear_receta_servings_increase">+</string>
     <string name="crear_receta_calories_label">Calories per serving (optional)</string>
@@ -61,6 +71,9 @@
     <string name="crear_receta_step_timer">Timer (min, optional)</string>
     <string name="crear_receta_step_invalid">The step needs text</string>
     <string name="crear_receta_favorite">Mark as Favorite</string>
+    <string name="crear_receta_favorite_subtitle">Quick access in your library</string>
+    <string name="crear_receta_ingredients_count">%1$d items</string>
+    <string name="crear_receta_steps_count">%1$d steps defined</string>
     <string name="crear_receta_save_draft">Save Draft</string>
     <string name="crear_receta_publish">Publish Recipe</string>
     <string name="crear_receta_publish_blocked">Cannot publish yet:</string>

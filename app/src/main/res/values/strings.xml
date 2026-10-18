@@ -12,6 +12,8 @@
     <!-- Mis Recetas: tarjetas -->
     <string name="mis_recetas_status_draft">Borrador</string>
     <string name="mis_recetas_status_published">Publicada</string>
+    <string name="mis_recetas_card_time">%1$d min</string>
+    <string name="mis_recetas_card_servings">%1$d porciones</string>
 
     <!-- Momento culinario -->
     <string name="momento_desayuno">Desayuno</string>
@@ -26,6 +28,18 @@
 
     <!-- Formulario de alta de Receta -->
     <string name="crear_receta_title">Crear receta</string>
+    <string name="crear_receta_header_subtitle">Paso a paso con IA</string>
+    <string name="action_save">Guardar</string>
+    <string name="crear_receta_required_badge">Obligatorio</string>
+    <string name="crear_receta_title_placeholder">Ej. Lentejas de la abuela, Arroz meloso...</string>
+    <string name="crear_receta_story_placeholder">Cuéntanos el secreto de tu versión, su textura o para qué ocasión es perfecta...</string>
+    <string name="crear_receta_metrics_time">Tiempo</string>
+    <string name="crear_receta_metrics_time_unit">min</string>
+    <string name="crear_receta_metrics_difficulty">Nivel</string>
+    <string name="crear_receta_metrics_servings">Raciones</string>
+    <string name="crear_receta_metrics_servings_unit">pers</string>
+    <string name="crear_receta_prep_short_label">Preparación</string>
+    <string name="crear_receta_cook_short_label">Cocción</string>
     <string name="crear_receta_photo_section">Foto</string>
     <string name="crear_receta_photo_preview">Foto de la receta</string>
     <string name="crear_receta_photo_none">Sin foto (opcional)</string>
@@ -40,10 +54,6 @@
     <string name="crear_receta_story_label">Historia o descripción breve</string>
     <string name="crear_receta_moment_label">Momento culinario</string>
     <string name="crear_receta_metrics_section">Detalles de cocina</string>
-    <string name="crear_receta_prep_label">Tiempo de preparación (min)</string>
-    <string name="crear_receta_cook_label">Tiempo de cocción (min)</string>
-    <string name="crear_receta_difficulty_label">Dificultad</string>
-    <string name="crear_receta_servings_label">Raciones base</string>
     <string name="crear_receta_servings_decrease">−</string>
     <string name="crear_receta_servings_increase">+</string>
     <string name="crear_receta_calories_label">Calorías por porción (opcional)</string>
@@ -62,6 +72,9 @@
     <string name="crear_receta_step_timer">Temporizador (min, opcional)</string>
     <string name="crear_receta_step_invalid">El paso necesita texto</string>
     <string name="crear_receta_favorite">Marcar en Mis Favoritas</string>
+    <string name="crear_receta_favorite_subtitle">Acceso directo en tu biblioteca</string>
+    <string name="crear_receta_ingredients_count">%1$d ítems</string>
+    <string name="crear_receta_steps_count">%1$d Pasos definidos</string>
     <string name="crear_receta_save_draft">Guardar Borrador</string>
     <string name="crear_receta_publish">Publicar Receta</string>
     <string name="crear_receta_publish_blocked">No se puede publicar todavía:</string>

@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
@@ -31,11 +33,17 @@ import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.domain.misrecetas.MisRecetasState
+import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.MealMoment
+import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.ui.crearreceta.CrearRecetaScreen
 import com.whatsforlunch.app.ui.crearreceta.CrearRecetaTestTags
 import com.whatsforlunch.app.ui.crearreceta.CrearRecetaViewModel
 import com.whatsforlunch.app.ui.crearreceta.toActions
+import com.whatsforlunch.app.ui.misrecetas.MisRecetasScreen
 import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
+import com.whatsforlunch.app.ui.misrecetas.MisRecetasUiState
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -176,22 +184,22 @@ class CrearRecetaE2ETest {
     @Test
     fun saveDraftIsBlockedWithoutTitle() {
         val repository = launchForm()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
         composeRule.onNodeWithText(formText(R.string.crear_receta_title_required)).performScrollTo().assertIsDisplayed()
         assertTrue(runBlocking { repository.observeRecipes().first() }.isEmpty())
     }
 
     // NFR-1: los mismos errores de bloqueo se afirman también en inglés, sin depender
-    // del idioma del dispositivo de validación.
+    // del idioma del dispositivo de validación. Con Publicar deshabilitado, los
+    // requisitos incumplidos se enumeran junto al dock (RF-15 de la fidelidad visual).
     @Test
     fun blockingErrorsAreLocalizedInEnglish() {
         val repository = launchForm(locale = Locale.ENGLISH)
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
         composeRule.onNodeWithText(formText(R.string.crear_receta_title_required)).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).performScrollTo().performClick()
-        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_ingredient)).performScrollTo()
-            .assertIsDisplayed()
-        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_step)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsNotEnabled()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_ingredient)).assertIsDisplayed()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_step)).assertIsDisplayed()
         assertTrue(runBlocking { repository.observeRecipes().first() }.isEmpty())
     }
 
@@ -199,7 +207,7 @@ class CrearRecetaE2ETest {
     fun saveDraftWithoutPhotoSavesDraft() {
         val repository = launchForm()
         typeTitle("Borrador sin foto")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
         val recipes = runBlocking { repository.observeRecipes().first() }
         assertEquals(1, recipes.size)
         assertEquals(RecipeStatus.DRAFT, recipes.first().status)
@@ -211,8 +219,10 @@ class CrearRecetaE2ETest {
         typeTitle("Sin foto")
         addValidIngredient()
         addValidStep()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).performScrollTo().performClick()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).performScrollTo().assertIsDisplayed()
+        // RF-14/RF-15 de la fidelidad visual: Publicar queda deshabilitado y el
+        // requisito incumplido se enumera junto al dock, sin guardar nada.
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsNotEnabled()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_photo)).assertIsDisplayed()
         assertTrue(runBlocking { repository.observeRecipes().first() }.isEmpty())
     }
 
@@ -222,9 +232,8 @@ class CrearRecetaE2ETest {
         typeTitle("Sin ingrediente")
         composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GALLERY).performScrollTo().performClick()
         addValidStep()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).performScrollTo().performClick()
-        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_ingredient)).performScrollTo()
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsNotEnabled()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_ingredient)).assertIsDisplayed()
         assertTrue(runBlocking { repository.observeRecipes().first() }.isEmpty())
     }
 
@@ -235,11 +244,40 @@ class CrearRecetaE2ETest {
         composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GALLERY).performScrollTo().performClick()
         addValidIngredient()
         addValidStep()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsEnabled()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).performClick()
         val recipes = runBlocking { repository.observeRecipes().first() }
         assertEquals(1, recipes.size)
         assertEquals(RecipeStatus.PUBLISHED, recipes.first().status)
         assertEquals("Tortilla publicada", recipes.first().title)
+    }
+
+    // RF-14 y RF-16 de la fidelidad visual: Publicar está deshabilitado mientras
+    // falte algún requisito y se habilita cuando el formulario los cumple.
+    @Test
+    fun publishIsDisabledUntilRequirementsAreMet() {
+        launchForm(photoAcquirer = FakePhotoAcquirer(gallery = PhotoResult.Success(byteArrayOf(1, 2, 3))))
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsNotEnabled()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).assertIsDisplayed()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_photo)).assertIsDisplayed()
+        typeTitle("Con requisitos")
+        addValidIngredient()
+        addValidStep()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GALLERY).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsEnabled()
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).assertCountEquals(0)
+    }
+
+    // RF-15 de la fidelidad visual: las filas de Ingrediente inválidas también se
+    // enumeran junto al dock como requisito que impide Publicar.
+    @Test
+    fun invalidIngredientRowsAreListedAsBlockingRequirement() {
+        launchForm()
+        typeTitle("Con fila inválida")
+        composeRule.onNodeWithTag(CrearRecetaTestTags.ADD_INGREDIENT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsNotEnabled()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_publish_error_invalid_ingredient)).assertIsDisplayed()
     }
 
     @Test
@@ -271,7 +309,7 @@ class CrearRecetaE2ETest {
         composeRule.onNodeWithText(formText(R.string.crear_receta_notice_ai_failed)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GALLERY).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_CAMERA).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
         assertEquals(RecipeStatus.DRAFT, runBlocking { repository.observeRecipes().first() }.single().status)
     }
 
@@ -289,6 +327,64 @@ class CrearRecetaE2ETest {
         composeRule.onNodeWithTag(CrearRecetaTestTags.FAVORITE_TOGGLE).performClick()
         composeRule.onNodeWithTag(CrearRecetaTestTags.FAVORITE_TOGGLE).assertIsOn()
     }
+
+    // RF-21 de la fidelidad visual: «Guardar» de la cabecera guarda la Receta como
+    // Borrador, con el mismo comportamiento que «Guardar Borrador» del dock.
+    @Test
+    fun headerSaveSavesDraft() {
+        val repository = launchForm()
+        typeTitle("Borrador desde cabecera")
+        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).performClick()
+        val recipes = runBlocking { repository.observeRecipes().first() }
+        assertEquals(1, recipes.size)
+        assertEquals(RecipeStatus.DRAFT, recipes.first().status)
+        assertEquals("Borrador desde cabecera", recipes.first().title)
+    }
+
+    // Caso límite de RF-21: sin título, «Guardar» no guarda y señala el título.
+    @Test
+    fun headerSaveWithoutTitleMarksTitleRequired() {
+        val repository = launchForm()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).performClick()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_title_required)).performScrollTo().assertIsDisplayed()
+        assertTrue(runBlocking { repository.observeRecipes().first() }.isEmpty())
+    }
+
+    // RF-1 a RF-8 de la fidelidad visual: están los bloques y controles del
+    // prototipo (cabecera con distintivo y Guardar, portada con controles de foto,
+    // información básica con chips de momento, rejilla de métricas, ingredientes,
+    // pasos con número en círculo, favorito y dock).
+    @Test
+    fun formShowsPrototypeBlocksAndControls() {
+        launchForm()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.STATUS_BADGE).assertIsDisplayed()
+        composeRule.onNodeWithText(formText(R.string.crear_receta_header_subtitle)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.COVER).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GALLERY).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_CAMERA).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GENERATE).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.BASIC_SECTION).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.MOMENT_BREAKFAST).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.MOMENT_LUNCH).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.MOMENT_DINNER).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.MOMENT_DESSERT).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.METRICS_GRID).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.METRICS_TIME).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.METRICS_DIFFICULTY).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.METRICS_SERVINGS).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SERVINGS_DECREASE).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SERVINGS_INCREASE).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.INGREDIENTS_SECTION).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.ADD_INGREDIENT).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.STEPS_SECTION).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.ADD_STEP).performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.stepNumber(0)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.FAVORITE_SECTION).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.ACTION_DOCK).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).assertIsDisplayed()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsDisplayed()
+    }
 }
 
 // verify 2 · RF-13, RF-25: la app real guarda un Borrador y lo muestra en Mis Recetas.
@@ -302,11 +398,104 @@ class CrearRecetaAppE2ETest {
     fun savedDraftAppearsInMisRecetas() {
         composeRule.onNodeWithTag(MisRecetasTestTags.CREATE_RECIPE).performClick()
         composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextInput("Borrador E2E aparición")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithTag(MisRecetasTestTags.RECIPE_LIST).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag(MisRecetasTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_LIST).assertIsDisplayed()
+    }
+}
+
+// RF-17 a RF-20 y RF-22 (fidelidad visual): tarjetas de Mis Recetas con portada y
+// badge de momento superpuesto, título, metadatos con iconos, píldora de estado y
+// badge junto al título cuando la Receta no tiene foto.
+@RunWith(AndroidJUnit4::class)
+class MisRecetasCardsE2ETest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private lateinit var cardsContext: Context
+
+    private fun cardText(@StringRes resId: Int, vararg args: Any): String =
+        cardsContext.getString(resId, *args)
+
+    private fun showCards(recipes: List<Recipe>) {
+        val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val configuration = Configuration(baseContext.resources.configuration).apply {
+            setLocale(Locale("es", "ES"))
+        }
+        cardsContext = baseContext.createConfigurationContext(configuration)
+        composeRule.setContent {
+            CompositionLocalProvider(LocalContext provides cardsContext) {
+                WhatsForLunchTheme {
+                    MisRecetasScreen(
+                        uiState = MisRecetasUiState(
+                            state = MisRecetasState.WithRecipes,
+                            recipes = recipes,
+                        ),
+                        onCreateRecipe = {},
+                        onScanPantry = {},
+                    )
+                }
+            }
+        }
+    }
+
+    private fun writePhoto(): String {
+        val file = File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "mis-recetas-card-photo.png",
+        )
+        file.writeBytes(validImageBytes())
+        return file.absolutePath
+    }
+
+    private fun recipe(id: String, photoPath: String?, status: RecipeStatus): Recipe = Recipe(
+        id = id,
+        title = "Tortilla Española",
+        story = "Huevos camperos y patata agria",
+        mealMoment = MealMoment.LUNCH,
+        prepMinutes = 10,
+        cookMinutes = 15,
+        difficulty = Difficulty.EASY,
+        baseServings = 4,
+        photoPath = photoPath,
+        status = status,
+    )
+
+    // RF-17, RF-18, RF-19 y RF-20: portada con badge de momento, título, metadatos
+    // (tiempo total = preparación + cocción, dificultad y raciones) y píldora.
+    @Test
+    fun cardWithPhotoShowsCoverBadgeAndMetadata() {
+        showCards(listOf(recipe("1", writePhoto(), RecipeStatus.DRAFT)))
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_PHOTO).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_MOMENT).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.momento_almuerzo)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithText("Tortilla Española").assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_TIME).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.mis_recetas_card_time, 25)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DIFFICULTY).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.dificultad_facil)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_SERVINGS).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.mis_recetas_card_servings, 4)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_STATUS).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.mis_recetas_status_draft)).assertIsDisplayed()
+    }
+
+    // RF-22: sin foto, la tarjeta arranca por el título y el badge del momento va
+    // junto a él; la fila de metadatos y la píldora de estado siguen presentes.
+    @Test
+    fun cardWithoutPhotoShowsMomentBadgeNextToTitle() {
+        showCards(listOf(recipe("2", null, RecipeStatus.PUBLISHED)))
+        composeRule.onAllNodesWithTag(MisRecetasTestTags.RECIPE_PHOTO).assertCountEquals(0)
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_MOMENT).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_TIME).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.mis_recetas_card_time, 25)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_STATUS).assertIsDisplayed()
+        composeRule.onNodeWithText(cardText(R.string.mis_recetas_status_published)).assertIsDisplayed()
     }
 }
