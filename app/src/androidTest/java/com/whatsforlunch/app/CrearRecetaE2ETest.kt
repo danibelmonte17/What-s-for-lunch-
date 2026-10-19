@@ -15,9 +15,13 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -464,7 +468,10 @@ class MisRecetasCardsE2ETest {
         showCards(listOf(recipe("1", writePhoto(), RecipeStatus.DRAFT)))
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_PHOTO).assertIsDisplayed()
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_MOMENT).assertIsDisplayed()
-        composeRule.onNodeWithText(cardText(R.string.momento_almuerzo)).assertIsDisplayed()
+        composeRule
+            .onAllNodesWithText(cardText(R.string.momento_almuerzo), useUnmergedTree = true)
+            .filter(hasAnyAncestor(hasTestTag(MisRecetasTestTags.RECIPE_CARD)))[0]
+            .assertIsDisplayed()
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_TITLE).assertIsDisplayed()
         composeRule.onNodeWithText("Tortilla Española").assertIsDisplayed()
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_TIME).assertIsDisplayed()

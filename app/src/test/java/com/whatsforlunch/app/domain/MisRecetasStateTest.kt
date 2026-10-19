@@ -19,4 +19,10 @@ class MisRecetasStateTest {
         val recipes = listOf(Recipe(id = "1", title = "Tortilla de patatas"))
         assertEquals(MisRecetasState.WithRecipes, misRecetasStateOf(recipes))
     }
+
+    @Test
+    fun nonEmptyCatalogWithoutVisibleRecipesProducesNoResultsState() {
+        val recipes = listOf(Recipe(id = "1", title = "Tortilla de patatas"))
+        assertEquals(MisRecetasState.NoResults, misRecetasStateOf(recipes, emptyList()))
+    }
 }

@@ -19,5 +19,8 @@ fun MisRecetasRoute(
         onCreateRecipe = onCreateRecipe,
         onScanPantry = onScanPantry,
         onEditRecipe = onEditRecipe,
+        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onMealMomentSelected = viewModel::onMealMomentSelected,
+        onResetFilters = viewModel::onResetFilters,
     )
 }

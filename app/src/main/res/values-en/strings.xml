@@ -15,6 +15,12 @@
     <string name="mis_recetas_card_servings">%1$d servings</string>
     <string name="mis_recetas_action_edit">Edit recipe</string>
     <string name="mis_recetas_action_edit_short">Edit</string>
+    <string name="mis_recetas_search_hint">Search by recipe or ingredient</string>
+    <string name="mis_recetas_filter_all">All</string>
+    <string name="mis_recetas_filter_label">Filter by meal moment</string>
+    <string name="mis_recetas_no_results_title">No matching recipes</string>
+    <string name="mis_recetas_no_results_message">Try another search or meal moment.</string>
+    <string name="mis_recetas_reset_filters">View all recipes</string>
 
     <!-- Meal moment -->
     <string name="momento_desayuno">Breakfast</string>

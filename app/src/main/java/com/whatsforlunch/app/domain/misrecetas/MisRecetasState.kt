@@ -8,7 +8,14 @@ import com.whatsforlunch.app.domain.model.Recipe
 enum class MisRecetasState {
     Empty,
     WithRecipes,
+    NoResults,
+}
+
+fun misRecetasStateOf(recipes: List<Recipe>, visibleRecipes: List<Recipe>): MisRecetasState = when {
+    recipes.isEmpty() -> MisRecetasState.Empty
+    visibleRecipes.isEmpty() -> MisRecetasState.NoResults
+    else -> MisRecetasState.WithRecipes
 }
 
 fun misRecetasStateOf(recipes: List<Recipe>): MisRecetasState =
-    if (recipes.isEmpty()) MisRecetasState.Empty else MisRecetasState.WithRecipes
+    misRecetasStateOf(recipes, recipes)

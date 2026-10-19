@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,12 +24,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -77,6 +84,14 @@ object MisRecetasTestTags {
     const val RECIPE_DIFFICULTY = "mis_recetas_card_difficulty"
     const val RECIPE_SERVINGS = "mis_recetas_card_servings"
     const val RECIPE_EDIT = "mis_recetas_card_edit"
+    const val SEARCH_FIELD = "mis_recetas_search_field"
+    const val FILTER_ROW = "mis_recetas_moment_filter"
+    const val FILTER_CHIP_ALL = "mis_recetas_filter_all"
+    const val FILTER_CHIP = "mis_recetas_filter"
+    const val NO_RESULTS = "mis_recetas_no_results"
+    const val RESET_FILTERS = "mis_recetas_reset_filters"
+
+    fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,6 +101,9 @@ fun MisRecetasScreen(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit = {},
+    onSearchQueryChanged: (String) -> Unit = {},
+    onMealMomentSelected: (MealMoment?) -> Unit = {},
+    onResetFilters: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -109,9 +127,23 @@ fun MisRecetasScreen(
                     .padding(innerPadding),
             )
             MisRecetasState.WithRecipes -> RecipeList(
-                recipes = uiState.recipes,
+                recipes = uiState.visibleRecipes,
                 onCreateRecipe = onCreateRecipe,
                 onEditRecipe = onEditRecipe,
+                searchQuery = uiState.searchQuery,
+                selectedMoment = uiState.mealMomentFilter,
+                onSearchQueryChanged = onSearchQueryChanged,
+                onMealMomentSelected = onMealMomentSelected,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            )
+            MisRecetasState.NoResults -> NoResults(
+                searchQuery = uiState.searchQuery,
+                selectedMoment = uiState.mealMomentFilter,
+                onSearchQueryChanged = onSearchQueryChanged,
+                onMealMomentSelected = onMealMomentSelected,
+                onResetFilters = onResetFilters,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -175,26 +207,165 @@ private fun RecipeList(
     recipes: List<Recipe>,
     onCreateRecipe: () -> Unit,
     onEditRecipe: (String) -> Unit,
+    searchQuery: String,
+    selectedMoment: MealMoment?,
+    onSearchQueryChanged: (String) -> Unit,
+    onMealMomentSelected: (MealMoment?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier
-            .padding(horizontal = WarmSpacing.md)
-            .testTag(MisRecetasTestTags.RECIPE_LIST),
-        verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
-    ) {
-        items(items = recipes, key = { it.id }) { recipe ->
-            RecipeCard(recipe = recipe, onEdit = { onEditRecipe(recipe.id) })
+    Column(modifier = modifier.padding(horizontal = WarmSpacing.md)) {
+        SearchAndFilterControls(
+            searchQuery = searchQuery,
+            selectedMoment = selectedMoment,
+            onSearchQueryChanged = onSearchQueryChanged,
+            onMealMomentSelected = onMealMomentSelected,
+        )
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .testTag(MisRecetasTestTags.RECIPE_LIST),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
+        ) {
+            items(items = recipes, key = { it.id }) { recipe ->
+                RecipeCard(recipe = recipe, onEdit = { onEditRecipe(recipe.id) })
+            }
+            item {
+                Button(
+                    onClick = onCreateRecipe,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp)
+                        .testTag(MisRecetasTestTags.CREATE_RECIPE),
+                ) {
+                    Text(text = stringResource(R.string.action_create_recipe))
+                }
+            }
         }
-        item {
-            Button(
-                onClick = onCreateRecipe,
+    }
+}
+
+@Composable
+private fun SearchAndFilterControls(
+    searchQuery: String,
+    selectedMoment: MealMoment?,
+    onSearchQueryChanged: (String) -> Unit,
+    onMealMomentSelected: (MealMoment?) -> Unit,
+) {
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = onSearchQueryChanged,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .testTag(MisRecetasTestTags.SEARCH_FIELD),
+        placeholder = { Text(text = stringResource(R.string.mis_recetas_search_hint)) },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+            )
+        },
+        singleLine = true,
+    )
+    val filterDescription = stringResource(R.string.mis_recetas_filter_label)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .semantics { contentDescription = filterDescription }
+            .testTag(MisRecetasTestTags.FILTER_ROW),
+        horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterChip(
+            selected = selectedMoment == null,
+            onClick = { onMealMomentSelected(null) },
+            label = { Text(text = stringResource(R.string.mis_recetas_filter_all)) },
+            colors = momentFilterChipColors(),
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .testTag(MisRecetasTestTags.FILTER_CHIP_ALL),
+        )
+        MealMoment.entries.forEach { moment ->
+            FilterChip(
+                selected = selectedMoment == moment,
+                onClick = { onMealMomentSelected(moment) },
+                label = { Text(text = stringResource(moment.labelRes())) },
+                colors = momentFilterChipColors(),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 52.dp)
-                    .testTag(MisRecetasTestTags.CREATE_RECIPE),
+                    .heightIn(min = 48.dp)
+                    .testTag(MisRecetasTestTags.filterChip(moment)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun momentFilterChipColors() = FilterChipDefaults.filterChipColors(
+    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    selectedContainerColor = MaterialTheme.colorScheme.primary,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+)
+
+@Composable
+private fun NoResults(
+    searchQuery: String,
+    selectedMoment: MealMoment?,
+    onSearchQueryChanged: (String) -> Unit,
+    onMealMomentSelected: (MealMoment?) -> Unit,
+    onResetFilters: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = WarmSpacing.md)
+            .testTag(MisRecetasTestTags.NO_RESULTS),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        SearchAndFilterControls(
+            searchQuery = searchQuery,
+            selectedMoment = selectedMoment,
+            onSearchQueryChanged = onSearchQueryChanged,
+            onMealMomentSelected = onMealMomentSelected,
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = WarmSpacing.md),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.SearchOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(48.dp),
+            )
+            Text(
+                text = stringResource(R.string.mis_recetas_no_results_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = WarmSpacing.md),
+            )
+            Text(
+                text = stringResource(R.string.mis_recetas_no_results_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = WarmSpacing.xs),
+            )
+            Button(
+                onClick = onResetFilters,
+                modifier = Modifier
+                    .padding(top = WarmSpacing.lg)
+                    .heightIn(min = 48.dp)
+                    .testTag(MisRecetasTestTags.RESET_FILTERS),
             ) {
-                Text(text = stringResource(R.string.action_create_recipe))
+                Text(text = stringResource(R.string.mis_recetas_reset_filters))
             }
         }
     }
