@@ -2,7 +2,6 @@ package com.whatsforlunch.app.ui.misrecetas
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
@@ -296,32 +294,27 @@ private fun CardActions(onEdit: () -> Unit) {
     }
 }
 
-// RF-4 y NFR-2: icono `edit` de 18 dp sobre un recuadro visual de 36 dp
-// (`w-9 h-9 rounded-lg` del prototipo) con área táctil de 48 dp.
+// RF-4, NFR-2 y excepción de diseño aprobada por el usuario (2026-10-19): la acción
+// «Editar receta» del pie de la tarjeta es un botón primario compacto —M3 `Button`
+// relleno con el color primario, como «Crear receta»— con el icono `edit` de 18 dp y
+// la etiqueta visible «Editar»; altura ≥ 52 dp (NFR-2) y nombre accesible «Editar receta».
 @Composable
 private fun EditRecipeButton(onClick: () -> Unit) {
     val label = stringResource(R.string.mis_recetas_action_edit)
-    Box(
+    Button(
+        onClick = onClick,
         modifier = Modifier
-            .size(48.dp)
-            .clickable(onClick = onClick)
+            .heightIn(min = 52.dp)
             .semantics { contentDescription = label }
             .testTag(MisRecetasTestTags.RECIPE_EDIT),
-        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(WarmRadius.default)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
-        }
+        Icon(
+            imageVector = Icons.Outlined.Edit,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+        Text(text = stringResource(R.string.mis_recetas_action_edit_short))
     }
 }
 
