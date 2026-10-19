@@ -1,7 +1,7 @@
 ---
 description: Audita una spec y la cierra en `ready` si es APTA.
 mode: subagent
-model: devexpert/chat-pro
+model: opencode-go/mimo-v2.6-pro
 permission:
   read: allow
   glob: allow

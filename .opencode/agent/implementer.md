@@ -1,7 +1,7 @@
 ---
 description: Implementa una feature desde su spec y la deja en `passing`.
 mode: subagent
-model: devexpert/chat
+model: opencode-go/gpt-6-luna
 permission:
   read: allow
   glob: allow

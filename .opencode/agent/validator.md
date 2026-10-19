@@ -1,7 +1,7 @@
 ---
 description: Valida una feature `passing` y la cierra o devuelve con bugs.
 mode: subagent
-model: devexpert/chat
+model: opencode-go/deepseek-v4.1-flash
 permission:
   read: allow
   glob: allow
