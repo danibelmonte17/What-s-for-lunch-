@@ -1,8 +1,8 @@
 # Modelo de dominio
 
-Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las decisiones de implementación viven en `docs/technical-discovery.md`.
+Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las decisiones de implementación viven en `docs/technical-discovery.md`. Los IDs `RD##` son estables y las specs los citan como fuente única de las reglas.
 
-## Entidades y relaciones
+## Conceptos centrales
 
 | Entidad | Qué representa | Atributos clave | Relaciones |
 |---|---|---|---|
@@ -18,7 +18,14 @@ Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las de
 
 Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis Recetas; se distinguen por el atributo `origen` (`P6`, `P32`).
 
-## Ciclo de vida
+## Relaciones
+
+- Receta 1—N IngredienteReceta N—1 Ingrediente; Receta 1—N Paso. Borrar una Receta borra en cascada sus IngredienteReceta y Pasos.
+- Escaneo propone N Alimento para la Despensa; los duplicados (mismo nombre normalizado) se fusionan en un solo Alimento.
+- Sugerencia se materializa como máximo en una Receta (al aceptarse).
+- ÍtemLista referencia opcionalmente a una Receta vía su Origen.
+
+## Estados y ciclos de vida
 
 ### Receta
 - `Borrador` → `Publicada`: el usuario pulsa «Publicar Receta» con título, foto y al menos 1 Ingrediente y 1 Paso válidos, y sin filas de Ingrediente ni Pasos inválidos (`⚠ S07`, Q-crear-receta-1).
@@ -62,17 +69,12 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Publicar una Receta: título y foto obligatorios, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila de Ingrediente ni Paso inválidos (Q-crear-receta-1, que revisa `⚠ S07`: la foto pasa a ser obligatoria).
 - Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan.
 
-## Roles y permisos de negocio
+## Escenarios importantes
 
-Un único rol en el MVP: el **Usuario** propietario del dispositivo. No hay invitados, administradores ni cuentas compartidas (`P7`, `P31`).
-
-| Acción | Usuario |
-|---|---|
-| Crear, editar y eliminar Recetas | ✅ |
-| Escanear la Despensa y aceptar/descartar Sugerencias | ✅ |
-| Usar el Modo Cocina y el Pinche | ✅ |
-| Gestionar la Lista de la Compra | ✅ |
-| Ver Recetas de otros usuarios | ❌ (fuera de alcance: ver `docs/build-brief.md`) |
+1. **Escaneo → Sugerencia → Receta**: el usuario escanea la Despensa, confirma los chips de Alimentos detectados, recibe Sugerencias compatibles (RD02), acepta una y queda en Mis Recetas con `origen = Sugerencia` (RD07).
+2. **Alta manual → cocina**: el usuario crea una Receta en el Formulario, la guarda como Borrador o la Publica (⚠ S07), la abre en el Detalle, ajusta Raciones (RD03) y arranca el Modo Cocina.
+3. **Faltantes → Lista de la Compra**: desde el Detalle o tras un Escaneo, lo que falta acaba como ÍtemLista con su Origen (RD09); la compra se agrupa por Pasillo o por Receta.
+4. **Fallo de IA o red**: Escáner o Pinche degradan a entrada manual con aviso (RD05) y el flujo continúa.
 
 ## Casos límite
 
@@ -86,6 +88,20 @@ Un único rol en el MVP: el **Usuario** propietario del dispositivo. No hay invi
 | Receta sin foto o sin ingredientes suficientes | Sin título, foto, 1 Ingrediente y 1 Paso válidos no se puede Publicar (Q-crear-receta-1, `⚠ S07`) |
 | Lista de la Compra vacía | Estado vacío con CTA para escanear la Despensa o añadir ítems |
 | Colección de Recetas vacía | Estado vacío con CTA para crear una Receta o escanear la Despensa |
+
+## Roles y acceso
+
+Un único rol en el MVP: el **Usuario** propietario del dispositivo. No hay invitados, administradores ni cuentas compartidas (`P7`, `P31`).
+
+| Acción | Usuario |
+|---|---|
+| Crear, editar y eliminar Recetas | ✅ |
+| Escanear la Despensa y aceptar/descartar Sugerencias | ✅ |
+| Usar el Modo Cocina y el Pinche | ✅ |
+| Gestionar la Lista de la Compra | ✅ |
+| Ver Recetas de otros usuarios | ❌ (fuera de alcance: ver `docs/build-brief.md`) |
+
+No hay acceso que conceder, revocar ni que caduque: sin cuentas ni sesión en red, la única «revocación» posible es borrar los datos del dispositivo (o la app). La API de IA usa la key del propio usuario (`⚠ S05`), no un acceso de la app.
 
 ## Historial y auditoría
 
