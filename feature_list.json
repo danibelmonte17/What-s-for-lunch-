@@ -73,7 +73,7 @@
         "Revisar que RF-15, RF-16, Casos límite, Plan de verificación y Trazabilidad de docs/specs/crear-receta.md describen Publicar deshabilitado con la lista de requisitos, sin contradicción con CrearRecetaE2ETest",
         "Comprobar que el checkbox T6 de docs/specs/afinar-fidelidad-visual-del-formulario.md queda marcado"
       ],
-      "status": "not_started"
+      "status": "validated"
     },
     {
       "id": "editar-receta",
