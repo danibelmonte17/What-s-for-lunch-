@@ -92,6 +92,25 @@
       "status": "validated"
     },
     {
+      "id": "revisar-identificadores-en-ingles",
+      "category": "tecnica",
+      "description": "Las clases, métodos, variables y ficheros del código usan nombres en inglés, sin identificadores en español.",
+      "depends_on": [
+        "editar-receta"
+      ],
+      "steps": [
+        "Auditar app/src (main, test y androidTest) y listar las clases, métodos, variables, constantes, paquetes y ficheros con nombres en español",
+        "Renombrar esos identificadores y ficheros a inglés, actualizando imports, referencias, testTags y tests afectados",
+        "Mantener en español solo los textos visibles de strings.xml, los comentarios y la documentación, según CONTEXT.md",
+        "Conservar el comportamiento y el esquema de Room tras el renombrado"
+      ],
+      "verify": [
+        "Revisión: app/src no contiene clases, métodos, variables, constantes, paquetes ni ficheros con nombres en español fuera de los textos visibles y los comentarios",
+        "Harness: lint, unit y e2e pasan tras el renombrado y la app mantiene el comportamiento ya validado"
+      ],
+      "status": "not_started"
+    },
+    {
       "id": "eliminar-receta",
       "category": "funcional",
       "description": "El usuario borra una receta tras confirmar la acción.",
