@@ -31,7 +31,6 @@
     <string name="crear_receta_title">Crear receta</string>
     <string name="crear_receta_edit_title">Editar Receta</string>
     <string name="crear_receta_header_subtitle">Paso a paso con IA</string>
-    <string name="action_save">Guardar</string>
     <string name="crear_receta_required_badge">Obligatorio</string>
     <string name="crear_receta_title_placeholder">Ej. Lentejas de la abuela, Arroz meloso...</string>
     <string name="crear_receta_story_placeholder">Cuéntanos el secreto de tu versión, su textura o para qué ocasión es perfecta...</string>

@@ -28,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragIndicator
 import androidx.compose.material.icons.outlined.Drafts
@@ -119,6 +118,8 @@ object CrearRecetaTestTags {
     const val PUBLISH_ERRORS = "crear_receta_publish_errors"
 
     // Bloques y controles del rediseño fiel al prototipo (RF-1 a RF-8, RF-21).
+    // La cabecera ya no dibuja «Guardar» (RF-21): el tag se conserva para que los E2E
+    // puedan afirmar su ausencia sin depender del idioma.
     const val HEADER_SAVE = "crear_receta_header_save"
     const val STATUS_BADGE = "crear_receta_status_badge"
     const val COVER = "crear_receta_cover"
@@ -225,15 +226,13 @@ fun CrearRecetaScreen(
 }
 
 // RF-3: cabecera con el título del formulario («Crear receta» en alta, «Editar Receta»
-// al editar), el distintivo de estado de la Receta y «Guardar».
-// RF-13, RF-14: «Guardar» ejecuta el guardado del estado —el de «Guardar Borrador» en
-// un Borrador y el de «Guardar cambios» en una Publicada— y queda deshabilitado
-// mientras la acción de guardado del dock lo esté.
+// al editar) y el distintivo de estado de la Receta.
+// RF-13, RF-14: la cabecera no dibuja «Guardar» en ningún modo: el único punto de
+// guardado son las acciones del dock (decisión Q-editar-receta-5, 2026-10-19).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
     val editing = uiState.recipeId != null
-    val published = uiState.editingStatus == RecipeStatus.PUBLISHED
     TopAppBar(
         navigationIcon = {
             TextButton(
@@ -260,29 +259,6 @@ private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-        },
-        actions = {
-            Button(
-                onClick = if (published) actions.onSaveChanges else actions.onSaveDraft,
-                enabled = !published || uiState.canPublish,
-                shape = FieldShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
-                modifier = Modifier
-                    .padding(end = WarmSpacing.sm)
-                    .heightIn(min = 48.dp)
-                    .testTag(CrearRecetaTestTags.HEADER_SAVE),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.BookmarkBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(WarmSpacing.xs))
-                Text(text = stringResource(R.string.action_save))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

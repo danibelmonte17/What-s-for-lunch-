@@ -30,7 +30,6 @@
     <string name="crear_receta_title">Create recipe</string>
     <string name="crear_receta_edit_title">Edit Recipe</string>
     <string name="crear_receta_header_subtitle">Step by step with AI</string>
-    <string name="action_save">Save</string>
     <string name="crear_receta_required_badge">Required</string>
     <string name="crear_receta_title_placeholder">e.g. Grandma\'s lentils, Creamy rice…</string>
     <string name="crear_receta_story_placeholder">Tell us the secret of your version, its texture or the perfect occasion…</string>

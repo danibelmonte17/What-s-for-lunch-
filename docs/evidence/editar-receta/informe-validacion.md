@@ -1,6 +1,6 @@
 # Informe de validación — `editar-receta`
 
-- **Fecha**: 2026-10-19 · **Modo**: completa (primer veredicto; el intento anterior no dejó informe ni resultado).
+- **Fecha**: 2026-10-19 · **Modo**: completa (ciclo 1) + ciclo 2 tras la retirada de «Guardar» de la cabecera.
 - **Entorno real**: emulador Android `Pixel_10_Pro` (**API 37.1**, densidad 480 → 3 px/dp), locale de sistema `en-US`; app en `es-ES` por locale de aplicación (`cmd locale set-app-locales`, revertido al terminar). AVD válido (≥ API 30).
 - **APK validado**: `app/build/outputs/apk/debug/app-debug.apk` (`com.whatsforlunch.app`, `installDebug` exit 0).
 
@@ -43,8 +43,8 @@ Recorrido manual con `adb` + `uiautomator` sobre el APK real, además de la suit
 | RF-10 | «Guardar Borrador» mantiene Borrador | **pasa** | manual: «Ensalada» → «Ensalada cesar» con píldora «Borrador»; `saveDraftFromEditingKeepsDraftStatus` |
 | RF-11 | publicar desde edición deja Publicada | **pasa** | `publishFromEditingSetsPublishedStatus` |
 | RF-12 | reglas de Publicar del Borrador en edición | **pasa** | manual: sin foto/ingrediente/paso → «Publicar Receta» deshabilitado + lista; `draftEditingWithoutRequirementsBlocksPublish` |
-| RF-13 | «Guardar» de cabecera guarda según estado | **pasa** | `headerSaveOnDraftEditingUpdatesDraft`, `headerSaveOnPublishedEditingSavesChanges` |
-| RF-14 | «Guardar» de cabecera deshabilitado con el dock deshabilitado | **pasa** | manual: cabecera `[853,180][1244,324]` → `enabled=false`; `headerSaveIsDisabledWhilePublishedSaveIsDisabled` |
+| RF-13 | en la cabecera no hay «Guardar» en ningún modo; el único guardado es el dock | **pasa** | manual: cabecera sin acción de guardado en alta y en edición (`uiautomator` no contiene «Guardar» fuera del dock); `editingHasNoHeaderSaveAction`, `publishedEditingHasNoHeaderSaveAction` |
+| RF-14 | sin acción de cabecera que se salte el bloqueo del dock | **pasa** | manual: dock `enabled=false` sin nodo de guardado en la cabecera; `headerSaveIsAbsentWhilePublishedSaveIsDisabled` |
 | RF-15 | cerrar sin guardar descarta cambios | **pasa** | manual: título vaciado → «Volver» → la tarjeta conserva su título anterior; `closingWithoutSavingDiscardsChanges` |
 | RF-16 | conserva el origen (Usuario/Sugerencia) | **pasa** | `saveChangesKeepsPublishedStatusAndOrigin` (origen `SUGGESTION` intacto, id y estado iguales) |
 | RF-17 | al guardar vuelve a Mis Recetas con la Receta actualizada | **pasa** | manual (2 veces, Publicada y Borrador) + `EditarRecetaAppE2ETest` |
@@ -74,10 +74,10 @@ Prototipos: `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (pie de la tarjeta)
 | `div.sticky.bottom-4.bg-surface-container-lowest/95` (dock) | superficie del dock | `#FFFFFF` en (640,2640) | igual |
 | dock Publicada (extensión declarada en RF-5) | acción primaria `bg-primary text-on-primary` ≥ 52 px | «Guardar cambios» `#A83212`, alto 156 px = **52 dp** | igual (extensión declarada) |
 | cabecera `span.text-on-surface` («Crear Receta» en el prototipo) | título + subtítulo «Paso a paso con IA» | «Editar Receta» (título de edición declarado en RF-3) + subtítulo intacto | igual (título de edición declarado) |
-| botón «Guardar» (cabecera) | primario habilitado / deshabilitado distinguible | habilitado `#A83212` con texto blanco; deshabilitado `#E4E3DF` | igual |
+| botón «Guardar» (cabecera) | primario habilitado / deshabilitado distinguible | **no se dibuja** (Q-editar-receta-5): el prototipo lo muestra, desviación declarada y aceptada por el usuario | desviación declarada |
 | «Guardar cambios» deshabilitado (`RF-7`) | estado deshabilitado visible y distinguible | `#E4E2DE` (`surface-container-highest`) frente a `#A83212` habilitado | igual |
 
-Atributos comparados: **11**. Desviaciones declaradas aceptadas: 3 (área táctil 48 dp frente a los 36 px del prototipo —RF-4/NFR-2; dock de Publicada con «Guardar cambios» —RF-5; título «Editar Receta» —RF-3, tomado del modal del prototipo de Mis Recetas). «Eliminar receta» y «Cocinar Ahora» quedan excluidos del muestreo por «Fuera de alcance» (Q-editar-receta-4). **Divergencias abiertas: 0.**
+Atributos comparados: **11**. Desviaciones declaradas aceptadas: 4 (área táctil 48 dp frente a los 36 px del prototipo —RF-4/NFR-2; dock de Publicada con «Guardar cambios» —RF-5; título «Editar Receta» —RF-3, tomado del modal del prototipo de Mis Recetas; botón «Guardar» de la cabecera omitido —Q-editar-receta-5). «Eliminar receta» y «Cocinar Ahora» quedan excluidos del muestreo por «Fuera de alcance» (Q-editar-receta-4). **Divergencias abiertas: 0.**
 
 ## 4. Alcance
 
@@ -87,10 +87,19 @@ Atributos comparados: **11**. Desviaciones declaradas aceptadas: 3 (área tácti
 
 - `docs/evidence/editar-receta/informe-validacion.md` (este informe).
 - `docs/evidence/editar-receta/mis-recetas-accion-editar.png` — Mis Recetas (es) con la tarjeta Publicada y su pie «Editar receta».
-- `docs/evidence/editar-receta/formulario-editar-receta.png` — formulario en modo edición (es): cabecera «Editar Receta»/«Publicada», datos precargados y dock «Guardar cambios».
+- `docs/evidence/editar-receta/formulario-editar-receta.png` — formulario en modo edición (es): cabecera «Editar Receta»/«Borrador» sin «Guardar», datos precargados y dock del alta («Guardar Borrador»/«Publicar Receta»).
 
 Total: 3 artefactos (≤ 4), solo de esta feature.
 
 ## 6. Veredicto
 
-**`validated`** — los 18 RF y los 4 NFR pasan su verificación en el entorno real, `init`/`lint`/`unit`/`e2e` en verde (45 tests instrumentados, 0 fallos, con la regresión de `crear-receta` y `afinar-fidelidad-visual-del-formulario`), fidelidad 1:1 sin divergencias abiertas y alcance correcto. Sin bugs.
+**`validated`** — los 18 RF y los 4 NFR pasan su verificación en el entorno real, `lint`/`unit`/`e2e` en verde (44 tests instrumentados, 0 fallos, con la regresión de `crear-receta` y `afinar-fidelidad-visual-del-formulario`), fidelidad 1:1 con las desviaciones declaradas y alcance correcto. Sin bugs.
+
+### Ciclo 2 (2026-10-19) — retirada de «Guardar» de la cabecera
+
+- **Cambio pedido por el usuario (Q-editar-receta-5)**: el botón de guardado de la cabecera era redundante en los tres estados (mismo handler y mismo `enabled` que el dock). Se elimina de `FormHeader` en todos los modos; el único guardado son las acciones del dock.
+- **Alcance**: `CrearRecetaScreen.kt` (`FormHeader` sin `actions`), `strings.xml` es/en (se retira `action_save`, ya sin uso), `CrearRecetaE2ETest` y `EditarRecetaE2ETest` (afirman la ausencia del tag `HEADER_SAVE` y guardan desde el dock), `docs/specs/editar-receta.md` (RF-13/RF-14) y `docs/specs/afinar-fidelidad-visual-del-formulario.md` (RF-3/RF-21).
+- **Harness**: `lint` exit 0 (0 errores), `unit` exit 0 (10 tests), `e2e` exit 0 (**44 tests, 0 fallos**, 0 saltados) en `Pixel_10_Pro(AVD) - 17`.
+- **Manual (adb + uiautomator)**: en alta y en edición la cabecera solo muestra «Volver», título, distintivo y «Paso a paso con IA»; `uiautomator` no encuentra ningún nodo «Guardar» fuera del dock. Guardado de Borrador desde el dock verificado de extremo a extremo (tarjeta «Tortilla de patatas»/«Borrador» en Mis Recetas).
+- **Evidencia actualizada**: `formulario-editar-receta.png` recapturada (cabecera sin «Guardar», dock del alta).
+- **Veredicto del ciclo 2**: `validated`.

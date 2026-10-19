@@ -189,6 +189,8 @@ class EditarRecetaE2ETest {
         composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsDisplayed()
         composeRule.onAllNodesWithTag(CrearRecetaTestTags.SAVE_DRAFT).assertCountEquals(0)
         composeRule.onAllNodesWithTag(CrearRecetaTestTags.PUBLISH).assertCountEquals(0)
+        // RF-13: en edición no hay «Guardar» de cabecera; el dock es el único guardado.
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
     // RF-9: al editar un Borrador, el dock es el del alta («Guardar Borrador» y
@@ -201,6 +203,8 @@ class EditarRecetaE2ETest {
         composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).assertIsDisplayed()
         composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsDisplayed()
         composeRule.onAllNodesWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertCountEquals(0)
+        // RF-13: el dock del alta es el único guardado; no hay «Guardar» de cabecera.
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
     // RF-7 y RF-8: una Publicada que deja de cumplir los requisitos de Publicar mantiene
@@ -211,7 +215,6 @@ class EditarRecetaE2ETest {
         launchEditor(repository, SEEDED_ID, photoAcquirer = EditPhotoAcquirer(PhotoResult.Success(editImageBytes())))
 
         composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsNotEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).assertIsNotEnabled()
         composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).assertIsDisplayed()
         composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_photo)).assertIsDisplayed()
         composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_ingredient)).assertIsDisplayed()
@@ -300,44 +303,47 @@ class EditarRecetaE2ETest {
         composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_photo)).assertIsDisplayed()
     }
 
-    // RF-13: «Guardar» de la cabecera ejecuta el guardado del estado: el de «Guardar
-    // Borrador» sobre un Borrador.
+    // RF-13: en modo edición la cabecera no dibuja «Guardar»; el único punto de
+    // guardado es la acción del dock, que mantiene el estado de la Receta.
     @Test
-    fun headerSaveOnDraftEditingUpdatesDraft() {
+    fun editingHasNoHeaderSaveAction() {
         val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Borrador desde cabecera")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).performClick()
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Borrador desde dock")
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
 
         val saved = storedRecipes(repository).single()
-        assertEquals("Borrador desde cabecera", saved.title)
+        assertEquals("Borrador desde dock", saved.title)
         assertEquals(RecipeStatus.DRAFT, saved.status)
     }
 
-    // RF-13: «Guardar» de la cabecera sobre una Publicada guarda como «Guardar cambios».
+    // RF-13: tampoco sobre una Publicada; «Guardar cambios» del dock sigue siendo el
+    // único guardado y conserva el estado.
     @Test
-    fun headerSaveOnPublishedEditingSavesChanges() {
+    fun publishedEditingHasNoHeaderSaveAction() {
         val repository = repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-cabecera.png")))
         launchEditor(repository, SEEDED_ID)
 
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
         composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Publicada desde cabecera")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).performClick()
+        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Publicada desde dock")
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).performClick()
 
         val saved = storedRecipes(repository).single()
-        assertEquals("Publicada desde cabecera", saved.title)
+        assertEquals("Publicada desde dock", saved.title)
         assertEquals(RecipeStatus.PUBLISHED, saved.status)
     }
 
-    // RF-14: mientras la acción de guardado del dock está deshabilitada, «Guardar» de la
-    // cabecera también lo está.
+    // RF-14: con el dock deshabilitado no queda ninguna acción de guardado en la
+    // cabecera que pudiera saltarse el bloqueo.
     @Test
-    fun headerSaveIsDisabledWhilePublishedSaveIsDisabled() {
+    fun headerSaveIsAbsentWhilePublishedSaveIsDisabled() {
         launchEditor(repositoryWith(seededRecipeWithoutDetails()), SEEDED_ID)
 
         composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsNotEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).assertIsNotEnabled()
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
     // RF-15: cerrar sin guardar descarta los cambios (la Receta conserva sus datos).
