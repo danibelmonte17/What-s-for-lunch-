@@ -44,7 +44,7 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 - **Tipografía**: Plus Jakarta Sans (títulos/labels) e Inter (cuerpo). En Modo Cocina, cuerpo ≥ 18 px (`body-lg`).
 - **Paleta**: primary `#a83212` (terracota), secondary `#006c4a` (verde salvia), tertiary `#8d4b00` (ámbar), superficies cálidas `#fbf9f5`… según el front-matter de `uxdocs/DESIGN.md`. (La prosa «Brand & Style» con `#E05A37` queda descartada por `P17`.)
 - **Espaciado y forma**: escala `space-xs`…`space-xl`; radios 0.5-1.5 rem, píldoras para chips y badges.
-- **Componentes**: botones primarios terracota (altura ≥ 52 px), chips/badges píldora, tarjetas de receta con borde tenue y sombra cálida, inputs con anillo de foco terracota.
+- **Componentes**: botones primarios terracota (altura ≥ 52 px; excepción compacta aprobada por el usuario en las acciones del pie de la tarjeta de Mis Recetas, 36 px visuales con área táctil ≥ 48 px), chips/badges píldora, tarjetas de receta con borde tenue y sombra cálida, inputs con anillo de foco terracota.
 - **Tono**: cercano, apetitoso, tranquilo.
 
 ## Estados a cubrir

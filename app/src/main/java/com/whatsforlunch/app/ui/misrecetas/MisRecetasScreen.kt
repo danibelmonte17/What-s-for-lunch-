@@ -359,6 +359,10 @@ private fun CardActions(onEdit: () -> Unit, onDelete: () -> Unit) {
     }
 }
 
+// Q-eliminar-receta-4 y Q-editar-receta-6: botón primario compacto con la misma
+// estructura que «Editar» —icono de 16 dp y etiqueta «Eliminar» en `labelMedium`—
+// y altura visual de 36 dp; el área táctil la mantiene el mínimo interactivo de
+// Material 3 (≥ 48 dp).
 @Composable
 private fun DeleteRecipeButton(onClick: () -> Unit) {
     val label = stringResource(R.string.mis_recetas_delete_action)
@@ -366,7 +370,7 @@ private fun DeleteRecipeButton(onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .minimumInteractiveComponentSize()
-            .heightIn(min = 52.dp)
+            .heightIn(min = 36.dp)
             .semantics { contentDescription = label }
             .testTag(MisRecetasTestTags.RECIPE_DELETE),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -374,7 +378,7 @@ private fun DeleteRecipeButton(onClick: () -> Unit) {
         Icon(
             imageVector = Icons.Outlined.Delete,
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(16.dp),
         )
         Spacer(modifier = Modifier.width(WarmSpacing.xs))
         Text(

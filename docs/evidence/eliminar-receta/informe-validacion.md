@@ -50,3 +50,11 @@ Nota de entorno: el picker del emulador sigue sin usarse — `recipeWithPhotoDel
 - `docs/evidence/eliminar-receta/mis-recetas-tras-borrar.png` — Mis Recetas tras confirmar el borrado: estado vacío (RF-2; ídem).
 
 Presupuesto: 3 artefactos (1 informe + 2 capturas). Logs completos en `.harness/`.
+
+### Ciclo 7 (2026-10-19) — alineación compacta de «Eliminar» con «Editar»
+
+- **Cambio pedido por el usuario:** el botón «Eliminar» conservaba el tamaño grande de la Iteración 2 (icono 18 dp, altura visual 52 dp) mientras «Editar» ya se había compactado a 16 dp / 36 dp visuales. Se igualan para que el pie de la tarjeta sea homogéneo (Q-eliminar-receta-4, Q-editar-receta-6).
+- **Alcance:** `MisRecetasScreen.kt` (`DeleteRecipeButton`: `heightIn(min = 36.dp)` e icono de 16 dp), `EliminarRecetaE2ETest.deleteActionHasAccessibleNameAndMeetsFooterSizeRequirements` (altura visual ≥ 36 dp e igual a la de «Editar»; el área táctil ≥ 48 dp la mantiene `minimumInteractiveComponentSize`), specs `eliminar-receta`/`editar-receta`, `DESIGN.md` y `risks-and-open-questions.md`. Sin cambios de flujo.
+- **Verificación directa (sin scripts del harness):** `lintDebug` + `testDebugUnitTest` `BUILD SUCCESSFUL` (12 tests, 0 fallos) y `connectedDebugAndroidTest` `BUILD SUCCESSFUL` con **53 tests: 53 pasan, 0 fallan, 0 saltados** (4 m 4 s) en `Pixel_10_Pro` (API 37, 480 dpi). El primer intento del E2E dio 1 fallo en el propio test (asumía altura ≥ 52 dp); se corrigió el umbral a la altura visual real y se repitió en verde.
+- **NFR-2 medido con `uiautomator` (densidad 3.0):** «Editar receta» `[96,590][345,698]` = 249×108 px = **83×36 dp** y «Eliminar receta» `[896,590][1184,698]` = 288×108 px = **96×36 dp**; ambas alturas coinciden. Nombre accesible «Eliminar receta» presente. El área táctil de 48 dp la garantiza el mínimo interactivo de Material 3.
+- **Veredicto:** alineación verificada; `eliminar-receta` sigue **`validated`** (los 2 `verify` de `feature_list.json` y el resto de la suite, en verde).

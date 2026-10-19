@@ -245,9 +245,13 @@ class EliminarRecetaE2ETest {
         action.assertContentDescriptionEquals("Eliminar receta")
         composeRule.onNodeWithText("Eliminar", useUnmergedTree = true).assertIsDisplayed()
         val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
+        // El testTag mide el botón visual: 36 dp de alto. El mínimo interactivo de
+        // Material 3 reserva alrededor el área táctil de 48 dp.
         val size = action.fetchSemanticsNode().size
+        val editSize = editAction.fetchSemanticsNode().size
         assertTrue(size.width / density >= 48f)
-        assertTrue(size.height / density >= 52f)
+        assertTrue(size.height / density >= 36f)
+        assertEquals(editSize.height, size.height)
         assertTrue(
             action.fetchSemanticsNode().boundsInRoot.left >=
                 editAction.fetchSemanticsNode().boundsInRoot.right,
