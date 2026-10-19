@@ -149,7 +149,7 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 - [x] T3: rediseño estructural del formulario (cabecera con título y distintivo, portada, métricas, ingredientes, pasos, favorito y dock). (cubre RF-1 a RF-8, RF-21)
 - [x] T4: estado «puede publicar», botón deshabilitado y lista junto al dock. (cubre RF-14 a RF-16)
 - [x] T5: tarjetas de Mis Recetas con foto, metadatos, píldora y badge sin foto. (cubre RF-17 a RF-20, RF-22)
-- [ ] T6: adaptar la spec y los tests E2E de `crear-receta` y re-ejecutar su regresión. (cubre el criterio de finalización)
+- [x] T6: adaptar la spec y los tests E2E de `crear-receta` y re-ejecutar su regresión. (cubre el criterio de finalización)
 - [x] T7: tests E2E de fidelidad, estado deshabilitado y tarjeta sin foto. (cubre el plan de verificación)
 
 ## Plan de verificación

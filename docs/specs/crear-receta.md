@@ -31,8 +31,8 @@ para poder verlos en Mis Recetas y más adelante cocinarlos paso a paso.
 - RF-12: SI un Paso no tiene texto, ENTONCES EL SISTEMA lo marca como inválido y bloquea Publicar la Receta mientras siga inválido (el Borrador se rige por RF-13 y lo conserva tal cual).
 - RF-13: CUANDO el usuario pulsa «Guardar Borrador» con título, EL SISTEMA guarda la Receta con estado Borrador, visible en Mis Recetas con ese distintivo.
 - RF-14: SI el usuario pulsa «Guardar Borrador» sin título, ENTONCES EL SISTEMA no guarda y señala el título como obligatorio.
-- RF-15: SI el usuario pulsa «Publicar Receta» sin al menos un Ingrediente válido o sin al menos un Paso válido, ENTONCES EL SISTEMA no publica e indica el requisito incumplido (`⚠ S07`).
-- RF-16: SI el usuario pulsa «Publicar Receta» sin título o sin foto, ENTONCES EL SISTEMA no publica e indica el requisito incumplido (Q-crear-receta-1, que revisa `⚠ S07`).
+- RF-15: MIENTRAS el formulario no cumple los requisitos de Publicar, EL SISTEMA muestra «Publicar Receta» deshabilitado con un estilo distinguible (`⚠ S07`).
+- RF-16: MIENTRAS el formulario no cumple los requisitos de Publicar, EL SISTEMA enumera junto al dock los requisitos incumplidos que impiden Publicar (título, foto, al menos un Ingrediente y un Paso válidos y ninguna fila de Ingrediente ni Paso inválidos) (Q-crear-receta-1, que revisa `⚠ S07`).
 - RF-17: CUANDO el usuario pulsa «Publicar Receta» con título, foto, al menos un Ingrediente y un Paso, y sin filas de Ingrediente ni Pasos inválidos, EL SISTEMA guarda la Receta con estado Publicada, visible en Mis Recetas.
 - RF-18: EL SISTEMA conserva las Recetas guardadas en el dispositivo tras reiniciar la app.
 - RF-19: CUANDO el usuario elige la foto, EL SISTEMA permite cargar una imagen de la galería o capturar una nueva con la cámara.
@@ -48,7 +48,7 @@ para poder verlos en Mis Recetas y más adelante cocinarlos paso a paso.
 - NFR-2: Objetivos táctiles ≥ 48×48 px y contraste WCAG 2.1 AA (`DESIGN.md`).
 - NFR-3: Android 11 (API 30) o superior, solo móvil (`P20`); el alta funciona sin red salvo «Generar con IA» y todo reside en el dispositivo (`P33`).
 ## Casos límite
-- Guardado incompleto: sin título → RF-14; publicar sin ingredientes o sin pasos → RF-15; publicar sin título o sin foto → RF-16.
+- Guardado incompleto: sin título → RF-14; requisitos de Publicar incumplidos → «Publicar Receta» deshabilitado y requisitos enumerados junto al dock → RF-15, RF-16; cumplidos → habilitado y publicable → RF-17.
 - Filas incompletas: Ingrediente sin nombre o con cantidad ≤ 0 → RF-8; Paso sin texto → RF-12; esas filas solo bloquean Publicar, no «Guardar Borrador» (que las conserva tal cual) → RF-13.
 - Límites: raciones fuera de 1-12 → RF-3; tiempos que no sean minutos ≥ 0 → RF-4.
 - Momento culinario sin elección explícita → RF-26 (Almuerzo por defecto).
@@ -82,8 +82,8 @@ para poder verlos en Mis Recetas y más adelante cocinarlos paso a paso.
 | RF-12 | derivado: caso límite | unit (bloqueo de Publicar por Paso inválido) | informe `unit` |
 | RF-13 | `steps`: guardar como Borrador | verify 2 | informe E2E + captura |
 | RF-14 | derivado: caso límite | escenario E2E: error de título | informe E2E |
-| RF-15 | `steps`: regla S07 | verify 3 (unit) + E2E de bloqueo | informe `unit` + E2E |
-| RF-16 | `steps` S07 + Q-crear-receta-1 | escenario E2E: publicar sin foto | informe E2E |
+| RF-15 | `steps` S07 + `afinar-fidelidad-visual-del-formulario` RF-14 | escenario E2E: Publicar deshabilitado | informe E2E |
+| RF-16 | `steps` S07 + Q-crear-receta-1 + `afinar-fidelidad-visual-del-formulario` RF-15 | escenario E2E: lista junto al dock | informe E2E |
 | RF-17 | `description`; `steps`: guardar como Publicada | verify 1 | informe E2E + captura |
 | RF-18 | `steps`: guardar la receta | escenario E2E: recrear actividad | informe E2E |
 | RF-19 | `steps`: foto + Q-crear-receta-3 | escenario manual con `adb`/uiautomator | informe de validación |
@@ -160,7 +160,7 @@ para poder verlos en Mis Recetas y más adelante cocinarlos paso a paso.
 - `./lint.sh` → exit 0 sin errores; `./unit.sh` → exit 0.
 - Unit (verify 3): «no se publica una receta sin al menos un ingrediente y un paso», más las validaciones de RF-3, RF-4, RF-8 y RF-12.
 - `./e2e.sh` en emulador API 30+: crear receta con dos ingredientes y dos pasos, foto (fake) y publicar → aparece en Mis Recetas (verify 1); guardar el mismo formulario como Borrador → tarjeta con distintivo Borrador (verify 2).
-- E2E propios: publicar sin ingrediente/paso o sin foto → error visible y sin guardar (RF-15, RF-16); guardar un Borrador con una fila inválida → se guarda y no se publica (RF-8, RF-12, RF-13); formulario nuevo → Almuerzo preseleccionado (RF-26); «Generar con IA» sin API key → aviso y con generador en fallo → aviso (RF-21, RF-22); marcar favorito y recrear la actividad → la Receta sigue en Mis Recetas (RF-18, RF-24).
+- E2E propios: Publicar deshabilitado y lista junto al dock mientras falta algún requisito y habilitado al cumplirlos, sin guardar nada antes de publicar (RF-15, RF-16; `publishIsDisabledUntilRequirementsAreMet`, `publishWithoutPhotoIsBlocked`, `publishWithoutIngredientIsBlocked`, `invalidIngredientRowsAreListedAsBlockingRequirement`); guardar un Borrador con una fila inválida → se guarda y no se publica (RF-8, RF-12, RF-13); formulario nuevo → Almuerzo preseleccionado (RF-26); «Generar con IA» sin API key → aviso y con generador en fallo → aviso (RF-21, RF-22); marcar favorito y recrear la actividad → la Receta sigue en Mis Recetas (RF-18, RF-24).
 - UI (solo el validador): 2 capturas en emulador API 30+ (formulario completo y Mis Recetas con tarjetas) comparadas con `uxdocs/chefencasa_registrar_y_editar_receta/code.html` y `DESIGN.md`, guardadas según «Evidencia a capturar».
 - Scripts de verificación: no se tocan `init`/`lint`/`unit`/`e2e`.
 ## Evidencia a capturar
