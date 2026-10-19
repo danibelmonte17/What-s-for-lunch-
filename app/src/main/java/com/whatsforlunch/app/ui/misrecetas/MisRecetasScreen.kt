@@ -2,6 +2,7 @@ package com.whatsforlunch.app.ui.misrecetas
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Schedule
@@ -35,12 +37,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,6 +76,7 @@ object MisRecetasTestTags {
     const val RECIPE_TIME = "mis_recetas_card_time"
     const val RECIPE_DIFFICULTY = "mis_recetas_card_difficulty"
     const val RECIPE_SERVINGS = "mis_recetas_card_servings"
+    const val RECIPE_EDIT = "mis_recetas_card_edit"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +85,7 @@ fun MisRecetasScreen(
     uiState: MisRecetasUiState,
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
+    onEditRecipe: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -104,6 +111,7 @@ fun MisRecetasScreen(
             MisRecetasState.WithRecipes -> RecipeList(
                 recipes = uiState.recipes,
                 onCreateRecipe = onCreateRecipe,
+                onEditRecipe = onEditRecipe,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -166,6 +174,7 @@ private fun EmptyMisRecetas(
 private fun RecipeList(
     recipes: List<Recipe>,
     onCreateRecipe: () -> Unit,
+    onEditRecipe: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -175,7 +184,7 @@ private fun RecipeList(
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
     ) {
         items(items = recipes, key = { it.id }) { recipe ->
-            RecipeCard(recipe = recipe)
+            RecipeCard(recipe = recipe, onEdit = { onEditRecipe(recipe.id) })
         }
         item {
             Button(
@@ -192,13 +201,14 @@ private fun RecipeList(
 }
 
 // RF-17 a RF-20 y RF-22: tarjeta con portada y badge de momento superpuesto (o
-// junto al título sin foto), título, metadatos con iconos y píldora de estado
-// sobre surface-container-lowest con esquinas de 0.75rem y sombra cálida.
+// junto al título sin foto), título, metadatos con iconos, píldora de estado y el
+// pie de acciones sobre surface-container-lowest con esquinas de 0.75rem y sombra
+// cálida. RF-4: el pie solo dibuja «Editar receta» (Q-editar-receta-4).
 private val CardShape: Shape = RoundedCornerShape(WarmRadius.md)
 private val PillShape: Shape = RoundedCornerShape(50)
 
 @Composable
-private fun RecipeCard(recipe: Recipe) {
+private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit) {
     Surface(
         shape = CardShape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -264,7 +274,53 @@ private fun RecipeCard(recipe: Recipe) {
                     )
                 }
                 MetadataRow(recipe = recipe)
+                CardActions(onEdit = onEdit)
             }
+        }
+    }
+}
+
+// RF-4: pie de acciones de la tarjeta con «Editar receta» en la posición izquierda
+// del prototipo. «Eliminar receta» y «Cocinar Ahora» quedan fuera de esta feature
+// (Q-editar-receta-4).
+@Composable
+private fun CardActions(onEdit: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = WarmSpacing.xs),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EditRecipeButton(onClick = onEdit)
+    }
+}
+
+// RF-4 y NFR-2: icono `edit` de 18 dp sobre un recuadro visual de 36 dp
+// (`w-9 h-9 rounded-lg` del prototipo) con área táctil de 48 dp.
+@Composable
+private fun EditRecipeButton(onClick: () -> Unit) {
+    val label = stringResource(R.string.mis_recetas_action_edit)
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = label }
+            .testTag(MisRecetasTestTags.RECIPE_EDIT),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(WarmRadius.default)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }

@@ -16,6 +16,11 @@ abstract class RecipeDao {
     @Query("SELECT * FROM recipes ORDER BY title COLLATE NOCASE ASC")
     abstract fun observeRecipesWithDetails(): Flow<List<RecipeWithDetails>>
 
+    // Lectura puntual por id para el modo edición (RF-2, RF-18).
+    @Transaction
+    @Query("SELECT * FROM recipes WHERE id = :id")
+    abstract suspend fun getRecipeWithDetails(id: String): RecipeWithDetails?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertRecipe(recipe: RecipeEntity)
 

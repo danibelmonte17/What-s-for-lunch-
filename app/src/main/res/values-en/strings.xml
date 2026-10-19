@@ -13,6 +13,7 @@
     <string name="mis_recetas_status_published">Published</string>
     <string name="mis_recetas_card_time">%1$d min</string>
     <string name="mis_recetas_card_servings">%1$d servings</string>
+    <string name="mis_recetas_action_edit">Edit recipe</string>
 
     <!-- Meal moment -->
     <string name="momento_desayuno">Breakfast</string>
@@ -27,6 +28,7 @@
 
     <!-- Recipe creation form -->
     <string name="crear_receta_title">Create recipe</string>
+    <string name="crear_receta_edit_title">Edit Recipe</string>
     <string name="crear_receta_header_subtitle">Step by step with AI</string>
     <string name="action_save">Save</string>
     <string name="crear_receta_required_badge">Required</string>
@@ -76,6 +78,7 @@
     <string name="crear_receta_steps_count">%1$d steps defined</string>
     <string name="crear_receta_save_draft">Save Draft</string>
     <string name="crear_receta_publish">Publish Recipe</string>
+    <string name="crear_receta_save_changes">Save changes</string>
     <string name="crear_receta_publish_blocked">Cannot publish yet:</string>
     <string name="crear_receta_publish_error_title">Title is missing</string>
     <string name="crear_receta_publish_error_photo">Photo is missing</string>
