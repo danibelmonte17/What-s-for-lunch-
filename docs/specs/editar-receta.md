@@ -28,7 +28,7 @@ para poder modificarla sin recrearla ni perder su estado.
 - RF-1: CUANDO el usuario pulsa «Editar receta» en la tarjeta de una Receta de Mis Recetas, EL SISTEMA abre el formulario de Receta en modo edición.
 - RF-2: EL SISTEMA precarga en el formulario el título, la historia, el momento culinario, los tiempos de preparación y cocción, la dificultad, las raciones base, las calorías, la foto, el favorito, los ingredientes y los pasos de la Receta editada.
 - RF-3: CUANDO el formulario abre en modo edición, EL SISTEMA titula la cabecera del alta «Editar Receta» con el distintivo de estado de la Receta (Borrador/Publicada), según `uxdocs/chefencasa_registrar_y_editar_receta/code.html` (cabecera) y el modal de edición de `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (título).
-- RF-4: EL SISTEMA presenta «Editar receta» en el pie de acciones de la tarjeta como un botón primario relleno y compacto (fondo primario, icono `edit` de 18 dp y etiqueta visible «Editar»), de ancho al contenido, con altura ≥ 52 dp y área táctil ≥ 48×48 dp, y con nombre accesible «Editar receta». **Excepción de diseño aprobada por el usuario el 2026-10-19**: el control se destaca frente al icono fantasma `w-9 h-9` de `uxdocs/chefencasa_mis_recetas_y_crud/code.html` para que la acción se vea en el dispositivo (el prototipo es orientativo, `P16`; ver `## Clarificación` y `Q-editar-receta-6`).
+- RF-4: EL SISTEMA presenta «Editar receta» en el pie de acciones de la tarjeta como un botón primario relleno y compacto (fondo primario, icono `edit` de 16 dp y etiqueta visible «Editar»), de ancho al contenido, con altura visual 36 dp y área táctil ≥ 48×48 dp (mínimo interactivo de Material 3), y con nombre accesible «Editar receta». Este tamaño compacto es la referencia del pie de la tarjeta y se comparte con «Eliminar receta» (`eliminar-receta`, Q-eliminar-receta-4). **Excepción de diseño aprobada por el usuario el 2026-10-19**: el control se destaca frente al icono fantasma `w-9 h-9` de `uxdocs/chefencasa_mis_recetas_y_crud/code.html` para que la acción se vea en el dispositivo (el prototipo es orientativo, `P16`; ver `## Clarificación` y `Q-editar-receta-6`).
 - RF-5: MIENTRAS se edita una Receta en estado Publicada, EL SISTEMA muestra en el dock una única acción primaria «Guardar cambios».
 - RF-6: CUANDO el usuario pulsa «Guardar cambios» sobre una Receta Publicada que cumple los requisitos de Publicar, EL SISTEMA guarda los cambios manteniendo el estado Publicada.
 - RF-7: MIENTRAS una Receta Publicada en edición no cumple los requisitos de Publicar (`⚠ S07`), EL SISTEMA mantiene «Guardar cambios» deshabilitado.
@@ -47,7 +47,7 @@ para poder modificarla sin recrearla ni perder su estado.
 ## Requisitos no funcionales
 
 - NFR-1: Interfaz en español e inglés vía `strings.xml` (`P19`); los textos de edición («Editar Receta», «Editar receta», «Editar», «Guardar cambios») se afirman en ambas lenguas.
-- NFR-2: Objetivos táctiles ≥ 48×48 dp y contraste WCAG 2.1 AA; los botones primarios —el del dock y el de «Editar receta» de la tarjeta (RF-4)— miden ≥ 52 dp de alto (`DESIGN.md`).
+- NFR-2: Objetivos táctiles ≥ 48×48 dp y contraste WCAG 2.1 AA; los botones primarios del dock miden ≥ 52 dp de alto (`DESIGN.md`) y el de «Editar receta» de la tarjeta (RF-4) mantiene el área táctil ≥ 48×48 dp con altura visual compacta de 36 dp (excepción de diseño aprobada por el usuario, alineada con «Eliminar receta»).
 - NFR-3: Android 11 (API 30) o superior, solo móvil (`P20`); el dato vive en el dispositivo (`P33`).
 - NFR-4: Los estados de edición reproducen el prototipo 1:1 (bloques, textos, iconos, controles y roles de token) por muestreo de píxeles en emulador API 30+, excluidos los controles de «Fuera de alcance» y el botón «Editar receta» del pie de la tarjeta (excepción de diseño aprobada por el usuario, RF-4), que se verifica por rol de token y tamaño; si el prototipo contradice `DESIGN.md`, prima `DESIGN.md` en interacción y accesibilidad y el prototipo en apariencia.
 
@@ -90,6 +90,7 @@ para poder modificarla sin recrearla ni perder su estado.
 
 ## Registro de iteraciones
 
+- Compactación final (2026-10-19): el botón «Editar» de la tarjeta se reduce a icono de 16 dp y altura visual de 36 dp (área táctil ≥ 48 dp por el mínimo interactivo de Material 3); RF-4, NFR-2, §Enfoque técnico «Tarjeta y copy» y §Plan de verificación se sincronizan con ese tamaño, que pasa a ser la referencia del pie de la tarjeta para «Editar» y «Eliminar».
 - Retrabajo tras auditoría (A RETRABAJAR intento 1): RF-4 fija icono 18 dp, recuadro 36 dp y área táctil ≥ 48 dp con la precedencia `DESIGN.md`/prototipo en NFR-4 (hallazgo 1); RF-13/RF-14 nombran el guardado de la cabecera por estado y su estado deshabilitado (2); RF-3 cita el prototipo correcto y los casos límites fijan el subtítulo (3); NFR-4 excluye del muestreo los controles de «Fuera de alcance» (4); RF-18 cubre el id inexistente (5); el caso límite del Borrador cita `crear-receta` RF-13/RF-14 (6); RF-7/RF-8 separados y RF-15 acotado (7); verificación es/en añadida (8). Post-APTA (intento 2), corregidos de oficio a petición del usuario: Trazabilidad precisa el origen de RF-11 y de RF-15 a RF-18 y NFR-2 unifica la medida en dp (menores 9 y 10).
 
 # PARTE B — PLAN
@@ -119,7 +120,7 @@ para poder modificarla sin recrearla ni perder su estado.
 - **Navegación**: `AppRoutes.CREAR_RECETA` pasa a `"crear_receta?recipeId={recipeId}"` y Mis Recetas navega con el id de la tarjeta; al guardar, `popBackStack` y `observeRecipes` refrescan la lista (RF-1, RF-17).
 - **Dock por estado**: `ActionDock` se rama por el estado de la Receta editada — Publicada → único «Guardar cambios» habilitado solo si `canPublish`, con `PublishErrors` junto al dock (RF-5 a RF-8); Borrador → dock del alta con sus mismas reglas (RF-9 a RF-12). `FormHeader` no dibuja «Guardar» en ningún modo: el dock es el único guardado (RF-13, RF-14).
 - **Guardado**: la acción de guardado persiste con el estado original (RF-6, RF-10); «Publicar Receta» solo ejecuta la transición Borrador → Publicada (RF-11) y nada persiste si se cierra sin guardar (RF-15).
-- **Tarjeta y copy**: `RecipeCard` añade el pie del prototipo solo con «Editar receta», en la posición izquierda y como botón primario compacto —`Button` de Material 3 con el color primario, icono `Icons.Outlined.Edit` de 18 dp + etiqueta visible «Editar», altura ≥ 52 dp por NFR-2 y nombre accesible «Editar receta»— por la excepción de diseño aprobada por el usuario (RF-4, Q-editar-receta-6); `RecipeList` recibe `onEditRecipe(id)` (RF-1, RF-4); «Eliminar» y «Cocinar Ahora» no se dibujan (Q-editar-receta-4). Textos de edición en `strings.xml` es/en (NFR-1).
+- **Tarjeta y copy**: `RecipeCard` añade el pie del prototipo solo con «Editar receta», en la posición izquierda y como botón primario compacto —`Button` de Material 3 con el color primario, icono `Icons.Outlined.Edit` de 16 dp + etiqueta visible «Editar», altura visual 36 dp y área táctil ≥ 48 dp por NFR-2, y nombre accesible «Editar receta»— por la excepción de diseño aprobada por el usuario (RF-4, Q-editar-receta-6); este es el contrato compacto que replica «Eliminar receta» (`eliminar-receta`); `RecipeList` recibe `onEditRecipe(id)` (RF-1, RF-4); «Eliminar» y «Cocinar Ahora» no se dibujan (Q-editar-receta-4). Textos de edición en `strings.xml` es/en (NFR-1).
 
 ## Archivos esperados
 
@@ -153,7 +154,7 @@ para poder modificarla sin recrearla ni perder su estado.
 - `./lint.sh` y `./unit.sh` → exit 0; unit: requisitos de Publicar en modo edición (RF-7, RF-8, RF-12) y conservación de estado y origen (RF-6, RF-10, RF-16).
 - E2E verify 1: editar el título de una receta publicada y comprobar que Mis Recetas muestra el nuevo título (RF-6, RF-17).
 - E2E propios: precarga (RF-2), cabecera y botón «Editar» (RF-3, RF-4), dock según estado (RF-5, RF-9), deshabilitado y lista en Publicada incompleta (RF-7, RF-8), guardar borrador manteniendo estado (RF-10), publicar desde edición (RF-11, RF-12), ausencia de «Guardar» de cabecera y guardado desde el dock en ambos estados (RF-13, RF-14), cierre sin guardar (RF-15), id inexistente (RF-18) y localización es/en de los textos de edición (NFR-1).
-- UI *(solo el validador)*: 2 capturas en emulador API 30+ (formulario en modo edición y tarjeta con el pie de acciones) comparadas por muestreo de píxeles acotado a los bloques implementados (NFR-4) con los prototipos y `DESIGN.md`, y medición por uiautomator (informa en px, convertidos a dp según la densidad del emulador) de área táctil ≥ 48 dp y de los botones primarios —dock y «Editar receta» de la tarjeta (≥ 52 dp)— (NFR-2); el botón «Editar receta» se compara por rol de token primario, no por 1:1 (RF-4). Regresión: `./e2e.sh` deja en verde `crear-receta` y `afinar-fidelidad-visual-del-formulario`; no se tocan `init`/`lint`/`unit`/`e2e`.
+- UI *(solo el validador)*: 2 capturas en emulador API 30+ (formulario en modo edición y tarjeta con el pie de acciones) comparadas por muestreo de píxeles acotado a los bloques implementados (NFR-4) con los prototipos y `DESIGN.md`, y medición por uiautomator (informa en px, convertidos a dp según la densidad del emulador) del área táctil ≥ 48 dp y de los botones primarios —dock (≥ 52 dp) y «Editar receta» de la tarjeta (36 dp visuales, ≥ 48 dp táctiles)— (NFR-2); el botón «Editar receta» se compara por rol de token primario, no por 1:1 (RF-4). Regresión: `./e2e.sh` deja en verde `crear-receta` y `afinar-fidelidad-visual-del-formulario`; no se tocan `init`/`lint`/`unit`/`e2e`.
 
 ## Evidencia a capturar
 
@@ -221,3 +222,13 @@ Implementar el ajuste y re-ejecutar la validación de la feature.
 ### Siguiente acción
 
 Implementar el ajuste (botón primario compacto con etiqueta «Editar»/«Edit» y nombre accesible «Editar receta»/«Edit recipe») y re-ejecutar la validación de la feature.
+
+## Clarificación — 2026-10-19 — cambio de alcance: tamaño compacto del pie de tarjeta
+
+### Hallazgos
+
+1. [cambio pedido por el usuario, resuelto] El botón «Editar» de la tarjeta se compacta a icono de 16 dp y altura visual de 36 dp (área táctil ≥ 48 dp por el mínimo interactivo de Material 3) y pasa a ser la referencia de tamaño del pie de la tarjeta: «Eliminar receta» (`eliminar-receta`) replica esas medidas para que ambas acciones sean homogéneas → ver RF-4, NFR-2, §Enfoque técnico «Tarjeta y copy», §Plan de verificación, §Registro de iteraciones y `Q-editar-receta-6`.
+
+### Siguiente acción
+
+Sincronizar la spec con el tamaño compacto ya implementado (commit `873b625`) y revalidar la feature; la alineación de «Eliminar» con estas medidas se documenta en `docs/specs/eliminar-receta.md`.

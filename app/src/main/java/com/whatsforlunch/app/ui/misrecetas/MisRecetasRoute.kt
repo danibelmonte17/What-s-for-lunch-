@@ -19,5 +19,7 @@ fun MisRecetasRoute(
         onCreateRecipe = onCreateRecipe,
         onScanPantry = onScanPantry,
         onEditRecipe = onEditRecipe,
+        onDeleteRecipe = viewModel::deleteRecipe,
+        onDeleteErrorConsumed = viewModel::consumeDeleteError,
     )
 }

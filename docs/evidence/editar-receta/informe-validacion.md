@@ -110,3 +110,10 @@ Total: 3 artefactos (≤ 4), solo de esta feature.
 - **Manual (adb + uiautomator)**: botón medido **342×156 px = 114×52 dp** (≥ 52 dp), relleno `#A83212` y etiqueta «Editar» con tinta blanca (`#FFFFFF`) muestreados en la captura, lápiz en tinta blanca; en inglés «Edit»/«Edit recipe»; pulsarlo abre «Editar Receta» con el título precargado y el dock del Borrador (RF-1, RF-9).
 - **Evidencia actualizada**: `mis-recetas-accion-editar.png` recapturada (tarjeta con el botón nuevo).
 - **Veredicto del ciclo 3**: `validated`.
+
+### Ciclo 4 (2026-10-19) — sincronización del tamaño compacto del botón «Editar»
+
+- **Contexto:** tras el ciclo 3, el botón «Editar» de la tarjeta se compactó a icono de 16 dp y altura visual de 36 dp (commit `873b625`), pero la spec y este informe seguían citando 18 dp y 114×52 dp. Las medidas de 114×52 dp de los ciclos anteriores quedan como históricas.
+- **Cambio documentado:** `docs/specs/editar-receta.md` (RF-4, NFR-2, §Enfoque técnico «Tarjeta y copy», §Plan de verificación y §Registro de iteraciones), `DESIGN.md` (excepción compacta del pie de tarjeta) y `docs/risks-and-open-questions.md` (Q-editar-receta-6). Sin cambios de comportamiento.
+- **Verificación:** `lintDebug` + `testDebugUnitTest` `BUILD SUCCESSFUL` (12 tests, 0 fallos) y `connectedDebugAndroidTest` `BUILD SUCCESSFUL` con **53 tests: 53 pasan, 0 fallan, 0 saltados** (4 m 4 s) en `Pixel_10_Pro` (API 37, 480 dpi), incluida la suite `EditarRecetaE2ETest` completa. Medición con `uiautomator` (densidad 3.0): «Editar receta» `[96,590][345,698]` = 249×108 px = **83×36 dp**; «Eliminar receta» replica 96×36 dp.
+- **Veredicto:** documentación sincronizada con el tamaño compacto implementado y regresión en verde; `editar-receta` sigue **`validated`**.
