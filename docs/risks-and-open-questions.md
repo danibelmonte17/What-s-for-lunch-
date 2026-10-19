@@ -12,6 +12,8 @@ El banco de descubrimiento (37 preguntas, `P1`-`P37`) quedó **resuelto** en la 
 
 Ninguna.
 
+_Actualización (`buscar-y-filtrar-recetas`): las 5 preguntas de la feature quedaron resueltas por el humano el 2026-10-19 (ver tabla)._
+
 | ID | Pregunta | Origen | Bloqueante | Estado |
 |---|---|---|---|---|
 | Q-arrancar-app-en-mis-recetas-1 | ¿Confirmamos la estructura prevista en `CONTEXT.md` (módulo único `app` con capas `ui`/`domain`/`data`, MVVM + StateFlow, Gradle Kotlin DSL y comandos `./gradlew`)? | `docs/specs/arrancar-app-en-mis-recetas.md` (⚠ S06) | no | resuelta (confirmada la estructura y los comandos de `CONTEXT.md`) |
@@ -36,6 +38,11 @@ Ninguna.
 | Q-editar-receta-6 | El icono «Editar receta» del pie de la tarjeta apenas se ve en el dispositivo: ¿se destaca? | `docs/specs/editar-receta.md` | no | resuelta (excepción de diseño aprobada por el usuario el 2026-10-19: botón primario compacto con lápiz y etiqueta «Editar» al estilo de «Crear receta», nombre accesible «Editar receta»; RF-4) |
 | Q-sincronizar-spec-de-crear-receta-1 | Al actualizar RF-15/RF-16 de `crear-receta.md`: ¿RF-15 queda el botón deshabilitado y RF-16 la lista junto al dock, o al revés? | `docs/specs/sincronizar-spec-de-crear-receta.md` | no | resuelta (RF-15 deshabilitado y RF-16 lista; confirmado por el usuario el 2026-10-19, manteniendo el orden de la `description`, `editar-receta` RF-7/RF-8 y `afinar-fidelidad-visual-del-formulario` RF-14/RF-15) |
 | Q-sincronizar-spec-de-crear-receta-2 | ¿Se añade una línea en «Registro de iteraciones» de `crear-receta.md` que registre esta sincronización? | `docs/specs/sincronizar-spec-de-crear-receta.md` | no | resuelta (no se añade nada en «Registro de iteraciones» de `crear-receta.md`; alcance = las cinco secciones de `steps` + T6, y el rastro vive en la spec de esta feature y en el Historial de `docs/progress-history.md`) |
+| Q-buscar-y-filtrar-recetas-1 | ¿El filtro por momento culinario es de selección única con «Todas» por defecto (como el prototipo) o de selección múltiple? | `docs/specs/buscar-y-filtrar-recetas.md` | no | resuelta (confirmada por el humano el 2026-10-19: selección única con opción «Todas») |
+| Q-buscar-y-filtrar-recetas-2 | ¿La comparación del buscador ignora tildes y espacios exteriores además de mayúsculas? | `docs/specs/buscar-y-filtrar-recetas.md` | no | resuelta (confirmada por el humano el 2026-10-19: comparación normalizada completa, insensible a mayúsculas y tildes y con espacios recortados, en título e ingredientes) |
+| Q-buscar-y-filtrar-recetas-3 | ¿Qué retardo de debounce usa el buscador? | `docs/specs/buscar-y-filtrar-recetas.md` | no | resuelta (confirmada por el humano el 2026-10-19: debounce de 300 ms) |
+| Q-buscar-y-filtrar-recetas-4 | ¿Se muestran el buscador y el filtro cuando la colección de Recetas está vacía? | `docs/specs/buscar-y-filtrar-recetas.md` | no | resuelta (confirmada por el humano el 2026-10-19: se ocultan; solo queda el estado vacío de Mis Recetas) |
+| Q-buscar-y-filtrar-recetas-5 | ¿La búsqueda y el filtro se conservan al navegar y volver a Mis Recetas y tras cerrar la app? | `docs/specs/buscar-y-filtrar-recetas.md` | no | resuelta (confirmada por el humano el 2026-10-19: estado en memoria, se conserva al navegar dentro de la sesión y se restablece al cerrar la app) |
 
 ## Supuestos
 

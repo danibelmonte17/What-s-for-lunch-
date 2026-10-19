@@ -142,7 +142,7 @@
         "E2E: con tres recetas de distinto momento, filtrar por Cena y comprobar que solo aparece la receta de Cena",
         "E2E: escribir un ingrediente en el buscador y comprobar que aparecen las recetas que lo contienen"
       ],
-      "status": "not_started"
+      "status": "validated"
     },
     {
       "id": "gestionar-alimentos-de-la-despensa",
