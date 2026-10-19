@@ -1,6 +1,6 @@
 # Informe de validación — `editar-receta`
 
-- **Fecha**: 2026-10-19 · **Modo**: completa (ciclo 1) + ciclo 2 tras la retirada de «Guardar» de la cabecera.
+- **Fecha**: 2026-10-19 · **Modo**: completa (ciclo 1) + ciclo 2 tras la retirada de «Guardar» de la cabecera + ciclo 3 tras destacar el botón «Editar» (excepción de diseño, Q-editar-receta-6).
 - **Entorno real**: emulador Android `Pixel_10_Pro` (**API 37.1**, densidad 480 → 3 px/dp), locale de sistema `en-US`; app en `es-ES` por locale de aplicación (`cmd locale set-app-locales`, revertido al terminar). AVD válido (≥ API 30).
 - **APK validado**: `app/build/outputs/apk/debug/app-debug.apk` (`com.whatsforlunch.app`, `installDebug` exit 0).
 
@@ -13,7 +13,7 @@
 | `unit.ps1` (`testDebugUnitTest`) | **exit 0** | **10 tests, 0 fallos** (`RecipeValidationTest` 8 + `MisRecetasStateTest` 2) |
 | `e2e.ps1` (`connectedDebugAndroidTest`) | **exit 0** | **45 tests, 0 fallos, 0 saltados** en `Pixel_10_Pro(AVD) - 17` (3 m 34 s) |
 
-Notas de entorno (no son fallos del producto): `init.ps1` requiere `ANDROID_HOME` en este worktree porque `local.properties` trae el `sdk.dir` escapado (`C\:\\…`) y el script lo lee sin desescapar; además, mezclar stderr (`2>&1`) al invocarlo bajo PowerShell 5.1 hace que su `ErrorActionPreference=Stop` aborte en la salida de `adb shell monkey`. Ejecutado como manda el arnés (sin fusión de flujos) devuelve exit 0.
+Notas de entorno (no son fallos del producto): en el ciclo 3 se corrigió `local.properties` (`sdk.dir` sin escapar, que rompía el `Join-Path` de `init.ps1`) y el arranque pasa con `adb` en el PATH, sin `ANDROID_HOME`; no se deben fusionar los flujos al invocar el arnés bajo PowerShell 5.1.
 
 ### Regresión (misma suite instrumentada)
 
@@ -34,7 +34,7 @@ Recorrido manual con `adb` + `uiautomator` sobre el APK real, además de la suit
 | RF-1 | pulsar «Editar receta» abre el formulario en modo edición | **pasa** | manual: tap (168,1172) → cabecera «Editar Receta»; `EditarRecetaAppE2ETest` |
 | RF-2 | precarga de todos los campos, foto, favorito, ingredientes y pasos | **pasa** | manual: «Tortilla de patatas» + «Quitar foto» + «Patata/700» + «Pochar la cebolla»; `editingPreloadsRecipeFieldsAndPublishedDock` (título, historia, momento, tiempos, dificultad, raciones, calorías, foto, filas y favorito) |
 | RF-3 | cabecera «Editar Receta» + distintivo de estado | **pasa** | manual: «Editar Receta» + píldora «Publicada» (y «Editar Recipe»/«Published» en inglés) |
-| RF-4 | icono `edit` 18 dp sobre recuadro 36 dp con área ≥ 48 dp | **pasa** | `uiautomator`: nodo `Editar receta` = `[96,1100][240,1244]` → **144×144 px = 48×48 dp**; tinta del icono 40×40 px centrada (glifo 18 dp) y color `#59413B` |
+| RF-4 | botón primario compacto «Editar» (lápiz 18 dp + etiqueta) ≥ 52 dp | **pasa** | `uiautomator`: nodo `Editar receta` = `[96,572][438,728]` → **342×156 px = 114×52 dp**; relleno `#A83212`, etiqueta «Editar» en `#FFFFFF` y lápiz en tinta blanca; es/en «Editar»/«Edit»; `cardEditActionRequestsEditingWithRecipeId`, `cardEditActionIsLocalizedInEnglish`; ciclo 3 (excepción de diseño, Q-editar-receta-6) |
 | RF-5 | dock de Publicada = única acción «Guardar cambios» | **pasa** | manual + `editingPreloadsRecipeFieldsAndPublishedDock` (no existen `SAVE_DRAFT` ni `PUBLISH`) |
 | RF-6 | guardar cambios mantiene Publicada | **pasa** | manual: título editado → tarjeta «…/Publicada»; `saveChangesKeepsPublishedStatusAndOrigin` |
 | RF-7 | «Guardar cambios» deshabilitado si no cumple requisitos | **pasa** | manual: sin título → nodo dock `enabled=false`; `publishedEditingWithoutRequirementsBlocksSavingChanges` |
@@ -54,8 +54,8 @@ Recorrido manual con `adb` + `uiautomator` sobre el APK real, además de la suit
 
 | NFR | Comprobación | Resultado |
 |---|---|---|
-| NFR-1 | textos de edición en es/en | **pasa**: «Editar Receta»/«Edit Recipe», «Editar receta»/«Edit recipe», «Guardar cambios»/«Save changes» comprobados en el emulador en ambos idiomas; 82/82 claves en `values/` y `values-en/`; `editTextsAreLocalizedInEnglish`, `cardEditActionIsLocalizedInEnglish` |
-| NFR-2 | objetivos ≥ 48 dp y contraste AA | **pasa**: icono «Editar receta» 48×48 dp y botón de dock 156 px = **52 dp** (≥ 52 dp); botón primario `#A83212` con texto blanco → contraste ≈ 6,7:1 (AA) |
+| NFR-1 | textos de edición en es/en | **pasa**: «Editar Receta»/«Edit Recipe», «Editar receta»/«Edit recipe», «Editar»/«Edit», «Guardar cambios»/«Save changes» comprobados en el emulador en ambos idiomas (ciclo 3: «Edit»/«Edit recipe» con la app en `en-US`); 82/82 claves en `values/` y `values-en/`; `editTextsAreLocalizedInEnglish`, `cardEditActionIsLocalizedInEnglish` |
+| NFR-2 | objetivos ≥ 48 dp y contraste AA | **pasa**: botón «Editar receta» de la tarjeta **342×156 px = 114×52 dp** y botón del dock = **52 dp** (≥ 52 dp); botón primario `#A83212` con texto blanco (`#FFFFFF`, muestreado) → contraste ≈ 6,7:1 (AA) |
 | NFR-3 | API 30+ | **pasa**: ejecutado en API 37.1 (y la suite corre en el mismo AVD) |
 | NFR-4 | fidelidad 1:1 por muestreo de píxeles | **pasa**: ver §3 |
 
@@ -67,9 +67,7 @@ Prototipos: `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (pie de la tarjeta)
 |---|---|---|---|
 | `article.recipe-card` | fondo `bg-surface-container-lowest` | `#FFFFFF` en (640,950) | igual |
 | `body.bg-surface` | fondo de pantalla | `#FBF9F5` en (640,1330) | igual |
-| `button[aria-label="Editar receta"]` `w-9 h-9 rounded-lg` | recuadro 36 px + área táctil ≥ 48 px (`NFR-2`) | nodo 144×144 px = **48×48 dp** (recuadro 36 dp en el código), clickable `[96,1100][240,1244]` | igual (RF-4 declara la precedencia `DESIGN.md`) |
-| `span.material-symbols-outlined.text-\[18px\]` `edit` | icono `edit` 18 px centrado | icono `Icons.Outlined.Edit` a 18 dp; tinta 40×40 px centrada en el recuadro | igual |
-| `text-on-surface-variant` | color del icono | `#59413B` (muestreado sobre la tinta) | igual |
+| `button[aria-label="Editar receta"]` `w-9 h-9 rounded-lg` (icono fantasma `text-on-surface-variant`) | acción destacada del pie de la tarjeta | botón primario compacto: relleno `#A83212`, etiqueta «Editar» en `#FFFFFF` y lápiz en tinta blanca; nodo **342×156 px = 114×52 dp** | **desviación declarada** (excepción de diseño aprobada por el usuario, RF-4/Q-editar-receta-6; verificado por rol de token y tamaño) |
 | `span` píldora de estado (`bg-primary/10 text-primary rounded-full`) | fondo primary @10 % + texto primary | píldora «Publicada» `#F2E5DE` sobre `#FBF9F5` (= primary 10 % exacto) y `#F6EAE7` sobre blanco | igual |
 | `div.sticky.bottom-4.bg-surface-container-lowest/95` (dock) | superficie del dock | `#FFFFFF` en (640,2640) | igual |
 | dock Publicada (extensión declarada en RF-5) | acción primaria `bg-primary text-on-primary` ≥ 52 px | «Guardar cambios» `#A83212`, alto 156 px = **52 dp** | igual (extensión declarada) |
@@ -77,7 +75,7 @@ Prototipos: `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (pie de la tarjeta)
 | botón «Guardar» (cabecera) | primario habilitado / deshabilitado distinguible | **no se dibuja** (Q-editar-receta-5): el prototipo lo muestra, desviación declarada y aceptada por el usuario | desviación declarada |
 | «Guardar cambios» deshabilitado (`RF-7`) | estado deshabilitado visible y distinguible | `#E4E2DE` (`surface-container-highest`) frente a `#A83212` habilitado | igual |
 
-Atributos comparados: **11**. Desviaciones declaradas aceptadas: 4 (área táctil 48 dp frente a los 36 px del prototipo —RF-4/NFR-2; dock de Publicada con «Guardar cambios» —RF-5; título «Editar Receta» —RF-3, tomado del modal del prototipo de Mis Recetas; botón «Guardar» de la cabecera omitido —Q-editar-receta-5). «Eliminar receta» y «Cocinar Ahora» quedan excluidos del muestreo por «Fuera de alcance» (Q-editar-receta-4). **Divergencias abiertas: 0.**
+Atributos comparados: **9** (el control «Editar receta» se verifica como excepción declarada, por rol de token y tamaño, no atributo a atributo). Desviaciones declaradas aceptadas: 4 (botón «Editar receta» destacado frente al icono fantasma del prototipo —excepción de diseño aprobada por el usuario, RF-4/Q-editar-receta-6; dock de Publicada con «Guardar cambios» —RF-5; título «Editar Receta» —RF-3, tomado del modal del prototipo de Mis Recetas; botón «Guardar» de la cabecera omitido —Q-editar-receta-5). «Eliminar receta» y «Cocinar Ahora» quedan excluidos del muestreo por «Fuera de alcance» (Q-editar-receta-4). **Divergencias abiertas: 0.**
 
 ## 4. Alcance
 
@@ -86,7 +84,7 @@ Atributos comparados: **11**. Desviaciones declaradas aceptadas: 4 (área tácti
 ## 5. Evidencia
 
 - `docs/evidence/editar-receta/informe-validacion.md` (este informe).
-- `docs/evidence/editar-receta/mis-recetas-accion-editar.png` — Mis Recetas (es) con la tarjeta Publicada y su pie «Editar receta».
+- `docs/evidence/editar-receta/mis-recetas-accion-editar.png` — Mis Recetas (es) con una tarjeta y su botón primario «Editar» (recapturada en el ciclo 3).
 - `docs/evidence/editar-receta/formulario-editar-receta.png` — formulario en modo edición (es): cabecera «Editar Receta»/«Borrador» sin «Guardar», datos precargados y dock del alta («Guardar Borrador»/«Publicar Receta»).
 
 Total: 3 artefactos (≤ 4), solo de esta feature.
@@ -103,3 +101,12 @@ Total: 3 artefactos (≤ 4), solo de esta feature.
 - **Manual (adb + uiautomator)**: en alta y en edición la cabecera solo muestra «Volver», título, distintivo y «Paso a paso con IA»; `uiautomator` no encuentra ningún nodo «Guardar» fuera del dock. Guardado de Borrador desde el dock verificado de extremo a extremo (tarjeta «Tortilla de patatas»/«Borrador» en Mis Recetas).
 - **Evidencia actualizada**: `formulario-editar-receta.png` recapturada (cabecera sin «Guardar», dock del alta).
 - **Veredicto del ciclo 2**: `validated`.
+
+### Ciclo 3 (2026-10-19) — botón «Editar» destacado (excepción de diseño, Q-editar-receta-6)
+
+- **Cambio pedido por el usuario**: el icono fantasma del pie de la tarjeta apenas se veía en el dispositivo; se pide un botón más vistoso, con el lápiz y la etiqueta «Editar», relleno como «Crear receta». Se documenta como **excepción de diseño** a la fidelidad 1:1 del prototipo (`P16`, orientativo; mandan los tokens de `DESIGN.md`): RF-4, NFR-2 y NFR-4 revisados, nueva fila `Q-editar-receta-6` y entrada de Clarificación en la spec.
+- **Alcance**: `MisRecetasScreen.kt` (`EditRecipeButton` pasa a `Button` primario compacto: lápiz 18 dp + «Editar», altura ≥ 52 dp, nombre accesible «Editar receta»), `strings.xml` es/en (`mis_recetas_action_edit_short` = «Editar»/«Edit»), `EditarRecetaE2ETest` (aserciones de la etiqueta visible en es/en) y `docs/specs/editar-receta.md` + `docs/risks-and-open-questions.md`. Sin cambios de flujo ni de otros comportamientos.
+- **Harness**: `init` exit 0; `lint` exit 0 (0 errores, 28 warnings); `unit` exit 0 (10 tests, 0 fallos); `e2e` exit 0 (**44 tests, 0 fallos, 0 saltados**) en `Pixel_10_Pro(AVD) - 17`, con la regresión de `crear-receta` y `afinar-fidelidad-visual-del-formulario`.
+- **Manual (adb + uiautomator)**: botón medido **342×156 px = 114×52 dp** (≥ 52 dp), relleno `#A83212` y etiqueta «Editar» con tinta blanca (`#FFFFFF`) muestreados en la captura, lápiz en tinta blanca; en inglés «Edit»/«Edit recipe»; pulsarlo abre «Editar Receta» con el título precargado y el dock del Borrador (RF-1, RF-9).
+- **Evidencia actualizada**: `mis-recetas-accion-editar.png` recapturada (tarjeta con el botón nuevo).
+- **Veredicto del ciclo 3**: `validated`.

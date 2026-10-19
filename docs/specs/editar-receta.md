@@ -11,7 +11,7 @@ source: feature_list.json
 
 ## Contexto y objetivo
 
-Mis Recetas ya crea Recetas, pero una Receta guardada no se puede modificar: cualquier error obliga a borrarla y recrearla. Esta feature abre el formulario existente en modo edición, precargado con los datos de la Receta, y guarda los cambios sin perder su estado (Borrador o Publicada), según el ciclo de vida de `docs/domain-model.md`. El usuario pidió ajustarse visualmente a `uxdocs/`: el acceso es el icono «Editar receta» del pie de la tarjeta y la cabecera del formulario pasa a «Editar Receta», tal como los dibuja el prototipo.
+Mis Recetas ya crea Recetas, pero una Receta guardada no se puede modificar: cualquier error obliga a borrarla y recrearla. Esta feature abre el formulario existente en modo edición, precargado con los datos de la Receta, y guarda los cambios sin perder su estado (Borrador o Publicada), según el ciclo de vida de `docs/domain-model.md`. El usuario pidió ajustarse visualmente a `uxdocs/`: la cabecera del formulario pasa a «Editar Receta», tal como la dibuja el prototipo. Revisado el 2026-10-19: el acceso del pie de la tarjeta, que el prototipo dibuja como icono fantasma poco visible, pasa a botón primario destacado por excepción de diseño aprobada por el usuario (ver RF-4 y `## Clarificación`).
 
 ## Actores y permisos
 
@@ -28,7 +28,7 @@ para poder modificarla sin recrearla ni perder su estado.
 - RF-1: CUANDO el usuario pulsa «Editar receta» en la tarjeta de una Receta de Mis Recetas, EL SISTEMA abre el formulario de Receta en modo edición.
 - RF-2: EL SISTEMA precarga en el formulario el título, la historia, el momento culinario, los tiempos de preparación y cocción, la dificultad, las raciones base, las calorías, la foto, el favorito, los ingredientes y los pasos de la Receta editada.
 - RF-3: CUANDO el formulario abre en modo edición, EL SISTEMA titula la cabecera del alta «Editar Receta» con el distintivo de estado de la Receta (Borrador/Publicada), según `uxdocs/chefencasa_registrar_y_editar_receta/code.html` (cabecera) y el modal de edición de `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (título).
-- RF-4: EL SISTEMA presenta «Editar receta» como un icono `edit` de 18 dp sobre un recuadro visual de 36 dp y un área táctil ≥ 48×48 dp, en el pie de acciones de la tarjeta según `uxdocs/chefencasa_mis_recetas_y_crud/code.html`.
+- RF-4: EL SISTEMA presenta «Editar receta» en el pie de acciones de la tarjeta como un botón primario relleno y compacto (fondo primario, icono `edit` de 18 dp y etiqueta visible «Editar»), de ancho al contenido, con altura ≥ 52 dp y área táctil ≥ 48×48 dp, y con nombre accesible «Editar receta». **Excepción de diseño aprobada por el usuario el 2026-10-19**: el control se destaca frente al icono fantasma `w-9 h-9` de `uxdocs/chefencasa_mis_recetas_y_crud/code.html` para que la acción se vea en el dispositivo (el prototipo es orientativo, `P16`; ver `## Clarificación` y `Q-editar-receta-6`).
 - RF-5: MIENTRAS se edita una Receta en estado Publicada, EL SISTEMA muestra en el dock una única acción primaria «Guardar cambios».
 - RF-6: CUANDO el usuario pulsa «Guardar cambios» sobre una Receta Publicada que cumple los requisitos de Publicar, EL SISTEMA guarda los cambios manteniendo el estado Publicada.
 - RF-7: MIENTRAS una Receta Publicada en edición no cumple los requisitos de Publicar (`⚠ S07`), EL SISTEMA mantiene «Guardar cambios» deshabilitado.
@@ -46,10 +46,10 @@ para poder modificarla sin recrearla ni perder su estado.
 
 ## Requisitos no funcionales
 
-- NFR-1: Interfaz en español e inglés vía `strings.xml` (`P19`); los textos de edición («Editar Receta», «Editar receta», «Guardar cambios») se afirman en ambas lenguas.
-- NFR-2: Objetivos táctiles ≥ 48×48 dp y contraste WCAG 2.1 AA; el botón primario del dock mide ≥ 52 dp de alto (`DESIGN.md`).
+- NFR-1: Interfaz en español e inglés vía `strings.xml` (`P19`); los textos de edición («Editar Receta», «Editar receta», «Editar», «Guardar cambios») se afirman en ambas lenguas.
+- NFR-2: Objetivos táctiles ≥ 48×48 dp y contraste WCAG 2.1 AA; los botones primarios —el del dock y el de «Editar receta» de la tarjeta (RF-4)— miden ≥ 52 dp de alto (`DESIGN.md`).
 - NFR-3: Android 11 (API 30) o superior, solo móvil (`P20`); el dato vive en el dispositivo (`P33`).
-- NFR-4: Los estados de edición reproducen el prototipo 1:1 (bloques, textos, iconos, controles y roles de token) por muestreo de píxeles en emulador API 30+, excluidos los controles de «Fuera de alcance»; si el prototipo contradice `DESIGN.md`, prima `DESIGN.md` en interacción y accesibilidad y el prototipo en apariencia.
+- NFR-4: Los estados de edición reproducen el prototipo 1:1 (bloques, textos, iconos, controles y roles de token) por muestreo de píxeles en emulador API 30+, excluidos los controles de «Fuera de alcance» y el botón «Editar receta» del pie de la tarjeta (excepción de diseño aprobada por el usuario, RF-4), que se verifica por rol de token y tamaño; si el prototipo contradice `DESIGN.md`, prima `DESIGN.md` en interacción y accesibilidad y el prototipo en apariencia.
 
 ## Casos límite
 
@@ -79,7 +79,7 @@ para poder modificarla sin recrearla ni perder su estado.
 | RF | Origen | Verificación | Evidencia |
 |---|---|---|---|
 | RF-1, RF-2 | `steps`: precargar el formulario | verify 1 + escenario E2E de precarga | informe E2E |
-| RF-3, RF-4 | uxdocs: cabecera y pie de la tarjeta | verify UI + uiautomator: cabecera e icono | captura |
+| RF-3, RF-4 | uxdocs: cabecera y pie de la tarjeta (RF-4 con la excepción de diseño aprobada por el usuario) | verify UI + uiautomator: cabecera y botón «Editar» | captura |
 | RF-5, RF-9, RF-11 | Q-editar-receta-1, Q-editar-receta-2 | escenario E2E: dock según estado y publicar desde edición | informe E2E |
 | RF-6, RF-10 | `steps`: guardar manteniendo estado | verify 1 (título nuevo en Mis Recetas) | informe E2E + captura |
 | RF-7, RF-8, RF-12 | Q-editar-receta-3 + `⚠ S07` | escenario E2E: deshabilitado y lista junto al dock | informe E2E |
@@ -119,7 +119,7 @@ para poder modificarla sin recrearla ni perder su estado.
 - **Navegación**: `AppRoutes.CREAR_RECETA` pasa a `"crear_receta?recipeId={recipeId}"` y Mis Recetas navega con el id de la tarjeta; al guardar, `popBackStack` y `observeRecipes` refrescan la lista (RF-1, RF-17).
 - **Dock por estado**: `ActionDock` se rama por el estado de la Receta editada — Publicada → único «Guardar cambios» habilitado solo si `canPublish`, con `PublishErrors` junto al dock (RF-5 a RF-8); Borrador → dock del alta con sus mismas reglas (RF-9 a RF-12). `FormHeader` no dibuja «Guardar» en ningún modo: el dock es el único guardado (RF-13, RF-14).
 - **Guardado**: la acción de guardado persiste con el estado original (RF-6, RF-10); «Publicar Receta» solo ejecuta la transición Borrador → Publicada (RF-11) y nada persiste si se cierra sin guardar (RF-15).
-- **Tarjeta y copy**: `RecipeCard` añade el pie del prototipo solo con «Editar receta» (icono `Icons.Outlined.Edit` de 18 dp sobre recuadro visual de 36 dp, `onSurfaceVariant`, área táctil ≥ 48 dp por NFR-2) en la posición izquierda y `RecipeList` recibe `onEditRecipe(id)` (RF-1, RF-4); «Eliminar» y «Cocinar Ahora» no se dibujan (Q-editar-receta-4). Textos de edición en `strings.xml` es/en (NFR-1).
+- **Tarjeta y copy**: `RecipeCard` añade el pie del prototipo solo con «Editar receta», en la posición izquierda y como botón primario compacto —`Button` de Material 3 con el color primario, icono `Icons.Outlined.Edit` de 18 dp + etiqueta visible «Editar», altura ≥ 52 dp por NFR-2 y nombre accesible «Editar receta»— por la excepción de diseño aprobada por el usuario (RF-4, Q-editar-receta-6); `RecipeList` recibe `onEditRecipe(id)` (RF-1, RF-4); «Eliminar» y «Cocinar Ahora» no se dibujan (Q-editar-receta-4). Textos de edición en `strings.xml` es/en (NFR-1).
 
 ## Archivos esperados
 
@@ -131,7 +131,7 @@ para poder modificarla sin recrearla ni perder su estado.
 ## Impacto visual
 
 - Fuente de diseño: `DESIGN.md` y los prototipos `uxdocs/chefencasa_registrar_y_editar_receta/code.html` (formulario, cabecera y dock) y `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (pie de acciones y modal «Editar Receta»); pantallas y estados afectados: Formulario de Receta en modo edición (cabecera y dock según estado) y Mis Recetas (pie de acciones de la tarjeta).
-- Fidelidad visual (NFR-4): 1:1 con el prototipo por muestreo de píxeles (bloques, textos, iconos, controles y roles de token) en emulador API 30+, acotado a los bloques implementados (excluidos «Eliminar receta» y «Cocinar Ahora», en «Fuera de alcance»); el resto del formulario hereda sin cambios los RF de `afinar-fidelidad-visual-del-formulario`. No hace falta artefacto de diseño nuevo: los prototipos cubren ambos elementos.
+- Fidelidad visual (NFR-4): 1:1 con el prototipo por muestreo de píxeles (bloques, textos, iconos, controles y roles de token) en emulador API 30+, acotado a los bloques implementados (excluidos «Eliminar receta» y «Cocinar Ahora», en «Fuera de alcance», y el botón «Editar receta» del pie de la tarjeta, excepción de diseño aprobada por el usuario que se verifica por rol de token y tamaño); el resto del formulario hereda sin cambios los RF de `afinar-fidelidad-visual-del-formulario`. No hace falta artefacto de diseño nuevo: los prototipos cubren ambos elementos.
 
 ## Impacto en documentación duradera
 
@@ -146,13 +146,14 @@ para poder modificarla sin recrearla ni perder su estado.
 - [x] T5: cabecera «Editar Receta» con distintivo de estado y textos es/en. (cubre RF-3, NFR-1)
 - [x] T6: cierre sin guardar. (cubre RF-15)
 - [x] T7: tests E2E de edición y regresión de `crear-receta`. (cubre el plan de verificación)
+- [x] T8: botón primario compacto «Editar» en el pie de la tarjeta (excepción de diseño aprobada por el usuario), textos es/en y aserciones E2E. (cubre RF-4, NFR-1, NFR-2)
 
 ## Plan de verificación
 
 - `./lint.sh` y `./unit.sh` → exit 0; unit: requisitos de Publicar en modo edición (RF-7, RF-8, RF-12) y conservación de estado y origen (RF-6, RF-10, RF-16).
 - E2E verify 1: editar el título de una receta publicada y comprobar que Mis Recetas muestra el nuevo título (RF-6, RF-17).
-- E2E propios: precarga (RF-2), cabecera e icono (RF-3, RF-4), dock según estado (RF-5, RF-9), deshabilitado y lista en Publicada incompleta (RF-7, RF-8), guardar borrador manteniendo estado (RF-10), publicar desde edición (RF-11, RF-12), ausencia de «Guardar» de cabecera y guardado desde el dock en ambos estados (RF-13, RF-14), cierre sin guardar (RF-15), id inexistente (RF-18) y localización es/en de los textos de edición (NFR-1).
-- UI *(solo el validador)*: 2 capturas en emulador API 30+ (formulario en modo edición y tarjeta con el pie de acciones) comparadas por muestreo de píxeles acotado a los bloques implementados (NFR-4) con los prototipos y `DESIGN.md`, y medición por uiautomator (informa en px, convertidos a dp según la densidad del emulador) de área táctil ≥ 48 dp y botón del dock ≥ 52 dp (NFR-2). Regresión: `./e2e.sh` deja en verde `crear-receta` y `afinar-fidelidad-visual-del-formulario`; no se tocan `init`/`lint`/`unit`/`e2e`.
+- E2E propios: precarga (RF-2), cabecera y botón «Editar» (RF-3, RF-4), dock según estado (RF-5, RF-9), deshabilitado y lista en Publicada incompleta (RF-7, RF-8), guardar borrador manteniendo estado (RF-10), publicar desde edición (RF-11, RF-12), ausencia de «Guardar» de cabecera y guardado desde el dock en ambos estados (RF-13, RF-14), cierre sin guardar (RF-15), id inexistente (RF-18) y localización es/en de los textos de edición (NFR-1).
+- UI *(solo el validador)*: 2 capturas en emulador API 30+ (formulario en modo edición y tarjeta con el pie de acciones) comparadas por muestreo de píxeles acotado a los bloques implementados (NFR-4) con los prototipos y `DESIGN.md`, y medición por uiautomator (informa en px, convertidos a dp según la densidad del emulador) de área táctil ≥ 48 dp y de los botones primarios —dock y «Editar receta» de la tarjeta (≥ 52 dp)— (NFR-2); el botón «Editar receta» se compara por rol de token primario, no por 1:1 (RF-4). Regresión: `./e2e.sh` deja en verde `crear-receta` y `afinar-fidelidad-visual-del-formulario`; no se tocan `init`/`lint`/`unit`/`e2e`.
 
 ## Evidencia a capturar
 
@@ -210,3 +211,13 @@ Continuar: la spec queda `ready` y puede pasar a implementación; los menores 9 
 
 ### Siguiente acción
 Implementar el ajuste y re-ejecutar la validación de la feature.
+
+## Clarificación — 2026-10-19 — cambio de alcance: excepción de diseño aprobada por el usuario
+
+### Hallazgos
+
+1. [excepción de diseño, resuelta] El icono fantasma del pie de la tarjeta (`w-9 h-9`, tinta `on-surface-variant`, sin etiqueta) apenas se ve en el dispositivo; el usuario pide destacar la acción como un botón primario compacto con el lápiz y la etiqueta «Editar», al estilo de «Crear receta». Se aprueba como **excepción consciente** a la fidelidad 1:1 con `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (orientativo, `P16`; mandan los tokens de `DESIGN.md`): ver RF-4, NFR-2, NFR-4, §Enfoque técnico «Tarjeta y copy», §Impacto visual, §Plan de verificación y `Q-editar-receta-6`. Alcance acotado a la apariencia del acceso de edición, sin cambios de flujo ni de requisitos funcionales; no requiere auditoría independiente por ser una decisión explícita del usuario.
+
+### Siguiente acción
+
+Implementar el ajuste (botón primario compacto con etiqueta «Editar»/«Edit» y nombre accesible «Editar receta»/«Edit recipe») y re-ejecutar la validación de la feature.

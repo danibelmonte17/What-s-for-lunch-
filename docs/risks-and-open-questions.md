@@ -33,6 +33,7 @@ Ninguna.
 | Q-editar-receta-3 | Si al editar una Publicada deja de cumplir `⚠ S07`, ¿qué pasa al guardar los cambios? | `docs/specs/editar-receta.md` | sí | resuelta (se bloquea el guardado: «Guardar cambios» deshabilitado, lista de requisitos junto al dock y nada se guarda; RF-7) |
 | Q-editar-receta-4 | El pie de la tarjeta dibuja «Editar», «Eliminar» y «Cocinar Ahora»: ¿qué toca esta feature? | `docs/specs/editar-receta.md` | no | resuelta (solo «Editar receta»; «Eliminar» es `eliminar-receta` y «Cocinar Ahora» de otras features; RF-4) |
 | Q-editar-receta-5 | El «Guardar» de la cabecera es redundante (mismo guardado y mismo habilitado que el dock): ¿se mantiene? | `docs/specs/editar-receta.md`, `docs/specs/afinar-fidelidad-visual-del-formulario.md` | no | resuelta (se elimina de la cabecera en todos los modos; el guardado queda solo en el dock; RF-13/RF-14 y RF-3/RF-21) |
+| Q-editar-receta-6 | El icono «Editar receta» del pie de la tarjeta apenas se ve en el dispositivo: ¿se destaca? | `docs/specs/editar-receta.md` | no | resuelta (excepción de diseño aprobada por el usuario el 2026-10-19: botón primario compacto con lápiz y etiqueta «Editar» al estilo de «Crear receta», nombre accesible «Editar receta»; RF-4) |
 
 ## Supuestos
 
