@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -294,27 +296,34 @@ private fun CardActions(onEdit: () -> Unit) {
     }
 }
 
-// RF-4, NFR-2 y excepción de diseño aprobada por el usuario (2026-10-19): la acción
-// «Editar receta» del pie de la tarjeta es un botón primario compacto —M3 `Button`
-// relleno con el color primario, como «Crear receta»— con el icono `edit` de 18 dp y
-// la etiqueta visible «Editar»; altura ≥ 52 dp (NFR-2) y nombre accesible «Editar receta».
+// RF-4 y excepción de diseño aprobada por el usuario (2026-10-19): la acción «Editar
+// receta» del pie de la tarjeta es un botón primario compacto —M3 `Button` relleno con
+// el color primario, como «Crear receta»— con icono `edit` de 16 dp y etiqueta «Editar»
+// en `labelMedium`; nombre accesible «Editar receta». Reducido a petición del usuario
+// (2026-10-19): altura visual 36 dp y ancho al contenido; el área táctil la mantiene el
+// mínimo interactivo de Material 3 (≥ 48 dp).
 @Composable
 private fun EditRecipeButton(onClick: () -> Unit) {
     val label = stringResource(R.string.mis_recetas_action_edit)
     Button(
         onClick = onClick,
         modifier = Modifier
-            .heightIn(min = 52.dp)
+            .minimumInteractiveComponentSize()
+            .heightIn(min = 36.dp)
             .semantics { contentDescription = label }
             .testTag(MisRecetasTestTags.RECIPE_EDIT),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Icon(
             imageVector = Icons.Outlined.Edit,
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(16.dp),
         )
         Spacer(modifier = Modifier.width(WarmSpacing.xs))
-        Text(text = stringResource(R.string.mis_recetas_action_edit_short))
+        Text(
+            text = stringResource(R.string.mis_recetas_action_edit_short),
+            style = MaterialTheme.typography.labelMedium,
+        )
     }
 }
 
