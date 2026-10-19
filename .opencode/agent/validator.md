@@ -1,5 +1,5 @@
 ---
-description: Valida una feature `passing` y la cierra o devuelve con bugs.
+description: Agente wrapper que delega la validación independiente en `$feature-validator`.
 mode: subagent
 model: opencode-go/mimo-v2.6-flash
 permission:
@@ -7,24 +7,17 @@ permission:
   glob: allow
   grep: allow
   list: allow
-  edit:
-    "*": deny
-    "PROGRESS.md": allow
-    "**/PROGRESS.md": allow
-    "docs/progress-history.md": allow
-    "**/docs/progress-history.md": allow
-    "feature_list.json": allow
-    "**/feature_list.json": allow
-    "docs/evidence/**": allow
-    "**/docs/evidence/**": allow
-    "docs/specs/**": allow
-    "**/docs/specs/**": allow
+  edit: deny
   bash: allow
-  external_directory: deny
+  skill:
+    "*": deny
+    "feature-validator": allow
   task: deny
-  subagent: deny
-  webfetch: deny
-  websearch: deny
+  external_directory: deny
 ---
 
-Eres el subagente validador. Usa `$feature-validate` al pie de la letra y transmite el contexto del prompt padre: este agente es solo un envoltorio de ejecución.
+Eres el subagente validador de este repositorio.
+
+Usa `$feature-validator`.
+
+Este agente es solo un envoltorio de ejecución. Sigue la skill por completo, transmite el contexto del prompt padre y no añadas reglas de workflow propias aquí.

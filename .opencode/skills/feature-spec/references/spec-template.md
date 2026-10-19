@@ -1,163 +1,133 @@
-# Plantilla de spec
+# Feature Implementation Spec Template
 
-Usa esta estructura para `docs/specs/<feature-id>.md`. Escríbela optimizada en tokens (regla común en `SKILL.md`): prosa mínima y tablas > párrafos. Sin objetivo de líneas: la extensión la fija el contenido. Las secciones marcadas *(solo si aplica)* se omiten por completo cuando no aplican; no las dejes vacías.
+Use this structure for `../../../../docs/specs/<feature-id>.md`.
 
-Regla de fuente única: cada dato se define una sola vez en su sección canónica y el resto referencia con `ver §X`; prohibido copiar la misma aserción en Trazabilidad, Enfoque, Tareas y Verificación. Los `Q-<feature-id>-<n>` solo se definen en «Dudas abiertas» y `docs/risks-and-open-questions.md`; el resto del doc los cita sin re-explicar la decisión.
+```md
+# Feature Implementation Spec: <feature title>
 
-````md
----
-feature: <feature-id>
-category: <category>
-depends_on: [<ids de features de las que depende>]
-status: draft            # draft | needs-clarification (hay incógnitas, no detiene) | ready (lo escribe el modo auditoría con APTA)
-source: feature_list.json
----
+## Source Feature
 
-# Spec: <título de la feature>
+- `id`: <feature-id>
+- `area`: <area>
+- `depends_on`: <feature ids this feature depends on>
+- `status`: <status at planning time>
+- `source`: `feature_list.json`
 
-# PARTE A · CONTRATO
+## Goal
 
-> QUÉ y POR QUÉ. Sin stack, arquitectura, nombres de archivos, esquemas, algoritmos ni firmas.
+<One or two paragraphs describing the outcome this feature must enable.>
 
-## Contexto y objetivo
+## Non-Goals
 
-<Qué problema resuelve y por qué merece la pena. Uno o dos párrafos.>
+- <Behavior or technical work explicitly outside this slice.>
+- <Adjacent feature that must not be pulled in.>
 
-## Actores y permisos
+## Job Story
 
-- <Actor/rol>: <comportamiento permitido y restricciones.>
+When <situation/context>,
+I want to <motivation/action>,
+so I can <expected outcome>.
 
-## Historia
+## Users And Permissions
 
-Cuando <situación o contexto>,
-quiero <acción o motivación>,
-para poder <resultado esperado>.
+- <Actor/role>: <allowed behavior and constraints>
 
-## Requisitos funcionales
+## Acceptance Scenarios
 
-> Un patrón EARS por requisito, una sola frase, verificable. Incluye aquí los casos límite y errores.
+### Scenario 1: <happy path name>
 
-- RF-1: CUANDO <disparador>, EL SISTEMA <hará> (resultado observable).
-- RF-2: SI <condición no deseada>, ENTONCES EL SISTEMA <hará>.
-- RF-3: MIENTRAS <estado>, EL SISTEMA <hará>.
-- RF-4: EL SISTEMA <hará>.
+Given <initial state>
+When <user/system action>
+Then <observable result>
 
-## Requisitos no funcionales *(solo si aplica)*
+### Scenario 2: <edge/error path name>
 
-<Rendimiento, seguridad, plataformas, idioma… siempre con umbral medible.>
+Given <initial state>
+When <user/system action>
+Then <observable result>
 
-## Casos límite
+## Repository Research
 
-- <Caso (vacíos, duplicados, datos corruptos, límites, concurrencia…)> → cubierto por RF-n.
+### Files Inspected
 
-## Fuera de alcance
+- `<path>` — <why it matters>
 
-> Incluye lo que queda condicionado a una duda abierta, no solo lo que se descarta por completo.
+### Existing Patterns To Follow
 
-- <Lo que explícitamente NO se hace en esta feature.>
+- <Pattern, convention, command, or architectural choice found in the repo.>
 
-## Criterios de finalización
+### Current Gaps
 
-<Ej.: todos los RF con verificación en verde + evidencia capturada.>
+- <Missing app infrastructure, missing command, missing table, unknown integration, etc.>
 
-## Dudas abiertas
+## Technical Approach
 
-> Cada duda de aquí se copia a `docs/risks-and-open-questions.md` como fila `Q-<feature-id>-<n>` (ver «Registro de aclaraciones» en la skill).
+<Describe the implementation strategy at a high enough level that another agent can execute it without re-planning.>
 
-- [NECESITA ACLARACIÓN: <pregunta concreta>] — bloqueante | no bloqueante. Se asume: <valor por defecto> (solo si no bloqueante).
+## Expected File Changes
 
-## Trazabilidad
+- `<path>` — create/modify; <reason>
+- `<path>` — create/modify; <reason>
 
-> Apunta, no describe: ≤15 palabras por celda; la aserción completa vive una sola vez en «Plan de verificación» o «Enfoque técnico».
+If paths are provisional because the app is not bootstrapped yet, say so explicitly.
 
-| RF | Origen | Verificación | Evidencia |
-|---|---|---|---|
-| RF-1 | `description`: <ítem> o `steps`: <paso> | <una de las `verify` o escenario propio> | <qué se registra> |
-| RF-2 | derivado: caso límite | <una de las `verify` o escenario propio> | <qué se registra> |
+## Visual Design Impact
 
-## Registro de iteraciones *(solo si la Parte A cambió tras empezar la Parte B)*
+- UI involved: yes/no
+- Design source: `../../../../DESIGN.md` / existing design asset / not applicable
+- Screens or states affected: <list>
+- New design artifact required: yes/no — <reason>
 
-- <1 línea por cambio contractual y por qué; sin repetir el detalle de Parte B ni de `## Clarificación`.>
+If UI is involved, follow `../../../../DESIGN.md` and identify any feature-specific visual states the implementer must handle. If `../../../../DESIGN.md` is missing but needed, mark it as a planning gap rather than letting the implementer invent a visual style.
 
-# PARTE B · PLAN
+## Durable Documentation Impact
 
-> CÓMO. No puede contradecir la Parte A ni añadir comportamiento nuevo.
+- `../../../../ARCHITECTURE.md`: create/update/not needed — <reason>
+- `../../../../CONSTRAINTS.md`: create/update/not needed — <reason>
+- `../../../../AGENTS.md`: update/not needed — <reason>
+- Other docs: <path or none> — <reason>
 
-## Investigación del repositorio
+Use these rules:
 
-### Archivos inspeccionados
+- Update `../../../../AGENTS.md` only when the agent workflow, startup path, or repo-wide operating rules change.
+- Create or update `../../../../ARCHITECTURE.md` when this feature establishes or changes domains, layers, runtime surfaces, dependency direction, adapters/providers, or other architectural boundaries.
+- Create or update `../../../../CONSTRAINTS.md` when this feature introduces a durable MUST/MUST NOT rule that future agents must obey.
+- Avoid duplicating product behavior already captured in discovery docs unless the implemented behavior changes the source of truth.
 
-- `<ruta>` — <por qué importa.>
+## Implementation Plan
 
-### Patrones existentes a seguir
+1. <First implementation step.>
+2. <Second implementation step.>
+3. <Final integration/update step.>
 
-- <Patrón, convención, comando o decisión de arquitectura encontrados.>
+## Implementation Tasks
 
-### Carencias actuales
+- [ ] <Small executable task.>
+- [ ] <Small executable task.>
+- [ ] <Small executable task.>
 
-> Incluye lo que falta por confirmar por una duda abierta (no solo infraestructura ausente).
+## Verification Plan
 
-- <Infraestructura ausente, comando inexistente, tabla faltante, integración desconocida…>
+- <Command or manual scenario to run.>
+- <Expected result.>
+- If the repo has a persistent E2E command such as `pnpm test:e2e` and this feature changes user-visible behavior, authentication, authorization, routing, or API flows, add or update focused E2E coverage and include the E2E command here. If E2E is not appropriate, state why.
 
-## Enfoque técnico
+For `init.sh`, be explicit:
 
-> Estrategia suficiente para que otro agente ejecute sin replanificar. Marca como provisional lo que dependa de una duda abierta y di de qué duda depende.
+- `./init.sh` should execute the non-blocking standard gate for the current repo state.
+- `./init.sh` must not start long-running processes such as `pnpm dev`.
+- It may print manual follow-up commands after the non-blocking checks pass.
 
-<... plan; señala explícitamente con "(provisional: depende de <duda>)" los puntos afectados.>
+## Evidence To Capture
 
-## Archivos esperados
+- <Command output, screenshot, test name, log line, or manual result to record in `feature_list.json` or `../../../../PROGRESS.md`.>
 
-- `<ruta>` — crear/modificar; <motivo.>
+## Validator Checklist
 
-Si las rutas son provisionales porque la app aún no tiene bootstrap, dilo explícitamente.
-
-## Impacto visual *(solo si hay UI)*
-
-- Fuente de diseño: `DESIGN.md` + prototipo de la pantalla `uxdocs/<pantalla>/code.html` (si existe; estatus en `DESIGN.md`)
-- Pantallas o estados afectados: <lista>
-- Fidelidad visual (NFR): <qué debe igualar al prototipo y cómo se verifica>
-- ¿Nuevo artefacto de diseño necesario?: sí/no — <motivo>
-
-Si `DESIGN.md` o el prototipo de la pantalla faltan y se necesitan, márcalo como carencia de planificación. En Android nativo la fidelidad se verifica con captura en emulador API 30+ comparada con el prototipo; en web, con Chrome DevTools MCP.
-
-## Impacto en documentación duradera
-
-- `ARCHITECTURE.md`: crear/actualizar/no necesario — <motivo>
-- `CONSTRAINTS.md`: crear/actualizar/no necesario — <motivo>
-- `AGENTS.md`: actualizar/no necesario — <motivo>
-- Otros: <ruta o ninguno> — <motivo>
-
-## Plan y tareas
-
-> Solo qué + `(cubre RF-n)`; el cómo vive en «Enfoque técnico», no lo re-expliques aquí.
-
-- [ ] T1: <tarea pequeña y ejecutable.> (cubre RF-n)
-- [ ] T2: <tarea pequeña y ejecutable.> (cubre RF-n)
-- [ ] T3: <integración o actualización final.>
-
-## Plan de verificación
-
-- <Comando o escenario manual a ejecutar.> → <resultado esperado.>
-- E2E: <comando y cobertura a añadir o actualizar, o justificación de por qué no.>
-- UI *(solo si aplica; ejecuta exclusivamente el validador)*:
-  - Android nativo: hasta 2 capturas en emulador API 30 o superior de los estados clave y comparación con `uxdocs/<pantalla>/code.html` y `DESIGN.md`, guardadas en <rutas de evidencia>.
-  - Web, con Chrome DevTools MCP: `navigate_page` a <rutas>, `take_snapshot`, `take_screenshot` en escritorio y móvil (`emulate`/`resize_page`) y `list_console_messages` sin errores nuevos, guardadas en <rutas de evidencia>.
-- Scripts de verificación (`init`/`lint`/`unit`/`e2e`) *(solo si se tocan)*: `init` solo arranca (compila e instala), no corre tests ni lint.
-
-## Evidencia a capturar
-
-> Presupuesto: **≤4 artefactos y solo de esta feature** (1 informe + ≤2 capturas + ≤1 E2E). Al revalidar se reemplaza el set anterior. El informe resume lint/unit/e2e y la fidelidad. La lista de capturas y rutas vive solo aquí; «Impacto visual» y «Plan de verificación» la referencian sin copiarla.
-
-- <Salida de comando, nombre de test, captura o resultado manual a registrar en el informe de la feature.>
-- UI: hasta 2 capturas de los estados clave, capturadas por el validador.
-
-## Checklist del validador
-
-- [ ] La implementación se queda dentro del alcance de esta spec.
-- [ ] Cada RF de la tabla de trazabilidad pasa su verificación.
-- [ ] La evidencia está presente, dentro del presupuesto (≤4) y solo de esta feature.
-- [ ] UI: evidencia visual (hasta 2 capturas de estados clave) y fidelidad al prototipo `uxdocs/<pantalla>/code.html` (Android: capturas de emulador; web: snapshot, capturas por viewport y consola limpia con Chrome DevTools MCP).
-- [ ] Cobertura E2E añadida o actualizada cuando hay flujo observable y existe harness, o justificada su ausencia.
-- [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
-- [ ] No se añadió comportamiento ni trabajo de otras features.
-````
+- [ ] Implementation stays within this feature's scope.
+- [ ] Acceptance scenarios pass.
+- [ ] Verification evidence is present.
+- [ ] Persistent E2E coverage was added/updated when the feature has an observable user/API flow and an E2E harness exists, or the spec explains why it is not needed.
+- [ ] `feature_list.json` and `../../../../PROGRESS.md` were updated correctly.
+- [ ] No unrelated product behavior or extra feature work was added.
+```
