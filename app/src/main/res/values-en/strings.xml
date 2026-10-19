@@ -15,6 +15,13 @@
     <string name="mis_recetas_card_servings">%1$d servings</string>
     <string name="mis_recetas_action_edit">Edit recipe</string>
     <string name="mis_recetas_action_edit_short">Edit</string>
+    <string name="mis_recetas_delete_action">Delete recipe</string>
+    <string name="mis_recetas_delete_short">Delete</string>
+    <string name="mis_recetas_delete_title">Delete recipe</string>
+    <string name="mis_recetas_delete_message">Delete “%1$s”? This action is permanent and can’t be undone.</string>
+    <string name="mis_recetas_delete_confirm">Delete</string>
+    <string name="mis_recetas_delete_cancel">Cancel</string>
+    <string name="mis_recetas_delete_error">The recipe couldn’t be deleted. Please try again.</string>
 
     <!-- Meal moment -->
     <string name="momento_desayuno">Breakfast</string>

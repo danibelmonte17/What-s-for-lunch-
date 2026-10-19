@@ -4,6 +4,7 @@ import com.whatsforlunch.app.data.local.IngredientEntity
 import com.whatsforlunch.app.data.local.RecipeDao
 import com.whatsforlunch.app.data.local.RecipeEntity
 import com.whatsforlunch.app.data.local.StepEntity
+import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
@@ -17,7 +18,10 @@ import kotlinx.coroutines.flow.map
 
 // Implementación persistente con Room (Parte B, T2). Sustituye a InMemoryRecipeRepository
 // en Koin; mapea entre las entidades y el modelo de dominio.
-class RoomRecipeRepository(private val dao: RecipeDao) : RecipeRepository {
+class RoomRecipeRepository(
+    private val dao: RecipeDao,
+    private val photoStore: PhotoStore,
+) : RecipeRepository {
 
     override fun observeRecipes(): Flow<List<Recipe>> =
         dao.observeRecipesWithDetails().map { recipes -> recipes.map { it.toDomain() } }
@@ -30,6 +34,16 @@ class RoomRecipeRepository(private val dao: RecipeDao) : RecipeRepository {
             ingredients = recipe.ingredients.mapIndexed { index, ingredient -> ingredient.toEntity(recipe.id, index) },
             steps = recipe.steps.mapIndexed { index, step -> step.toEntity(recipe.id, index) },
         )
+    }
+
+    override suspend fun deleteRecipe(id: String) {
+        val recipe = dao.getRecipeWithDetails(id)?.toDomain() ?: return
+        val deletedRows = dao.deleteRecipe(id)
+        if (deletedRows > 0 && recipe.photoPath != null) {
+            // El borrado del fichero es best-effort: un problema con un fichero ausente
+            // o inaccesible no debe revertir ni ocultar el borrado definitivo de Room.
+            runCatching { photoStore.delete(recipe.photoPath) }
+        }
     }
 }
 
