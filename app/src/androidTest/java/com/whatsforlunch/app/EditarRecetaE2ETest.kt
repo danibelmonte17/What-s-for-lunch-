@@ -376,27 +376,31 @@ class EditarRecetaE2ETest {
         assertEquals("Save changes", editorText(R.string.crear_receta_save_changes))
     }
 
-    // RF-4: la tarjeta de Mis Recetas ofrece «Editar receta» (icono `edit` sobre un
-    // recuadro de 36 dp con área táctil de 48 dp) y avisa con el id de la Receta.
+    // RF-4: la tarjeta de Mis Recetas ofrece «Editar receta» como botón primario
+    // compacto (icono `edit` de 18 dp + etiqueta «Editar»; excepción de diseño
+    // aprobada por el usuario el 2026-10-19) y avisa con el id de la Receta.
     @Test
     fun cardEditActionRequestsEditingWithRecipeId() {
         var requestedId: String? = null
         showCards(seededRecipe(photoPath = editPhotoFile("editar-tarjeta.png"))) { requestedId = it }
 
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_EDIT).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.mis_recetas_action_edit_short)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(editorText(R.string.mis_recetas_action_edit)).assertIsDisplayed()
         composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_EDIT).performClick()
 
         assertEquals(SEEDED_ID, requestedId)
     }
 
-    // NFR-1: la acción «Editar receta» de la tarjeta también está en inglés.
+    // NFR-1: la acción «Editar receta» de la tarjeta también está en inglés (etiqueta
+    // visible «Edit» y nombre accesible «Edit recipe»).
     @Test
     fun cardEditActionIsLocalizedInEnglish() {
         showCards(seededRecipe(photoPath = editPhotoFile("editar-tarjeta-en.png")), locale = Locale.ENGLISH) {}
 
         assertEquals("Edit recipe", editorText(R.string.mis_recetas_action_edit))
         composeRule.onNodeWithContentDescription("Edit recipe").assertIsDisplayed()
+        composeRule.onNodeWithText("Edit").assertIsDisplayed()
     }
 
     private fun showCards(
