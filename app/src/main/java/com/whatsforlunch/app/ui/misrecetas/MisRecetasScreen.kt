@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Schedule
@@ -31,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,6 +44,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,6 +76,7 @@ object MisRecetasTestTags {
     const val RECIPE_TIME = "mis_recetas_card_time"
     const val RECIPE_DIFFICULTY = "mis_recetas_card_difficulty"
     const val RECIPE_SERVINGS = "mis_recetas_card_servings"
+    const val RECIPE_EDIT = "mis_recetas_card_edit"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +85,7 @@ fun MisRecetasScreen(
     uiState: MisRecetasUiState,
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
+    onEditRecipe: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -104,6 +111,7 @@ fun MisRecetasScreen(
             MisRecetasState.WithRecipes -> RecipeList(
                 recipes = uiState.recipes,
                 onCreateRecipe = onCreateRecipe,
+                onEditRecipe = onEditRecipe,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -166,6 +174,7 @@ private fun EmptyMisRecetas(
 private fun RecipeList(
     recipes: List<Recipe>,
     onCreateRecipe: () -> Unit,
+    onEditRecipe: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -175,7 +184,7 @@ private fun RecipeList(
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
     ) {
         items(items = recipes, key = { it.id }) { recipe ->
-            RecipeCard(recipe = recipe)
+            RecipeCard(recipe = recipe, onEdit = { onEditRecipe(recipe.id) })
         }
         item {
             Button(
@@ -192,13 +201,14 @@ private fun RecipeList(
 }
 
 // RF-17 a RF-20 y RF-22: tarjeta con portada y badge de momento superpuesto (o
-// junto al título sin foto), título, metadatos con iconos y píldora de estado
-// sobre surface-container-lowest con esquinas de 0.75rem y sombra cálida.
+// junto al título sin foto), título, metadatos con iconos, píldora de estado y el
+// pie de acciones sobre surface-container-lowest con esquinas de 0.75rem y sombra
+// cálida. RF-4: el pie solo dibuja «Editar receta» (Q-editar-receta-4).
 private val CardShape: Shape = RoundedCornerShape(WarmRadius.md)
 private val PillShape: Shape = RoundedCornerShape(50)
 
 @Composable
-private fun RecipeCard(recipe: Recipe) {
+private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit) {
     Surface(
         shape = CardShape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -264,8 +274,56 @@ private fun RecipeCard(recipe: Recipe) {
                     )
                 }
                 MetadataRow(recipe = recipe)
+                CardActions(onEdit = onEdit)
             }
         }
+    }
+}
+
+// RF-4: pie de acciones de la tarjeta con «Editar receta» en la posición izquierda
+// del prototipo. «Eliminar receta» y «Cocinar Ahora» quedan fuera de esta feature
+// (Q-editar-receta-4).
+@Composable
+private fun CardActions(onEdit: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = WarmSpacing.xs),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EditRecipeButton(onClick = onEdit)
+    }
+}
+
+// RF-4 y excepción de diseño aprobada por el usuario (2026-10-19): la acción «Editar
+// receta» del pie de la tarjeta es un botón primario compacto —M3 `Button` relleno con
+// el color primario, como «Crear receta»— con icono `edit` de 16 dp y etiqueta «Editar»
+// en `labelMedium`; nombre accesible «Editar receta». Reducido a petición del usuario
+// (2026-10-19): altura visual 36 dp y ancho al contenido; el área táctil la mantiene el
+// mínimo interactivo de Material 3 (≥ 48 dp).
+@Composable
+private fun EditRecipeButton(onClick: () -> Unit) {
+    val label = stringResource(R.string.mis_recetas_action_edit)
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .heightIn(min = 36.dp)
+            .semantics { contentDescription = label }
+            .testTag(MisRecetasTestTags.RECIPE_EDIT),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Edit,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+        Text(
+            text = stringResource(R.string.mis_recetas_action_edit_short),
+            style = MaterialTheme.typography.labelMedium,
+        )
     }
 }
 

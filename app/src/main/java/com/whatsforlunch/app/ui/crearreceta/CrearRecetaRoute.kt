@@ -13,10 +13,12 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
 // Une el ViewModel del formulario con la pantalla sin estado. Aquí se monta el
-// adquirente de foto real (con los lanzadores del sistema) y se navega al guardar.
+// adquirente de foto real (con los lanzadores del sistema), se abre en modo edición
+// cuando llega un id de Receta y se navega al guardar.
 @Composable
 fun CrearRecetaRoute(
     onDone: () -> Unit,
+    recipeId: String? = null,
     viewModel: CrearRecetaViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -30,8 +32,11 @@ fun CrearRecetaRoute(
     LaunchedEffect(photoAcquirer) {
         if (photoAcquirer != null) viewModel.setPhotoAcquirer(photoAcquirer)
     }
-    LaunchedEffect(uiState.saved) {
-        if (uiState.saved) onDone()
+    // RF-1, RF-2: precarga la Receta a editar; RF-18: si no existe, se vuelve a Mis
+    // Recetas sin abrir el formulario. RF-17: al guardar, se vuelve a Mis Recetas.
+    LaunchedEffect(recipeId) { viewModel.loadRecipe(recipeId) }
+    LaunchedEffect(uiState.saved, uiState.recipeMissing) {
+        if (uiState.saved || uiState.recipeMissing) onDone()
     }
 
     CrearRecetaScreen(uiState = uiState, actions = viewModel.toActions(onDone))
@@ -39,6 +44,7 @@ fun CrearRecetaRoute(
 
 // Convierte los métodos del ViewModel en las acciones de la pantalla. Compartido por
 // la Route y por las pruebas que montan la pantalla directamente.
+// RF-15: cerrar (onBack) no persiste nada: los cambios se descartan al salir.
 fun CrearRecetaViewModel.toActions(onDone: () -> Unit): CrearRecetaActions = CrearRecetaActions(
     onBack = onDone,
     onTitleChange = this::onTitleChange,
@@ -66,5 +72,6 @@ fun CrearRecetaViewModel.toActions(onDone: () -> Unit): CrearRecetaActions = Cre
     onRemovePhoto = this::onRemovePhoto,
     onSaveDraft = this::onSaveDraft,
     onPublish = this::onPublish,
+    onSaveChanges = this::onSaveChanges,
     onDismissNotice = this::onDismissNotice,
 )

@@ -28,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragIndicator
 import androidx.compose.material.icons.outlined.Drafts
@@ -37,6 +36,7 @@ import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.RestaurantMenu
+import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.ShoppingBasket
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.filled.Favorite
@@ -80,6 +80,7 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.crearreceta.RecipeRequirement
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
+import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -112,10 +113,13 @@ object CrearRecetaTestTags {
     const val FAVORITE_TOGGLE = "crear_receta_favorite"
     const val SAVE_DRAFT = "crear_receta_save_draft"
     const val PUBLISH = "crear_receta_publish"
+    const val SAVE_CHANGES = "crear_receta_save_changes"
     const val NOTICE = "crear_receta_notice"
     const val PUBLISH_ERRORS = "crear_receta_publish_errors"
 
     // Bloques y controles del rediseño fiel al prototipo (RF-1 a RF-8, RF-21).
+    // La cabecera ya no dibuja «Guardar» (RF-21): el tag se conserva para que los E2E
+    // puedan afirmar su ausencia sin depender del idioma.
     const val HEADER_SAVE = "crear_receta_header_save"
     const val STATUS_BADGE = "crear_receta_status_badge"
     const val COVER = "crear_receta_cover"
@@ -176,6 +180,7 @@ class CrearRecetaActions(
     val onRemovePhoto: () -> Unit = {},
     val onSaveDraft: () -> Unit = {},
     val onPublish: () -> Unit = {},
+    val onSaveChanges: () -> Unit = {},
     val onDismissNotice: () -> Unit = {},
 )
 
@@ -195,7 +200,7 @@ fun CrearRecetaScreen(
     Scaffold(
         modifier = modifier.testTag(CrearRecetaTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = { FormHeader(actions = actions) },
+        topBar = { FormHeader(uiState = uiState, actions = actions) },
         bottomBar = { ActionDock(uiState = uiState, actions = actions) },
     ) { innerPadding ->
         Column(
@@ -220,10 +225,14 @@ fun CrearRecetaScreen(
     }
 }
 
-// RF-3: cabecera con el título del formulario, el distintivo de estado y «Guardar».
+// RF-3: cabecera con el título del formulario («Crear receta» en alta, «Editar Receta»
+// al editar) y el distintivo de estado de la Receta, a la derecha de la barra.
+// RF-13, RF-14: la cabecera no dibuja «Guardar» en ningún modo: el único punto de
+// guardado son las acciones del dock (decisión Q-editar-receta-5, 2026-10-19).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FormHeader(actions: CrearRecetaActions) {
+private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+    val editing = uiState.recipeId != null
     TopAppBar(
         navigationIcon = {
             TextButton(
@@ -235,14 +244,12 @@ private fun FormHeader(actions: CrearRecetaActions) {
         },
         title = {
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(R.string.crear_receta_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                    Spacer(modifier = Modifier.width(WarmSpacing.sm))
-                    StatusBadge()
-                }
+                Text(
+                    text = stringResource(
+                        if (editing) R.string.crear_receta_edit_title else R.string.crear_receta_title,
+                    ),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
                 Text(
                     text = stringResource(R.string.crear_receta_header_subtitle),
                     style = MaterialTheme.typography.labelSmall,
@@ -251,26 +258,14 @@ private fun FormHeader(actions: CrearRecetaActions) {
             }
         },
         actions = {
-            Button(
-                onClick = actions.onSaveDraft,
-                shape = FieldShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
+            // Petición del usuario (2026-10-19): el distintivo de estado va a la derecha
+            // de la cabecera, centrado en la barra y con 16 dp de margen derecho.
+            StatusBadge(
+                status = uiState.editingStatus ?: RecipeStatus.DRAFT,
                 modifier = Modifier
-                    .padding(end = WarmSpacing.sm)
-                    .heightIn(min = 48.dp)
-                    .testTag(CrearRecetaTestTags.HEADER_SAVE),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.BookmarkBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(WarmSpacing.xs))
-                Text(text = stringResource(R.string.action_save))
-            }
+                    .align(Alignment.CenterVertically)
+                    .padding(end = WarmSpacing.md),
+            )
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -281,15 +276,15 @@ private fun FormHeader(actions: CrearRecetaActions) {
 
 // Distintivo de estado de la Receta (Borrador/Publicada) en píldora (RF-3, RF-13).
 @Composable
-private fun StatusBadge() {
+private fun StatusBadge(status: RecipeStatus, modifier: Modifier = Modifier) {
     Surface(
         shape = PillShape,
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
         contentColor = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.testTag(CrearRecetaTestTags.STATUS_BADGE),
+        modifier = modifier.testTag(CrearRecetaTestTags.STATUS_BADGE),
     ) {
         Text(
-            text = stringResource(R.string.mis_recetas_status_draft),
+            text = stringResource(status.labelRes()),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
@@ -1066,8 +1061,11 @@ private fun FavoriteSection(uiState: CrearRecetaUiState, actions: CrearRecetaAct
 // RF-8, RF-14, RF-15 y RF-16: dock siempre visible con «Guardar Borrador» y
 // «Publicar Receta», deshabilitado (estilo distinguible) mientras falten requisitos,
 // que se enumeran junto al dock.
+// RF-5 a RF-8: al editar una Receta Publicada, el dock muestra una única acción
+// primaria «Guardar cambios» que mantiene el estado Publicada.
 @Composable
 private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+    val published = uiState.editingStatus == RecipeStatus.PUBLISHED
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         modifier = Modifier
@@ -1082,32 +1080,9 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
             if (uiState.publishErrors.isNotEmpty()) {
                 PublishErrors(errors = uiState.publishErrors)
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-            ) {
-                FilledTonalButton(
-                    onClick = actions.onSaveDraft,
-                    shape = FieldShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 52.dp)
-                        .testTag(CrearRecetaTestTags.SAVE_DRAFT),
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Drafts,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
-                    Text(text = stringResource(R.string.crear_receta_save_draft))
-                }
+            if (published) {
                 Button(
-                    onClick = actions.onPublish,
+                    onClick = actions.onSaveChanges,
                     enabled = uiState.canPublish,
                     shape = FieldShape,
                     colors = ButtonDefaults.buttonColors(
@@ -1117,20 +1092,72 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                         disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
                     modifier = Modifier
-                        .weight(1.5f)
+                        .fillMaxWidth()
                         .heightIn(min = 52.dp)
-                        .testTag(CrearRecetaTestTags.PUBLISH),
+                        .testTag(CrearRecetaTestTags.SAVE_CHANGES),
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.RestaurantMenu,
+                        imageVector = Icons.Outlined.Save,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(WarmSpacing.xs))
                     Text(
-                        text = stringResource(R.string.crear_receta_publish),
+                        text = stringResource(R.string.crear_receta_save_changes),
                         style = MaterialTheme.typography.labelLarge,
                     )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                ) {
+                    FilledTonalButton(
+                        onClick = actions.onSaveDraft,
+                        shape = FieldShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 52.dp)
+                            .testTag(CrearRecetaTestTags.SAVE_DRAFT),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Drafts,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                        Text(text = stringResource(R.string.crear_receta_save_draft))
+                    }
+                    Button(
+                        onClick = actions.onPublish,
+                        enabled = uiState.canPublish,
+                        shape = FieldShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                        modifier = Modifier
+                            .weight(1.5f)
+                            .heightIn(min = 52.dp)
+                            .testTag(CrearRecetaTestTags.PUBLISH),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.RestaurantMenu,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                        Text(
+                            text = stringResource(R.string.crear_receta_publish),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
                 }
             }
         }
@@ -1279,4 +1306,10 @@ private fun RecipeRequirement.messageRes(): Int = when (this) {
     RecipeRequirement.STEP -> R.string.crear_receta_publish_error_step
     RecipeRequirement.INVALID_INGREDIENT -> R.string.crear_receta_publish_error_invalid_ingredient
     RecipeRequirement.INVALID_STEP -> R.string.crear_receta_publish_error_invalid_step
+}
+
+// RF-3: el distintivo de la cabecera en modo edición nombra el estado de la Receta.
+private fun RecipeStatus.labelRes(): Int = when (this) {
+    RecipeStatus.DRAFT -> R.string.mis_recetas_status_draft
+    RecipeStatus.PUBLISHED -> R.string.mis_recetas_status_published
 }

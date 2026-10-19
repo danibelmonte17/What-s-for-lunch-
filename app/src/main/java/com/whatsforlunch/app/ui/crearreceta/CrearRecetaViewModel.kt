@@ -52,7 +52,8 @@ data class StepFieldUiState(
         get() = text.isNotBlank()
 }
 
-// Estado visible del formulario de alta de Receta (Parte B, T3-T7).
+// Estado visible del formulario de Receta: alta (recipeId null) o edición de una
+// Receta existente (Parte B, T2-T7).
 data class CrearRecetaUiState(
     val title: String = "",
     val story: String = "",
@@ -74,19 +75,36 @@ data class CrearRecetaUiState(
     val notice: CrearRecetaNotice? = null,
     val isPhotoLoading: Boolean = false,
     val saved: Boolean = false,
+    // Modo edición: id de la Receta abierta (null = alta) y el estado con el que se
+    // guardará si no se publica (RF-5, RF-6, RF-9, RF-10, RF-16).
+    val recipeId: String? = null,
+    val editingStatus: RecipeStatus? = null,
+    // RF-18: el id recibido no corresponde a ninguna Receta; se vuelve a Mis Recetas.
+    val recipeMissing: Boolean = false,
 )
 
-// MVVM + StateFlow: el formulario de alta. Las reglas de validación viven en domain/
-// (RecipeValidation); aquí solo se orquesta el estado y el guardado.
+// MVVM + StateFlow: el formulario de alta y de edición de Receta. Las reglas de
+// validación viven en domain/ (RecipeValidation); aquí solo se orquesta el estado y
+// el guardado.
 class CrearRecetaViewModel(
     private val repository: RecipeRepository,
     private val photoStore: PhotoStore,
+    // Id de la Receta a editar; null = alta de una Receta nueva (RF-1).
+    initialRecipeId: String? = null,
 ) : ViewModel() {
 
-    private val recipeId: String = UUID.randomUUID().toString()
+    // Id reservado para la Receta nueva: en alta no hay Receta previa (RF-2).
+    private val newRecipeId: String = UUID.randomUUID().toString()
+
+    // Origen de la Receta guardada; la edición lo conserva (RF-16).
+    private var originalOrigin: RecipeOrigin = RecipeOrigin.USER
 
     private val _uiState = MutableStateFlow(withPublishState(CrearRecetaUiState()))
     val uiState: StateFlow<CrearRecetaUiState> = _uiState.asStateFlow()
+
+    init {
+        loadRecipe(initialRecipeId)
+    }
 
     // La Route inyecta la implementación real (con los lanzadores del sistema);
     // los tests inyectan un fake. Por defecto no hay adquisición de foto.
@@ -94,6 +112,22 @@ class CrearRecetaViewModel(
 
     fun setPhotoAcquirer(acquirer: PhotoAcquirer) {
         photoAcquirer = acquirer
+    }
+
+    // RF-1, RF-2: abre el formulario en modo edición precargando los datos de la
+    // Receta; RF-18: si el id no corresponde a ninguna Receta, avisa para volver a
+    // Mis Recetas sin abrir el formulario. Idempotente: no recarga la misma Receta.
+    fun loadRecipe(id: String?) {
+        if (id == null || id == _uiState.value.recipeId) return
+        viewModelScope.launch {
+            val recipe = repository.getRecipe(id)
+            if (recipe == null) {
+                mutate { it.copy(recipeMissing = true) }
+            } else {
+                originalOrigin = recipe.origin
+                mutate { preloadedState(recipe) }
+            }
+        }
     }
 
     fun onTitleChange(value: String) = mutate { it.copy(title = value, titleError = false) }
@@ -163,6 +197,7 @@ class CrearRecetaViewModel(
 
     fun onDismissNotice() = mutate { it.copy(notice = null) }
 
+    // RF-10: guarda manteniendo el estado Borrador (también en modo edición).
     fun onSaveDraft() {
         val recipe = buildRecipe(_uiState.value, RecipeStatus.DRAFT)
         if (RecipeRequirement.TITLE in RecipeValidation.validateForDraft(recipe)) {
@@ -172,6 +207,7 @@ class CrearRecetaViewModel(
         }
     }
 
+    // RF-11: publica la Receta (alta o transición Borrador -> Publicada al editar).
     fun onPublish() {
         val recipe = buildRecipe(_uiState.value, RecipeStatus.PUBLISHED)
         val unmet = RecipeValidation.validateForPublish(recipe)
@@ -183,12 +219,24 @@ class CrearRecetaViewModel(
         }
     }
 
+    // RF-6: guarda los cambios de una Receta Publicada manteniendo su estado, solo si
+    // sigue cumpliendo los requisitos de Publicar (RF-7).
+    fun onSaveChanges() {
+        val recipe = buildRecipe(_uiState.value, _uiState.value.editingStatus ?: RecipeStatus.PUBLISHED)
+        val unmet = RecipeValidation.validateForPublish(recipe)
+        if (unmet.isEmpty()) {
+            persist(recipe)
+        } else {
+            mutate { it.copy(titleError = RecipeRequirement.TITLE in unmet) }
+        }
+    }
+
     private fun acquirePhoto(acquire: suspend () -> PhotoResult) {
         mutate { it.copy(isPhotoLoading = true, notice = null) }
         viewModelScope.launch {
             when (val result = acquire()) {
                 is PhotoResult.Success -> {
-                    val path = photoStore.save(recipeId, result.bytes)
+                    val path = photoStore.save(currentRecipeId(), result.bytes)
                     mutate { it.copy(photoPath = path, isPhotoLoading = false) }
                 }
                 PhotoResult.Cancelled -> mutate { it.copy(isPhotoLoading = false) }
@@ -225,8 +273,10 @@ class CrearRecetaViewModel(
     }
 
     private fun buildRecipe(state: CrearRecetaUiState, status: RecipeStatus): Recipe {
+        // En modo edición se conservan el id y el origen de la Receta (RF-2, RF-16).
+        val id = state.recipeId ?: newRecipeId
         return Recipe(
-            id = recipeId,
+            id = id,
             title = state.title.trim(),
             story = state.story.trim(),
             mealMoment = state.mealMoment,
@@ -241,10 +291,10 @@ class CrearRecetaViewModel(
             photoPath = state.photoPath,
             favorite = state.favorite,
             status = status,
-            origin = RecipeOrigin.USER,
+            origin = originalOrigin,
             ingredients = state.ingredients.mapIndexed { index, row ->
                 RecipeIngredient(
-                    id = "$recipeId-ingredient-$index",
+                    id = "$id-ingredient-$index",
                     name = row.name.trim(),
                     quantity = row.quantity.toDoubleOrNull() ?: 0.0,
                     unit = row.unit.trim(),
@@ -253,13 +303,53 @@ class CrearRecetaViewModel(
             },
             steps = state.steps.mapIndexed { index, row ->
                 RecipeStep(
-                    id = "$recipeId-step-$index",
+                    id = "$id-step-$index",
                     text = row.text.trim(),
                     timerMinutes = row.timerMinutes.toIntOrNull()?.takeIf { it >= 0 },
                 )
             },
         )
     }
+
+    // Id con el que se guarda la Receta: el de la Receta en edición o el reservado
+    // para el alta (RF-2).
+    private fun currentRecipeId(): String = _uiState.value.recipeId ?: newRecipeId
+
+    // RF-2: precarga el formulario con todos los datos de la Receta editada,
+    // incluidas sus filas de Ingrediente y Paso y su foto y favorito.
+    private fun preloadedState(recipe: Recipe): CrearRecetaUiState = CrearRecetaUiState(
+        title = recipe.title,
+        story = recipe.story,
+        mealMoment = recipe.mealMoment,
+        prepMinutes = recipe.prepMinutes.toString(),
+        cookMinutes = recipe.cookMinutes.toString(),
+        difficulty = recipe.difficulty,
+        baseServings = recipe.baseServings.coerceIn(
+            RecipeValidation.MIN_BASE_SERVINGS,
+            RecipeValidation.MAX_BASE_SERVINGS,
+        ),
+        caloriesPerServing = recipe.caloriesPerServing?.toString() ?: "",
+        photoPath = recipe.photoPath,
+        favorite = recipe.favorite,
+        ingredients = recipe.ingredients.map { ingredient ->
+            IngredientFieldUiState(
+                key = nextKey(),
+                name = ingredient.name,
+                quantity = formatQuantity(ingredient.quantity),
+                unit = ingredient.unit,
+                optional = ingredient.optional,
+            )
+        },
+        steps = recipe.steps.map { step ->
+            StepFieldUiState(
+                key = nextKey(),
+                text = step.text,
+                timerMinutes = step.timerMinutes?.toString() ?: "",
+            )
+        },
+        recipeId = recipe.id,
+        editingStatus = recipe.status,
+    )
 
     // Cualquier cambio recalcula los requisitos incumplidos de Publicar y si el
     // formulario puede publicar (RF-14 a RF-16); fuente única de verdad: validateForPublish.
@@ -290,3 +380,8 @@ class CrearRecetaViewModel(
 
     private var keyCounter = 1L
 }
+
+// Cantidad de una fila de Ingrediente sin decimales innecesarios (700.0 -> "700"),
+// para que la precarga del modo edición muestre el mismo valor que el alta (RF-2).
+private fun formatQuantity(quantity: Double): String =
+    if (quantity % 1.0 == 0.0) quantity.toLong().toString() else quantity.toString()

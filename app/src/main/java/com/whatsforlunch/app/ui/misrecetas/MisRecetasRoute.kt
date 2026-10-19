@@ -10,6 +10,7 @@ import org.koin.androidx.compose.koinViewModel
 fun MisRecetasRoute(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
+    onEditRecipe: (String) -> Unit,
     viewModel: MisRecetasViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -17,5 +18,6 @@ fun MisRecetasRoute(
         uiState = uiState,
         onCreateRecipe = onCreateRecipe,
         onScanPantry = onScanPantry,
+        onEditRecipe = onEditRecipe,
     )
 }

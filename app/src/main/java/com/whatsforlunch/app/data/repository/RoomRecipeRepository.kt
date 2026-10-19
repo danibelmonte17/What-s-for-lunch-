@@ -22,6 +22,8 @@ class RoomRecipeRepository(private val dao: RecipeDao) : RecipeRepository {
     override fun observeRecipes(): Flow<List<Recipe>> =
         dao.observeRecipesWithDetails().map { recipes -> recipes.map { it.toDomain() } }
 
+    override suspend fun getRecipe(id: String): Recipe? = dao.getRecipeWithDetails(id)?.toDomain()
+
     override suspend fun saveRecipe(recipe: Recipe) {
         dao.upsertRecipe(
             recipe = recipe.toEntity(),

@@ -14,6 +14,8 @@
     <string name="mis_recetas_status_published">Publicada</string>
     <string name="mis_recetas_card_time">%1$d min</string>
     <string name="mis_recetas_card_servings">%1$d porciones</string>
+    <string name="mis_recetas_action_edit">Editar receta</string>
+    <string name="mis_recetas_action_edit_short">Editar</string>
 
     <!-- Momento culinario -->
     <string name="momento_desayuno">Desayuno</string>
@@ -28,8 +30,8 @@
 
     <!-- Formulario de alta de Receta -->
     <string name="crear_receta_title">Crear receta</string>
+    <string name="crear_receta_edit_title">Editar Receta</string>
     <string name="crear_receta_header_subtitle">Paso a paso con IA</string>
-    <string name="action_save">Guardar</string>
     <string name="crear_receta_required_badge">Obligatorio</string>
     <string name="crear_receta_title_placeholder">Ej. Lentejas de la abuela, Arroz meloso...</string>
     <string name="crear_receta_story_placeholder">Cuéntanos el secreto de tu versión, su textura o para qué ocasión es perfecta...</string>
@@ -77,6 +79,7 @@
     <string name="crear_receta_steps_count">%1$d Pasos definidos</string>
     <string name="crear_receta_save_draft">Guardar Borrador</string>
     <string name="crear_receta_publish">Publicar Receta</string>
+    <string name="crear_receta_save_changes">Guardar cambios</string>
     <string name="crear_receta_publish_blocked">No se puede publicar todavía:</string>
     <string name="crear_receta_publish_error_title">Falta el título</string>
     <string name="crear_receta_publish_error_photo">Falta la foto</string>

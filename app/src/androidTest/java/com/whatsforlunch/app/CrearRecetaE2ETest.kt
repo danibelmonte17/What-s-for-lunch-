@@ -328,36 +328,28 @@ class CrearRecetaE2ETest {
         composeRule.onNodeWithTag(CrearRecetaTestTags.FAVORITE_TOGGLE).assertIsOn()
     }
 
-    // RF-21 de la fidelidad visual: «Guardar» de la cabecera guarda la Receta como
-    // Borrador, con el mismo comportamiento que «Guardar Borrador» del dock.
+    // RF-21 de la fidelidad visual (actualizado 2026-10-19): la cabecera ya no dibuja
+    // «Guardar»; el único guardado es «Guardar Borrador» del dock.
     @Test
-    fun headerSaveSavesDraft() {
+    fun headerHasNoSaveActionAndDockSavesDraft() {
         val repository = launchForm()
-        typeTitle("Borrador desde cabecera")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).performClick()
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
+        typeTitle("Borrador desde el dock")
+        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
         val recipes = runBlocking { repository.observeRecipes().first() }
         assertEquals(1, recipes.size)
         assertEquals(RecipeStatus.DRAFT, recipes.first().status)
-        assertEquals("Borrador desde cabecera", recipes.first().title)
-    }
-
-    // Caso límite de RF-21: sin título, «Guardar» no guarda y señala el título.
-    @Test
-    fun headerSaveWithoutTitleMarksTitleRequired() {
-        val repository = launchForm()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).performClick()
-        composeRule.onNodeWithText(formText(R.string.crear_receta_title_required)).performScrollTo().assertIsDisplayed()
-        assertTrue(runBlocking { repository.observeRecipes().first() }.isEmpty())
+        assertEquals("Borrador desde el dock", recipes.first().title)
     }
 
     // RF-1 a RF-8 de la fidelidad visual: están los bloques y controles del
-    // prototipo (cabecera con distintivo y Guardar, portada con controles de foto,
+    // prototipo (cabecera con distintivo, portada con controles de foto,
     // información básica con chips de momento, rejilla de métricas, ingredientes,
     // pasos con número en círculo, favorito y dock).
     @Test
     fun formShowsPrototypeBlocksAndControls() {
         launchForm()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.HEADER_SAVE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
         composeRule.onNodeWithTag(CrearRecetaTestTags.STATUS_BADGE).assertIsDisplayed()
         composeRule.onNodeWithText(formText(R.string.crear_receta_header_subtitle)).assertIsDisplayed()
         composeRule.onNodeWithTag(CrearRecetaTestTags.COVER).performScrollTo().assertIsDisplayed()
