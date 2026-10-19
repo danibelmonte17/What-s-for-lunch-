@@ -226,7 +226,7 @@ fun CrearRecetaScreen(
 }
 
 // RF-3: cabecera con el título del formulario («Crear receta» en alta, «Editar Receta»
-// al editar) y el distintivo de estado de la Receta.
+// al editar) y el distintivo de estado de la Receta, a la derecha de la barra.
 // RF-13, RF-14: la cabecera no dibuja «Guardar» en ningún modo: el único punto de
 // guardado son las acciones del dock (decisión Q-editar-receta-5, 2026-10-19).
 @OptIn(ExperimentalMaterial3Api::class)
@@ -244,22 +244,28 @@ private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
         },
         title = {
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(
-                            if (editing) R.string.crear_receta_edit_title else R.string.crear_receta_title,
-                        ),
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                    Spacer(modifier = Modifier.width(WarmSpacing.sm))
-                    StatusBadge(status = uiState.editingStatus ?: RecipeStatus.DRAFT)
-                }
+                Text(
+                    text = stringResource(
+                        if (editing) R.string.crear_receta_edit_title else R.string.crear_receta_title,
+                    ),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
                 Text(
                     text = stringResource(R.string.crear_receta_header_subtitle),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        },
+        actions = {
+            // Petición del usuario (2026-10-19): el distintivo de estado va a la derecha
+            // de la cabecera, centrado en la barra y con 16 dp de margen derecho.
+            StatusBadge(
+                status = uiState.editingStatus ?: RecipeStatus.DRAFT,
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(end = WarmSpacing.md),
+            )
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -270,12 +276,12 @@ private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
 
 // Distintivo de estado de la Receta (Borrador/Publicada) en píldora (RF-3, RF-13).
 @Composable
-private fun StatusBadge(status: RecipeStatus) {
+private fun StatusBadge(status: RecipeStatus, modifier: Modifier = Modifier) {
     Surface(
         shape = PillShape,
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
         contentColor = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.testTag(CrearRecetaTestTags.STATUS_BADGE),
+        modifier = modifier.testTag(CrearRecetaTestTags.STATUS_BADGE),
     ) {
         Text(
             text = stringResource(status.labelRes()),
