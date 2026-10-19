@@ -89,7 +89,7 @@
       "verify": [
         "E2E: editar el título de una receta publicada y comprobar que Mis Recetas muestra el nuevo título"
       ],
-      "status": "ready"
+      "status": "validated"
     },
     {
       "id": "eliminar-receta",

@@ -139,13 +139,13 @@ para poder modificarla sin recrearla ni perder su estado.
 
 ## Plan y tareas
 
-- [ ] T1: `getRecipe(id)` en `RecipeRepository`, `RecipeDao`, `RoomRecipeRepository` e `InMemoryRecipeRepository`. (cubre RF-2, RF-18)
-- [ ] T2: modo edición en ViewModel y Route (`recipeId` opcional, precarga y `buildRecipe` con id/estado/origen). (cubre RF-1, RF-2, RF-16)
-- [ ] T3: dock por estado y «Guardar» de cabecera. (cubre RF-5 a RF-14)
-- [ ] T4: acción «Editar receta» en el pie de la tarjeta y navegación con id desde Mis Recetas. (cubre RF-1, RF-4, RF-17)
-- [ ] T5: cabecera «Editar Receta» con distintivo de estado y textos es/en. (cubre RF-3, NFR-1)
-- [ ] T6: cierre sin guardar. (cubre RF-15)
-- [ ] T7: tests E2E de edición y regresión de `crear-receta`. (cubre el plan de verificación)
+- [x] T1: `getRecipe(id)` en `RecipeRepository`, `RecipeDao`, `RoomRecipeRepository` e `InMemoryRecipeRepository`. (cubre RF-2, RF-18)
+- [x] T2: modo edición en ViewModel y Route (`recipeId` opcional, precarga y `buildRecipe` con id/estado/origen). (cubre RF-1, RF-2, RF-16)
+- [x] T3: dock por estado y «Guardar» de cabecera. (cubre RF-5 a RF-14)
+- [x] T4: acción «Editar receta» en el pie de la tarjeta y navegación con id desde Mis Recetas. (cubre RF-1, RF-4, RF-17)
+- [x] T5: cabecera «Editar Receta» con distintivo de estado y textos es/en. (cubre RF-3, NFR-1)
+- [x] T6: cierre sin guardar. (cubre RF-15)
+- [x] T7: tests E2E de edición y regresión de `crear-receta`. (cubre el plan de verificación)
 
 ## Plan de verificación
 
@@ -160,13 +160,13 @@ para poder modificarla sin recrearla ni perder su estado.
 
 ## Checklist del validador
 
-- [ ] La implementación se queda dentro del alcance de esta spec.
-- [ ] Cada RF de la tabla de trazabilidad pasa su verificación.
-- [ ] La evidencia está presente, dentro del presupuesto (≤ 4) y solo de esta feature.
-- [ ] UI: 2 capturas de estados clave y fidelidad 1:1 a los prototipos y a `DESIGN.md`, acotada a los bloques implementados.
-- [ ] Cobertura E2E añadida y regresión de `crear-receta` y `afinar-fidelidad-visual-del-formulario` en verde.
-- [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
-- [ ] No se añadió comportamiento ni trabajo de otras features.
+- [x] La implementación se queda dentro del alcance de esta spec.
+- [x] Cada RF de la tabla de trazabilidad pasa su verificación.
+- [x] La evidencia está presente, dentro del presupuesto (≤ 4) y solo de esta feature.
+- [x] UI: 2 capturas de estados clave y fidelidad 1:1 a los prototipos y a `DESIGN.md`, acotada a los bloques implementados.
+- [x] Cobertura E2E añadida y regresión de `crear-receta` y `afinar-fidelidad-visual-del-formulario` en verde.
+- [x] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
+- [x] No se añadió comportamiento ni trabajo de otras features.
 
 ## Clarificación — 2026-10-18 — veredicto: A RETRABAJAR (intento 1 de 3)
 
