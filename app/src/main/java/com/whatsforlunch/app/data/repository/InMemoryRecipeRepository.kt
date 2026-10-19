@@ -18,4 +18,8 @@ class InMemoryRecipeRepository : RecipeRepository {
     override suspend fun saveRecipe(recipe: Recipe) {
         recipes.value = recipes.value.filterNot { it.id == recipe.id } + recipe
     }
+
+    override suspend fun deleteRecipe(id: String) {
+        recipes.value = recipes.value.filterNot { it.id == id }
+    }
 }

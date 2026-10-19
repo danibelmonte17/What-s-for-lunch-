@@ -125,7 +125,7 @@
         "E2E: eliminar una receta, confirmar y comprobar que desaparece de Mis Recetas",
         "E2E: cancelar la confirmación y comprobar que la receta sigue en Mis Recetas"
       ],
-      "status": "not_started"
+      "status": "validated"
     },
     {
       "id": "buscar-y-filtrar-recetas",

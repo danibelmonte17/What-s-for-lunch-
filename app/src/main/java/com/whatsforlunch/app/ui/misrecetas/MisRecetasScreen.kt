@@ -22,12 +22,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -36,13 +39,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -84,12 +94,16 @@ object MisRecetasTestTags {
     const val RECIPE_DIFFICULTY = "mis_recetas_card_difficulty"
     const val RECIPE_SERVINGS = "mis_recetas_card_servings"
     const val RECIPE_EDIT = "mis_recetas_card_edit"
+    const val RECIPE_DELETE = "mis_recetas_card_delete"
     const val SEARCH_FIELD = "mis_recetas_search_field"
     const val FILTER_ROW = "mis_recetas_moment_filter"
     const val FILTER_CHIP_ALL = "mis_recetas_filter_all"
     const val FILTER_CHIP = "mis_recetas_filter"
     const val NO_RESULTS = "mis_recetas_no_results"
     const val RESET_FILTERS = "mis_recetas_reset_filters"
+    const val DELETE_DIALOG = "mis_recetas_delete_dialog"
+    const val DELETE_CONFIRM = "mis_recetas_delete_confirm"
+    const val DELETE_CANCEL = "mis_recetas_delete_cancel"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
 }
@@ -104,10 +118,24 @@ fun MisRecetasScreen(
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
     onResetFilters: () -> Unit = {},
+    onDeleteRecipe: (String) -> Unit = {},
+    onDeleteErrorConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val deleteErrorMessage = stringResource(R.string.mis_recetas_delete_error)
+
+    LaunchedEffect(uiState.deleteError) {
+        if (uiState.deleteError) {
+            snackbarHostState.showSnackbar(deleteErrorMessage)
+            onDeleteErrorConsumed()
+        }
+    }
+
     Scaffold(
         modifier = modifier.testTag(MisRecetasTestTags.SCREEN),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.mis_recetas_title)) },
@@ -134,6 +162,7 @@ fun MisRecetasScreen(
                 selectedMoment = uiState.mealMomentFilter,
                 onSearchQueryChanged = onSearchQueryChanged,
                 onMealMomentSelected = onMealMomentSelected,
+                onDeleteRecipe = { recipeToDelete = it },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -149,6 +178,37 @@ fun MisRecetasScreen(
                     .padding(innerPadding),
             )
         }
+    }
+
+    recipeToDelete?.let { recipe ->
+        AlertDialog(
+            onDismissRequest = { recipeToDelete = null },
+            modifier = Modifier.testTag(MisRecetasTestTags.DELETE_DIALOG),
+            title = { Text(text = stringResource(R.string.mis_recetas_delete_title)) },
+            text = {
+                Text(text = stringResource(R.string.mis_recetas_delete_message, recipe.title))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        recipeToDelete = null
+                        onDeleteRecipe(recipe.id)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.testTag(MisRecetasTestTags.DELETE_CONFIRM),
+                ) {
+                    Text(text = stringResource(R.string.mis_recetas_delete_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { recipeToDelete = null },
+                    modifier = Modifier.testTag(MisRecetasTestTags.DELETE_CANCEL),
+                ) {
+                    Text(text = stringResource(R.string.mis_recetas_delete_cancel))
+                }
+            },
+        )
     }
 }
 
@@ -211,6 +271,7 @@ private fun RecipeList(
     selectedMoment: MealMoment?,
     onSearchQueryChanged: (String) -> Unit,
     onMealMomentSelected: (MealMoment?) -> Unit,
+    onDeleteRecipe: (Recipe) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(horizontal = WarmSpacing.md)) {
@@ -228,7 +289,11 @@ private fun RecipeList(
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
         ) {
             items(items = recipes, key = { it.id }) { recipe ->
-                RecipeCard(recipe = recipe, onEdit = { onEditRecipe(recipe.id) })
+                RecipeCard(
+                    recipe = recipe,
+                    onEdit = { onEditRecipe(recipe.id) },
+                    onDelete = { onDeleteRecipe(recipe) },
+                )
             }
             item {
                 Button(
@@ -373,13 +438,12 @@ private fun NoResults(
 
 // RF-17 a RF-20 y RF-22: tarjeta con portada y badge de momento superpuesto (o
 // junto al título sin foto), título, metadatos con iconos, píldora de estado y el
-// pie de acciones sobre surface-container-lowest con esquinas de 0.75rem y sombra
-// cálida. RF-4: el pie solo dibuja «Editar receta» (Q-editar-receta-4).
+// pie de acciones sobre surface-container-lowest con esquinas de 0.75rem y sombra cálida.
 private val CardShape: Shape = RoundedCornerShape(WarmRadius.md)
 private val PillShape: Shape = RoundedCornerShape(50)
 
 @Composable
-private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit) {
+private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit) {
     Surface(
         shape = CardShape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -445,25 +509,53 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit) {
                     )
                 }
                 MetadataRow(recipe = recipe)
-                CardActions(onEdit = onEdit)
+                CardActions(onEdit = onEdit, onDelete = onDelete)
             }
         }
     }
 }
 
-// RF-4: pie de acciones de la tarjeta con «Editar receta» en la posición izquierda
-// del prototipo. «Eliminar receta» y «Cocinar Ahora» quedan fuera de esta feature
-// (Q-editar-receta-4).
+// Ambas acciones del pie de tarjeta usan botones primarios compactos.
 @Composable
-private fun CardActions(onEdit: () -> Unit) {
+private fun CardActions(onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = WarmSpacing.xs),
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         EditRecipeButton(onClick = onEdit)
+        DeleteRecipeButton(onClick = onDelete)
+    }
+}
+
+// Q-eliminar-receta-4 y Q-editar-receta-6: botón primario compacto con la misma
+// estructura que «Editar» —icono de 16 dp y etiqueta «Eliminar» en `labelMedium`—
+// y altura visual de 36 dp; el área táctil la mantiene el mínimo interactivo de
+// Material 3 (≥ 48 dp).
+@Composable
+private fun DeleteRecipeButton(onClick: () -> Unit) {
+    val label = stringResource(R.string.mis_recetas_delete_action)
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .heightIn(min = 36.dp)
+            .semantics { contentDescription = label }
+            .testTag(MisRecetasTestTags.RECIPE_DELETE),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Delete,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.xs))
+        Text(
+            text = stringResource(R.string.mis_recetas_delete_short),
+            style = MaterialTheme.typography.labelMedium,
+        )
     }
 }
 

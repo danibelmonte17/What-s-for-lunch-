@@ -22,7 +22,7 @@ import org.koin.dsl.module
 val appModule = module {
     single { Room.databaseBuilder(androidContext(), RecipeDatabase::class.java, "whatsforlunch.db").build() }
     single { get<RecipeDatabase>().recipeDao() }
-    single<RecipeRepository> { RoomRecipeRepository(get()) }
+    single<RecipeRepository> { RoomRecipeRepository(get(), get()) }
     single<PhotoStore> { FilePhotoStore(androidContext()) }
 
     single { OkHttpClient() }

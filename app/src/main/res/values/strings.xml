@@ -22,6 +22,13 @@
     <string name="mis_recetas_no_results_title">No hay recetas que coincidan</string>
     <string name="mis_recetas_no_results_message">Prueba con otro texto o momento culinario.</string>
     <string name="mis_recetas_reset_filters">Ver todas las recetas</string>
+    <string name="mis_recetas_delete_action">Eliminar receta</string>
+    <string name="mis_recetas_delete_short">Eliminar</string>
+    <string name="mis_recetas_delete_title">Eliminar receta</string>
+    <string name="mis_recetas_delete_message">¿Eliminar «%1$s»? Esta acción es definitiva y no se puede deshacer.</string>
+    <string name="mis_recetas_delete_confirm">Eliminar</string>
+    <string name="mis_recetas_delete_cancel">Cancelar</string>
+    <string name="mis_recetas_delete_error">No se pudo eliminar la receta. Inténtalo de nuevo.</string>
 
     <!-- Momento culinario -->
     <string name="momento_desayuno">Desayuno</string>
