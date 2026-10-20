@@ -81,6 +81,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
+import com.whatsforlunch.app.domain.match.RecipeMatch
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
@@ -100,6 +101,7 @@ object MyRecipesTestTags {
     const val RECIPE_CARD = "my_recipes_card"
     const val RECIPE_STATUS = "my_recipes_card_status"
     const val RECIPE_MOMENT = "my_recipes_card_moment"
+    const val RECIPE_MATCH = "my_recipes_card_match"
     const val RECIPE_PHOTO = "my_recipes_card_photo"
     const val RECIPE_TITLE = "my_recipes_card_title"
     const val RECIPE_TIME = "my_recipes_card_time"
@@ -189,6 +191,7 @@ fun MyRecipesScreen(
             )
             MyRecipesState.WithRecipes -> RecipeList(
                 recipes = uiState.visibleRecipes,
+                matches = uiState.matches,
                 onCreateRecipe = onCreateRecipe,
                 onEditRecipe = onEditRecipe,
                 searchQuery = uiState.searchQuery,
@@ -298,6 +301,7 @@ private fun EmptyMyRecipes(
 @Composable
 private fun RecipeList(
     recipes: List<Recipe>,
+    matches: Map<String, RecipeMatch>,
     onCreateRecipe: () -> Unit,
     onEditRecipe: (String) -> Unit,
     searchQuery: String,
@@ -324,6 +328,7 @@ private fun RecipeList(
             items(items = recipes, key = { it.id }) { recipe ->
                 RecipeCard(
                     recipe = recipe,
+                    match = matches[recipe.id],
                     onEdit = { onEditRecipe(recipe.id) },
                     onDelete = { onDeleteRecipe(recipe) },
                 )
@@ -644,7 +649,12 @@ private val CardShape: Shape = RoundedCornerShape(WarmRadius.md)
 private val PillShape: Shape = RoundedCornerShape(50)
 
 @Composable
-private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit) {
+private fun RecipeCard(
+    recipe: Recipe,
+    match: RecipeMatch?,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
     Surface(
         shape = CardShape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -675,6 +685,14 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit)
                             .align(Alignment.TopStart)
                             .padding(WarmSpacing.md),
                     )
+                    match?.let {
+                        MatchBadge(
+                            match = it,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(WarmSpacing.md),
+                        )
+                    }
                 }
             }
             Column(
@@ -698,6 +716,10 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit)
                             .testTag(MyRecipesTestTags.RECIPE_TITLE),
                     )
                     Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                    if (bitmap == null) {
+                        match?.let { MatchBadge(match = it) }
+                    }
+                    if (match != null) Spacer(modifier = Modifier.width(WarmSpacing.sm))
                     StatusPill(status = recipe.status)
                 }
                 if (recipe.story.isNotBlank()) {
@@ -713,6 +735,35 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit)
                 CardActions(onEdit = onEdit, onDelete = onDelete)
             }
         }
+    }
+}
+
+@Composable
+private fun MatchBadge(match: RecipeMatch, modifier: Modifier = Modifier) {
+    val fullMatch = match.isFullMatch
+    val accessibilityDescription = stringResource(
+        R.string.my_recipes_card_match_content_description,
+        match.percentage,
+    )
+    Surface(
+        shape = PillShape,
+        color = if (fullMatch) MaterialTheme.colorScheme.secondary
+        else MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = if (fullMatch) MaterialTheme.colorScheme.onSecondary
+        else MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = modifier
+            .semantics {
+                contentDescription = accessibilityDescription
+            }
+            .testTag(MyRecipesTestTags.RECIPE_MATCH),
+    ) {
+        Text(
+            text = if (fullMatch) stringResource(R.string.my_recipes_card_match_full)
+            else stringResource(R.string.my_recipes_card_match, match.percentage),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
+        )
     }
 }
 

@@ -2,12 +2,15 @@ package com.whatsforlunch.app.ui.myrecipes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.whatsforlunch.app.domain.match.RecipeMatch
+import com.whatsforlunch.app.domain.match.calculateMatch
 import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
 import com.whatsforlunch.app.domain.myrecipes.filterRecipes
 import com.whatsforlunch.app.domain.myrecipes.myRecipesStateOf
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.domain.repository.PantryRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,11 +31,15 @@ data class MyRecipesUiState(
     val mealMomentFilter: MealMoment? = null,
     val visibleRecipes: List<Recipe> = recipes,
     val deleteError: Boolean = false,
+    val matches: Map<String, RecipeMatch> = emptyMap(),
 )
 
 // MVVM + StateFlow (Q-arrancar-app-en-mis-recetas-1): reglas fuera de la UI.
 @OptIn(FlowPreview::class)
-class MyRecipesViewModel(private val repository: RecipeRepository) : ViewModel() {
+class MyRecipesViewModel(
+    private val repository: RecipeRepository,
+    private val pantryRepository: PantryRepository,
+) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
     private val appliedSearchQuery = MutableStateFlow("")
@@ -47,13 +54,18 @@ class MyRecipesViewModel(private val repository: RecipeRepository) : ViewModel()
         }
     }
 
-    val uiState: StateFlow<MyRecipesUiState> = combine(
+    private val recipesAndPantry = combine(
         repository.observeRecipes(),
+        pantryRepository.observePantryItems(),
+    ) { recipes, pantryItems -> recipes to pantryItems }
+
+    val uiState: StateFlow<MyRecipesUiState> = combine(
+        recipesAndPantry,
         searchQuery,
         appliedSearchQuery,
         mealMomentFilter,
         deleteError,
-    ) { recipes, currentQuery, appliedQuery, moment, hasDeleteError ->
+    ) { (recipes, pantryItems), currentQuery, appliedQuery, moment, hasDeleteError ->
         val visibleRecipes = filterRecipes(recipes, appliedQuery, moment)
         MyRecipesUiState(
             state = myRecipesStateOf(recipes, visibleRecipes),
@@ -62,6 +74,9 @@ class MyRecipesViewModel(private val repository: RecipeRepository) : ViewModel()
             mealMomentFilter = moment,
             visibleRecipes = visibleRecipes,
             deleteError = hasDeleteError,
+            matches = recipes.mapNotNull { recipe ->
+                calculateMatch(recipe, pantryItems)?.let { recipe.id to it }
+            }.toMap(),
         )
     }
         .stateIn(

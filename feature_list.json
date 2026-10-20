@@ -242,9 +242,14 @@
         "E2E: con la mitad de los ingredientes obligatorios en la Despensa, comprobar que la tarjeta muestra el porcentaje calculado",
         "Unit: los ingredientes opcionales no alteran el porcentaje"
       ],
-      "evidence": [],
+      "evidence": [
+        "Autoverificación en Pixel_10_Pro API 37: init.ps1 exit 0; lintDebug BUILD SUCCESSFUL (0 errores); testDebugUnitTest --rerun-tasks BUILD SUCCESSFUL (32 tests); assembleDebug BUILD SUCCESSFUL.",
+        "MatchBadgeE2ETest (connectedDebugAndroidTest focalizada): 1/1 verde; cubre badge 50%, 100% Match, opcionales, nombres normalizados y reactividad al cambiar la Despensa.",
+        "Reparación del validador 2026-10-20: lintDebug BUILD SUCCESSFUL (0 errores); testDebugUnitTest --rerun-tasks 33/33 (incluye obligatorio con cantidad 0); assembleDebug BUILD SUCCESSFUL; MatchBadgeE2ETest focalizada 2/2 en Pixel_10_Pro API 37 (tarjeta con foto verifica exactamente un badge).",
+        "Aceptación independiente (feature-validator, ciclo 2): accept — reranqueo propio: lintDebug 0 errores, testDebugUnitTest --rerun-tasks 33/33 (RecipeMatchTest 5/5), E2E focalizada MatchBadgeE2ETest 2/2 y connectedDebugAndroidTest completa 70/70 (0 fallos/0 omitidos, 10m 48s) en Pixel_10_Pro API 37; los dos hallazgos del ciclo 1 (badge duplicado en tarjeta con foto sin el guard if (bitmap == null) de D6, y unit D1 de obligatorio con cantidad 0) verificados corregidos en código y en emulador; verify 1 (badge «50%» con la mitad de obligatorios y content-desc «Coincidencia con la Despensa: 50%») y verify 2 (opcional no altera el %) en verde; visual es con muestreo de píxeles exacto (#82F5C1/#00714E 0-99% y #006C4A/#FFFFFF 100% Match); 2 capturas en docs/evidence/mostrar-badge-de-coincidencia/; informe en docs/validations/mostrar-badge-de-coincidencia.md"
+      ],
       "notes": "Cálculo sobre obligatorios (RD01/RD10); umbral y badge según RD02",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "escanear-despensa-con-camara",

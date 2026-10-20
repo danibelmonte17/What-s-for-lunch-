@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
@@ -55,7 +56,7 @@ class SearchAndFilterRecipesE2ETest {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         screenContext = baseContext.createConfigurationContext(configuration)
-        val viewModel = MyRecipesViewModel(repository)
+        val viewModel = MyRecipesViewModel(repository, InMemoryPantryRepository())
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides screenContext) {
@@ -198,7 +199,7 @@ class SearchAndFilterRecipesE2ETest {
     @Test
     fun keepsSearchAndMomentFilterWhenReturningWithinTheSession() {
         val repository = repositoryWithRecipes()
-        val viewModel = MyRecipesViewModel(repository)
+        val viewModel = MyRecipesViewModel(repository, InMemoryPantryRepository())
         val showingRecipes = mutableStateOf(true)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
