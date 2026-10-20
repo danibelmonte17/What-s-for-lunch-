@@ -31,7 +31,7 @@ import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
-import com.whatsforlunch.app.domain.misrecetas.MisRecetasState
+import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
@@ -40,14 +40,14 @@ import com.whatsforlunch.app.domain.model.RecipeOrigin
 import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.repository.RecipeRepository
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaRoute
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaScreen
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaTestTags
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaViewModel
-import com.whatsforlunch.app.ui.crearreceta.toActions
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasScreen
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasUiState
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeScreen
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
+import com.whatsforlunch.app.ui.createrecipe.toActions
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesUiState
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -110,12 +110,12 @@ private class EditPhotoAcquirer(
 // sobre un repositorio en memoria con la Receta ya guardada. Cada valor sembrado es
 // distinto del valor por defecto del alta, para que la precarga sea verificable.
 @RunWith(AndroidJUnit4::class)
-class EditarRecetaE2ETest {
+class EditRecipeE2ETest {
 
     @get:Rule
     val composeRule = createComposeRule()
 
-    // El locale se inyecta (mismo patrón que CrearRecetaE2ETest) para que las
+    // El locale se inyecta (mismo patrón que CreateRecipeE2ETest) para que las
     // aserciones sobre textos no dependan del idioma del dispositivo (NFR-1).
     private lateinit var editorContext: Context
 
@@ -127,17 +127,17 @@ class EditarRecetaE2ETest {
         onDone: () -> Unit = {},
         photoAcquirer: PhotoAcquirer = EditPhotoAcquirer(),
         locale: Locale = Locale("es", "ES"),
-    ): CrearRecetaViewModel {
+    ): CreateRecipeViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         editorContext = baseContext.createConfigurationContext(configuration)
-        val viewModel = CrearRecetaViewModel(repository, EditPhotoStore(), recipeId)
+        val viewModel = CreateRecipeViewModel(repository, EditPhotoStore(), recipeId)
         viewModel.setPhotoAcquirer(photoAcquirer)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides editorContext) {
                 WhatsForLunchTheme {
-                    CrearRecetaScreen(uiState = state, actions = viewModel.toActions(onDone))
+                    CreateRecipeScreen(uiState = state, actions = viewModel.toActions(onDone))
                 }
             }
         }
@@ -163,34 +163,34 @@ class EditarRecetaE2ETest {
     fun editingPreloadsRecipeFieldsAndPublishedDock() {
         launchEditor(repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-precarga.png"))), SEEDED_ID)
 
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_edit_title)).assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.STATUS_BADGE).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.mis_recetas_status_published)).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_header_subtitle)).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_edit_title)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STATUS_BADGE).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.my_recipes_status_published)).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_header_subtitle)).assertIsDisplayed()
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).assertTextContains(seededTitle)
-        composeRule.onNodeWithTag(CrearRecetaTestTags.STORY_FIELD).performScrollTo()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).assertTextContains(seededTitle)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STORY_FIELD).performScrollTo()
             .assertTextContains("Huevos, patata y cebolla")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.MOMENT_DINNER).performScrollTo().assertIsSelected()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PREP_MINUTES_FIELD).performScrollTo().assertTextContains("10")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.COOK_MINUTES_FIELD).performScrollTo().assertTextContains("15")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.DIFFICULTY_EASY).performScrollTo().assertIsSelected()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SERVINGS_VALUE).performScrollTo().assertTextContains("2")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.CALORIES_FIELD).performScrollTo().assertTextContains("250")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_PREVIEW).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ingredientName(0)).performScrollTo().assertTextContains("Patata")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ingredientQuantity(0)).assertTextContains("700")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ingredientUnit(0)).assertTextContains("g")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ingredientOptional(0)).assertIsOn()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.stepText(0)).performScrollTo().assertTextContains("Pochar la cebolla")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.stepTimer(0)).assertTextContains("5")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.FAVORITE_TOGGLE).performScrollTo().assertIsOn()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.MOMENT_DINNER).performScrollTo().assertIsSelected()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PREP_MINUTES_FIELD).performScrollTo().assertTextContains("10")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.COOK_MINUTES_FIELD).performScrollTo().assertTextContains("15")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.DIFFICULTY_EASY).performScrollTo().assertIsSelected()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SERVINGS_VALUE).performScrollTo().assertTextContains("2")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.CALORIES_FIELD).performScrollTo().assertTextContains("250")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_PREVIEW).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientName(0)).performScrollTo().assertTextContains("Patata")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientQuantity(0)).assertTextContains("700")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(0)).assertTextContains("g")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientOptional(0)).assertIsOn()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(0)).performScrollTo().assertTextContains("Pochar la cebolla")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("5")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.FAVORITE_TOGGLE).performScrollTo().assertIsOn()
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.SAVE_DRAFT).assertCountEquals(0)
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.PUBLISH).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_DRAFT).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.PUBLISH).assertCountEquals(0)
         // RF-13: en edición no hay «Guardar» de cabecera; el dock es el único guardado.
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
     // RF-9: al editar un Borrador, el dock es el del alta («Guardar Borrador» y
@@ -199,12 +199,12 @@ class EditarRecetaE2ETest {
     fun draftEditingShowsCreationDock() {
         launchEditor(repositoryWith(seededRecipe(status = RecipeStatus.DRAFT)), SEEDED_ID)
 
-        composeRule.onNodeWithText(editorText(R.string.mis_recetas_status_draft)).assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertCountEquals(0)
+        composeRule.onNodeWithText(editorText(R.string.my_recipes_status_draft)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertCountEquals(0)
         // RF-13: el dock del alta es el único guardado; no hay «Guardar» de cabecera.
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
     // RF-7 y RF-8: una Publicada que deja de cumplir los requisitos de Publicar mantiene
@@ -214,27 +214,27 @@ class EditarRecetaE2ETest {
         val repository = repositoryWith(seededRecipeWithoutDetails())
         launchEditor(repository, SEEDED_ID, photoAcquirer = EditPhotoAcquirer(PhotoResult.Success(editImageBytes())))
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsNotEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_photo)).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_ingredient)).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_step)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsNotEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH_ERRORS).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_photo)).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_ingredient)).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_step)).assertIsDisplayed()
 
         // Completa la foto, un ingrediente y un paso: «Guardar cambios» se habilita y
         // guarda manteniendo el estado Publicada (RF-6).
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PHOTO_GALLERY).performScrollTo().performClick()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ADD_INGREDIENT).performScrollTo().performClick()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ingredientName(0)).performScrollTo()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GALLERY).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_INGREDIENT).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientName(0)).performScrollTo()
             .performTextReplacement("Patata")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ingredientQuantity(0)).performScrollTo()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientQuantity(0)).performScrollTo()
             .performTextReplacement("700")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.ADD_STEP).performScrollTo().performClick()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.stepText(0)).performScrollTo()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_STEP).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(0)).performScrollTo()
             .performTextReplacement("Pochar la cebolla")
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).assertCountEquals(0)
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsEnabled()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.PUBLISH_ERRORS).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals(RecipeStatus.PUBLISHED, saved.status)
@@ -248,8 +248,8 @@ class EditarRecetaE2ETest {
         )
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Tortilla mejorada")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Tortilla mejorada")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals(SEEDED_ID, saved.id)
@@ -266,8 +266,8 @@ class EditarRecetaE2ETest {
         val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Borrador corregido")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Borrador corregido")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals("Borrador corregido", saved.title)
@@ -283,8 +283,8 @@ class EditarRecetaE2ETest {
         )
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals("Tortilla de patatas", saved.title)
@@ -298,9 +298,9 @@ class EditarRecetaE2ETest {
         val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH).assertIsNotEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.PUBLISH_ERRORS).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_publish_error_photo)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsNotEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH_ERRORS).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_photo)).assertIsDisplayed()
     }
 
     // RF-13: en modo edición la cabecera no dibuja «Guardar»; el único punto de
@@ -310,9 +310,9 @@ class EditarRecetaE2ETest {
         val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Borrador desde dock")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_DRAFT).performClick()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Borrador desde dock")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals("Borrador desde dock", saved.title)
@@ -326,10 +326,10 @@ class EditarRecetaE2ETest {
         val repository = repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-cabecera.png")))
         launchEditor(repository, SEEDED_ID)
 
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Publicada desde dock")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).performClick()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Publicada desde dock")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals("Publicada desde dock", saved.title)
@@ -342,8 +342,8 @@ class EditarRecetaE2ETest {
     fun headerSaveIsAbsentWhilePublishedSaveIsDisabled() {
         launchEditor(repositoryWith(seededRecipeWithoutDetails()), SEEDED_ID)
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsNotEnabled()
-        composeRule.onAllNodesWithTag(CrearRecetaTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsNotEnabled()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
     // RF-15: cerrar sin guardar descarta los cambios (la Receta conserva sus datos).
@@ -353,7 +353,7 @@ class EditarRecetaE2ETest {
         val repository = repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-cierre.png")))
         launchEditor(repository, SEEDED_ID, onDone = { closed = true })
 
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Cambios descartados")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Cambios descartados")
         composeRule.onNodeWithText(editorText(R.string.action_back)).performClick()
 
         assertTrue(closed)
@@ -369,11 +369,11 @@ class EditarRecetaE2ETest {
             locale = Locale.ENGLISH,
         )
 
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_edit_title)).assertIsDisplayed()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.crear_receta_save_changes)).assertIsDisplayed()
-        assertEquals("Edit Recipe", editorText(R.string.crear_receta_edit_title))
-        assertEquals("Save changes", editorText(R.string.crear_receta_save_changes))
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_edit_title)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_save_changes)).assertIsDisplayed()
+        assertEquals("Edit Recipe", editorText(R.string.create_recipe_edit_title))
+        assertEquals("Save changes", editorText(R.string.create_recipe_save_changes))
     }
 
     // RF-4: la tarjeta de Mis Recetas ofrece «Editar receta» como botón primario
@@ -384,10 +384,10 @@ class EditarRecetaE2ETest {
         var requestedId: String? = null
         showCards(seededRecipe(photoPath = editPhotoFile("editar-tarjeta.png"))) { requestedId = it }
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_EDIT).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.mis_recetas_action_edit_short)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(editorText(R.string.mis_recetas_action_edit)).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_EDIT).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_EDIT).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.my_recipes_action_edit_short)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(editorText(R.string.my_recipes_action_edit)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_EDIT).performClick()
 
         assertEquals(SEEDED_ID, requestedId)
     }
@@ -398,7 +398,7 @@ class EditarRecetaE2ETest {
     fun cardEditActionIsLocalizedInEnglish() {
         showCards(seededRecipe(photoPath = editPhotoFile("editar-tarjeta-en.png")), locale = Locale.ENGLISH) {}
 
-        assertEquals("Edit recipe", editorText(R.string.mis_recetas_action_edit))
+        assertEquals("Edit recipe", editorText(R.string.my_recipes_action_edit))
         composeRule.onNodeWithContentDescription("Edit recipe").assertIsDisplayed()
         composeRule.onNodeWithText("Edit").assertIsDisplayed()
     }
@@ -414,9 +414,9 @@ class EditarRecetaE2ETest {
         composeRule.setContent {
             CompositionLocalProvider(LocalContext provides editorContext) {
                 WhatsForLunchTheme {
-                    MisRecetasScreen(
-                        uiState = MisRecetasUiState(
-                            state = MisRecetasState.WithRecipes,
+                    MyRecipesScreen(
+                        uiState = MyRecipesUiState(
+                            state = MyRecipesState.WithRecipes,
                             recipes = listOf(recipe),
                         ),
                         onCreateRecipe = {},
@@ -479,7 +479,7 @@ class EditarRecetaE2ETest {
 // a Mis Recetas. Se monta la Route real (ViewModel y repositorio de Koin) sobre una base
 // de datos vacía.
 @RunWith(AndroidJUnit4::class)
-class EditarRecetaRouteE2ETest {
+class EditRecipeRouteE2ETest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -494,7 +494,7 @@ class EditarRecetaRouteE2ETest {
         var closed = false
         composeRule.setContent {
             WhatsForLunchTheme {
-                CrearRecetaRoute(onDone = { closed = true }, recipeId = "receta-que-no-existe")
+                CreateRecipeRoute(onDone = { closed = true }, recipeId = "receta-que-no-existe")
             }
         }
 
@@ -506,7 +506,7 @@ class EditarRecetaRouteE2ETest {
 // verify 1 · RF-6, RF-17: la app real edita el título de una Receta Publicada y Mis
 // Recetas muestra el título nuevo.
 @RunWith(AndroidJUnit4::class)
-class EditarRecetaAppE2ETest {
+class EditRecipeAppE2ETest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
@@ -517,7 +517,7 @@ class EditarRecetaAppE2ETest {
     }
 
     @Test
-    fun editedTitleAppearsInMisRecetas() {
+    fun editedTitleAppearsInMyRecipes() {
         val repository: RecipeRepository = GlobalContext.get().get<RecipeRepository>()
         runBlocking {
             repository.saveRecipe(
@@ -541,22 +541,22 @@ class EditarRecetaAppE2ETest {
         }
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.RECIPE_EDIT).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_EDIT).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(MisRecetasTestTags.SCREEN).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_EDIT).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_EDIT).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Tortilla de patatas").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(CrearRecetaTestTags.TITLE_FIELD).performTextReplacement("Tortilla mejorada")
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Tortilla mejorada")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Tortilla mejorada").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(MisRecetasTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Tortilla mejorada").assertIsDisplayed()
         assertEquals(RecipeStatus.PUBLISHED, runBlocking { repository.getRecipe("editar-e2e-1") }?.status)
     }

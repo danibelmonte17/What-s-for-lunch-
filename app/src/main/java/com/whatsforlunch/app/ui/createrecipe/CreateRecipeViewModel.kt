@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.ui.crearreceta
+package com.whatsforlunch.app.ui.createrecipe
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,8 +6,8 @@ import com.whatsforlunch.app.data.photo.NoOpPhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
 import com.whatsforlunch.app.data.photo.PhotoStore
-import com.whatsforlunch.app.domain.crearreceta.RecipeRequirement
-import com.whatsforlunch.app.domain.crearreceta.RecipeValidation
+import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
+import com.whatsforlunch.app.domain.createrecipe.RecipeValidation
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // Aviso no bloqueante del formulario (RF-21, RF-22, RF-23).
-enum class CrearRecetaNotice {
+enum class CreateRecipeNotice {
     AI_KEY_MISSING,
     AI_GENERATION_FAILED,
     CAMERA_PERMISSION_DENIED,
@@ -54,7 +54,7 @@ data class StepFieldUiState(
 
 // Estado visible del formulario de Receta: alta (recipeId null) o edición de una
 // Receta existente (Parte B, T2-T7).
-data class CrearRecetaUiState(
+data class CreateRecipeUiState(
     val title: String = "",
     val story: String = "",
     val mealMoment: MealMoment = MealMoment.LUNCH,
@@ -72,7 +72,7 @@ data class CrearRecetaUiState(
     // RecipeValidation.validateForPublish) y si el formulario ya los cumple.
     val publishErrors: Set<RecipeRequirement> = emptySet(),
     val canPublish: Boolean = false,
-    val notice: CrearRecetaNotice? = null,
+    val notice: CreateRecipeNotice? = null,
     val isPhotoLoading: Boolean = false,
     val saved: Boolean = false,
     // Modo edición: id de la Receta abierta (null = alta) y el estado con el que se
@@ -86,7 +86,7 @@ data class CrearRecetaUiState(
 // MVVM + StateFlow: el formulario de alta y de edición de Receta. Las reglas de
 // validación viven en domain/ (RecipeValidation); aquí solo se orquesta el estado y
 // el guardado.
-class CrearRecetaViewModel(
+class CreateRecipeViewModel(
     private val repository: RecipeRepository,
     private val photoStore: PhotoStore,
     // Id de la Receta a editar; null = alta de una Receta nueva (RF-1).
@@ -99,8 +99,8 @@ class CrearRecetaViewModel(
     // Origen de la Receta guardada; la edición lo conserva (RF-16).
     private var originalOrigin: RecipeOrigin = RecipeOrigin.USER
 
-    private val _uiState = MutableStateFlow(withPublishState(CrearRecetaUiState()))
-    val uiState: StateFlow<CrearRecetaUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(withPublishState(CreateRecipeUiState()))
+    val uiState: StateFlow<CreateRecipeUiState> = _uiState.asStateFlow()
 
     init {
         loadRecipe(initialRecipeId)
@@ -241,11 +241,11 @@ class CrearRecetaViewModel(
                 }
                 PhotoResult.Cancelled -> mutate { it.copy(isPhotoLoading = false) }
                 PhotoResult.CameraPermissionDenied ->
-                    mutate { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.CAMERA_PERMISSION_DENIED) }
+                    mutate { it.copy(isPhotoLoading = false, notice = CreateRecipeNotice.CAMERA_PERMISSION_DENIED) }
                 PhotoResult.MissingApiKey ->
-                    mutate { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.AI_KEY_MISSING) }
+                    mutate { it.copy(isPhotoLoading = false, notice = CreateRecipeNotice.AI_KEY_MISSING) }
                 PhotoResult.GenerationFailed ->
-                    mutate { it.copy(isPhotoLoading = false, notice = CrearRecetaNotice.AI_GENERATION_FAILED) }
+                    mutate { it.copy(isPhotoLoading = false, notice = CreateRecipeNotice.AI_GENERATION_FAILED) }
             }
         }
     }
@@ -272,7 +272,7 @@ class CrearRecetaViewModel(
         }
     }
 
-    private fun buildRecipe(state: CrearRecetaUiState, status: RecipeStatus): Recipe {
+    private fun buildRecipe(state: CreateRecipeUiState, status: RecipeStatus): Recipe {
         // En modo edición se conservan el id y el origen de la Receta (RF-2, RF-16).
         val id = state.recipeId ?: newRecipeId
         return Recipe(
@@ -317,7 +317,7 @@ class CrearRecetaViewModel(
 
     // RF-2: precarga el formulario con todos los datos de la Receta editada,
     // incluidas sus filas de Ingrediente y Paso y su foto y favorito.
-    private fun preloadedState(recipe: Recipe): CrearRecetaUiState = CrearRecetaUiState(
+    private fun preloadedState(recipe: Recipe): CreateRecipeUiState = CreateRecipeUiState(
         title = recipe.title,
         story = recipe.story,
         mealMoment = recipe.mealMoment,
@@ -353,11 +353,11 @@ class CrearRecetaViewModel(
 
     // Cualquier cambio recalcula los requisitos incumplidos de Publicar y si el
     // formulario puede publicar (RF-14 a RF-16); fuente única de verdad: validateForPublish.
-    private fun mutate(transform: (CrearRecetaUiState) -> CrearRecetaUiState) {
+    private fun mutate(transform: (CreateRecipeUiState) -> CreateRecipeUiState) {
         _uiState.update { withPublishState(transform(it)) }
     }
 
-    private fun withPublishState(state: CrearRecetaUiState): CrearRecetaUiState {
+    private fun withPublishState(state: CreateRecipeUiState): CreateRecipeUiState {
         val unmet = RecipeValidation.validateForPublish(buildRecipe(state, RecipeStatus.PUBLISHED))
         return state.copy(publishErrors = unmet, canPublish = unmet.isEmpty())
     }
