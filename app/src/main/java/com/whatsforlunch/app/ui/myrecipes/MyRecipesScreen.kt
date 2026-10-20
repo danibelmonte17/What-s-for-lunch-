@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.ui.misrecetas
+package com.whatsforlunch.app.ui.myrecipes
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -80,7 +80,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
-import com.whatsforlunch.app.domain.misrecetas.MisRecetasState
+import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
@@ -90,38 +90,16 @@ import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
-object MisRecetasTestTags {
-    const val SCREEN = "mis_recetas_screen"
-    const val EMPTY_TITLE = "mis_recetas_empty_title"
-    const val EMPTY_MESSAGE = "mis_recetas_empty_message"
+object MyRecipesTestTags {
+    const val SCREEN = "my_recipes_screen"
+    const val EMPTY_TITLE = "my_recipes_empty_title"
+    const val EMPTY_MESSAGE = "my_recipes_empty_message"
     const val CREATE_RECIPE = "action_create_recipe"
     const val SCAN_PANTRY = "action_scan_pantry"
-    const val RECIPE_LIST = "mis_recetas_list"
-    const val RECIPE_CARD = "mis_recetas_card"
-    const val RECIPE_STATUS = "mis_recetas_card_status"
-    const val RECIPE_MOMENT = "mis_recetas_card_moment"
-    const val RECIPE_PHOTO = "mis_recetas_card_photo"
-    const val RECIPE_TITLE = "mis_recetas_card_title"
-    const val RECIPE_TIME = "mis_recetas_card_time"
-    const val RECIPE_DIFFICULTY = "mis_recetas_card_difficulty"
-    const val RECIPE_SERVINGS = "mis_recetas_card_servings"
-    const val RECIPE_EDIT = "mis_recetas_card_edit"
-    const val RECIPE_DELETE = "mis_recetas_card_delete"
-    const val SEARCH_FIELD = "mis_recetas_search_field"
-    const val SEARCH_ICON = "mis_recetas_search_icon"
-    const val FILTER_ROW = "mis_recetas_moment_filter"
-    const val FILTER_CHIP_ALL = "mis_recetas_filter_all"
-    const val FILTER_CHIP_ALL_ICON = "mis_recetas_filter_all_icon"
-    const val FILTER_CHIP = "mis_recetas_filter"
-    const val FILTER_CHIP_ICON = "mis_recetas_filter_icon"
-    const val NO_RESULTS = "mis_recetas_no_results"
-    const val NO_RESULTS_CARD = "mis_recetas_no_results_card"
-    const val NO_RESULTS_ICON = "mis_recetas_no_results_icon"
-    const val NO_RESULTS_ICON_CONTAINER = "mis_recetas_no_results_icon_container"
-    const val RESET_FILTERS = "mis_recetas_reset_filters"
-    const val DELETE_DIALOG = "mis_recetas_delete_dialog"
-    const val DELETE_CONFIRM = "mis_recetas_delete_confirm"
-    const val DELETE_CANCEL = "mis_recetas_delete_cancel"
+    const val RESET_FILTERS = "my_recipes_reset_filters"
+    const val DELETE_DIALOG = "my_recipes_delete_dialog"
+    const val DELETE_CONFIRM = "my_recipes_delete_confirm"
+    const val DELETE_CANCEL = "my_recipes_delete_cancel"
     const val OPEN_PANTRY = "action_open_pantry"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
@@ -130,8 +108,8 @@ object MisRecetasTestTags {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MisRecetasScreen(
-    uiState: MisRecetasUiState,
+fun MyRecipesScreen(
+    uiState: MyRecipesUiState,
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit = {},
@@ -145,7 +123,7 @@ fun MisRecetasScreen(
 ) {
     var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val deleteErrorMessage = stringResource(R.string.mis_recetas_delete_error)
+    val deleteErrorMessage = stringResource(R.string.my_recipes_delete_error)
 
     LaunchedEffect(uiState.deleteError) {
         if (uiState.deleteError) {
@@ -155,15 +133,15 @@ fun MisRecetasScreen(
     }
 
     Scaffold(
-        modifier = modifier.testTag(MisRecetasTestTags.SCREEN),
+        modifier = modifier.testTag(MyRecipesTestTags.SCREEN),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.mis_recetas_title)) },
+                title = { Text(text = stringResource(R.string.my_recipes_title)) },
                 actions = {
                     IconButton(
                         onClick = onOpenPantry,
-                        modifier = Modifier.testTag(MisRecetasTestTags.OPEN_PANTRY),
+                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY),
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Inventory2,
@@ -180,14 +158,14 @@ fun MisRecetasScreen(
         },
     ) { innerPadding ->
         when (uiState.state) {
-            MisRecetasState.Empty -> EmptyMisRecetas(
+            MyRecipesState.Empty -> EmptyMyRecipes(
                 onCreateRecipe = onCreateRecipe,
                 onScanPantry = onScanPantry,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
             )
-            MisRecetasState.WithRecipes -> RecipeList(
+            MyRecipesState.WithRecipes -> RecipeList(
                 recipes = uiState.visibleRecipes,
                 onCreateRecipe = onCreateRecipe,
                 onEditRecipe = onEditRecipe,
@@ -200,7 +178,7 @@ fun MisRecetasScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
             )
-            MisRecetasState.NoResults -> NoResults(
+            MyRecipesState.NoResults -> NoResults(
                 searchQuery = uiState.searchQuery,
                 selectedMoment = uiState.mealMomentFilter,
                 onSearchQueryChanged = onSearchQueryChanged,
@@ -216,10 +194,10 @@ fun MisRecetasScreen(
     recipeToDelete?.let { recipe ->
         AlertDialog(
             onDismissRequest = { recipeToDelete = null },
-            modifier = Modifier.testTag(MisRecetasTestTags.DELETE_DIALOG),
-            title = { Text(text = stringResource(R.string.mis_recetas_delete_title)) },
+            modifier = Modifier.testTag(MyRecipesTestTags.DELETE_DIALOG),
+            title = { Text(text = stringResource(R.string.my_recipes_delete_title)) },
             text = {
-                Text(text = stringResource(R.string.mis_recetas_delete_message, recipe.title))
+                Text(text = stringResource(R.string.my_recipes_delete_message, recipe.title))
             },
             confirmButton = {
                 TextButton(
@@ -228,17 +206,17 @@ fun MisRecetasScreen(
                         onDeleteRecipe(recipe.id)
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.testTag(MisRecetasTestTags.DELETE_CONFIRM),
+                    modifier = Modifier.testTag(MyRecipesTestTags.DELETE_CONFIRM),
                 ) {
-                    Text(text = stringResource(R.string.mis_recetas_delete_confirm))
+                    Text(text = stringResource(R.string.my_recipes_delete_confirm))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { recipeToDelete = null },
-                    modifier = Modifier.testTag(MisRecetasTestTags.DELETE_CANCEL),
+                    modifier = Modifier.testTag(MyRecipesTestTags.DELETE_CANCEL),
                 ) {
-                    Text(text = stringResource(R.string.mis_recetas_delete_cancel))
+                    Text(text = stringResource(R.string.my_recipes_delete_cancel))
                 }
             },
         )
@@ -246,7 +224,7 @@ fun MisRecetasScreen(
 }
 
 @Composable
-private fun EmptyMisRecetas(
+private fun EmptyMyRecipes(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -257,20 +235,20 @@ private fun EmptyMisRecetas(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(R.string.mis_recetas_empty_title),
+            text = stringResource(R.string.my_recipes_empty_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
-            modifier = Modifier.testTag(MisRecetasTestTags.EMPTY_TITLE),
+            modifier = Modifier.testTag(MyRecipesTestTags.EMPTY_TITLE),
         )
         Text(
-            text = stringResource(R.string.mis_recetas_empty_message),
+            text = stringResource(R.string.my_recipes_empty_message),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(top = WarmSpacing.sm)
-                .testTag(MisRecetasTestTags.EMPTY_MESSAGE),
+                .testTag(MyRecipesTestTags.EMPTY_MESSAGE),
         )
         Button(
             onClick = onCreateRecipe,
@@ -278,7 +256,7 @@ private fun EmptyMisRecetas(
                 .fillMaxWidth()
                 .padding(top = WarmSpacing.xl)
                 .heightIn(min = 52.dp)
-                .testTag(MisRecetasTestTags.CREATE_RECIPE),
+                .testTag(MyRecipesTestTags.CREATE_RECIPE),
         ) {
             Text(text = stringResource(R.string.action_create_recipe))
         }
@@ -288,7 +266,7 @@ private fun EmptyMisRecetas(
                 .fillMaxWidth()
                 .padding(top = WarmSpacing.md)
                 .heightIn(min = 48.dp)
-                .testTag(MisRecetasTestTags.SCAN_PANTRY),
+                .testTag(MyRecipesTestTags.SCAN_PANTRY),
         ) {
             Text(text = stringResource(R.string.action_scan_pantry))
         }
@@ -318,7 +296,7 @@ private fun RecipeList(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .testTag(MisRecetasTestTags.RECIPE_LIST),
+                .testTag(MyRecipesTestTags.RECIPE_LIST),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
         ) {
             items(items = recipes, key = { it.id }) { recipe ->
@@ -334,7 +312,7 @@ private fun RecipeList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 52.dp)
-                        .testTag(MisRecetasTestTags.CREATE_RECIPE),
+                        .testTag(MyRecipesTestTags.CREATE_RECIPE),
                 ) {
                     Text(text = stringResource(R.string.action_create_recipe))
                 }
@@ -364,7 +342,7 @@ private fun SearchAndFilterControls(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .testTag(MisRecetasTestTags.SEARCH_FIELD),
+                .testTag(MyRecipesTestTags.SEARCH_FIELD),
             textStyle = MaterialTheme.typography.bodySmall.copy(
                 color = MaterialTheme.colorScheme.onSurface,
             ),
@@ -386,7 +364,7 @@ private fun SearchAndFilterControls(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .size(20.dp)
-                            .testTag(MisRecetasTestTags.SEARCH_ICON),
+                            .testTag(MyRecipesTestTags.SEARCH_ICON),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
@@ -395,7 +373,7 @@ private fun SearchAndFilterControls(
                     ) {
                         if (searchQuery.isEmpty()) {
                             Text(
-                                text = stringResource(R.string.mis_recetas_search_hint),
+                                text = stringResource(R.string.my_recipes_search_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.60f),
                             )
@@ -406,24 +384,24 @@ private fun SearchAndFilterControls(
             },
         )
     }
-    val filterDescription = stringResource(R.string.mis_recetas_filter_label)
+    val filterDescription = stringResource(R.string.my_recipes_filter_label)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = WarmSpacing.sm)
             .horizontalScroll(rememberScrollState())
             .semantics { contentDescription = filterDescription }
-            .testTag(MisRecetasTestTags.FILTER_ROW),
+            .testTag(MyRecipesTestTags.FILTER_ROW),
         horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MomentFilterChip(
-            label = stringResource(R.string.mis_recetas_filter_all),
+            label = stringResource(R.string.my_recipes_filter_all),
             icon = Icons.Outlined.RestaurantMenu,
             selected = selectedMoment == null,
-            iconTint = MaterialTheme.colorScheme.onSurface,
-            testTag = MisRecetasTestTags.FILTER_CHIP_ALL,
-            iconTestTag = MisRecetasTestTags.FILTER_CHIP_ALL_ICON,
+            iconTint = MaterialTheme.colorScheme.primary,
+            testTag = MyRecipesTestTags.FILTER_CHIP_ALL,
+            iconTestTag = MyRecipesTestTags.FILTER_CHIP_ALL_ICON,
             onClick = { onMealMomentSelected(null) },
         )
         MealMoment.entries.forEach { moment ->
@@ -432,8 +410,8 @@ private fun SearchAndFilterControls(
                 icon = moment.icon(),
                 selected = selectedMoment == moment,
                 iconTint = moment.inactiveTint(),
-                testTag = MisRecetasTestTags.filterChip(moment),
-                iconTestTag = MisRecetasTestTags.filterChipIcon(moment),
+                testTag = MyRecipesTestTags.filterChip(moment),
+                iconTestTag = MyRecipesTestTags.filterChipIcon(moment),
                 onClick = { onMealMomentSelected(moment) },
             )
         }
@@ -525,10 +503,10 @@ private val SkilletIcon: ImageVector = ImageVector.Builder(
 
 @Composable
 private fun MealMoment.inactiveTint() = when (this) {
-    MealMoment.BREAKFAST -> MaterialTheme.colorScheme.tertiary
-    MealMoment.LUNCH -> MaterialTheme.colorScheme.primary
-    MealMoment.DINNER -> MaterialTheme.colorScheme.secondary
-    MealMoment.DESSERT -> MaterialTheme.colorScheme.tertiaryContainer
+    MealMoment.BREAKFAST,
+    MealMoment.LUNCH,
+    MealMoment.DINNER,
+    MealMoment.DESSERT -> MaterialTheme.colorScheme.primary
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -546,7 +524,7 @@ private fun NoResults(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = WarmSpacing.md)
-            .testTag(MisRecetasTestTags.NO_RESULTS),
+            .testTag(MyRecipesTestTags.NO_RESULTS),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SearchAndFilterControls(
@@ -565,7 +543,7 @@ private fun NoResults(
                 modifier = Modifier
                     .fillMaxWidth()
                     .warmShadow(shape = cardShape)
-                    .testTag(MisRecetasTestTags.NO_RESULTS_CARD),
+                    .testTag(MyRecipesTestTags.NO_RESULTS_CARD),
                 shape = cardShape,
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
             ) {
@@ -579,7 +557,7 @@ private fun NoResults(
                     Surface(
                         modifier = Modifier
                             .size(56.dp)
-                            .testTag(MisRecetasTestTags.NO_RESULTS_ICON_CONTAINER),
+                            .testTag(MyRecipesTestTags.NO_RESULTS_ICON_CONTAINER),
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceContainer,
                     ) {
@@ -590,18 +568,18 @@ private fun NoResults(
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .size(28.dp)
-                                    .testTag(MisRecetasTestTags.NO_RESULTS_ICON),
+                                    .testTag(MyRecipesTestTags.NO_RESULTS_ICON),
                             )
                         }
                     }
                     Text(
-                        text = stringResource(R.string.mis_recetas_no_results_title),
+                        text = stringResource(R.string.my_recipes_no_results_title),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                     )
                     Text(
-                        text = stringResource(R.string.mis_recetas_no_results_message),
+                        text = stringResource(R.string.my_recipes_no_results_message),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -611,7 +589,7 @@ private fun NoResults(
                         modifier = Modifier
                             .minimumInteractiveComponentSize()
                             .clickable(role = Role.Button, onClick = onResetFilters)
-                            .testTag(MisRecetasTestTags.RESET_FILTERS),
+                            .testTag(MyRecipesTestTags.RESET_FILTERS),
                         contentAlignment = Alignment.Center,
                     ) {
                         Surface(
@@ -624,7 +602,7 @@ private fun NoResults(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = stringResource(R.string.mis_recetas_reset_filters),
+                                    text = stringResource(R.string.my_recipes_reset_filters),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSecondary,
                                 )
@@ -651,7 +629,7 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit)
         modifier = Modifier
             .fillMaxWidth()
             .warmShadow(shape = CardShape)
-            .testTag(MisRecetasTestTags.RECIPE_CARD),
+            .testTag(MyRecipesTestTags.RECIPE_CARD),
     ) {
         Column {
             val bitmap = rememberBitmap(recipe.photoPath)
@@ -667,7 +645,7 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit)
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .testTag(MisRecetasTestTags.RECIPE_PHOTO),
+                            .testTag(MyRecipesTestTags.RECIPE_PHOTO),
                     )
                     MomentBadge(
                         mealMoment = recipe.mealMoment,
@@ -695,7 +673,7 @@ private fun RecipeCard(recipe: Recipe, onEdit: () -> Unit, onDelete: () -> Unit)
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f)
-                            .testTag(MisRecetasTestTags.RECIPE_TITLE),
+                            .testTag(MyRecipesTestTags.RECIPE_TITLE),
                     )
                     Spacer(modifier = Modifier.width(WarmSpacing.sm))
                     StatusPill(status = recipe.status)
@@ -737,14 +715,14 @@ private fun CardActions(onEdit: () -> Unit, onDelete: () -> Unit) {
 // Material 3 (≥ 48 dp).
 @Composable
 private fun DeleteRecipeButton(onClick: () -> Unit) {
-    val label = stringResource(R.string.mis_recetas_delete_action)
+    val label = stringResource(R.string.my_recipes_delete_action)
     Button(
         onClick = onClick,
         modifier = Modifier
             .minimumInteractiveComponentSize()
             .heightIn(min = 36.dp)
             .semantics { contentDescription = label }
-            .testTag(MisRecetasTestTags.RECIPE_DELETE),
+            .testTag(MyRecipesTestTags.RECIPE_DELETE),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Icon(
@@ -754,7 +732,7 @@ private fun DeleteRecipeButton(onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(WarmSpacing.xs))
         Text(
-            text = stringResource(R.string.mis_recetas_delete_short),
+            text = stringResource(R.string.my_recipes_delete_short),
             style = MaterialTheme.typography.labelMedium,
         )
     }
@@ -768,14 +746,14 @@ private fun DeleteRecipeButton(onClick: () -> Unit) {
 // mínimo interactivo de Material 3 (≥ 48 dp).
 @Composable
 private fun EditRecipeButton(onClick: () -> Unit) {
-    val label = stringResource(R.string.mis_recetas_action_edit)
+    val label = stringResource(R.string.my_recipes_action_edit)
     Button(
         onClick = onClick,
         modifier = Modifier
             .minimumInteractiveComponentSize()
             .heightIn(min = 36.dp)
             .semantics { contentDescription = label }
-            .testTag(MisRecetasTestTags.RECIPE_EDIT),
+            .testTag(MyRecipesTestTags.RECIPE_EDIT),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Icon(
@@ -785,7 +763,7 @@ private fun EditRecipeButton(onClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(WarmSpacing.xs))
         Text(
-            text = stringResource(R.string.mis_recetas_action_edit_short),
+            text = stringResource(R.string.my_recipes_action_edit_short),
             style = MaterialTheme.typography.labelMedium,
         )
     }
@@ -803,22 +781,22 @@ private fun MetadataRow(recipe: Recipe) {
             icon = Icons.Outlined.Schedule,
             iconTint = MaterialTheme.colorScheme.tertiary,
             text = stringResource(
-                R.string.mis_recetas_card_time,
+                R.string.my_recipes_card_time,
                 recipe.prepMinutes + recipe.cookMinutes,
             ),
-            testTag = MisRecetasTestTags.RECIPE_TIME,
+            testTag = MyRecipesTestTags.RECIPE_TIME,
         )
         MetadataItem(
             icon = Icons.Outlined.Equalizer,
             iconTint = MaterialTheme.colorScheme.secondary,
             text = stringResource(recipe.difficulty.labelRes()),
-            testTag = MisRecetasTestTags.RECIPE_DIFFICULTY,
+            testTag = MyRecipesTestTags.RECIPE_DIFFICULTY,
         )
         MetadataItem(
             icon = Icons.Outlined.Group,
             iconTint = MaterialTheme.colorScheme.primary,
-            text = stringResource(R.string.mis_recetas_card_servings, recipe.baseServings),
-            testTag = MisRecetasTestTags.RECIPE_SERVINGS,
+            text = stringResource(R.string.my_recipes_card_servings, recipe.baseServings),
+            testTag = MyRecipesTestTags.RECIPE_SERVINGS,
         )
     }
 }
@@ -856,7 +834,7 @@ private fun MomentBadge(mealMoment: MealMoment, modifier: Modifier = Modifier) {
         shape = PillShape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.95f),
         contentColor = MaterialTheme.colorScheme.primary,
-        modifier = modifier.testTag(MisRecetasTestTags.RECIPE_MOMENT),
+        modifier = modifier.testTag(MyRecipesTestTags.RECIPE_MOMENT),
     ) {
         Text(
             text = stringResource(mealMoment.labelRes()),
@@ -874,7 +852,7 @@ private fun StatusPill(status: RecipeStatus) {
         shape = PillShape,
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
         contentColor = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.testTag(MisRecetasTestTags.RECIPE_STATUS),
+        modifier = Modifier.testTag(MyRecipesTestTags.RECIPE_STATUS),
     ) {
         Text(
             text = stringResource(status.labelRes()),
@@ -893,19 +871,19 @@ private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {
 }
 
 private fun MealMoment.labelRes(): Int = when (this) {
-    MealMoment.BREAKFAST -> R.string.momento_desayuno
-    MealMoment.LUNCH -> R.string.momento_almuerzo
-    MealMoment.DINNER -> R.string.momento_cena
-    MealMoment.DESSERT -> R.string.momento_postre
+    MealMoment.BREAKFAST -> R.string.meal_moment_breakfast
+    MealMoment.LUNCH -> R.string.meal_moment_lunch
+    MealMoment.DINNER -> R.string.meal_moment_dinner
+    MealMoment.DESSERT -> R.string.meal_moment_dessert
 }
 
 private fun Difficulty.labelRes(): Int = when (this) {
-    Difficulty.EASY -> R.string.dificultad_facil
-    Difficulty.MEDIUM -> R.string.dificultad_media
-    Difficulty.HARD -> R.string.dificultad_dificil
+    Difficulty.EASY -> R.string.difficulty_easy
+    Difficulty.MEDIUM -> R.string.difficulty_medium
+    Difficulty.HARD -> R.string.difficulty_hard
 }
 
 private fun RecipeStatus.labelRes(): Int = when (this) {
-    RecipeStatus.DRAFT -> R.string.mis_recetas_status_draft
-    RecipeStatus.PUBLISHED -> R.string.mis_recetas_status_published
+    RecipeStatus.DRAFT -> R.string.my_recipes_status_draft
+    RecipeStatus.PUBLISHED -> R.string.my_recipes_status_published
 }

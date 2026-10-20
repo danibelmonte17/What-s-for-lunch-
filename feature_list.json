@@ -139,9 +139,13 @@
         "Revisión: app/src no contiene clases, métodos, variables, constantes, paquetes ni ficheros con nombres en español fuera de los textos visibles y los comentarios",
         "Harness: lint, unit y e2e pasan tras el renombrado y la app mantiene el comportamiento ya validado"
       ],
-      "evidence": [],
+      "evidence": [
+        "Autoverificación: verify 1 barridos sin identificadores/rutas/claves/ficheros españoles (un positivo falso IngredientEntity revisado); strings.xml claves pares 95/95 y valores byte a byte intactos; data/local/ sin cambios",
+        "Autoverificación en Pixel_10_Pro API 37: init exit 0, lintDebug exit 0, unit 19/19, connectedDebugAndroidTest 61/61 (0 fallos/0 saltados), assembleDebug exit 0; informe docs/validations/revisar-identificadores-en-ingles.md",
+        "Aceptación independiente (feature-validator): accept — verify 1 con barridos propios sin identificadores en español (solo el falso positivo IngredientEntity); strings.xml es/en 95/95 valores byte a byte intactos y claves idénticas entre locales; data/local/ sin cambios; prueba de normalización idéntica en 18/20 ficheros Kotlin (puro renombrado); harness en Pixel_10_Pro API 37: init/lint exit 0, unit 19/19 con rerun forzado, e2e 61/61, assembleDebug exit 0. Hallazgos Low L1 (resuelto en el commit de cierre) y L2 (datos de prueba exceptuados por la spec, registrados en el informe); informe en docs/validations/revisar-identificadores-en-ingles.md"
+      ],
       "notes": "Solo identificadores: strings.xml, comentarios y documentación quedan en español; conservar el esquema de Room",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "eliminar-receta",

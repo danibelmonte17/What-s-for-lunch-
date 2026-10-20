@@ -13,8 +13,8 @@ import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.ui.pantry.PantryViewModel
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaViewModel
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasViewModel
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -39,7 +39,7 @@ val appModule = module {
     single<AiKeyProvider> { UnconfiguredAiKeyProvider() }
     single<ImageGenerator> { OpenAiCompatibleImageGenerator(get(), get()) }
 
-    viewModel { MisRecetasViewModel(get()) }
-    viewModel { CrearRecetaViewModel(get(), get()) }
+    viewModel { MyRecipesViewModel(get()) }
+    viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
 }

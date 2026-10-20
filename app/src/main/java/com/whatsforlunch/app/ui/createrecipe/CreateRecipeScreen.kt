@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.ui.crearreceta
+package com.whatsforlunch.app.ui.createrecipe
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -77,7 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
-import com.whatsforlunch.app.domain.crearreceta.RecipeRequirement
+import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.RecipeStatus
@@ -86,74 +86,74 @@ import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
-object CrearRecetaTestTags {
-    const val SCREEN = "crear_receta_screen"
-    const val TITLE_FIELD = "crear_receta_title"
-    const val STORY_FIELD = "crear_receta_story"
-    const val PREP_MINUTES_FIELD = "crear_receta_prep_minutes"
-    const val COOK_MINUTES_FIELD = "crear_receta_cook_minutes"
-    const val CALORIES_FIELD = "crear_receta_calories"
-    const val SERVINGS_VALUE = "crear_receta_servings_value"
-    const val SERVINGS_DECREASE = "crear_receta_servings_decrease"
-    const val SERVINGS_INCREASE = "crear_receta_servings_increase"
-    const val MOMENT_BREAKFAST = "crear_receta_moment_breakfast"
-    const val MOMENT_LUNCH = "crear_receta_moment_lunch"
-    const val MOMENT_DINNER = "crear_receta_moment_dinner"
-    const val MOMENT_DESSERT = "crear_receta_moment_dessert"
-    const val DIFFICULTY_EASY = "crear_receta_difficulty_easy"
-    const val DIFFICULTY_MEDIUM = "crear_receta_difficulty_medium"
-    const val DIFFICULTY_HARD = "crear_receta_difficulty_hard"
-    const val PHOTO_PREVIEW = "crear_receta_photo_preview"
-    const val PHOTO_GALLERY = "crear_receta_photo_gallery"
-    const val PHOTO_CAMERA = "crear_receta_photo_camera"
-    const val PHOTO_GENERATE = "crear_receta_photo_generate"
-    const val PHOTO_REMOVE = "crear_receta_photo_remove"
-    const val ADD_INGREDIENT = "crear_receta_add_ingredient"
-    const val ADD_STEP = "crear_receta_add_step"
-    const val FAVORITE_TOGGLE = "crear_receta_favorite"
-    const val SAVE_DRAFT = "crear_receta_save_draft"
-    const val PUBLISH = "crear_receta_publish"
-    const val SAVE_CHANGES = "crear_receta_save_changes"
-    const val NOTICE = "crear_receta_notice"
-    const val PUBLISH_ERRORS = "crear_receta_publish_errors"
+object CreateRecipeTestTags {
+    const val SCREEN = "create_recipe_screen"
+    const val TITLE_FIELD = "create_recipe_title"
+    const val STORY_FIELD = "create_recipe_story"
+    const val PREP_MINUTES_FIELD = "create_recipe_prep_minutes"
+    const val COOK_MINUTES_FIELD = "create_recipe_cook_minutes"
+    const val CALORIES_FIELD = "create_recipe_calories"
+    const val SERVINGS_VALUE = "create_recipe_servings_value"
+    const val SERVINGS_DECREASE = "create_recipe_servings_decrease"
+    const val SERVINGS_INCREASE = "create_recipe_servings_increase"
+    const val MOMENT_BREAKFAST = "create_recipe_moment_breakfast"
+    const val MOMENT_LUNCH = "create_recipe_moment_lunch"
+    const val MOMENT_DINNER = "create_recipe_moment_dinner"
+    const val MOMENT_DESSERT = "create_recipe_moment_dessert"
+    const val DIFFICULTY_EASY = "create_recipe_difficulty_easy"
+    const val DIFFICULTY_MEDIUM = "create_recipe_difficulty_medium"
+    const val DIFFICULTY_HARD = "create_recipe_difficulty_hard"
+    const val PHOTO_PREVIEW = "create_recipe_photo_preview"
+    const val PHOTO_GALLERY = "create_recipe_photo_gallery"
+    const val PHOTO_CAMERA = "create_recipe_photo_camera"
+    const val PHOTO_GENERATE = "create_recipe_photo_generate"
+    const val PHOTO_REMOVE = "create_recipe_photo_remove"
+    const val ADD_INGREDIENT = "create_recipe_add_ingredient"
+    const val ADD_STEP = "create_recipe_add_step"
+    const val FAVORITE_TOGGLE = "create_recipe_favorite"
+    const val SAVE_DRAFT = "create_recipe_save_draft"
+    const val PUBLISH = "create_recipe_publish"
+    const val SAVE_CHANGES = "create_recipe_save_changes"
+    const val NOTICE = "create_recipe_notice"
+    const val PUBLISH_ERRORS = "create_recipe_publish_errors"
 
     // Bloques y controles del rediseño fiel al prototipo (RF-1 a RF-8, RF-21).
     // La cabecera ya no dibuja «Guardar» (RF-21): el tag se conserva para que los E2E
     // puedan afirmar su ausencia sin depender del idioma.
-    const val HEADER_SAVE = "crear_receta_header_save"
-    const val STATUS_BADGE = "crear_receta_status_badge"
-    const val COVER = "crear_receta_cover"
-    const val BASIC_SECTION = "crear_receta_basic_section"
-    const val METRICS_GRID = "crear_receta_metrics_grid"
-    const val METRICS_TIME = "crear_receta_metrics_time"
-    const val METRICS_DIFFICULTY = "crear_receta_metrics_difficulty"
-    const val METRICS_SERVINGS = "crear_receta_metrics_servings"
-    const val INGREDIENTS_SECTION = "crear_receta_ingredients_section"
-    const val STEPS_SECTION = "crear_receta_steps_section"
-    const val FAVORITE_SECTION = "crear_receta_favorite_section"
-    const val ACTION_DOCK = "crear_receta_action_dock"
+    const val HEADER_SAVE = "create_recipe_header_save"
+    const val STATUS_BADGE = "create_recipe_status_badge"
+    const val COVER = "create_recipe_cover"
+    const val BASIC_SECTION = "create_recipe_basic_section"
+    const val METRICS_GRID = "create_recipe_metrics_grid"
+    const val METRICS_TIME = "create_recipe_metrics_time"
+    const val METRICS_DIFFICULTY = "create_recipe_metrics_difficulty"
+    const val METRICS_SERVINGS = "create_recipe_metrics_servings"
+    const val INGREDIENTS_SECTION = "create_recipe_ingredients_section"
+    const val STEPS_SECTION = "create_recipe_steps_section"
+    const val FAVORITE_SECTION = "create_recipe_favorite_section"
+    const val ACTION_DOCK = "create_recipe_action_dock"
 
-    fun ingredientName(index: Int) = "crear_receta_ingredient_name_$index"
+    fun ingredientName(index: Int) = "create_recipe_ingredient_name_$index"
 
-    fun ingredientQuantity(index: Int) = "crear_receta_ingredient_quantity_$index"
+    fun ingredientQuantity(index: Int) = "create_recipe_ingredient_quantity_$index"
 
-    fun ingredientUnit(index: Int) = "crear_receta_ingredient_unit_$index"
+    fun ingredientUnit(index: Int) = "create_recipe_ingredient_unit_$index"
 
-    fun ingredientOptional(index: Int) = "crear_receta_ingredient_optional_$index"
+    fun ingredientOptional(index: Int) = "create_recipe_ingredient_optional_$index"
 
-    fun removeIngredient(index: Int) = "crear_receta_remove_ingredient_$index"
+    fun removeIngredient(index: Int) = "create_recipe_remove_ingredient_$index"
 
-    fun stepText(index: Int) = "crear_receta_step_text_$index"
+    fun stepText(index: Int) = "create_recipe_step_text_$index"
 
-    fun stepTimer(index: Int) = "crear_receta_step_timer_$index"
+    fun stepTimer(index: Int) = "create_recipe_step_timer_$index"
 
-    fun removeStep(index: Int) = "crear_receta_remove_step_$index"
+    fun removeStep(index: Int) = "create_recipe_remove_step_$index"
 
-    fun stepNumber(index: Int) = "crear_receta_step_number_$index"
+    fun stepNumber(index: Int) = "create_recipe_step_number_$index"
 }
 
 // Acciones del formulario, agrupadas para no saturar la firma de la pantalla.
-class CrearRecetaActions(
+class CreateRecipeActions(
     val onBack: () -> Unit = {},
     val onTitleChange: (String) -> Unit = {},
     val onStoryChange: (String) -> Unit = {},
@@ -192,13 +192,13 @@ private val PillShape: Shape = RoundedCornerShape(50)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CrearRecetaScreen(
-    uiState: CrearRecetaUiState,
-    actions: CrearRecetaActions,
+fun CreateRecipeScreen(
+    uiState: CreateRecipeUiState,
+    actions: CreateRecipeActions,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
-        modifier = modifier.testTag(CrearRecetaTestTags.SCREEN),
+        modifier = modifier.testTag(CreateRecipeTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = { FormHeader(uiState = uiState, actions = actions) },
         bottomBar = { ActionDock(uiState = uiState, actions = actions) },
@@ -231,7 +231,7 @@ fun CrearRecetaScreen(
 // guardado son las acciones del dock (decisión Q-editar-receta-5, 2026-10-19).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+private fun FormHeader(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
     val editing = uiState.recipeId != null
     TopAppBar(
         navigationIcon = {
@@ -246,12 +246,12 @@ private fun FormHeader(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
             Column {
                 Text(
                     text = stringResource(
-                        if (editing) R.string.crear_receta_edit_title else R.string.crear_receta_title,
+                        if (editing) R.string.create_recipe_edit_title else R.string.create_recipe_title,
                     ),
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
-                    text = stringResource(R.string.crear_receta_header_subtitle),
+                    text = stringResource(R.string.create_recipe_header_subtitle),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -281,7 +281,7 @@ private fun StatusBadge(status: RecipeStatus, modifier: Modifier = Modifier) {
         shape = PillShape,
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
         contentColor = MaterialTheme.colorScheme.primary,
-        modifier = modifier.testTag(CrearRecetaTestTags.STATUS_BADGE),
+        modifier = modifier.testTag(CreateRecipeTestTags.STATUS_BADGE),
     ) {
         Text(
             text = stringResource(status.labelRes()),
@@ -293,14 +293,14 @@ private fun StatusBadge(status: RecipeStatus, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun NoticeBanner(notice: CrearRecetaNotice, onDismiss: () -> Unit) {
+private fun NoticeBanner(notice: CreateRecipeNotice, onDismiss: () -> Unit) {
     Surface(
         shape = SectionShape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         modifier = Modifier
             .fillMaxWidth()
             .warmShadow(shape = SectionShape)
-            .testTag(CrearRecetaTestTags.NOTICE),
+            .testTag(CreateRecipeTestTags.NOTICE),
     ) {
         Row(
             modifier = Modifier.padding(WarmSpacing.md),
@@ -322,9 +322,9 @@ private fun NoticeBanner(notice: CrearRecetaNotice, onDismiss: () -> Unit) {
 // RF-15: junto al dock se enumeran los requisitos incumplidos que impiden Publicar.
 @Composable
 private fun PublishErrors(errors: Set<RecipeRequirement>) {
-    Column(modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.PUBLISH_ERRORS)) {
+    Column(modifier = Modifier.fillMaxWidth().testTag(CreateRecipeTestTags.PUBLISH_ERRORS)) {
         Text(
-            text = stringResource(R.string.crear_receta_publish_blocked),
+            text = stringResource(R.string.create_recipe_publish_blocked),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.error,
         )
@@ -340,9 +340,9 @@ private fun PublishErrors(errors: Set<RecipeRequirement>) {
 
 // RF-2: portada de foto a ancho completo con los controles de foto al pie.
 @Composable
-private fun PhotoCover(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+private fun PhotoCover(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
     val bitmap = rememberBitmap(uiState.photoPath)
-    val coverLabel = stringResource(R.string.crear_receta_photo_section)
+    val coverLabel = stringResource(R.string.create_recipe_photo_section)
     Surface(
         shape = SectionShape,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -350,7 +350,7 @@ private fun PhotoCover(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
             .fillMaxWidth()
             .warmShadow(shape = SectionShape)
             .semantics { contentDescription = coverLabel }
-            .testTag(CrearRecetaTestTags.COVER),
+            .testTag(CreateRecipeTestTags.COVER),
     ) {
         Box(
             modifier = Modifier
@@ -360,12 +360,12 @@ private fun PhotoCover(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap,
-                    contentDescription = stringResource(R.string.crear_receta_photo_preview),
+                    contentDescription = stringResource(R.string.create_recipe_photo_preview),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(SectionShape)
-                        .testTag(CrearRecetaTestTags.PHOTO_PREVIEW),
+                        .testTag(CreateRecipeTestTags.PHOTO_PREVIEW),
                 )
                 TextButton(
                     onClick = actions.onRemovePhoto,
@@ -377,17 +377,17 @@ private fun PhotoCover(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                         .align(Alignment.TopEnd)
                         .padding(WarmSpacing.sm)
                         .heightIn(min = 48.dp)
-                        .testTag(CrearRecetaTestTags.PHOTO_REMOVE),
+                        .testTag(CreateRecipeTestTags.PHOTO_REMOVE),
                 ) {
-                    Text(text = stringResource(R.string.crear_receta_photo_remove))
+                    Text(text = stringResource(R.string.create_recipe_photo_remove))
                 }
             } else {
                 Text(
                     text = stringResource(
                         if (uiState.isPhotoLoading) {
-                            R.string.crear_receta_photo_loading
+                            R.string.create_recipe_photo_loading
                         } else {
-                            R.string.crear_receta_photo_none
+                            R.string.create_recipe_photo_none
                         },
                     ),
                     style = MaterialTheme.typography.bodyMedium,
@@ -403,24 +403,24 @@ private fun PhotoCover(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                 horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
             ) {
                 PhotoControlButton(
-                    labelRes = R.string.crear_receta_photo_gallery,
+                    labelRes = R.string.create_recipe_photo_gallery,
                     icon = Icons.Outlined.PhotoLibrary,
                     onClick = actions.onPickPhotoFromGallery,
-                    testTag = CrearRecetaTestTags.PHOTO_GALLERY,
+                    testTag = CreateRecipeTestTags.PHOTO_GALLERY,
                     modifier = Modifier.weight(1f),
                 )
                 PhotoControlButton(
-                    labelRes = R.string.crear_receta_photo_camera,
+                    labelRes = R.string.create_recipe_photo_camera,
                     icon = Icons.Outlined.PhotoCamera,
                     onClick = actions.onTakePhoto,
-                    testTag = CrearRecetaTestTags.PHOTO_CAMERA,
+                    testTag = CreateRecipeTestTags.PHOTO_CAMERA,
                     modifier = Modifier.weight(1f),
                 )
                 PhotoControlButton(
-                    labelRes = R.string.crear_receta_photo_generate,
+                    labelRes = R.string.create_recipe_photo_generate,
                     icon = Icons.Outlined.AutoAwesome,
                     onClick = actions.onGeneratePhoto,
-                    testTag = CrearRecetaTestTags.PHOTO_GENERATE,
+                    testTag = CreateRecipeTestTags.PHOTO_GENERATE,
                     modifier = Modifier.weight(1.3f),
                     primary = true,
                 )
@@ -475,16 +475,16 @@ private fun RowScope.PhotoControlButton(
 
 // RF-4 e información básica: título, historia y fila de chips de momento culinario.
 @Composable
-private fun BasicInfoSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    SectionCard(testTag = CrearRecetaTestTags.BASIC_SECTION) {
+private fun BasicInfoSection(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
+    SectionCard(testTag = CreateRecipeTestTags.BASIC_SECTION) {
         Text(
-            text = stringResource(R.string.crear_receta_basic_section),
+            text = stringResource(R.string.create_recipe_basic_section),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.crear_receta_title_label),
+                text = stringResource(R.string.create_recipe_title_label),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -495,7 +495,7 @@ private fun BasicInfoSection(uiState: CrearRecetaUiState, actions: CrearRecetaAc
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ) {
                 Text(
-                    text = stringResource(R.string.crear_receta_required_badge),
+                    text = stringResource(R.string.create_recipe_required_badge),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(
                         horizontal = WarmSpacing.sm,
@@ -507,44 +507,44 @@ private fun BasicInfoSection(uiState: CrearRecetaUiState, actions: CrearRecetaAc
         OutlinedTextField(
             value = uiState.title,
             onValueChange = actions.onTitleChange,
-            placeholder = { Text(text = stringResource(R.string.crear_receta_title_placeholder)) },
+            placeholder = { Text(text = stringResource(R.string.create_recipe_title_placeholder)) },
             isError = uiState.titleError,
             supportingText = if (uiState.titleError) {
-                { Text(text = stringResource(R.string.crear_receta_title_required)) }
+                { Text(text = stringResource(R.string.create_recipe_title_required)) }
             } else {
                 null
             },
             singleLine = true,
             shape = FieldShape,
             colors = warmFieldColors(),
-            modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.TITLE_FIELD),
+            modifier = Modifier.fillMaxWidth().testTag(CreateRecipeTestTags.TITLE_FIELD),
         )
         Text(
-            text = stringResource(R.string.crear_receta_story_label),
+            text = stringResource(R.string.create_recipe_story_label),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
         OutlinedTextField(
             value = uiState.story,
             onValueChange = actions.onStoryChange,
-            placeholder = { Text(text = stringResource(R.string.crear_receta_story_placeholder)) },
+            placeholder = { Text(text = stringResource(R.string.create_recipe_story_placeholder)) },
             minLines = 2,
             shape = FieldShape,
             colors = warmFieldColors(),
-            modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.STORY_FIELD),
+            modifier = Modifier.fillMaxWidth().testTag(CreateRecipeTestTags.STORY_FIELD),
         )
         OutlinedTextField(
             value = uiState.caloriesPerServing,
             onValueChange = actions.onCaloriesChange,
-            placeholder = { Text(text = stringResource(R.string.crear_receta_calories_label)) },
+            placeholder = { Text(text = stringResource(R.string.create_recipe_calories_label)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             shape = FieldShape,
             colors = warmFieldColors(),
-            modifier = Modifier.fillMaxWidth().testTag(CrearRecetaTestTags.CALORIES_FIELD),
+            modifier = Modifier.fillMaxWidth().testTag(CreateRecipeTestTags.CALORIES_FIELD),
         )
         Text(
-            text = stringResource(R.string.crear_receta_moment_label),
+            text = stringResource(R.string.create_recipe_moment_label),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -568,17 +568,17 @@ private fun BasicInfoSection(uiState: CrearRecetaUiState, actions: CrearRecetaAc
 
 // RF-5: rejilla de tres bloques (tiempo, dificultad y raciones) con icono y control.
 @Composable
-private fun MetricsGrid(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+private fun MetricsGrid(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
     Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
         Text(
-            text = stringResource(R.string.crear_receta_metrics_section),
+            text = stringResource(R.string.create_recipe_metrics_section),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(CrearRecetaTestTags.METRICS_GRID),
+                .testTag(CreateRecipeTestTags.METRICS_GRID),
             horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
             TimeMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
@@ -590,19 +590,19 @@ private fun MetricsGrid(uiState: CrearRecetaUiState, actions: CrearRecetaActions
 
 @Composable
 private fun TimeMetricBlock(
-    uiState: CrearRecetaUiState,
-    actions: CrearRecetaActions,
+    uiState: CreateRecipeUiState,
+    actions: CreateRecipeActions,
     modifier: Modifier = Modifier,
 ) {
     MetricBlock(
-        label = R.string.crear_receta_metrics_time,
+        label = R.string.create_recipe_metrics_time,
         icon = Icons.Outlined.Timer,
         iconTint = MaterialTheme.colorScheme.primary,
-        testTag = CrearRecetaTestTags.METRICS_TIME,
+        testTag = CreateRecipeTestTags.METRICS_TIME,
         modifier = modifier,
     ) {
         Text(
-            text = stringResource(R.string.crear_receta_prep_short_label),
+            text = stringResource(R.string.create_recipe_prep_short_label),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -617,10 +617,10 @@ private fun TimeMetricBlock(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .testTag(CrearRecetaTestTags.PREP_MINUTES_FIELD),
+                .testTag(CreateRecipeTestTags.PREP_MINUTES_FIELD),
         )
         Text(
-            text = stringResource(R.string.crear_receta_cook_short_label),
+            text = stringResource(R.string.create_recipe_cook_short_label),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -635,10 +635,10 @@ private fun TimeMetricBlock(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .testTag(CrearRecetaTestTags.COOK_MINUTES_FIELD),
+                .testTag(CreateRecipeTestTags.COOK_MINUTES_FIELD),
         )
         Text(
-            text = stringResource(R.string.crear_receta_metrics_time_unit),
+            text = stringResource(R.string.create_recipe_metrics_time_unit),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -647,15 +647,15 @@ private fun TimeMetricBlock(
 
 @Composable
 private fun DifficultyMetricBlock(
-    uiState: CrearRecetaUiState,
-    actions: CrearRecetaActions,
+    uiState: CreateRecipeUiState,
+    actions: CreateRecipeActions,
     modifier: Modifier = Modifier,
 ) {
     MetricBlock(
-        label = R.string.crear_receta_metrics_difficulty,
+        label = R.string.create_recipe_metrics_difficulty,
         icon = Icons.Outlined.BarChart,
         iconTint = MaterialTheme.colorScheme.secondary,
-        testTag = CrearRecetaTestTags.METRICS_DIFFICULTY,
+        testTag = CreateRecipeTestTags.METRICS_DIFFICULTY,
         modifier = modifier,
     ) {
         Difficulty.entries.forEach { difficulty ->
@@ -671,15 +671,15 @@ private fun DifficultyMetricBlock(
 
 @Composable
 private fun ServingsMetricBlock(
-    uiState: CrearRecetaUiState,
-    actions: CrearRecetaActions,
+    uiState: CreateRecipeUiState,
+    actions: CreateRecipeActions,
     modifier: Modifier = Modifier,
 ) {
     MetricBlock(
-        label = R.string.crear_receta_metrics_servings,
+        label = R.string.create_recipe_metrics_servings,
         icon = Icons.Outlined.Groups,
         iconTint = MaterialTheme.colorScheme.tertiary,
-        testTag = CrearRecetaTestTags.METRICS_SERVINGS,
+        testTag = CreateRecipeTestTags.METRICS_SERVINGS,
         modifier = modifier,
     ) {
         Row(
@@ -691,10 +691,10 @@ private fun ServingsMetricBlock(
                 text = uiState.baseServings.toString(),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.testTag(CrearRecetaTestTags.SERVINGS_VALUE),
+                modifier = Modifier.testTag(CreateRecipeTestTags.SERVINGS_VALUE),
             )
             Text(
-                text = stringResource(R.string.crear_receta_metrics_servings_unit),
+                text = stringResource(R.string.create_recipe_metrics_servings_unit),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -704,13 +704,13 @@ private fun ServingsMetricBlock(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             StepperButton(
-                symbol = stringResource(R.string.crear_receta_servings_decrease),
-                testTag = CrearRecetaTestTags.SERVINGS_DECREASE,
+                symbol = stringResource(R.string.create_recipe_servings_decrease),
+                testTag = CreateRecipeTestTags.SERVINGS_DECREASE,
                 onClick = { actions.onServingsChange(uiState.baseServings - 1) },
             )
             StepperButton(
-                symbol = stringResource(R.string.crear_receta_servings_increase),
-                testTag = CrearRecetaTestTags.SERVINGS_INCREASE,
+                symbol = stringResource(R.string.create_recipe_servings_increase),
+                testTag = CreateRecipeTestTags.SERVINGS_INCREASE,
                 onClick = { actions.onServingsChange(uiState.baseServings + 1) },
             )
         }
@@ -811,15 +811,15 @@ private fun SelectionChip(
 // RF-6: cada fila de Ingrediente en línea (asa decorativa sin reordenado,
 // Q-afinar-fidelidad-visual-del-formulario-1).
 @Composable
-private fun IngredientsSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    SectionCard(testTag = CrearRecetaTestTags.INGREDIENTS_SECTION) {
+private fun IngredientsSection(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
+    SectionCard(testTag = CreateRecipeTestTags.INGREDIENTS_SECTION) {
         SectionHeader(
             icon = Icons.Outlined.ShoppingBasket,
             iconTint = MaterialTheme.colorScheme.secondary,
-            title = R.string.crear_receta_ingredients_title,
+            title = R.string.create_recipe_ingredients_title,
             trailing = {
                 CountBadge(
-                    text = stringResource(R.string.crear_receta_ingredients_count, uiState.ingredients.size),
+                    text = stringResource(R.string.create_recipe_ingredients_count, uiState.ingredients.size),
                 )
             },
         )
@@ -828,16 +828,16 @@ private fun IngredientsSection(uiState: CrearRecetaUiState, actions: CrearReceta
         }
         AddRowButton(
             onClick = actions.onAddIngredient,
-            label = R.string.crear_receta_add_ingredient,
-            testTag = CrearRecetaTestTags.ADD_INGREDIENT,
+            label = R.string.create_recipe_add_ingredient,
+            testTag = CreateRecipeTestTags.ADD_INGREDIENT,
         )
     }
 }
 
 @Composable
-private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: CrearRecetaActions) {
-    val optionalLabel = stringResource(R.string.crear_receta_ingredient_optional)
-    val quantityLabel = stringResource(R.string.crear_receta_ingredient_quantity)
+private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: CreateRecipeActions) {
+    val optionalLabel = stringResource(R.string.create_recipe_ingredient_optional)
+    val quantityLabel = stringResource(R.string.create_recipe_ingredient_quantity)
     Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -853,14 +853,14 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
             OutlinedTextField(
                 value = row.name,
                 onValueChange = { actions.onIngredientNameChange(row.key, it) },
-                placeholder = { Text(text = stringResource(R.string.crear_receta_ingredient_name)) },
+                placeholder = { Text(text = stringResource(R.string.create_recipe_ingredient_name)) },
                 singleLine = true,
                 shape = FieldShape,
                 colors = warmFieldColors(),
                 modifier = Modifier
                     .weight(1.5f)
                     .heightIn(min = 48.dp)
-                    .testTag(CrearRecetaTestTags.ingredientName(index)),
+                    .testTag(CreateRecipeTestTags.ingredientName(index)),
             )
             OutlinedTextField(
                 value = row.quantity,
@@ -874,19 +874,19 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
                     .weight(0.7f)
                     .heightIn(min = 48.dp)
                     .semantics { contentDescription = quantityLabel }
-                    .testTag(CrearRecetaTestTags.ingredientQuantity(index)),
+                    .testTag(CreateRecipeTestTags.ingredientQuantity(index)),
             )
             OutlinedTextField(
                 value = row.unit,
                 onValueChange = { actions.onIngredientUnitChange(row.key, it) },
-                placeholder = { Text(text = stringResource(R.string.crear_receta_ingredient_unit)) },
+                placeholder = { Text(text = stringResource(R.string.create_recipe_ingredient_unit)) },
                 singleLine = true,
                 shape = FieldShape,
                 colors = warmFieldColors(),
                 modifier = Modifier
                     .weight(0.8f)
                     .heightIn(min = 48.dp)
-                    .testTag(CrearRecetaTestTags.ingredientUnit(index)),
+                    .testTag(CreateRecipeTestTags.ingredientUnit(index)),
             )
             Checkbox(
                 checked = row.optional,
@@ -894,22 +894,22 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
                 colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier
                     .semantics { contentDescription = optionalLabel }
-                    .testTag(CrearRecetaTestTags.ingredientOptional(index)),
+                    .testTag(CreateRecipeTestTags.ingredientOptional(index)),
             )
             IconButton(
                 onClick = { actions.onRemoveIngredient(row.key) },
-                modifier = Modifier.testTag(CrearRecetaTestTags.removeIngredient(index)),
+                modifier = Modifier.testTag(CreateRecipeTestTags.removeIngredient(index)),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.crear_receta_remove),
+                    contentDescription = stringResource(R.string.create_recipe_remove),
                     tint = MaterialTheme.colorScheme.outline,
                 )
             }
         }
         if (!row.isValid) {
             Text(
-                text = stringResource(R.string.crear_receta_ingredient_invalid),
+                text = stringResource(R.string.create_recipe_ingredient_invalid),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -919,15 +919,15 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
 
 // RF-7: cada Paso con su número en un círculo destacado, su texto y su temporizador.
 @Composable
-private fun StepsSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    SectionCard(testTag = CrearRecetaTestTags.STEPS_SECTION) {
+private fun StepsSection(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
+    SectionCard(testTag = CreateRecipeTestTags.STEPS_SECTION) {
         SectionHeader(
             icon = Icons.Outlined.FormatListNumbered,
             iconTint = MaterialTheme.colorScheme.primary,
-            title = R.string.crear_receta_steps_title,
+            title = R.string.create_recipe_steps_title,
             trailing = {
                 CountBadge(
-                    text = stringResource(R.string.crear_receta_steps_count, uiState.steps.size),
+                    text = stringResource(R.string.create_recipe_steps_count, uiState.steps.size),
                 )
             },
         )
@@ -936,15 +936,15 @@ private fun StepsSection(uiState: CrearRecetaUiState, actions: CrearRecetaAction
         }
         AddRowButton(
             onClick = actions.onAddStep,
-            label = R.string.crear_receta_add_step,
-            testTag = CrearRecetaTestTags.ADD_STEP,
+            label = R.string.create_recipe_add_step,
+            testTag = CreateRecipeTestTags.ADD_STEP,
         )
     }
 }
 
 @Composable
-private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActions) {
-    val stepLabel = stringResource(R.string.crear_receta_step_number, index + 1)
+private fun StepRow(row: StepFieldUiState, index: Int, actions: CreateRecipeActions) {
+    val stepLabel = stringResource(R.string.create_recipe_step_number, index + 1)
     Surface(
         shape = FieldShape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -964,7 +964,7 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActio
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
                         .semantics { contentDescription = stepLabel }
-                        .testTag(CrearRecetaTestTags.stepNumber(index)),
+                        .testTag(CreateRecipeTestTags.stepNumber(index)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -976,13 +976,13 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActio
                 OutlinedTextField(
                     value = row.text,
                     onValueChange = { actions.onStepTextChange(row.key, it) },
-                    placeholder = { Text(text = stringResource(R.string.crear_receta_step_text)) },
+                    placeholder = { Text(text = stringResource(R.string.create_recipe_step_text)) },
                     minLines = 2,
                     shape = FieldShape,
                     colors = warmFieldColors(),
                     modifier = Modifier
                         .weight(1f)
-                        .testTag(CrearRecetaTestTags.stepText(index)),
+                        .testTag(CreateRecipeTestTags.stepText(index)),
                 )
             }
             Row(
@@ -992,7 +992,7 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActio
                 OutlinedTextField(
                     value = row.timerMinutes,
                     onValueChange = { actions.onStepTimerChange(row.key, it) },
-                    placeholder = { Text(text = stringResource(R.string.crear_receta_step_timer)) },
+                    placeholder = { Text(text = stringResource(R.string.create_recipe_step_timer)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = FieldShape,
@@ -1000,22 +1000,22 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActio
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 48.dp)
-                        .testTag(CrearRecetaTestTags.stepTimer(index)),
+                        .testTag(CreateRecipeTestTags.stepTimer(index)),
                 )
                 IconButton(
                     onClick = { actions.onRemoveStep(row.key) },
-                    modifier = Modifier.testTag(CrearRecetaTestTags.removeStep(index)),
+                    modifier = Modifier.testTag(CreateRecipeTestTags.removeStep(index)),
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
-                        contentDescription = stringResource(R.string.crear_receta_remove),
+                        contentDescription = stringResource(R.string.create_recipe_remove),
                         tint = MaterialTheme.colorScheme.outline,
                     )
                 }
             }
             if (!row.isValid) {
                 Text(
-                    text = stringResource(R.string.crear_receta_step_invalid),
+                    text = stringResource(R.string.create_recipe_step_invalid),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -1026,8 +1026,8 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CrearRecetaActio
 
 // Bloque de favorito con su control de marcado (RF-1; control según el prototipo).
 @Composable
-private fun FavoriteSection(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
-    SectionCard(testTag = CrearRecetaTestTags.FAVORITE_SECTION) {
+private fun FavoriteSection(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
+    SectionCard(testTag = CreateRecipeTestTags.FAVORITE_SECTION) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.Favorite,
@@ -1038,12 +1038,12 @@ private fun FavoriteSection(uiState: CrearRecetaUiState, actions: CrearRecetaAct
             Spacer(modifier = Modifier.width(WarmSpacing.sm))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.crear_receta_favorite),
+                    text = stringResource(R.string.create_recipe_favorite),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = stringResource(R.string.crear_receta_favorite_subtitle),
+                    text = stringResource(R.string.create_recipe_favorite_subtitle),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1052,7 +1052,7 @@ private fun FavoriteSection(uiState: CrearRecetaUiState, actions: CrearRecetaAct
                 checked = uiState.favorite,
                 onCheckedChange = { actions.onFavoriteToggle() },
                 colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
-                modifier = Modifier.testTag(CrearRecetaTestTags.FAVORITE_TOGGLE),
+                modifier = Modifier.testTag(CreateRecipeTestTags.FAVORITE_TOGGLE),
             )
         }
     }
@@ -1064,14 +1064,14 @@ private fun FavoriteSection(uiState: CrearRecetaUiState, actions: CrearRecetaAct
 // RF-5 a RF-8: al editar una Receta Publicada, el dock muestra una única acción
 // primaria «Guardar cambios» que mantiene el estado Publicada.
 @Composable
-private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions) {
+private fun ActionDock(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
     val published = uiState.editingStatus == RecipeStatus.PUBLISHED
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         modifier = Modifier
             .fillMaxWidth()
             .warmShadow(shape = RoundedCornerShape(0.dp))
-            .testTag(CrearRecetaTestTags.ACTION_DOCK),
+            .testTag(CreateRecipeTestTags.ACTION_DOCK),
     ) {
         Column(
             modifier = Modifier.padding(WarmSpacing.md),
@@ -1094,7 +1094,7 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 52.dp)
-                        .testTag(CrearRecetaTestTags.SAVE_CHANGES),
+                        .testTag(CreateRecipeTestTags.SAVE_CHANGES),
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Save,
@@ -1103,7 +1103,7 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                     )
                     Spacer(modifier = Modifier.width(WarmSpacing.xs))
                     Text(
-                        text = stringResource(R.string.crear_receta_save_changes),
+                        text = stringResource(R.string.create_recipe_save_changes),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
@@ -1122,7 +1122,7 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = 52.dp)
-                            .testTag(CrearRecetaTestTags.SAVE_DRAFT),
+                            .testTag(CreateRecipeTestTags.SAVE_DRAFT),
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Drafts,
@@ -1130,7 +1130,7 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(WarmSpacing.xs))
-                        Text(text = stringResource(R.string.crear_receta_save_draft))
+                        Text(text = stringResource(R.string.create_recipe_save_draft))
                     }
                     Button(
                         onClick = actions.onPublish,
@@ -1145,7 +1145,7 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                         modifier = Modifier
                             .weight(1.5f)
                             .heightIn(min = 52.dp)
-                            .testTag(CrearRecetaTestTags.PUBLISH),
+                            .testTag(CreateRecipeTestTags.PUBLISH),
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.RestaurantMenu,
@@ -1154,7 +1154,7 @@ private fun ActionDock(uiState: CrearRecetaUiState, actions: CrearRecetaActions)
                         )
                         Spacer(modifier = Modifier.width(WarmSpacing.xs))
                         Text(
-                            text = stringResource(R.string.crear_receta_publish),
+                            text = stringResource(R.string.create_recipe_publish),
                             style = MaterialTheme.typography.labelLarge,
                         )
                     }
@@ -1268,48 +1268,48 @@ private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {
 }
 
 private fun MealMoment.labelRes(): Int = when (this) {
-    MealMoment.BREAKFAST -> R.string.momento_desayuno
-    MealMoment.LUNCH -> R.string.momento_almuerzo
-    MealMoment.DINNER -> R.string.momento_cena
-    MealMoment.DESSERT -> R.string.momento_postre
+    MealMoment.BREAKFAST -> R.string.meal_moment_breakfast
+    MealMoment.LUNCH -> R.string.meal_moment_lunch
+    MealMoment.DINNER -> R.string.meal_moment_dinner
+    MealMoment.DESSERT -> R.string.meal_moment_dessert
 }
 
 private fun MealMoment.testTag(): String = when (this) {
-    MealMoment.BREAKFAST -> CrearRecetaTestTags.MOMENT_BREAKFAST
-    MealMoment.LUNCH -> CrearRecetaTestTags.MOMENT_LUNCH
-    MealMoment.DINNER -> CrearRecetaTestTags.MOMENT_DINNER
-    MealMoment.DESSERT -> CrearRecetaTestTags.MOMENT_DESSERT
+    MealMoment.BREAKFAST -> CreateRecipeTestTags.MOMENT_BREAKFAST
+    MealMoment.LUNCH -> CreateRecipeTestTags.MOMENT_LUNCH
+    MealMoment.DINNER -> CreateRecipeTestTags.MOMENT_DINNER
+    MealMoment.DESSERT -> CreateRecipeTestTags.MOMENT_DESSERT
 }
 
 private fun Difficulty.labelRes(): Int = when (this) {
-    Difficulty.EASY -> R.string.dificultad_facil
-    Difficulty.MEDIUM -> R.string.dificultad_media
-    Difficulty.HARD -> R.string.dificultad_dificil
+    Difficulty.EASY -> R.string.difficulty_easy
+    Difficulty.MEDIUM -> R.string.difficulty_medium
+    Difficulty.HARD -> R.string.difficulty_hard
 }
 
 private fun Difficulty.testTag(): String = when (this) {
-    Difficulty.EASY -> CrearRecetaTestTags.DIFFICULTY_EASY
-    Difficulty.MEDIUM -> CrearRecetaTestTags.DIFFICULTY_MEDIUM
-    Difficulty.HARD -> CrearRecetaTestTags.DIFFICULTY_HARD
+    Difficulty.EASY -> CreateRecipeTestTags.DIFFICULTY_EASY
+    Difficulty.MEDIUM -> CreateRecipeTestTags.DIFFICULTY_MEDIUM
+    Difficulty.HARD -> CreateRecipeTestTags.DIFFICULTY_HARD
 }
 
-private fun CrearRecetaNotice.messageRes(): Int = when (this) {
-    CrearRecetaNotice.AI_KEY_MISSING -> R.string.crear_receta_notice_ai_key_missing
-    CrearRecetaNotice.AI_GENERATION_FAILED -> R.string.crear_receta_notice_ai_failed
-    CrearRecetaNotice.CAMERA_PERMISSION_DENIED -> R.string.crear_receta_notice_camera_denied
+private fun CreateRecipeNotice.messageRes(): Int = when (this) {
+    CreateRecipeNotice.AI_KEY_MISSING -> R.string.create_recipe_notice_ai_key_missing
+    CreateRecipeNotice.AI_GENERATION_FAILED -> R.string.create_recipe_notice_ai_failed
+    CreateRecipeNotice.CAMERA_PERMISSION_DENIED -> R.string.create_recipe_notice_camera_denied
 }
 
 private fun RecipeRequirement.messageRes(): Int = when (this) {
-    RecipeRequirement.TITLE -> R.string.crear_receta_publish_error_title
-    RecipeRequirement.PHOTO -> R.string.crear_receta_publish_error_photo
-    RecipeRequirement.INGREDIENT -> R.string.crear_receta_publish_error_ingredient
-    RecipeRequirement.STEP -> R.string.crear_receta_publish_error_step
-    RecipeRequirement.INVALID_INGREDIENT -> R.string.crear_receta_publish_error_invalid_ingredient
-    RecipeRequirement.INVALID_STEP -> R.string.crear_receta_publish_error_invalid_step
+    RecipeRequirement.TITLE -> R.string.create_recipe_publish_error_title
+    RecipeRequirement.PHOTO -> R.string.create_recipe_publish_error_photo
+    RecipeRequirement.INGREDIENT -> R.string.create_recipe_publish_error_ingredient
+    RecipeRequirement.STEP -> R.string.create_recipe_publish_error_step
+    RecipeRequirement.INVALID_INGREDIENT -> R.string.create_recipe_publish_error_invalid_ingredient
+    RecipeRequirement.INVALID_STEP -> R.string.create_recipe_publish_error_invalid_step
 }
 
 // RF-3: el distintivo de la cabecera en modo edición nombra el estado de la Receta.
 private fun RecipeStatus.labelRes(): Int = when (this) {
-    RecipeStatus.DRAFT -> R.string.mis_recetas_status_draft
-    RecipeStatus.PUBLISHED -> R.string.mis_recetas_status_published
+    RecipeStatus.DRAFT -> R.string.my_recipes_status_draft
+    RecipeStatus.PUBLISHED -> R.string.my_recipes_status_published
 }

@@ -104,9 +104,9 @@ class SystemPhotoAcquirer(
     }
 
     private companion object {
-        const val GALLERY_KEY = "crear_receta_pick_gallery"
-        const val PERMISSION_KEY = "crear_receta_request_camera"
-        const val CAMERA_KEY = "crear_receta_take_photo"
+        const val GALLERY_KEY = "create_recipe_pick_gallery"
+        const val PERMISSION_KEY = "create_recipe_request_camera"
+        const val CAMERA_KEY = "create_recipe_take_photo"
         const val CAPTURE_DIR = "captures"
     }
 }

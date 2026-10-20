@@ -1,10 +1,10 @@
-package com.whatsforlunch.app.ui.misrecetas
+package com.whatsforlunch.app.ui.myrecipes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.whatsforlunch.app.domain.misrecetas.MisRecetasState
-import com.whatsforlunch.app.domain.misrecetas.filterRecipes
-import com.whatsforlunch.app.domain.misrecetas.misRecetasStateOf
+import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
+import com.whatsforlunch.app.domain.myrecipes.filterRecipes
+import com.whatsforlunch.app.domain.myrecipes.myRecipesStateOf
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.repository.RecipeRepository
@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 
 // Estado visible de Mis Recetas: el estado de la colección, las Recetas guardadas,
 // la búsqueda/filtro activos y el aviso de error de borrado.
-data class MisRecetasUiState(
-    val state: MisRecetasState = MisRecetasState.Empty,
+data class MyRecipesUiState(
+    val state: MyRecipesState = MyRecipesState.Empty,
     val recipes: List<Recipe> = emptyList(),
     val searchQuery: String = "",
     val mealMomentFilter: MealMoment? = null,
@@ -32,7 +32,7 @@ data class MisRecetasUiState(
 
 // MVVM + StateFlow (Q-arrancar-app-en-mis-recetas-1): reglas fuera de la UI.
 @OptIn(FlowPreview::class)
-class MisRecetasViewModel(private val repository: RecipeRepository) : ViewModel() {
+class MyRecipesViewModel(private val repository: RecipeRepository) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
     private val appliedSearchQuery = MutableStateFlow("")
@@ -47,7 +47,7 @@ class MisRecetasViewModel(private val repository: RecipeRepository) : ViewModel(
         }
     }
 
-    val uiState: StateFlow<MisRecetasUiState> = combine(
+    val uiState: StateFlow<MyRecipesUiState> = combine(
         repository.observeRecipes(),
         searchQuery,
         appliedSearchQuery,
@@ -55,8 +55,8 @@ class MisRecetasViewModel(private val repository: RecipeRepository) : ViewModel(
         deleteError,
     ) { recipes, currentQuery, appliedQuery, moment, hasDeleteError ->
         val visibleRecipes = filterRecipes(recipes, appliedQuery, moment)
-        MisRecetasUiState(
-            state = misRecetasStateOf(recipes, visibleRecipes),
+        MyRecipesUiState(
+            state = myRecipesStateOf(recipes, visibleRecipes),
             recipes = recipes,
             searchQuery = currentQuery,
             mealMomentFilter = moment,
@@ -67,7 +67,7 @@ class MisRecetasViewModel(private val repository: RecipeRepository) : ViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-            initialValue = MisRecetasUiState(),
+            initialValue = MyRecipesUiState(),
         )
 
     fun onSearchQueryChanged(query: String) {

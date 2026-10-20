@@ -10,8 +10,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaTestTags
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.ProvisionalTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 // verify 2 · RF-9, RF-10, RF-11, RF-6, RF-7, RF-8: textos visibles localizados es/en,
 // navegación a los destinos provisionales con vuelta atrás y fallback a español.
 @RunWith(AndroidJUnit4::class)
-class MisRecetasLocalizationE2ETest {
+class MyRecipesLocalizationE2ETest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -82,35 +82,35 @@ class MisRecetasLocalizationE2ETest {
     @Test
     fun createRecipeOpensFormAndReturns() {
         showApp(Locale("es", "ES"))
-        composeRule.onNodeWithTag(MisRecetasTestTags.CREATE_RECIPE).performClick()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.CREATE_RECIPE).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Crear receta").assertIsDisplayed()
         composeRule.onNodeWithText("Volver").performClick()
-        composeRule.onNodeWithTag(MisRecetasTestTags.EMPTY_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
     }
 
     @Test
     fun scanPantryOpensProvisionalScannerAndReturns() {
         showApp(Locale("es", "ES"))
-        composeRule.onNodeWithTag(MisRecetasTestTags.SCAN_PANTRY).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
         composeRule.onNodeWithTag(ProvisionalTestTags.SCANNER_SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Escanear la Despensa").assertIsDisplayed()
         composeRule.onNodeWithText("Volver").performClick()
-        composeRule.onNodeWithTag(MisRecetasTestTags.EMPTY_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
     }
 
     @Test
     fun englishDestinationsShowEnglishTexts() {
         showApp(Locale.ENGLISH)
-        composeRule.onNodeWithTag(MisRecetasTestTags.CREATE_RECIPE).performClick()
-        composeRule.onNodeWithTag(CrearRecetaTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.CREATE_RECIPE).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Create recipe").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SCAN_PANTRY).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
         composeRule.onNodeWithTag(ProvisionalTestTags.SCANNER_SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Scan your Pantry").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()

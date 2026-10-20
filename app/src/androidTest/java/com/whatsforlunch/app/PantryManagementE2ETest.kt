@@ -19,7 +19,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import org.junit.Before
 import org.junit.Rule
@@ -37,8 +37,8 @@ class PantryManagementE2ETest {
     }
 
     @Test
-    fun opensPantryFromMisRecetasAndShowsEmptyState() {
-        composeRule.onNodeWithTag(MisRecetasTestTags.OPEN_PANTRY).assertIsDisplayed().performClick()
+    fun opensPantryFromMyRecipesAndShowsEmptyState() {
+        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY).assertIsDisplayed().performClick()
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithTag(PantryTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onNodeWithTag(PantryTestTags.EMPTY_MESSAGE).assertIsDisplayed()
@@ -125,7 +125,7 @@ class PantryManagementE2ETest {
     }
 
     private fun openPantry() {
-        composeRule.onNodeWithTag(MisRecetasTestTags.OPEN_PANTRY).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY).performClick()
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
     }
 

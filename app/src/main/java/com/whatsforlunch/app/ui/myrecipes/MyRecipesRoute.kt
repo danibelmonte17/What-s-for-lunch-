@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.ui.misrecetas
+package com.whatsforlunch.app.ui.myrecipes
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -7,15 +7,15 @@ import org.koin.androidx.compose.koinViewModel
 
 // Une el ViewModel (MVVM + StateFlow) con la pantalla sin estado.
 @Composable
-fun MisRecetasRoute(
+fun MyRecipesRoute(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit,
     onOpenPantry: () -> Unit = {},
-    viewModel: MisRecetasViewModel = koinViewModel(),
+    viewModel: MyRecipesViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    MisRecetasScreen(
+    MyRecipesScreen(
         uiState = uiState,
         onCreateRecipe = onCreateRecipe,
         onScanPantry = onScanPantry,

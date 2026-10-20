@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.ui.misrecetas
+package com.whatsforlunch.app.ui.myrecipes
 
 import androidx.lifecycle.ViewModelStore
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
@@ -20,7 +20,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MisRecetasSearchDebounceTest {
+class MyRecipesSearchDebounceTest {
 
     @Test
     fun searchAppliesOnceThreeHundredMillisecondsAfterTheLastKeystroke() = runTest {
@@ -30,7 +30,7 @@ class MisRecetasSearchDebounceTest {
             val repository = InMemoryRecipeRepository()
             repository.saveRecipe(recipe("1", "Pollo al limón", "Pollo"))
             repository.saveRecipe(recipe("2", "Crema de calabaza", "Calabaza"))
-            val viewModel = MisRecetasViewModel(repository)
+            val viewModel = MyRecipesViewModel(repository)
             viewModelStore.put("search", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -63,7 +63,7 @@ class MisRecetasSearchDebounceTest {
             val repository = InMemoryRecipeRepository()
             repository.saveRecipe(recipe("1", "Pollo al limón", "Pollo", MealMoment.DINNER))
             repository.saveRecipe(recipe("2", "Crema de calabaza", "Calabaza", MealMoment.LUNCH))
-            val viewModel = MisRecetasViewModel(repository)
+            val viewModel = MyRecipesViewModel(repository)
             viewModelStore.put("search", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }

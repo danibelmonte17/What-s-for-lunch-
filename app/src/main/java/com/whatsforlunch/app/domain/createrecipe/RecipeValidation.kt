@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.domain.crearreceta
+package com.whatsforlunch.app.domain.createrecipe
 
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
