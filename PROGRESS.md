@@ -11,7 +11,7 @@ Solo lo comprobado, no lo que se cree. El detalle por feature vive en `docs/evid
 
 ## Siguiente paso
 1. `gestionar-alimentos-de-la-despensa` **cerrada** (`accepted`, sesión 42): el commit único de la feature lo hace el orquestador al cerrar el flujo (rama `feature/gestionar-alimentos-de-la-despensa` sobre `d8b9a0a`, sin push — permiso denegado).
-2. Las features dependency-ready siguientes son `mostrar-badge-de-coincidencia` (depende de `crear-receta` y esta feature, ambas `accepted`) y `anadir-faltantes-a-la-lista` (depende de `crear-receta` y esta feature); ambas sin spec. `revisar-identificadores-en-ingles` se cerró en el PR #9 (`origin/develop` avanzó a `d797412` durante esta sesión).
+2. `gestionar-alimentos-de-la-despensa` **publicada**: commit `453ee1e` en `feature/gestionar-alimentos-de-la-despensa` (base `d8b9a0a`), push con permiso del usuario y **PR #10** hacia `develop` (no fusionar por el bot; revisión/merge por el flujo del proyecto). Las features dependency-ready siguientes son `mostrar-badge-de-coincidencia` y `anadir-faltantes-a-la-lista` (ambas sin spec). `revisar-identificadores-en-ingles` se cerró en el PR #9 (`origin/develop` avanzó a `d797412` durante esta sesión).
 3. Nota de shell: en PowerShell 5.1 ejecutar los scripts con `cmd /c "powershell -NoProfile -ExecutionPolicy Bypass -File <script>.ps1 > .harness\<x>.log 2>&1"` para evitar el falso fallo de `init` por el stderr de `adb shell monkey`; añadir `platform-tools`/`emulator` al PATH y crear `.harness/` antes de redirigir en worktrees nuevos.
 
 ## Riesgos y preguntas abiertas
