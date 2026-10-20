@@ -37,6 +37,9 @@
     <string name="my_recipes_status_published">Published</string>
     <string name="my_recipes_card_time">%1$d min</string>
     <string name="my_recipes_card_servings">%1$d servings</string>
+    <string name="my_recipes_card_match">%1$d%%</string>
+    <string name="my_recipes_card_match_full">100% Match</string>
+    <string name="my_recipes_card_match_content_description">Pantry match: %1$d%%</string>
     <string name="my_recipes_action_edit">Edit recipe</string>
     <string name="my_recipes_action_edit_short">Edit</string>
     <string name="my_recipes_search_hint">Search by recipe or ingredient</string>

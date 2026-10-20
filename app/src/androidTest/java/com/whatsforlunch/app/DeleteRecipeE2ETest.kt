@@ -23,6 +23,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.repository.RecipeRepository
@@ -82,7 +83,7 @@ class DeleteRecipeE2ETest {
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         localizedContext = baseContext.createConfigurationContext(configuration)
         val localizedConfiguration = Configuration(localizedContext.resources.configuration)
-        val viewModel = MyRecipesViewModel(repository)
+        val viewModel = MyRecipesViewModel(repository, InMemoryPantryRepository())
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             // Also provide configuration/resources: AlertDialog uses a separate window and

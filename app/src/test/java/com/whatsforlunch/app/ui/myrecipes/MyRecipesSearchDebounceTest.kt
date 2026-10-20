@@ -2,6 +2,7 @@ package com.whatsforlunch.app.ui.myrecipes
 
 import androidx.lifecycle.ViewModelStore
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
@@ -30,7 +31,7 @@ class MyRecipesSearchDebounceTest {
             val repository = InMemoryRecipeRepository()
             repository.saveRecipe(recipe("1", "Pollo al limón", "Pollo"))
             repository.saveRecipe(recipe("2", "Crema de calabaza", "Calabaza"))
-            val viewModel = MyRecipesViewModel(repository)
+            val viewModel = MyRecipesViewModel(repository, InMemoryPantryRepository())
             viewModelStore.put("search", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -63,7 +64,7 @@ class MyRecipesSearchDebounceTest {
             val repository = InMemoryRecipeRepository()
             repository.saveRecipe(recipe("1", "Pollo al limón", "Pollo", MealMoment.DINNER))
             repository.saveRecipe(recipe("2", "Crema de calabaza", "Calabaza", MealMoment.LUNCH))
-            val viewModel = MyRecipesViewModel(repository)
+            val viewModel = MyRecipesViewModel(repository, InMemoryPantryRepository())
             viewModelStore.put("search", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }

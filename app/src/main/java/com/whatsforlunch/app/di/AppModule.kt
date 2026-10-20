@@ -39,7 +39,7 @@ val appModule = module {
     single<AiKeyProvider> { UnconfiguredAiKeyProvider() }
     single<ImageGenerator> { OpenAiCompatibleImageGenerator(get(), get()) }
 
-    viewModel { MyRecipesViewModel(get()) }
+    viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
 }
