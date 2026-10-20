@@ -35,14 +35,14 @@ Checked before `execute` is allowed to mutate anything. `plan` runs the same che
 1. Dependencies accepted: every id in `depends_on` has status `accepted` in `feature_list.json`.
 2. Clean base: the base checkout has no staged, modified, or deleted tracked files (`git status --porcelain` has no tracked entries; untracked files are allowed and reported), no merge/rebase in progress, and `base_branch` resolves.
 3. Permissions: `gh auth status` shows an account that can manage issues and PRs in the repository, and the user explicitly granted push permission (otherwise work stays local and `publish` cannot push or open PRs).
-4. Independent environments: one worktree per feature outside the base checkout, one session per worktree, no shared mutable state between features (each worktree runs its own `./init.sh` and local database).
+4. Independent environments: one worktree per feature under `.worktrees/` inside the base checkout, one session per worktree, no shared mutable state between features (each worktree runs its own `./init.sh` and local database).
 
 If any precondition fails, report the failing features and stop before mutating anything.
 
 ## Deterministic Identities (reuse keys)
 
 - Branch: `feature/<feature-id>`.
-- Worktree: `<worktrees-root>/<feature-id>` where `<worktrees-root>` is `../<base-checkout-dirname>-worktrees`, outside the base checkout.
+- Worktree: `<worktrees-root>/<feature-id>` where `<worktrees-root>` is `.worktrees`, inside the base checkout (gitignored via `.gitignore`).
 - Issue title: `[<feature-id>] <feature title from feature_list.json>`.
 - PR: head `feature/<feature-id>` into `base_branch`, title `[<feature-id>] <feature title>`.
 

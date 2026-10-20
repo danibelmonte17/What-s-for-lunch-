@@ -210,9 +210,20 @@
         "E2E: añadir el alimento Tomate fresco y comprobar que aparece en la Despensa",
         "E2E: eliminar un alimento y comprobar que desaparece del listado"
       ],
-      "evidence": [],
+      "evidence": [
+        "Autoverificación sesión 42: init.ps1 exit 0, lintDebug 0 errores, testDebugUnitTest 27/27 y assembleDebug BUILD SUCCESSFUL",
+        "connectedDebugAndroidTest retry 3: 67/67 verde; retry 4: 66/67 por teardown intermitente en BuscarYFiltrarRecetasE2ETest.keepsSearchAndMomentFilterWhenReturningWithinTheSession; retry 5 (más reciente): 67/67, 0 fallos/omitidos",
+        "PantryManagementE2ETest focalizada 5/5 y PantryLocalizationE2ETest 1/1 pasan; los fallos de locale/race de retry 2 se corrigieron en las aserciones E2E",
+        "MIGRATION_1_2 comprobada con DB v1 de prueba con una Receta; snapshot original restaurado y DB actual v2",
+        "e2e.ps1 no ejecutado (desinstala la app); se usó directamente connectedDebugAndroidTest",
+        "Aceptación independiente (feature-validator): accept — unit 27/27 reejecutados (--rerun), lint 0 errores y connectedDebugAndroidTest 67/67 (2º intento tras aborto del emulador) en Pixel_10_Pro API 37; verification ejecutados en emulador con adb/uiautomator (añadir «Tomate fresco» ✓, eliminar con confirmación ✓); migración 1→2 repetida con fixture «Gazpacho andaluz» sin pérdida; 2 capturas es en docs/evidence/gestionar-alimentos-de-la-despensa/; informe en docs/validations/gestionar-alimentos-de-la-despensa.md (3 hallazgos no bloqueantes anotados)",
+        "Delta stepper 2026-10-20: init.ps1 exit 0 (PKG=com.whatsforlunch.app); lintDebug 0 errores; testDebugUnitTest --rerun-tasks 28/28; assembleDebug BUILD SUCCESSFUL. PantryItemValidationTest 4/4 e InMemoryPantryRepositoryTest 5/5.",
+        "PantryManagementE2ETest focalizada 5/5 (incluye edición con tres incrementos y límites 0/999, guardado de 0 sin línea de cantidad); PantryLocalizationE2ETest 2/2 (es/en, controles ≥48 dp); connectedDebugAndroidTest completa 68/68, 0 fallos/omitidos, Pixel_10_Pro API 37.",
+        "Room v2 y MIGRATION_1_2 sin cambios; mapeo Int?↔Double? redondea y limita al leer. Capturas renovadas: docs/evidence/gestionar-alimentos-de-la-despensa/despensa-con-alimentos.png y despensa-dialogo-stepper.png.",
+        "Aceptación independiente del delta stepper 2026-10-20 (feature-validator, sesión 44): accept — reejecución propia: init.ps1 exit 0, lintDebug 0 errores, testDebugUnitTest --rerun-tasks 28/28, assembleDebug BUILD SUCCESSFUL, connectedDebugAndroidTest 68/68 (0 fallos/omitidos) y focalizadas PantryManagementE2ETest 5/5 + PantryLocalizationE2ETest 2/2 en Pixel_10_Pro API 37; verificación manual adb/uiautomator S4/S7/S10 es/en (diálogo con 1 solo EditText, «−» deshabilitado en 0 y «+» en 999 a 48 dp, guardar 0 = sin cantidad); sin restos del campo de texto (grep); Room v2 intacto; informe ampliado en docs/validations/gestionar-alimentos-de-la-despensa.md (4 hallazgos no bloqueantes)"
+      ],
       "notes": "La Despensa no tiene desglose por ubicaciones físicas (RD11)",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "mostrar-badge-de-coincidencia",

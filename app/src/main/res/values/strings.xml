@@ -9,6 +9,30 @@
     <string name="action_back">Volver</string>
     <string name="action_dismiss">Cerrar</string>
 
+    <!-- Despensa -->
+    <string name="pantry_title">Despensa</string>
+    <string name="pantry_open_accessibility">Despensa</string>
+    <string name="pantry_add_food">Añadir alimento</string>
+    <string name="pantry_add_title">Añadir alimento</string>
+    <string name="pantry_edit_title">Editar alimento</string>
+    <string name="pantry_save_changes">Guardar cambios</string>
+    <string name="pantry_name_label">Nombre</string>
+    <string name="pantry_quantity_label">Cantidad (opcional)</string>
+    <string name="pantry_quantity_value">Cantidad: %1$s</string>
+    <string name="pantry_quantity_decrease">Disminuir cantidad</string>
+    <string name="pantry_quantity_increase">Aumentar cantidad</string>
+    <string name="pantry_edit_accessibility">Editar</string>
+    <string name="pantry_delete_accessibility">Eliminar</string>
+    <string name="pantry_delete_title">Eliminar alimento</string>
+    <string name="pantry_delete_message">¿Eliminar «%1$s»? Esta acción es definitiva y no se puede deshacer.</string>
+    <string name="pantry_delete_confirm">Eliminar</string>
+    <string name="pantry_cancel">Cancelar</string>
+    <string name="pantry_duplicate_error">Este alimento ya está en la Despensa.</string>
+    <string name="pantry_save_error">No se pudo guardar el alimento. Inténtalo de nuevo.</string>
+    <string name="pantry_delete_error">No se pudo eliminar el alimento. Inténtalo de nuevo.</string>
+    <string name="pantry_empty_title">Tu Despensa está vacía</string>
+    <string name="pantry_empty_message">Añade los alimentos que tienes en casa.</string>
+
     <!-- Mis Recetas: tarjetas -->
     <string name="my_recipes_status_draft">Borrador</string>
     <string name="my_recipes_status_published">Publicada</string>

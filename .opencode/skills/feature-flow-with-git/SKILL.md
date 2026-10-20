@@ -31,7 +31,7 @@ If any required input is missing, ask before mutating anything.
 ## Deterministic Identities (reuse keys)
 
 - Branch: `feature/<feature-id>`.
-- Worktree: `<worktrees-root>/<feature-id>` where `<worktrees-root>` is `../<base-checkout-dirname>-worktrees`, outside the base checkout.
+- Worktree: `<worktrees-root>/<feature-id>` where `<worktrees-root>` is `.worktrees`, inside the base checkout (gitignored via `.gitignore`).
 - PR: head `feature/<feature-id>` into `base_branch`, title `[<feature-id>] <feature title from feature_list.json>`, body with the acceptance evidence.
 
 ## Flow

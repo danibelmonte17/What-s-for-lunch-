@@ -10,7 +10,7 @@ Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las de
 | Ingrediente | Producto de cocina reutilizable entre Recetas | nombre, unidad, Pasillo | N Receta |
 | IngredienteReceta | Cantidad de un Ingrediente en una Receta | cantidad, unidad, obligatorio (sí/no) | Receta, Ingrediente |
 | Paso | Instrucción secuencial de una Receta | orden, texto, temporizador (opcional) | Receta |
-| Alimento | Producto disponible en la Despensa | nombre, cantidad (opcional) | detectado en Escaneo |
+| Alimento | Producto disponible en la Despensa | nombre, cantidad (entero 0..999; 0 = sin cantidad) | detectado en Escaneo |
 | Escaneo | Captura de la cámara y detección asociada | fecha, Alimentos detectados con confianza | propone Alimentos para la Despensa |
 | Sugerencia | Receta propuesta por la IA desde la Despensa | Coincidencia, estado (propuesta/aceptada/descartada) | se materializa en una Receta al aceptarse |
 | Lista de la Compra | Conjunto de ítems pendientes de comprar | — | N ÍtemLista |
@@ -67,7 +67,8 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Cantidades de IngredienteReceta: mayores que 0.
 - Título de la Receta: obligatorio.
 - Publicar una Receta: título y foto obligatorios, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila de Ingrediente ni Paso inválidos (Q-crear-receta-1, que revisa `⚠ S07`: la foto pasa a ser obligatoria).
-- Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan.
+- Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan en un solo Alimento. En el alta y la edición manual de Alimentos de la Despensa, un duplicado se rechaza con aviso y no se crea fila nueva (Q-gestionar-alimentos-de-la-despensa-3): mismo resultado que la fusión del Escaneo —un solo Alimento por nombre normalizado—.
+- Cantidad de un Alimento: entero entre 0 y 999; 0 equivale a sin cantidad.
 
 ## Escenarios importantes
 
