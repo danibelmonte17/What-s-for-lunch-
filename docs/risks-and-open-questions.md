@@ -4,7 +4,7 @@ Todo lo que falta por saber o que hemos asumido sin confirmar. Si otro documento
 
 ## Resumen
 
-Preguntas abiertas: 0 · Supuestos: 7 · Riesgos: 6 · Bloquean la siguiente fase: 0
+Preguntas abiertas: 0 · Supuestos: 7 · Riesgos: 6 · Bloquean la siguiente fase: 0 · Supuestos sin confirmar: 3 (`Q-escanear-despensa-con-camara-1..3`, a corroborar durante esa feature)
 
 El banco de descubrimiento (37 preguntas, `P1`-`P37`) quedó **resuelto**: 36 respondidas por el usuario y 1 asumida (`P29` → `S01`); sus respuestas viven ya dobladas en los documentos de producto y siguen siendo citas válidas (`P12`, `P31`…). Las preguntas `Q-…` de las specs se registran aquí mientras están abiertas y pasan al apéndice al resolverse.
 
@@ -64,7 +64,7 @@ Validaciones pendientes antes o durante la construcción de las features que dep
 
 ## Apéndice · Registro de preguntas resueltas
 
-Historial de trazabilidad. Las specs citan estos IDs como origen de requisitos; no se borran ni se renumeran. Nada de aquí está pendiente.
+Historial de trazabilidad. Las specs citan estos IDs como origen de requisitos; no se borran ni se renumeran. Nada de aquí está pendiente, salvo las tres Q del Escáner, que quedan como supuestos sin confirmar (ver su estado).
 
 | ID | Pregunta | Origen | Bloqueante | Estado |
 |---|---|---|---|---|
@@ -103,6 +103,7 @@ Historial de trazabilidad. Las specs citan estos IDs como origen de requisitos; 
 | Q-gestionar-alimentos-de-la-despensa-2 | ¿El borrado de un Alimento pide confirmación? (RD04 exige confirmación solo para Recetas; el prototipo del Escáner borra chips de un toque) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (confirmado por el usuario el 2026-10-20: diálogo de confirmación con el nombre del Alimento, mismo patrón que `eliminar-receta`, con «Cancelar»/«Eliminar» y descarte = cancelar) |
 | Q-gestionar-alimentos-de-la-despensa-3 | ¿Qué pasa al añadir o renombrar un Alimento cuyo nombre normalizado coincide con otro existente? (el dominio fija «se fusionan» para el Escaneo) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (confirmado por el usuario el 2026-10-20: aviso «Este alimento ya está en la Despensa» y no se crea fila nueva; se conserva un solo Alimento por nombre normalizado) |
 | Q-gestionar-alimentos-de-la-despensa-4 | ¿Qué representa la «cantidad (opcional)» del Alimento en el formulario? (sin unidad en `docs/domain-model.md`) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (revisado el 2026-10-20: se sustituyó el decimal por texto por un stepper entero 0..999, sin unidad; 0 = sin cantidad) |
-| Q-escanear-despensa-con-camara-1 | ¿Qué pasa cuando un Alimento escaneado coincide (por nombre normalizado) con uno ya presente en la Despensa? | `docs/specs/escanear-despensa-con-camara.md` (D2) | no | resuelta (confirmado por el usuario el 2026-10-20: se fusiona sin crear fila nueva y sin tocar la cantidad del Alimento existente, con aviso resumido de lo fusionado) |
-| Q-escanear-despensa-con-camara-2 | Al salir del Escáner con chips sin guardar (atrás o cierre de pantalla), ¿se descarta el Escaneo sin confirmación o se pide confirmación? | `docs/specs/escanear-despensa-con-camara.md` (D3) | no | resuelta (confirmado por el usuario el 2026-10-20: diálogo de confirmación antes de descartar, mismo patrón que `eliminar-receta`; «Cancelar» vuelve al Escáner conservando los chips) |
-| Q-escanear-despensa-con-camara-3 | ¿Los chips del Escáner editan la cantidad de los Alimentos detectados? | `docs/specs/escanear-despensa-con-camara.md` (D5) | no | resuelta (confirmado por el usuario el 2026-10-20: no; se guardan sin cantidad —0 = sin cantidad— y el usuario la ajusta en la pantalla Despensa con el stepper existente) |
+| Q-escanear-despensa-con-camara-1 | ¿Qué pasa cuando un Alimento escaneado coincide (por nombre normalizado) con uno ya presente en la Despensa? | `docs/specs/escanear-despensa-con-camara.md` (D2) | no | **supuesto sin confirmar** (decisión del usuario 2026-10-20: no se confirma ahora; propuesta del planner: fusión sin fila nueva ni tocar la cantidad existente, con aviso resumido) — corroborar/corregir durante `escanear-despensa-con-camara` |
+| Q-escanear-despensa-con-camara-2 | Al salir del Escáner con chips sin guardar (atrás o cierre de pantalla), ¿se descarta el Escaneo sin confirmación o se pide confirmación? | `docs/specs/escanear-despensa-con-camara.md` (D3) | no | **supuesto sin confirmar** (decisión del usuario 2026-10-20: no se confirma ahora; propuesta del planner: diálogo de confirmación con el patrón de `eliminar-receta`, «Cancelar» conserva los chips) — corroborar/corregir durante `escanear-despensa-con-camara` |
+| Q-escanear-despensa-con-camara-3 | ¿Los chips del Escáner editan la cantidad de los Alimentos detectados? | `docs/specs/escanear-despensa-con-camara.md` (D5) | no | **supuesto sin confirmar** (decisión del usuario 2026-10-20: no se confirma ahora; propuesta del planner: sin cantidad, se ajusta en la pantalla Despensa con el stepper) — corroborar/corregir durante `escanear-despensa-con-camara` |
+| Q-ver-detalle-de-receta-1 | Los utensilios del step 1 («hero … con los utensilios») no existen en el modelo (`Recipe.kt`, Room, `docs/domain-model.md`) ni en el formulario aceptado: ¿se amplía el modelo (feature aparte con migración) o se omiten? | `docs/specs/ver-detalle-de-receta.md` (U1) | no | resuelta (decidida por el usuario el 2026-10-20: **omisión en el MVP**; la sección «Utensilios necesarios» no se implementa en el Detalle; si se quiere, una feature futura ampliará modelo + formulario con su propia spec) |

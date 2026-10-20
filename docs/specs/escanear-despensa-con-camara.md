@@ -185,15 +185,15 @@ Los paths de `ui/scanner/`, `data/scanner/` y `domain/scanner/` son los previsto
 - `ARCHITECTURE.md`: not needed — no existe; las capas `ui`/`domain`/`data` y la dirección de dependencias no cambian (adapters nuevos del patrón ya usado por foto/IA).
 - `CONSTRAINTS.md`: not needed — no existe y no se introducen reglas MUST/MUST NOT nuevas (RD05/RD06 ya viven en `docs/domain-model.md`).
 - `AGENTS.md`: not needed — sin cambios de flujo de agentes, comandos ni convenciones.
-- Other docs: `docs/technical-discovery.md` — update (modelo concreto y dependencias tras el spike); `docs/risks-and-open-questions.md` — update (RK02; las preguntas Q-escanear-despensa-con-camara-1..3 ya están registradas como resueltas); `docs/domain-model.md` — update solo si se añade el matiz de fusión sin alterar cantidad.
+- Other docs: `docs/technical-discovery.md` — update (modelo concreto y dependencias tras el spike); `docs/risks-and-open-questions.md` — update (RK02; las preguntas Q-escanear-despensa-con-camara-1..3 están registradas como **supuestos sin confirmar**, a corroborar durante esta feature); `docs/domain-model.md` — update solo si se añade el matiz de fusión sin alterar cantidad.
 
 ## Dudas abiertas y desconocidos (Unknowns)
 
 - **D1 · RK02 (bloqueante previo)**: el modelo MediaPipe concreto está por validar (> 88 % de confianza, API 30). El spike es paso 0 obligatorio; **si no cumple, se PARA y se pregunta al usuario** (aceptar umbral menor / YOLOv8 ONNX / degradar a manual). Mientras no esté validado, nada de la detección se da por bueno. El umbral mínimo de confianza para proponer chip es parámetro del spike (candidato 0.80, el del prototipo).
-- **D2 · resuelta** (Q-escanear-despensa-con-camara-1, 2026-10-20): los duplicados se fusionan también con Alimentos ya presentes en la Despensa (sin fila nueva, sin tocar su cantidad) y se comunica con un aviso resumido.
-- **D3 · resuelta** (Q-escanear-despensa-con-camara-2, 2026-10-20): tras «Guardar en la Despensa» se navega a la Despensa con los Alimentos ya guardados; si hay chips sin guardar y se pulsa atrás (o se navega fuera), se muestra un diálogo de confirmación antes de descartar el Escaneo (S10), mismo patrón que `eliminar-receta`.
+- **D2 · supuesto** (Q-escanear-despensa-con-camara-1; **sin confirmar** — el usuario decidió el 2026-10-20 dejarlo como supuesto a corroborar durante la implementación): los duplicados se fusionan también con Alimentos ya presentes en la Despensa (sin fila nueva, sin tocar su cantidad) y se comunica con un aviso resumido.
+- **D3 · supuesto** (Q-escanear-despensa-con-camara-2; **sin confirmar** — ídem): tras «Guardar en la Despensa» se navega a la Despensa con los Alimentos ya guardados; si hay chips sin guardar y se pulsa atrás (o se navega fuera), se muestra un diálogo de confirmación antes de descartar el Escaneo (S10), mismo patrón que `eliminar-receta`.
 - **D4 (depende del spike)**: vocabulario del modelo y traducción de etiquetas (mapa `food_label_*` es/en con fallback a etiqueta cruda). Si el vocabulario es muy amplio, priorizar los alimentos del MVP y confirmar el criterio con el usuario.
-- **D5 · resuelta** (Q-escanear-despensa-con-camara-3, 2026-10-20): los Alimentos detectados se guardan sin cantidad (la ajusta el usuario en Despensa); los chips no editan cantidad.
+- **D5 · supuesto** (Q-escanear-despensa-con-camara-3; **sin confirmar** — ídem): los Alimentos detectados se guardan sin cantidad (la ajusta el usuario en Despensa); los chips no editan cantidad.
 - Decisiones de interacción fijadas por esta spec por estar el prototipo incompleto (visor → captura congelada con etiquetas → chips → guardar; no hay detección en vivo sobre el preview): se revisan en la validación visual sin cambiar el comportamiento.
 
 ## Implementation Plan
