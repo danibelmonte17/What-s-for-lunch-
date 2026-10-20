@@ -16,6 +16,12 @@
     <string name="mis_recetas_card_servings">%1$d porciones</string>
     <string name="mis_recetas_action_edit">Editar receta</string>
     <string name="mis_recetas_action_edit_short">Editar</string>
+    <string name="mis_recetas_search_hint">Buscar por receta o ingrediente</string>
+    <string name="mis_recetas_filter_all">Todas</string>
+    <string name="mis_recetas_filter_label">Filtrar por momento culinario</string>
+    <string name="mis_recetas_no_results_title">No hay recetas que coincidan</string>
+    <string name="mis_recetas_no_results_message">Prueba con otro texto o momento culinario.</string>
+    <string name="mis_recetas_reset_filters">Ver todas las recetas</string>
     <string name="mis_recetas_delete_action">Eliminar receta</string>
     <string name="mis_recetas_delete_short">Eliminar</string>
     <string name="mis_recetas_delete_title">Eliminar receta</string>
