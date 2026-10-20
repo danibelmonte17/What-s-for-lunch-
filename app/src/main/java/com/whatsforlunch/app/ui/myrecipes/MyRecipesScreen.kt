@@ -405,7 +405,7 @@ private fun SearchAndFilterControls(
             label = stringResource(R.string.my_recipes_filter_all),
             icon = Icons.Outlined.RestaurantMenu,
             selected = selectedMoment == null,
-            iconTint = MaterialTheme.colorScheme.onSurface,
+            iconTint = MaterialTheme.colorScheme.primary,
             testTag = MyRecipesTestTags.FILTER_CHIP_ALL,
             iconTestTag = MyRecipesTestTags.FILTER_CHIP_ALL_ICON,
             onClick = { onMealMomentSelected(null) },
@@ -509,10 +509,10 @@ private val SkilletIcon: ImageVector = ImageVector.Builder(
 
 @Composable
 private fun MealMoment.inactiveTint() = when (this) {
-    MealMoment.BREAKFAST -> MaterialTheme.colorScheme.tertiary
-    MealMoment.LUNCH -> MaterialTheme.colorScheme.primary
-    MealMoment.DINNER -> MaterialTheme.colorScheme.secondary
-    MealMoment.DESSERT -> MaterialTheme.colorScheme.tertiaryContainer
+    MealMoment.BREAKFAST,
+    MealMoment.LUNCH,
+    MealMoment.DINNER,
+    MealMoment.DESSERT -> MaterialTheme.colorScheme.primary
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
