@@ -1,4 +1,4 @@
-package com.whatsforlunch.app.ui.crearreceta
+package com.whatsforlunch.app.ui.createrecipe
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -16,10 +16,10 @@ import org.koin.compose.koinInject
 // adquirente de foto real (con los lanzadores del sistema), se abre en modo edición
 // cuando llega un id de Receta y se navega al guardar.
 @Composable
-fun CrearRecetaRoute(
+fun CreateRecipeRoute(
     onDone: () -> Unit,
     recipeId: String? = null,
-    viewModel: CrearRecetaViewModel = koinViewModel(),
+    viewModel: CreateRecipeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -39,13 +39,13 @@ fun CrearRecetaRoute(
         if (uiState.saved || uiState.recipeMissing) onDone()
     }
 
-    CrearRecetaScreen(uiState = uiState, actions = viewModel.toActions(onDone))
+    CreateRecipeScreen(uiState = uiState, actions = viewModel.toActions(onDone))
 }
 
 // Convierte los métodos del ViewModel en las acciones de la pantalla. Compartido por
 // la Route y por las pruebas que montan la pantalla directamente.
 // RF-15: cerrar (onBack) no persiste nada: los cambios se descartan al salir.
-fun CrearRecetaViewModel.toActions(onDone: () -> Unit): CrearRecetaActions = CrearRecetaActions(
+fun CreateRecipeViewModel.toActions(onDone: () -> Unit): CreateRecipeActions = CreateRecipeActions(
     onBack = onDone,
     onTitleChange = this::onTitleChange,
     onStoryChange = this::onStoryChange,

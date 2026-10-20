@@ -1,6 +1,6 @@
 # Contexto del proyecto
 
-Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa lo mismo para toda persona o agente que trabaje aquí, y los documentos, specs y el código los usan tal cual. Lo previsto o no confirmado lleva `⚠` (supuestos y riesgos: `docs/risks-and-open-questions.md`). El producto y su alcance están en `docs/build-brief.md`.
+Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa lo mismo para toda persona o agente que trabaje aquí, y se usa tal cual en documentación, textos de UI y comentarios. Los identificadores del código usan la equivalencia inglesa fijada en `docs/specs/revisar-identificadores-en-ingles.md`. Lo previsto o no confirmado lleva `⚠` (supuestos y riesgos: `docs/risks-and-open-questions.md`). El producto y su alcance están en `docs/build-brief.md`.
 
 ## Qué es
 

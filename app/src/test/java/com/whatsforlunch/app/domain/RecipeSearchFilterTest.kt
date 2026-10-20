@@ -1,6 +1,6 @@
 package com.whatsforlunch.app.domain
 
-import com.whatsforlunch.app.domain.misrecetas.filterRecipes
+import com.whatsforlunch.app.domain.myrecipes.filterRecipes
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient

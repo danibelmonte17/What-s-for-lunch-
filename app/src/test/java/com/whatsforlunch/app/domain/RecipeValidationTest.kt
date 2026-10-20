@@ -1,7 +1,7 @@
 package com.whatsforlunch.app.domain
 
-import com.whatsforlunch.app.domain.crearreceta.RecipeRequirement
-import com.whatsforlunch.app.domain.crearreceta.RecipeValidation
+import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
+import com.whatsforlunch.app.domain.createrecipe.RecipeValidation
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStatus

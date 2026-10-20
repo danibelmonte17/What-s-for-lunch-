@@ -26,9 +26,9 @@ import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.repository.RecipeRepository
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasScreen
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasViewModel
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
 import kotlinx.coroutines.flow.first
@@ -62,7 +62,7 @@ private class FailingDeleteRecipeRepository(
 // Escenarios del borrado en Mis Recetas: confirmación, cancelación, descarte, error,
 // localización y accesibilidad (Parte B, T6).
 @RunWith(AndroidJUnit4::class)
-class EliminarRecetaE2ETest {
+class DeleteRecipeE2ETest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -77,12 +77,12 @@ class EliminarRecetaE2ETest {
     private fun launchScreen(
         repository: RecipeRepository,
         locale: Locale = Locale("es", "ES"),
-    ): MisRecetasViewModel {
+    ): MyRecipesViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         localizedContext = baseContext.createConfigurationContext(configuration)
         val localizedConfiguration = Configuration(localizedContext.resources.configuration)
-        val viewModel = MisRecetasViewModel(repository)
+        val viewModel = MyRecipesViewModel(repository)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             // Also provide configuration/resources: AlertDialog uses a separate window and
@@ -93,7 +93,7 @@ class EliminarRecetaE2ETest {
                 LocalResources provides localizedContext.resources,
             ) {
                 WhatsForLunchTheme {
-                    MisRecetasScreen(
+                    MyRecipesScreen(
                         uiState = state,
                         onCreateRecipe = {},
                         onScanPantry = {},
@@ -104,7 +104,7 @@ class EliminarRecetaE2ETest {
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.RECIPE_DELETE)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_DELETE)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         return viewModel
@@ -121,17 +121,17 @@ class EliminarRecetaE2ETest {
 
         composeRule.onNodeWithContentDescription("Eliminar receta").assertIsDisplayed().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.DELETE_DIALOG)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.DELETE_DIALOG)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_DIALOG).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_DIALOG).assertIsDisplayed()
         composeRule.onNodeWithText("Eliminar receta").assertIsDisplayed()
         composeRule.onNodeWithText("¿Eliminar «Tortilla de patatas»? Esta acción es definitiva y no se puede deshacer.")
             .assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_CONFIRM).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_CONFIRM).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.EMPTY_TITLE).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.EMPTY_TITLE).fetchSemanticsNodes().isNotEmpty()
         }
         assertTrue(runBlocking { repository.observeRecipes().first().isEmpty() })
     }
@@ -141,8 +141,8 @@ class EliminarRecetaE2ETest {
         val repository = repositoryWithRecipe()
         launchScreen(repository)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DELETE).performClick()
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_CANCEL).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DELETE).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_CANCEL).performClick()
 
         composeRule.onNodeWithText(seededRecipe.title).assertIsDisplayed()
         assertEquals(listOf(seededRecipe), runBlocking { repository.observeRecipes().first() })
@@ -153,14 +153,14 @@ class EliminarRecetaE2ETest {
         val repository = repositoryWithRecipe()
         launchScreen(repository)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DELETE).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DELETE).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.DELETE_DIALOG)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.DELETE_DIALOG)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         Espresso.pressBack()
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_DIALOG).assertDoesNotExist()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_DIALOG).assertDoesNotExist()
         composeRule.onNodeWithText(seededRecipe.title).assertIsDisplayed()
         assertEquals(listOf(seededRecipe), runBlocking { repository.observeRecipes().first() })
     }
@@ -169,13 +169,13 @@ class EliminarRecetaE2ETest {
     fun confirmingRecipeAlreadyRemovedClosesDialogWithoutError() {
         val repository = repositoryWithRecipe()
         launchScreen(repository)
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DELETE).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DELETE).performClick()
         runBlocking { repository.deleteRecipe(seededRecipe.id) }
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_CONFIRM).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_CONFIRM).performClick()
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_DIALOG).assertDoesNotExist()
-        composeRule.onNodeWithTag(MisRecetasTestTags.EMPTY_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_DIALOG).assertDoesNotExist()
+        composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onAllNodesWithText("No se pudo eliminar la receta. Inténtalo de nuevo.")
             .assertCountEquals(0)
     }
@@ -185,8 +185,8 @@ class EliminarRecetaE2ETest {
         val repository = FailingDeleteRecipeRepository(repositoryWithRecipe())
         launchScreen(repository)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DELETE).performClick()
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_CONFIRM).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DELETE).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_CONFIRM).performClick()
         composeRule.onNodeWithText("No se pudo eliminar la receta. Inténtalo de nuevo.")
             .assertIsDisplayed()
         composeRule.onNodeWithText(seededRecipe.title).assertIsDisplayed()
@@ -197,8 +197,8 @@ class EliminarRecetaE2ETest {
         val repository = FailingDeleteRecipeRepository(repositoryWithRecipe())
         launchScreen(repository, Locale.ENGLISH)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DELETE).performClick()
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_CONFIRM).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DELETE).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_CONFIRM).performClick()
         composeRule.onNodeWithText("The recipe couldn’t be deleted. Please try again.").assertIsDisplayed()
         composeRule.onNodeWithText(seededRecipe.title).assertIsDisplayed()
     }
@@ -209,14 +209,14 @@ class EliminarRecetaE2ETest {
 
         composeRule.onNodeWithContentDescription("Delete recipe").assertIsDisplayed().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.DELETE_DIALOG)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.DELETE_DIALOG)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Delete recipe").assertIsDisplayed()
         composeRule.onNodeWithText("Delete “Tortilla de patatas”? This action is permanent and can’t be undone.")
             .assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.DELETE_CONFIRM).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.DELETE_CONFIRM).assertIsDisplayed()
     }
 
     @Test
@@ -238,8 +238,8 @@ class EliminarRecetaE2ETest {
     @Test
     fun deleteActionHasAccessibleNameAndMeetsFooterSizeRequirements() {
         launchScreen(repositoryWithRecipe())
-        val action = composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_DELETE)
-        val editAction = composeRule.onNodeWithTag(MisRecetasTestTags.RECIPE_EDIT)
+        val action = composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DELETE)
+        val editAction = composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_EDIT)
         action.assertIsDisplayed()
         editAction.assertIsDisplayed()
         action.assertContentDescriptionEquals("Eliminar receta")

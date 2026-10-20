@@ -27,9 +27,9 @@ import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasScreen
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasTestTags
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasViewModel
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
@@ -39,7 +39,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class BuscarYFiltrarRecetasE2ETest {
+class SearchAndFilterRecipesE2ETest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -51,16 +51,16 @@ class BuscarYFiltrarRecetasE2ETest {
     private fun launchScreen(
         repository: InMemoryRecipeRepository = repositoryWithRecipes(),
         locale: Locale = Locale("es", "ES"),
-    ): MisRecetasViewModel {
+    ): MyRecipesViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         screenContext = baseContext.createConfigurationContext(configuration)
-        val viewModel = MisRecetasViewModel(repository)
+        val viewModel = MyRecipesViewModel(repository)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides screenContext) {
                 WhatsForLunchTheme {
-                    MisRecetasScreen(
+                    MyRecipesScreen(
                         uiState = state,
                         onCreateRecipe = {},
                         onScanPantry = {},
@@ -80,16 +80,16 @@ class BuscarYFiltrarRecetasE2ETest {
         launchScreen()
         waitForRecipeCount(3)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.FILTER_CHIP_ALL).assertIsSelected()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_ALL).assertIsSelected()
         MealMoment.entries.forEach { moment ->
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.filterChip(moment)).assertCountEquals(1)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.filterChip(moment)).assertCountEquals(1)
         }
-        composeRule.onNodeWithTag(MisRecetasTestTags.filterChip(MealMoment.DINNER)).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.DINNER)).performClick()
 
         waitForRecipeCount(1)
         composeRule.onNodeWithText("Pollo asado").assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.filterChip(MealMoment.DINNER)).assertIsSelected()
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.DINNER)).assertIsSelected()
     }
 
     @Test
@@ -97,65 +97,65 @@ class BuscarYFiltrarRecetasE2ETest {
         launchScreen()
         waitForRecipeCount(3)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD).assertIsDisplayed()
         composeRule.onAllNodesWithTag(
-            MisRecetasTestTags.SEARCH_ICON,
+            MyRecipesTestTags.SEARCH_ICON,
             useUnmergedTree = true,
         ).assertCountEquals(1)
         composeRule.onAllNodesWithTag(
-            MisRecetasTestTags.FILTER_CHIP_ALL_ICON,
+            MyRecipesTestTags.FILTER_CHIP_ALL_ICON,
             useUnmergedTree = true,
         ).assertCountEquals(1)
         MealMoment.entries.forEach { moment ->
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.filterChip(moment)).assertCountEquals(1)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.filterChip(moment)).assertCountEquals(1)
             composeRule.onAllNodesWithTag(
-                MisRecetasTestTags.filterChipIcon(moment),
+                MyRecipesTestTags.filterChipIcon(moment),
                 useUnmergedTree = true,
             ).assertCountEquals(1)
         }
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .performTextReplacement("sin coincidencia")
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.NO_RESULTS_CARD)
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.NO_RESULTS_CARD)
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.FILTER_ROW).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.NO_RESULTS_CARD).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.NO_RESULTS_ICON_CONTAINER).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.NO_RESULTS_ICON).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.RESET_FILTERS).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_ROW).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.NO_RESULTS_CARD).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.NO_RESULTS_ICON_CONTAINER).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.NO_RESULTS_ICON).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RESET_FILTERS).assertIsDisplayed()
     }
 
     @Test
     fun searchesIngredientsCombinesCriteriaShowsNoResultsAndResets() {
         launchScreen()
         waitForRecipeCount(3)
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .performTextReplacement("Cebolla")
 
         waitForRecipeCount(2)
         composeRule.onNodeWithText("Pollo asado").assertIsDisplayed()
         composeRule.onNodeWithText("Arroz con pollo").assertIsDisplayed()
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.filterChip(MealMoment.DINNER)).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.DINNER)).performClick()
         waitForRecipeCount(1)
         composeRule.onNodeWithText("Pollo asado").assertIsDisplayed()
         composeRule.onAllNodesWithText("Arroz con pollo").assertCountEquals(0)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .performTextReplacement("no existe")
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.NO_RESULTS).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.NO_RESULTS).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText(text(R.string.mis_recetas_no_results_title)).assertIsDisplayed()
-        composeRule.onNodeWithTag(MisRecetasTestTags.RESET_FILTERS).assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(text(R.string.my_recipes_no_results_title)).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RESET_FILTERS).assertIsDisplayed().performClick()
         waitForRecipeCount(3)
-        assertEquals("", composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        assertEquals("", composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text)
-        composeRule.onNodeWithTag(MisRecetasTestTags.FILTER_CHIP_ALL).assertIsSelected()
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_ALL).assertIsSelected()
     }
 
     @Test
@@ -164,48 +164,48 @@ class BuscarYFiltrarRecetasE2ETest {
         waitForRecipeCount(3)
         viewModel.onMealMomentSelected(MealMoment.DINNER)
         waitForRecipeCount(1)
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .performTextReplacement("pollo")
         waitForRecipeCount(1)
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .performTextReplacement("")
         waitForRecipeCount(1)
-        composeRule.onNodeWithTag(MisRecetasTestTags.filterChip(MealMoment.DINNER)).assertIsSelected()
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.DINNER)).assertIsSelected()
     }
 
     @Test
     fun emptyCollectionHidesSearchAndFilterControls() {
         launchScreen(repository = InMemoryRecipeRepository())
-        composeRule.onNodeWithTag(MisRecetasTestTags.EMPTY_TITLE).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(MisRecetasTestTags.SEARCH_FIELD).assertCountEquals(0)
-        composeRule.onAllNodesWithTag(MisRecetasTestTags.FILTER_ROW).assertCountEquals(0)
+        composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.SEARCH_FIELD).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.FILTER_ROW).assertCountEquals(0)
     }
 
     @Test
     fun searchTextsFollowTheEnglishLocale() {
         launchScreen(locale = Locale("en", "US"))
         waitForRecipeCount(3)
-        composeRule.onNodeWithText(text(R.string.mis_recetas_search_hint)).assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.mis_recetas_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.my_recipes_search_hint)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.my_recipes_filter_all)).assertIsDisplayed()
     }
 
     @Test
     fun emptyStateTextFollowsTheSpanishLocale() {
         launchScreen(repository = InMemoryRecipeRepository(), locale = Locale("es", "ES"))
-        composeRule.onNodeWithText(text(R.string.mis_recetas_empty_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.my_recipes_empty_title)).assertIsDisplayed()
     }
 
     @Test
     fun keepsSearchAndMomentFilterWhenReturningWithinTheSession() {
         val repository = repositoryWithRecipes()
-        val viewModel = MisRecetasViewModel(repository)
+        val viewModel = MyRecipesViewModel(repository)
         val showingRecipes = mutableStateOf(true)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides InstrumentationRegistry.getInstrumentation().targetContext) {
                 WhatsForLunchTheme {
                     if (showingRecipes.value) {
-                        MisRecetasScreen(
+                        MyRecipesScreen(
                             uiState = state,
                             onCreateRecipe = { showingRecipes.value = false },
                             onScanPantry = {},
@@ -222,25 +222,25 @@ class BuscarYFiltrarRecetasE2ETest {
             }
         }
         waitForRecipeCount(3)
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
             .performTextReplacement("pollo")
         waitForRecipeCount(2)
-        composeRule.onNodeWithTag(MisRecetasTestTags.filterChip(MealMoment.DINNER)).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.DINNER)).performClick()
         waitForRecipeCount(1)
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.CREATE_RECIPE)
+        composeRule.onNodeWithTag(MyRecipesTestTags.CREATE_RECIPE)
             .performScrollTo()
             .performClick()
         composeRule.onNodeWithText("Back to My Recipes").performClick()
 
-        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD).assertTextContains("pollo")
-        composeRule.onNodeWithTag(MisRecetasTestTags.filterChip(MealMoment.DINNER)).assertIsSelected()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD).assertTextContains("pollo")
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.DINNER)).assertIsSelected()
         waitForRecipeCount(1)
     }
 
     private fun waitForRecipeCount(count: Int) {
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithTag(MisRecetasTestTags.RECIPE_CARD).fetchSemanticsNodes().size == count
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().size == count
         }
     }
 
