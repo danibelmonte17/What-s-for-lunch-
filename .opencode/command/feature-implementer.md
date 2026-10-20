@@ -7,4 +7,4 @@ Carga la skill `feature-implementer` con la herramienta de skills y sigue sus in
 
 Petición del usuario: $ARGUMENTS
 
-Si el usuario no ha indicado un id de feature, retoma la `in_progress` si la hay, si no elige la primera `ready` lista para implementar según el criterio de selección de la skill. Sin spec en `docs/specs/<feature-id>.md` no hay implementación: para y pide ejecutar primero la skill `feature-spec`.
+Si el usuario no ha indicado un id de feature, retoma la `in_progress` si la hay, si no elige la primera que no esté ni `passing` ni `accepted`, con dependencias `accepted` y con spec ya redactada, según el criterio de selección de la skill. Sin spec en `docs/specs/<feature-id>.md` no hay implementación: para y pide ejecutar primero la skill `feature-spec`.

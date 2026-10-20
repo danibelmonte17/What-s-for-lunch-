@@ -1,5 +1,5 @@
 ---
-description: Ejecuta la skill harness-starter: genera el harness del proyecto (feature_list.json, PROGRESS.md, docs/progress-history.md, AGENTS.md y los scripts init/lint/unit/e2e en .sh y .ps1) a partir de la documentación de especificación.
+description: Ejecuta la skill harness-starter: genera o actualiza el harness mínimo del proyecto (AGENTS.md, init.sh, PROGRESS.md y feature_list.json) a partir de la documentación de descubrimiento.
 agent: build
 ---
 

@@ -1,150 +1,148 @@
 ---
 name: feature-flow
-description: Orquesta spec, implementación y validación de features en worktrees, hasta abrir PR.
+description: Orchestrate the planner, implementer, and validator workflow for one feature using the project's configured subagents. Use when the user asks to run the feature flow, continue the next available feature, delegate to planner/implementer/validator agents, or move a feature through spec, implementation, and validation.
 ---
 
 # Feature Flow
 
-Delega cada etapa en su subagente; el orquestador solo controla transiciones y git. **Fuente de estado:** `feature_list.json` del worktree, nunca el texto del subagente. La spec alterna planner y auditor independiente (máx. 3 revisiones); auditoría no anidada en planner.
+Use this skill to let the main agent coordinate the three project subagents:
 
-```
-feature-flow (agente primario build)
-  └─ por cada feature, en orden:
-       subagent → planner (feature-spec/redacción) → spec draft (JSON sigue not_started)
-          │  ¿dudas abiertas y sin --auto? → 1 ronda de preguntas al humano → planner (retrabajo: las resuelve)
-       subagent → clarify (feature-spec/auditoría) → ready | A RETRABAJAR
-                  ↺ planner ⇄ clarify (máx 3; reintentos en delta; clarify cierra en ready)
-       subagent → implementer (feature-implementer) → passing
-       subagent → validator (feature-validate) → validated | in_progress
-                  ↺ reintento implement→validate (máx 3; revalidación en delta)
-       si validated → commit + push + gh pr create → borra worktree
-```
+- `planner` wraps `$feature-spec`.
+- `implementer` wraps `$feature-implementer`.
+- `validator` wraps `$feature-validator`.
 
-## 1. Activación y reglas (única fuente)
+The main agent is the orchestrator. It chooses the next role, launches the right subagent, reviews the result, and keeps the same feature moving until the flow reaches an explicit stop condition.
 
-- La lanza el usuario para ejecutar el ciclo de **una o varias** features, cada una aislada en un git worktree bajo `.worktrees/` sobre la rama `feature/<feature-id>` (id exacto de `feature_list.json`).
-- **No se inicia con el entorno sucio**, con rebase/merge en curso ni con ramas o worktrees previos del flujo. Si las features elegidas tienen `depends_on` entre ellas, para y advierte (deben ir en flujos separados o tras mergear el PR anterior).
-- **El orquestador no planifica, no implementa ni valida.** Delega en los subagentes con la herramienta `subagent`; no reescribe specs, no arregla código, no marca estados por su cuenta. Sí pregunta al humano las dudas de la spec (gate de §3.3.c); las respuestas las incorpora planner, nunca el orquestador.
-- **Escrituras del orquestador:** solo git (worktree, commit, push, PR), `PROGRESS.md` y `docs/progress-history.md` dentro del worktree. El `status` de `feature_list.json` lo escriben los subagentes; **únicas excepciones**: los cierres en fallo de §3.4 (deja `passing`/`not_started`).
-- **Prohibido:** force-push, borrar trabajo ajeno, tocar secretos, commitear archivos sensibles (`.jks`, `*.keystore`, `secrets.properties`, `local.properties`).
-- **Una feature termina `validated` (con PR, salvo `--no-pr` o `gh` sin auth, donde no hay PR pero el flujo continúa) o el flujo para.** Nunca se abre un PR de una feature sin validar.
-- **Máximo 3 ciclos de validación por feature** (y hasta 3 revisiones de spec). Al agotarlos: la feature queda en `passing` (o `not_started` si falló la spec), se conservan su worktree y su rama, se anota el bloqueo en `PROGRESS.md` y el flujo **para** pidiendo intervención humana.
-- **Idioma:** documentación y comunicación en español (el del usuario); el código, en inglés.
+## Hard Rules
 
-## 2. Entradas (una vez por corrida; no releeas por feature lo ya leído)
+- Work on one feature at a time.
+- Do not run planner, implementer, and validator in parallel for the same feature.
+- Do not skip roles unless the required artifact already exists and is current.
+- Do not implement work in the main agent while a subagent owns that role.
+- Subagents do not create commits. The main orchestrator owns final staging and commit after validator acceptance.
+- Do not treat `passing` as accepted. `passing` means implementer self-verification passed; validator `accept` is independent.
+- After validation returns `accept`, persist acceptance by changing the selected feature status in `feature_list.json` from `passing` to `accepted` and appending concise evidence that names the independent validator acceptance.
+- If validation returns `revise`, route the repair brief back to `implementer` for the same feature.
+- After a `revise` repair, route the same feature back to `validator`; do not stop after the repair unless the user explicitly asked for a single role step.
+- If validation returns `block`, stop and report the blocker.
+- After validation returns `accept`, stage only the accepted feature's changes and create a Conventional Commit before selecting or reporting the next feature.
+- After every accepted feature pass, the main orchestrator must report what changed and how the user can try it locally. The implementer supplies raw verification notes, the validator checks they are real, and the orchestrator presents the final user-facing testing steps after the commit.
+- Do not push commits unless the user explicitly asks for a push.
 
-1. `AGENTS.md` y la cabecera de `PROGRESS.md` (el Historial vive en `docs/progress-history.md`; no lo leas entero)
-2. `feature_list.json` (raíz del repo)
-3. `docs/build-brief.md` (líneas rojas) y `docs/risks-and-open-questions.md`
-4. Por cada feature elegida: su spec `docs/specs/<feature-id>.md`, solo las secciones necesarias (cabecera de estado, dudas y resumen), localizadas con `grep -n '^#'` + `Read offset/limit`
-5. `CONTEXT.md`, `docs/domain-model.md`, `docs/technical-discovery.md`, `DESIGN.md`: solo si una spec o un subagente los cita
+## Inputs To Read First
 
-Rutas relativas a la raíz del repo. El estado de cada feature durante la corrida se consulta con grep de su entrada en `.worktrees/<feature-id>/feature_list.json`.
+1. `../../../AGENTS.md`
+2. `../../../PROGRESS.md`
+3. `feature_list.json`
+4. `docs/specs/` if present
+5. `docs/validations/` if present
+6. Current git status
 
-## 3. Procedimiento
+## Feature Selection
 
-### 3.1 Argumentos y selección
+If the user provides a feature id, use that feature.
 
-`$ARGUMENTS`: uno o varios `feature-id` separados por espacios (opcional); `--base <rama>` (rama de partida de los PR; por defecto, la actual); `--no-pr` (sin push ni PR; deja rama y worktree listos); `--auto` (no interrumpe por dudas de la spec; sin humano en la sesión, el flujo actúa como con `--auto`).
+If no feature id is provided, select in this order:
 
-**Rama:** se compone **siempre** automáticamente como `feature/<feature-id>`. Si `$ARGUMENTS` trae `--branch`, un prefijo u otro nombre de rama, ignóralo y avisa.
+1. A feature with status `in_progress`.
+2. The first `passing` feature in `feature_list.json` order; `passing` always means implemented and self-verified but not independently accepted.
+3. The first feature whose status is neither `passing` nor `accepted` in `feature_list.json` order whose `depends_on` prerequisites are satisfied and that already has a spec.
+4. The first feature whose status is neither `passing` nor `accepted` in `feature_list.json` order whose `depends_on` prerequisites are satisfied and that has no spec.
 
-Selección: **con ids**, comprueba que existen y no están `validated`, sin dependencias mutuas entre las elegidas (si las hay, para y advierte), ordenadas respetando `depends_on` y el orden de la lista. **Sin ids**, la primera feature `not_started` o `ready` con todas sus `depends_on` `validated`; si no hay, reporta y para.
+A feature is dependency-ready when every id in `depends_on` references a feature whose status is `accepted`. For legacy feature lists, a dependency with status `passing` may be treated as ready only when `feature_list.json`, `../../../PROGRESS.md`, or `../../../docs/validations/<feature-id>.md` contains explicit independent validator acceptance evidence. If `depends_on` is absent in an older feature list, treat it as `[]` for backward compatibility, but prefer adding it when maintaining the list.
 
-### 3.2 Preflight (entorno limpio)
+If no unfinished feature is dependency-ready, report the blocking dependency ids instead of selecting a later blocked feature. When the user asks what can run in parallel, list all dependency-ready unfinished features in `feature_list.json` order.
 
-1. `git status --porcelain` vacío (si no, para y pide limpiar o commitear). Sin rebase/merge en curso (`.git/rebase-merge` o `rebase-apply`).
-2. `git fetch origin --prune`. Resuelve `<base>` en local o `origin/<base>`.
-3. Comprueba que no existen `.worktrees/<feature-id>` ni la rama `feature/<feature-id>` de una corrida previa (si existen, para y pide resolverlas).
-4. Si habrá PR (`--no-pr` ausente): `gh auth status` en verde (si no, avisa que no habrá PR y no abortes).
-5. Resuelve el root absoluto del repo: `git rev-parse --show-toplevel`.
+## Role Selection
 
-### 3.3 Por cada feature, en secuencia
+For the selected feature:
 
-**a. Rama y worktree.** `git worktree add -b feature/<feature-id> .worktrees/<feature-id> origin/<base>` — siempre desde `origin/<base>` recién fetcheado.
+0. If the feature status is `accepted`, report that the feature is already planned, implemented, and accepted; select the next available feature if the user asked to continue.
+1. If `../../../docs/specs/<feature-id>.md` is missing or stale, run `planner`.
+2. Else if the feature is neither `passing` nor `accepted`, run `implementer`.
+3. Else if the feature is `passing`, run `validator`.
 
-**b. Sembrar los locales gitignored.** Copia al worktree `local.properties` y `secrets.properties` si existen en el checkout principal (Gradle y `feature-validate` los necesitan). No los versiones ni los edites.
+Validation records should live under `../../../docs/validations/<feature-id>.md` when the validator or main agent persists them. If the validator only reports in chat, the main agent should ask before writing a validation record unless the user requested persistence.
 
-**c. Spec (planner ⇄ auditoría).** Solo si no existe `docs/specs/<feature-id>.md` o el estado es `not_started`. `MAX_CLARIFY = 3` (entradas `veredicto: A RETRABAJAR` en los bloques `## Clarificación` de la spec + `docs/specs/<feature-id>-clarificacion.md`):
+## Configured Subagents
 
-1. Invoca `planner` con `$feature-spec` modo redacción; deja la spec en borrador. Primer pase en sesión limpia. En retrabajo: antes de invocar, copia la spec a `.harness/spec-<feature-id>-<intento>.md` (gitignored); continúa su sesión con `sessionID` (fallback §4) y pasa solo el delta. Al volver, calcula el delta con salida contenida (`git diff --no-index <snapshot> <spec>` —el exit 1 solo indica diferencias, no es un fallo— o comparación de cabeceras de sección) y guárdalo para la auditoría.
-2. **Preguntas (solo dudas abiertas):** localiza en spec y registro las dudas abiertas de esta feature con grep. Si hay humano y no `--auto`, pregúntalas en **una sola ronda** (bloqueantes primero; en las no bloqueantes, valor asumido primero) y re-invoca planner en modo continuar con las respuestas `Q-<id>: <respuesta>`; segunda ronda solo si una respuesta abre una duda bloqueante nueva. Continúa su sesión. Nunca edites tú la spec. Con `--auto`/sin humano, anota en `PROGRESS.md` y continúa.
-3. Invoca `clarify` con `$feature-spec` modo auditoría (id, ruta y, en intentos 2+, el delta + hallazgos previos pendientes en el prompt; continúa su sesión). Sin delta, indica auditoría completa. APTA cierra en `ready`.
-4. Lee el `status` de la entrada en `.worktrees/<feature-id>/feature_list.json`: `ready` → continúa con la implementación; `not_started` con menos de 3 `A RETRABAJAR` → vuelve al paso 1 (retrabajo); `not_started` con 3 → «Cierre en fallo de spec» (§3.4).
+Launch the project subagents configured for the active agent runtime.
 
-**d. Implementación.** Invoca a `implementer` con `$feature-implementer` (sesión limpia la primera vez). Debe dejar la feature en `passing`. Si no está en `ready` al llegar aquí, para y reporta la incoherencia.
+Send only dynamic handoff context:
 
-**e. Validación con reintentos.** `MAX_VALIDACIONES = 3`:
+- repository path,
+- selected feature id,
+- selected role,
+- spec path when applicable,
+- validator repair brief when applicable,
+- expected output summary.
 
-1. Invoca a `validator` con `$feature-validate` (sesión limpia la primera vez). En revalidación, continúa su sesión con `sessionID` y pásale el informe de bugs previo y el delta de la corrección —`git -C .worktrees/<feature-id> status --porcelain` + `git diff` contenido, con las rutas nuevas—; el validator elige completa o delta (válvula en §3.0 de su skill).
-2. Lee el `status` de la entrada en `.worktrees/<feature-id>/feature_list.json`:
-   - `validated` → salir del bucle.
-   - `passing` (no verificable: sin AVD, red o clave) → **no reintentes**; para el flujo y reporta los prerrequisitos exactos.
-   - `in_progress` (bug demostrado) → si quedan intentos, re-invoca a `implementer` con el informe de bugs, **continuando su sesión con `sessionID`** (fallback §4); al volver, revalida en delta (paso 1). Agotados los 3 ciclos → «Cierre en fallo» (§3.4).
+Do not duplicate the subagent role prompts in this skill. The stable role instructions live in the configured subagent files.
 
-**f. Cierre en éxito** (solo con `validated`): actualiza en el worktree `PROGRESS.md` y, si falta, la entrada del Historial en `docs/progress-history.md` (el subagente ya lo hace; añade solo el resumen del flujo). Commitea con Conventional Commits (`feat(<feature-id>): <resumen>`, `docs(<feature-id>): spec y estado`, `test(<feature-id>): evidencia de validación`). `git -C .worktrees/<feature-id> push -u origin feature/<feature-id>`. Crea el PR:
+## Orchestration Loop
 
-```
-gh pr create --base <base> --head feature/<feature-id> \
-  --title "feat(<feature-id>): <descripción>" \
-  --body "<cuerpo>"
-```
+Default behavior for this skill is until-accepted mode for one selected feature. Do not stop after a planner, implementer, or repair step while the next required role is clear.
 
-El cuerpo resume: feature id y descripción, RF validados, enlaces a la evidencia en `docs/evidence/<feature-id>/`, resultado de `lint`/`unit`/`e2e` y nº de validaciones. Devuelve la URL. Después `git worktree remove --force .worktrees/<feature-id>` (la rama se conserva mientras el PR esté abierto). Con `--no-pr`: omite push y PR, deja el commit en la rama, reporta rama y worktree y **continúa con la siguiente feature**.
+Mode summary: until-accepted is the default full pipeline for one feature; one-step runs a single role only when explicitly requested; next-feature only selects and reports after an accept, never auto-starts.
 
-### 3.4 Cierres en fallo (no crees PR; conserva worktree y rama; para el flujo)
+- Until-accepted mode: run planner -> implementer -> validator sequentially for one feature, stopping only when the validator returns `accept`, the validator returns `block`, or a subagent cannot continue.
+- Repair loop: if validator returns `revise`, run `implementer` with the repair brief, then run `validator` again for the same feature.
+- One-step mode: run only the next required role and report the result only when the user explicitly asks for a single step, dry run, preview, or next-role-only execution.
+- Next-feature mode: after accept, select the next feature and report the next required role; do not start it unless asked.
 
-**Validación agotada (3 ciclos):** deja la feature en `passing` en `feature_list.json` (desviación consciente: `feature-validate` la deja en `in_progress`; se promueve a `passing` para señalizar «implementada pero requiere intervención»); anota en `PROGRESS.md` (*Siguiente paso*) y en `docs/progress-history.md` del worktree: feature id, RF afectado, resumen de bugs, rutas de evidencia y comando de reproducción; reporta la ruta y el siguiente paso (corregir con `feature-implementer` y re-ejecutar la validación).
+## Commit On Acceptance
 
-**Spec agotada (3 auditorías):** deja la feature en `not_started` (única excepción de escritura del orquestador); anota bloqueo, intentos y hallazgos pendientes en `PROGRESS.md` e Historial; conserva worktree/rama y pide intervención humana.
+Creating the commit is the main orchestrator's final step after the validator returns `accept`; subagents never commit (see Hard Rules). The orchestrator must commit the accepted feature before reporting the flow complete.
 
-## 4. Invocación de subagentes
+1. Run `git status --short` and inspect the relevant diff.
+2. Persist acceptance by updating `feature_list.json` for the selected feature to status `accepted` and appending concise validator evidence. If a validation artifact is useful, create or update `../../../docs/validations/<feature-id>.md`; otherwise `feature_list.json` plus `../../../PROGRESS.md` evidence is sufficient.
+3. Identify the files changed for the accepted feature, including required harness/docs/evidence updates.
+4. Stage only those files. Do not stage unrelated user or other-agent changes.
+5. Create one Conventional Commit, using a message that names the feature. Prefer:
+   - `feat: complete <feature-id>` for user-visible product/platform features,
+   - `docs: complete <feature-id>` for documentation-only features,
+   - `chore: complete <feature-id>` for workflow/tooling-only features.
+6. If the accepted feature's changes cannot be isolated from unrelated work, stop and report the commit blocker instead of making a mixed commit.
+7. Do not push the commit unless the user explicitly requested a push.
+8. After the commit succeeds, select the next available feature and report the next required role. Do not start the next feature unless asked.
 
-`subagent` hereda el root del checkout principal; cada prompt declara el worktree:
+## Final User Handoff
 
-```
-Ejecuta la feature <feature-id> tratando el directorio
-<root-absoluto>/.worktrees/<feature-id> como la raíz del repositorio.
+After a validator `accept` and successful commit, the main orchestrator must give a concise user-facing handoff. Do not delegate this final handoff to a subagent.
 
-- Todas las lecturas, búsquedas y ediciones deben usar rutas bajo ese directorio.
-- Cualquier comando (./init.sh, ./gradlew, adb, git) se ejecuta con workdir =
-  <root-absoluto>/.worktrees/<feature-id>.
-- Las rutas relativas de tu skill (docs/specs/, feature_list.json, PROGRESS.md)
-  se resuelven dentro de ese worktree.
+The handoff headings below are intentionally in Spanish: the skill is written in English, but the final handoff is addressed to the Spanish-speaking user.
 
-Sigue tu skill al pie de la letra. Devuelve el resumen final que define tu skill.
-```
+Include:
 
-Para `clarify`, indica id, ruta, modo auditoría y, en intentos 2+, el delta + hallazgos previos. APTA cierra en `ready`.
+- `Qué se ha hecho`: 2-5 bullets summarizing the accepted behavior, not internal noise.
+- `Cómo probarlo`: the automatic command, usually `CI=true ./init.sh`, plus concrete manual/local steps when the feature has observable behavior. Prefer commands the user can run directly. If manual testing needs env vars, database, a dev server, or a port, state that explicitly.
+- `Validación`: validator verdict and the most relevant checks/smokes that actually ran.
+- `Commit`: hash and Conventional Commit message.
+- `Siguiente`: next feature id and next required role/action.
 
-Sesión nueva en el primer pase. En retrabajo o revalidación, continúa el mismo subagente con su `sessionID` y pasa solo el delta; indica que no relea lo ya leído (solo el delta y lo que este cite). Usa sesión nueva únicamente si no hay sesión utilizable (fallback), pasando el delta y las rutas necesarias. Ordena el prompt para cache: preámbulo fijo del worktree primero; delta variable al final.
+When no meaningful manual test exists, say so and explain the closest verification command. Do not invent product behavior that was not implemented.
 
-Al volver de cada subagente, comprueba la transición con grep de la entrada en `.worktrees/<feature-id>/feature_list.json` (nunca el texto del subagente). Si el `status` no es el esperado, para y reporta la incoherencia.
+## Reviewing Subagent Results
 
-**Fallos y paradas.**
+After a subagent returns:
 
-| Situación | Acción |
-|---|---|
-| Entorno sucio, rebase/merge en curso | Parar sin tocar nada |
-| Rama o worktree previo del flujo | Parar y pedir resolverlo |
-| Features con dependencia mutua en la corrida | Parar y advertir |
-| Dudas abiertas | §3.3.c: preguntar y pasar respuestas al planner; con `--auto`/sin humano, anotar y continuar |
-| Dudas siguen tras la ronda de preguntas | Continuar a auditoría y reportar |
-| 3 auditorías sin APTA | Dejar `not_started`, conservar worktree y parar |
-| Validación falla 3 veces | Deja `passing`, conserva worktree, parar |
-| No verificable (sin AVD/red/clave) | No reintenta; deja `passing`, reporta desbloqueo |
-| `gh` sin auth | No crea PR; deja rama y worktree, explica el desbloqueo |
-| `subagent` devuelve estado incoherente | Parar y reportar |
+- verify the expected artifact exists or the expected verdict is present,
+- check that the subagent stayed in role,
+- check for obvious missing state updates,
+- summarize the next action.
 
-## 5. Salida
+Do not redo the subagent's work unless it clearly failed or the user asks.
 
-Reporta (≤10 líneas): Features procesadas (en orden) y estado final `<id: validated|passing|not_started>`; Preguntas al humano por feature `<n preguntadas / n resueltas>` y rondas; Revisiones de clarify y validaciones por feature (`completa|delta` por intento) con RF validados; PR de cada feature validada `<URL>` (o por qué no se creó); Worktrees `<eliminados>` / `<conservados → ruta>`; Bloqueos y prerrequisitos para desbloquear; Procesos de Gradle o emuladores pendientes y temporales sin versionar.
+## Output Summary
 
-**Checklist:**
+Report:
 
-- [ ] Preflight limpio: sin cambios, rebase/merge, worktrees ni ramas previas.
-- [ ] Cada transición leída de `feature_list.json` del worktree (grep de la entrada), no del texto del subagente.
-- [ ] En reintentos y retrabajos continué la sesión anterior del subagente con `sessionID`, pasé solo el delta (a auditoría/validación incluido) e inicié una sesión limpia únicamente cuando aplica el fallback de §4.
-- [ ] Cada feature termina `validated` (con PR) o el flujo se detiene con el bloqueo anotado.
-- [ ] Ningún PR abierto sin `validated`; worktrees limpiados o conservados con justificación.
-- [ ] `PROGRESS.md` y `docs/progress-history.md` actualizados y sin secretos ni temporales sin versionar.
+- selected feature id,
+- role executed,
+- subagent used,
+- artifact or files produced/updated,
+- verification or verdict summary,
+- user-facing summary of what changed,
+- user-facing instructions for how to test the accepted feature locally,
+- commit hash and commit message when a commit was created,
+- next required role/action.
