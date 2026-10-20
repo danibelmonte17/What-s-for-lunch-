@@ -2,7 +2,7 @@
 feature: buscar-y-filtrar-recetas
 category: funcional
 depends_on: [crear-receta]
-status: ready
+status: draft            # draft | needs-clarification (hay incógnitas, no detiene) | ready (lo escribe el modo auditoría con APTA)
 source: feature_list.json
 ---
 
@@ -74,6 +74,8 @@ para encontrar rápidamente la que quiero cocinar.
 
 ## Fuera de alcance
 
+> Incluye lo que queda condicionado a una duda abierta, no solo lo que se descarta por completo.
+
 - Filtros por tiempo y dificultad y su drawer del prototipo: esta feature solo filtra por momento culinario.
 - Contador de resultados del prototipo («X recetas disponibles»).
 - Ordenación por relevancia de los resultados (se conserva el orden actual, RF-14).
@@ -91,8 +93,6 @@ Todos los RF pasan su verificación (`Plan de verificación`) en el emulador, co
 ## Dudas abiertas
 
 > Cada duda de aquí se copia a `docs/risks-and-open-questions.md` como fila `Q-<feature-id>-<n>` (ver «Registro de aclaraciones» en la skill).
-
-Todas resueltas por el humano el 2026-10-19; se conservan por trazabilidad.
 
 - [RESUELTA: ¿el filtro por momento culinario es de selección única con «Todas» por defecto (como el prototipo) o de selección múltiple?] — no bloqueante. Confirmada por el humano (2026-10-19): selección única con opción «Todas» (RF-5, RF-6, RF-8).
 - [RESUELTA: ¿la comparación del buscador ignora tildes y espacios exteriores además de mayúsculas?] — no bloqueante. Confirmada por el humano (2026-10-19): comparación normalizada completa, insensible a mayúsculas y tildes y con espacios recortados, en título e ingredientes (RF-3).
@@ -157,11 +157,15 @@ Todas resueltas por el humano el 2026-10-19; se conservan por trazabilidad.
 
 ### Carencias actuales
 
+> Incluye lo que falta por confirmar por una duda abierta (no solo infraestructura ausente).
+
 - Sin `kotlinx-coroutines-test`: hace falta para el test de debounce con tiempo virtual (se añade a `testImplementation`).
 - Sin `testTag` del buscador, los chips y el estado «sin resultados» (se añaden en `MisRecetasTestTags`).
 - Sin provisionales pendientes: las 5 dudas de la spec quedaron confirmadas por el humano el 2026-10-19 (ver «Dudas abiertas»).
 
 ## Enfoque técnico
+
+> Estrategia suficiente para que otro agente ejecute sin replanificar. Marca como provisional lo que dependa de una duda abierta y di de qué duda depende.
 
 - **Regla de filtrado** en `domain/misrecetas/RecipeSearchFilter.kt` (nuevo, puro): `filterRecipes(recipes, query, moment)` con `moment: MealMoment?` (`null` = Todas). Normaliza query, títulos y nombres de ingrediente (minúsculas, sin tildes vía `java.text.Normalizer`, sin espacios exteriores; confirmado en Q-buscar-y-filtrar-recetas-2) y aplica: contiene en título o en cualquier nombre de ingrediente (RF-1, RF-3) Y momento (RF-7, RF-9, RF-10). Vacío = sin criterio de texto (RF-4). Devuelve la lista filtrada conservando el orden de entrada (RF-14); incluye Borradores y Publicadas (RF-1).
 - **Estado de pantalla**: `MisRecetasState` gana `NoResults` y `misRecetasStateOf(recipes, visible)` (compatibles con la firma actual): `Empty` si la colección está vacía (RF-13), `NoResults` si hay Recetas pero ninguna visible (RF-11), `WithRecipes` en caso contrario.
@@ -187,7 +191,7 @@ Todas resueltas por el humano el 2026-10-19; se conservan por trazabilidad.
 
 - Fuente de diseño: `DESIGN.md` + prototipo `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (orientativo, `P16`).
 - Pantallas o estados afectados: Mis Recetas (buscador + chips sobre la lista; nuevo estado «sin resultados»); estado vacío sin cambios.
-- Fidelidad visual (NFR-2): buscador con icono, chips redondeados con activo en `primary` y estado «sin resultados» con icono `search_off` siguiendo los tokens de `uxdocs/DESIGN.md`; targets ≥ 48 dp; 2 capturas de emulador API 30+ comparadas con el prototipo.
+- Fidelidad visual (NFR-2): buscador con icono, chips redondeados con activo en `primary` y estado «sin resultados» con icono `search_off` siguiendo los tokens de `DESIGN.md`; objetivos táctiles ≥ 48 dp; comparación por captura en emulador API 30+ (lista en «Evidencia a capturar»).
 - ¿Nuevo artefacto de diseño necesario?: no — el prototipo cubre buscador, chips y estado sin resultados.
 
 ## Impacto en documentación duradera
@@ -221,16 +225,16 @@ Todas resueltas por el humano el 2026-10-19; se conservan por trazabilidad.
   - Borrar el buscador con filtro activo → solo el filtro (RF-4); valores iniciales: buscador vacío y «Todas» (RF-6); elegir un momento deselecciona el anterior (RF-8); «Todas» muestra todos (RF-9); colección vacía → estado vacío sin buscador ni filtro (RF-13); textos en es/en (NFR-1).
   - Navegar al formulario y volver a Mis Recetas → búsqueda y filtro intactos (RF-15); cerrar y reabrir la app → valores iniciales (RF-6).
 - Unit: normalización (mayúsculas/tildes/espacios, RF-3), conservación de orden (RF-14) y debounce con tiempo virtual (RF-2).
-- UI *(solo el validador)*: hasta 2 capturas en emulador API 30+ (lista filtrada por Cena y estado «sin resultados») comparadas con `uxdocs/chefencasa_mis_recetas_y_crud/code.html` y `DESIGN.md`, guardadas según «Evidencia a capturar».
+- UI *(solo el validador)*: hasta 2 capturas de los estados clave de «Evidencia a capturar» en emulador API 30+, comparadas con `uxdocs/chefencasa_mis_recetas_y_crud/code.html` y `DESIGN.md`.
 - Scripts de verificación (`init`/`lint`/`unit`/`e2e`): no se tocan.
 
 ## Evidencia a capturar
 
-> Presupuesto: ≤4 artefactos y solo de esta feature (1 informe + ≤2 capturas + ≤1 E2E). Al revalidar se reemplaza el set anterior.
+> Presupuesto: **≤4 artefactos y solo de esta feature** (1 informe + ≤2 capturas + ≤1 E2E). Al revalidar se reemplaza el set anterior. El informe resume lint/unit/e2e y la fidelidad. La lista de capturas y rutas vive solo aquí; «Impacto visual» y «Plan de verificación» la referencian sin copiarla.
 
 - `docs/evidence/buscar-y-filtrar-recetas/informe-validacion.md` — resumen de `lint`/`unit`/`e2e` (con los tests de `BuscarYFiltrarRecetasE2ETest`) y de la fidelidad.
-- UI: captura `mis-recetas-filtro-cena.png` — Mis Recetas con el filtro Cena aplicado (es).
-- UI: captura `mis-recetas-sin-resultados.png` — estado «sin resultados» con su acción de restablecer (es).
+- UI: `docs/evidence/buscar-y-filtrar-recetas/mis-recetas-filtro-cena.png` — Mis Recetas con el filtro Cena aplicado (es).
+- UI: `docs/evidence/buscar-y-filtrar-recetas/mis-recetas-sin-resultados.png` — estado «sin resultados» con su acción de restablecer (es).
 
 ## Checklist del validador
 
