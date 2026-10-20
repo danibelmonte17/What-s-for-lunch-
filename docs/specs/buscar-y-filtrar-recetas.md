@@ -1,256 +1,250 @@
----
-feature: buscar-y-filtrar-recetas
-category: funcional
-depends_on: [crear-receta]
-status: draft            # draft | needs-clarification (hay incógnitas, no detiene) | ready (lo escribe el modo auditoría con APTA)
-source: feature_list.json
----
+# Feature Implementation Spec: Buscar y filtrar recetas
 
-# Spec: Buscar y filtrar recetas
+## Source Feature
 
-# PARTE A · CONTRATO
+- `id`: buscar-y-filtrar-recetas
+- `area`: funcional
+- `depends_on`: crear-receta (`accepted`)
+- `status`: `not_started` — reabierta el 2026-10-20 a petición del usuario (venía de `validated`/`accepted` del harness antiguo) para corregir la fidelidad visual de sus controles frente a `uxdocs/`
+- `source`: `feature_list.json`
 
-> QUÉ y POR QUÉ. Sin stack, arquitectura, nombres de archivos, esquemas, algoritmos ni firmas.
+## Goal
 
-## Contexto y objetivo
+Mis Recetas debe permitir localizar cualquier Receta en pocos segundos: un buscador textual sobre título e ingredientes (comparación normalizada, debounce de 300 ms) combinable con un filtro por Momento culinario de selección única (Todas, Desayuno, Almuerzo, Cena, Postre), con estado «sin resultados» y acción de restablecer. El comportamiento funcional (escenarios S1-S11) ya está implementado y se verificó en los ciclos 1-6 (`docs/evidence/buscar-y-filtrar-recetas/informe-validacion.md`); esta pasada lo re-verifica sin regresión y corrige la fidelidad visual.
 
-Mis Recetas ya lista las Recetas creadas (`crear-receta`, `editar-receta`) ordenadas por título, pero a medida que la colección crece encontrar una concreta obliga a desplazarse por toda la lista. Esta feature añade a Mis Recetas un buscador textual sobre título e ingredientes con debounce y un filtro por momento culinario, combinables entre sí, para que el usuario localice cualquier Receta en pocos segundos. Sigue el prototipo de Mis Recetas (`uxdocs/chefencasa_mis_recetas_y_crud/code.html`).
+Motivo de la reapertura (petición del usuario, 2026-10-20): los controles de esta feature no se ajustan visualmente al prototipo `uxdocs/chefencasa_mis_recetas_y_crud/code.html`. La **fidelidad visual frente a `uxdocs/` pasa a ser un requisito verificable** (V1-V3, «Visual Design Impact»): buscador, chips de momento y estado «sin resultados» deben calcar atributo a atributo la composición, los colores por rol, las formas, la iconografía y la tipografía del prototipo, comprobable por muestreo de píxeles y `uiautomator` en el emulador.
 
-## Actores y permisos
+## Non-Goals
 
-- **Usuario** (único rol del MVP, propietario del dispositivo): busca y filtra sus Recetas (Borradores y Publicadas). Sin cuentas ni roles adicionales (`P31`).
+- Filtros por tiempo y dificultad, su drawer y el botón `tune` del prototipo (el buscador va a ancho completo).
+- Contador de resultados del prototipo («X recetas disponibles»).
+- Ordenación por relevancia: se conserva el orden actual de la lista.
+- Badge de Coincidencia (`mostrar-badge-de-coincidencia`) y acciones CRUD de la tarjeta («Editar» es `editar-receta`, «Eliminar» es `eliminar-receta`, «Cocinar Ahora» de otras features).
+- Fidelidad visual de la tarjeta y del resto de la pantalla: la de las tarjetas la cubre `afinar-fidelidad-visual-del-formulario` (`accepted`); cabecera, «Crear», contador y barra inferior pertenecen a otras features. Esta feature es fiel solo en sus tres bloques (V1-V3).
+- Búsqueda o filtros en otras pantallas (Escáner, Lista de la Compra, Pinche); sugerencias, autocompletado o historial del buscador.
+- Persistencia de búsqueda y filtro tras cerrar la app: se restablecen a los valores iniciales (Q-buscar-y-filtrar-recetas-5).
+- Filtro de momento múltiple, comparación sin normalizar y debounce distinto de 300 ms (Q-buscar-y-filtrar-recetas-1 a -3).
+- Copy de la interfaz: se conservan los textos es/en ya validados en `strings.xml`; la fidelidad exigida es visual (composición, color, forma, iconografía, tipografía). El copy del prototipo queda fuera porque cada spec propone su copy (`Q-arrancar-app-en-mis-recetas-5`); si el usuario quiere calcar también el copy, será una decisión explícita aparte.
 
-## Historia
+## Job Story
 
-Cuando tengo varias recetas guardadas en Mis Recetas,
+Cuando tengo varias Recetas guardadas en Mis Recetas,
 quiero buscarlas por nombre o ingrediente y filtrarlas por momento culinario,
 para encontrar rápidamente la que quiero cocinar.
 
-## Requisitos funcionales
+## Users And Permissions
 
-> Un patrón EARS por requisito, una sola frase, verificable. Incluye aquí los casos límite y errores.
+- **Usuario** (único rol del MVP, propietario del dispositivo; sin cuentas ni roles, `P31`): busca y filtra sus Recetas, Borradores y Publicadas. Nada de esta feature exige permisos adicionales.
 
-**Búsqueda textual**
+## Acceptance Scenarios
 
-- RF-1: CUANDO el usuario escribe texto en el buscador de Mis Recetas, EL SISTEMA muestra solo las Recetas cuyo título o alguno de sus nombres de ingrediente contiene el texto escrito.
-- RF-2: CUANDO el usuario teclea varias pulsaciones seguidas en el buscador, EL SISTEMA aplica el texto una sola vez, 300 ms después de la última pulsación.
-- RF-3: SI el texto escrito difiere de un título o de un nombre de ingrediente solo en mayúsculas, tildes o espacios exteriores, ENTONCES EL SISTEMA lo considera coincidencia.
-- RF-4: SI el buscador queda vacío, ENTONCES EL SISTEMA muestra todas las Recetas que cumplan el filtro de momento culinario activo.
+### Scenario 1: Filtrar por momento culinario (verify 1 de `feature_list.json`)
 
-**Filtro por momento culinario**
+Given tres Recetas con momentos culinarios distintos (Cena, Almuerzo, Desayuno) en Mis Recetas
+When el usuario selecciona el chip «Cena»
+Then solo aparece la Receta de Cena y los demás chips quedan deseleccionados
 
-- RF-5: EL SISTEMA ofrece como filtro por momento culinario exactamente Desayuno, Almuerzo, Cena y Postre, además de la opción Todas.
-- RF-6: EL SISTEMA usa como valores iniciales del buscador y del filtro el texto vacío y el filtro Todas.
-- RF-7: CUANDO el usuario elige un momento culinario en el filtro, EL SISTEMA muestra solo las Recetas con ese momento culinario.
-- RF-8: CUANDO el usuario elige un momento culinario, EL SISTEMA deselecciona el filtro previamente activo (selección única).
-- RF-9: MIENTRAS el filtro Todas está seleccionado, EL SISTEMA muestra Recetas de todos los momentos culinarios.
+### Scenario 2: Buscar por ingrediente (verify 2 de `feature_list.json`)
 
-**Combinación y resultados**
+Given varias Recetas, una con el ingrediente «Pollo»
+When el usuario escribe «pollo» en el buscador
+Then aparecen solo las Recetas con ese texto en el título o en algún nombre de ingrediente
 
-- RF-10: MIENTRAS hay texto en el buscador y un momento culinario elegido, EL SISTEMA muestra solo las Recetas que cumplen ambos criterios.
-- RF-11: SI ninguna Receta coincide con el texto del buscador y el filtro activos, ENTONCES EL SISTEMA muestra el estado «sin resultados» con una acción para restablecer la búsqueda y el filtro.
-- RF-12: CUANDO el usuario pulsa la acción de restablecer del estado «sin resultados», EL SISTEMA vacía el buscador y selecciona el filtro Todas.
-- RF-13: SI la colección de Recetas está vacía, ENTONCES EL SISTEMA muestra el estado vacío de Mis Recetas con sus acciones y sin buscador ni filtro.
-- RF-14: EL SISTEMA conserva el orden de la lista de Mis Recetas al aplicar búsqueda y filtro.
-- RF-15: MIENTRAS la app sigue en memoria, EL SISTEMA conserva el texto del buscador y el filtro de momento activos al volver a Mis Recetas.
+### Scenario 3: Combinar búsqueda y filtro
 
-## Requisitos no funcionales
+Given texto en el buscador y un momento culinario elegido
+When se aplica la búsqueda tras el debounce
+Then solo aparecen las Recetas que cumplen ambos criterios
 
-- NFR-1: EL SISTEMA muestra los textos del buscador, del filtro y del estado «sin resultados» en español e inglés vía `strings.xml` (`P19`).
-- NFR-2: EL SISTEMA ofrece objetivos táctiles de al menos 48 dp en el buscador, los chips de filtro y la acción de restablecer (`DESIGN.md`).
+### Scenario 4: Debounce de 300 ms
 
-## Casos límite
+Given el buscador con foco
+When el usuario teclea varias pulsaciones seguidas
+Then el texto se aplica una sola vez, 300 ms después de la última pulsación
 
-- Buscador vacío con filtro activo → solo aplica el filtro → RF-4.
-- Texto sin coincidencias, con o sin filtro activo → estado «sin resultados» → RF-11.
-- Restablecer desde «sin resultados» → vuelve a la lista completa → RF-12.
-- Mayúsculas, tildes y espacios exteriores en texto o títulos → coinciden → RF-3.
-- Ráfaga de escritura rápida → una sola actualización tras la pausa → RF-2.
-- Colección de Recetas vacía → estado vacío existente, sin buscador ni filtro → RF-13.
-- Borradores: la búsqueda y el filtro incluyen Recetas en estado Borrador y Publicada → RF-1, RF-7.
-- Dos Recetas del mismo momento o con títulos parecidos → ambas aparecen, en el orden actual de la lista → RF-7, RF-14.
-- Navegar a otra pantalla y volver a Mis Recetas dentro de la sesión → se conservan búsqueda y filtro → RF-15.
-- Cerrar y reabrir la app → buscador vacío y filtro Todas → RF-6.
+### Scenario 5: Comparación normalizada
 
-## Fuera de alcance
+Given un título o un nombre de ingrediente con mayúsculas, tildes y espacios exteriores
+When el usuario escribe la variante sin tildes ni espacios
+Then la Receta coincide por subcadena normalizada
 
-> Incluye lo que queda condicionado a una duda abierta, no solo lo que se descarta por completo.
+### Scenario 6: Borrar el buscador con filtro activo
 
-- Filtros por tiempo y dificultad y su drawer del prototipo: esta feature solo filtra por momento culinario.
-- Contador de resultados del prototipo («X recetas disponibles»).
-- Ordenación por relevancia de los resultados (se conserva el orden actual, RF-14).
-- Badge de Coincidencia en las tarjetas (`mostrar-badge-de-coincidencia`).
-- Acciones CRUD de las tarjetas: «Editar receta» ya existe (`editar-receta`); «Eliminar» es `eliminar-receta`; «Cocinar Ahora» es de otras features.
-- Búsqueda o filtros en otras pantallas (Escáner, Lista de la Compra, Pinche).
-- Sugerencias, autocompletado o historial del buscador.
-- Persistencia de la búsqueda y del filtro tras cerrar la app: se restablecen a los valores iniciales (RF-6; confirmado en Q-buscar-y-filtrar-recetas-5).
-- Filtro de momento múltiple, comparación sin normalizar y retardo de debounce distinto de 300 ms: descartados por las respuestas confirmadas (Q-buscar-y-filtrar-recetas-1 a -3).
+Given un momento elegido y texto en el buscador
+When el usuario vacía el buscador
+Then siguen apareciendo solo las Recetas del momento elegido
 
-## Criterios de finalización
+### Scenario 7: Sin resultados y restablecer
 
-Todos los RF pasan su verificación (`Plan de verificación`) en el emulador, con `lint`, `unit` y `e2e` en verde y la evidencia capturada según «Evidencia a capturar».
+Given criterios de búsqueda y filtro sin ninguna coincidencia
+When se muestra el estado «sin resultados»
+Then el buscador y el filtro siguen visibles, el estado muestra su mensaje y la acción, y al pulsar «Ver todas las recetas» el buscador queda vacío y «Todas» seleccionado
 
-## Dudas abiertas
+### Scenario 8: Colección vacía
 
-> Cada duda de aquí se copia a `docs/risks-and-open-questions.md` como fila `Q-<feature-id>-<n>` (ver «Registro de aclaraciones» en la skill).
+Given Mis Recetas sin ninguna Receta
+When se abre la pantalla
+Then se muestra el estado vacío de Mis Recetas con sus acciones y sin buscador ni filtro (Q-buscar-y-filtrar-recetas-4)
 
-- [RESUELTA: ¿el filtro por momento culinario es de selección única con «Todas» por defecto (como el prototipo) o de selección múltiple?] — no bloqueante. Confirmada por el humano (2026-10-19): selección única con opción «Todas» (RF-5, RF-6, RF-8).
-- [RESUELTA: ¿la comparación del buscador ignora tildes y espacios exteriores además de mayúsculas?] — no bloqueante. Confirmada por el humano (2026-10-19): comparación normalizada completa, insensible a mayúsculas y tildes y con espacios recortados, en título e ingredientes (RF-3).
-- [RESUELTA: ¿qué retardo de debounce usa el buscador?] — no bloqueante. Confirmada por el humano (2026-10-19): debounce de 300 ms (RF-2).
-- [RESUELTA: ¿se muestran el buscador y el filtro cuando la colección de Recetas está vacía?] — no bloqueante. Confirmada por el humano (2026-10-19): se ocultan; solo queda el estado vacío (RF-13).
-- [RESUELTA: ¿la búsqueda y el filtro se conservan al navegar y volver a Mis Recetas y tras cerrar la app?] — no bloqueante. Confirmada por el humano (2026-10-19): estado en memoria, se conserva al navegar dentro de la sesión y se restablece al cerrar la app (RF-15, RF-6).
+### Scenario 9: Valores iniciales y selección única
 
-## Trazabilidad
+Given la app recién iniciada
+When se abre Mis Recetas
+Then el buscador está vacío y «Todas» está seleccionado, y al elegir un momento el activo previo se deselecciona (Q-buscar-y-filtrar-recetas-1)
 
-> Apunta, no describe: ≤15 palabras por celda; la aserción completa vive una sola vez en «Plan de verificación» o «Enfoque técnico».
+### Scenario 10: Estado en memoria
 
-| RF | Origen | Verificación | Evidencia |
-|---|---|---|---|
-| RF-1 | `steps`: buscador sobre título e ingredientes | verify 2 (ingrediente en el buscador) | informe E2E |
-| RF-2 | `steps`: buscador con debounce | unit: tiempo virtual (ver Plan de verificación) | resultado unit |
-| RF-3 | derivado: caso límite (comparación) | escenario unit: normalización | resultado unit |
-| RF-4 | derivado: caso límite (buscador vacío) | escenario E2E: borrar el buscador | informe E2E |
-| RF-5 | `steps`: filtro por momento culinario | escenario E2E: opciones del filtro visibles | informe E2E |
-| RF-6 | derivado: valor por defecto | escenario E2E: valores iniciales | informe E2E |
-| RF-7 | `steps`: filtro por momento culinario | verify 1 (filtrar por Cena) | informe E2E |
-| RF-8 | derivado: selección única | escenario unit: cambiar de momento | resultado unit |
-| RF-9 | derivado: caso límite («Todas») | escenario E2E: «Todas» muestra todos | informe E2E |
-| RF-10 | `description`: combinando búsqueda y filtro | escenario E2E combinado | informe E2E |
-| RF-11 | derivado: caso límite (sin coincidencias) | escenario E2E: sin resultados | informe E2E + captura |
-| RF-12 | derivado: caso límite (restablecer) | escenario E2E: pulsar restablecer | informe E2E |
-| RF-13 | derivado: caso límite (colección vacía) | escenario E2E: estado vacío intacto | informe E2E |
-| RF-14 | derivado: caso límite (orden) | escenario unit: orden conservado | resultado unit |
-| RF-15 | duda resuelta Q-buscar-y-filtrar-recetas-5 | escenario E2E: navegar y volver | informe E2E |
-| NFR-1 | restricción `P19` | escenario E2E en es/en | informe E2E |
-| NFR-2 | restricción `DESIGN.md` | UI: capturas y uiautomator | capturas |
+Given búsqueda y filtro activos
+When el usuario navega al formulario y vuelve a Mis Recetas
+Then se conservan; al cerrar y reabrir la app vuelven a los valores iniciales (Q-buscar-y-filtrar-recetas-5)
 
-## Registro de iteraciones
+### Scenario 11: Orden y estados de Receta conservados
 
-- 2026-10-19: el humano resuelve las 5 dudas confirmando los valores asumidos; se añade RF-15 (retención en memoria) con sus casos límite y trazabilidad, y se retiran las marcas provisionales de la Parte B.
+Given Recetas en estado Borrador y Publicada con un orden dado
+When se aplican búsqueda y filtro
+Then aparecen ambos estados y se conserva el orden de la lista
 
-# PARTE B · PLAN
+### Scenario 12: Fidelidad visual de los controles (V1-V3)
 
-> CÓMO. No puede contradecir la Parte A ni añadir comportamiento nuevo.
+Given Mis Recetas con Recetas (lista y estado «sin resultados»)
+When se captura la pantalla en un emulador API 30+ y se compara con `uxdocs/chefencasa_mis_recetas_y_crud/code.html`
+Then buscador, chips de momento y estado «sin resultados» cumplen V1-V3, comprobado por muestreo de píxeles de los roles de color y por `uiautomator` (bloques, iconos, textos y objetivos ≥ 48 dp)
 
-## Investigación del repositorio
+## Repository Research
 
-### Archivos inspeccionados
+### Files Inspected
 
-- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasScreen.kt` — pantalla, `MisRecetasTestTags` y etiquetas de momento (`momento_*`).
-- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasViewModel.kt` — `MisRecetasUiState` y StateFlow desde `observeRecipes()`.
-- `app/src/main/java/com/whatsforlunch/app/domain/misrecetas/MisRecetasState.kt` — estado Empty/WithRecipes derivado de la colección.
-- `app/src/main/java/com/whatsforlunch/app/domain/model/Recipe.kt`, `RecipeIngredient.kt`, `MealMoment.kt` — modelo, ingredientes y momentos.
-- `app/src/main/java/com/whatsforlunch/app/data/local/RecipeDao.kt` — Recetas observadas ordenadas por título.
-- `app/src/main/java/com/whatsforlunch/app/data/repository/InMemoryRecipeRepository.kt` y `app/src/androidTest/java/com/whatsforlunch/app/EditarRecetaE2ETest.kt` — patrón de siembra en E2E.
-- `app/build.gradle.kts`, `gradle/libs.versions.toml` — dependencias de test (solo JUnit 4).
-- `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml` — claves existentes es/en.
-- `uxdocs/chefencasa_mis_recetas_y_crud/code.html` — prototipo: buscador, chips de momento, estado sin resultados.
-- `docs/domain-model.md`, `DESIGN.md` — reglas y pautas de interfaz.
+- `feature_list.json` — `user_visible_behavior`, `steps` y `verification` de la feature; `crear-receta` en `accepted`.
+- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasScreen.kt` — UI actual: `OutlinedTextField` para el buscador, `FilterChip` sin icono para los momentos y `NoResults` con botón `primary`; `MisRecetasTestTags`.
+- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasViewModel.kt` — `MisRecetasUiState`, `debounce(300)` solo sobre el texto, filtro al instante, estado en memoria.
+- `app/src/main/java/com/whatsforlunch/app/domain/misrecetas/RecipeSearchFilter.kt` — filtrado y normalización (NFD, sin tildes, minúsculas, trim).
+- `app/src/main/java/com/whatsforlunch/app/domain/misrecetas/MisRecetasState.kt` — `Empty`/`WithRecipes`/`NoResults`.
+- `app/src/main/java/com/whatsforlunch/app/domain/model/MealMoment.kt`, `Recipe.kt` — momentos culinarios y modelo.
+- `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml` — textos es/en actuales (hint, «Todas», sin resultados, restablecer).
+- `app/src/test/java/com/whatsforlunch/app/domain/RecipeSearchFilterTest.kt`, `.../MisRecetasStateTest.kt`, `.../ui/misrecetas/MisRecetasSearchDebounceTest.kt` — unit actuales (19 tests de suite tras el merge).
+- `app/src/androidTest/java/com/whatsforlunch/app/BuscarYFiltrarRecetasE2ETest.kt` (7 tests) y `EditarRecetaE2ETest.kt` — patrón E2E con `InMemoryRecipeRepository` y pantalla real.
+- `app/build.gradle.kts`, `gradle/libs.versions.toml` — `kotlinx-coroutines-test` y `material-icons-extended` ya presentes.
+- `app/src/main/java/com/whatsforlunch/app/ui/theme/Color.kt`, `Type.kt`, `Spacing.kt`, `WarmShadow.kt` — tokens disponibles: roles de color, `WarmTypography`, `WarmRadius.md` = 12 dp, `warmShadow`.
+- `uxdocs/chefencasa_mis_recetas_y_crud/code.html` y `screen.png` — prototipo: buscador, chips de momento con icono y estado sin resultados.
+- `uxdocs/DESIGN.md`, `DESIGN.md` — tokens YAML (mandan, `P17`), prosa orientativa (`P16`), sombra ámbar-carbón y excepción compacta de botones.
+- `docs/evidence/buscar-y-filtrar-recetas/informe-validacion.md` — ciclo 6: funcional en verde y 3 divergencias de fidelidad declaradas «no bloqueantes» (buscador, chips sin icono, botón del estado sin resultados).
+- `docs/specs/afinar-fidelidad-visual-del-formulario.md` — precedente de fidelidad verificable (muestreo de píxeles + `uiautomator`) y de la excepción compacta (Q-editar-receta-6).
+- `docs/risks-and-open-questions.md` — Q-buscar-y-filtrar-recetas-1 a -5, todas resueltas.
 
-### Patrones existentes a seguir
+### Existing Patterns To Follow
 
-- MVVM + StateFlow con reglas en `domain/` sin dependencias de UI (`MisRecetasState`); Koin inyecta `MisRecetasViewModel(get())`.
-- `MisRecetasUiState` se expone como `StateFlow` con `stateIn(WhileSubscribed(5_000))`.
-- E2E Compose con `testTag` en `MisRecetasTestTags`; siembra con `InMemoryRecipeRepository` y composables reales (`EditarRecetaE2ETest`); locale inyectado en el test (`MisRecetasLocalizationE2ETest`).
-- Etiquetas de momento culinario ya localizadas (`momento_desayuno`… `momento_postre`, `MealMoment.labelRes()`).
-- Comentarios en español; código e identificadores en inglés para lo nuevo (los identificadores antiguos en español los resuelve `revisar-identificadores-en-ingles`).
+- MVVM + StateFlow con reglas en `domain/` sin dependencias de UI; Koin inyecta `MisRecetasViewModel(get())`.
+- Fidelidad visual como requisito verificable por muestreo de píxeles y `uiautomator` sobre capturas del emulador (precedente `afinar-fidelidad-visual-del-formulario`, NFR-4).
+- Acciones compactas: 36 dp de altura visual con área táctil ≥ 48 dp (excepción aprobada, Q-editar-receta-6).
+- `WarmTypography` ya mapea los roles del sistema: `headline-sm` → `headlineSmall` (18 sp), `body-sm` → `bodySmall` (14 sp), `label-md` → `labelMedium` (13 sp), `label-sm` → `labelSmall` (11 sp).
+- E2E Compose con `testTag` estables en `MisRecetasTestTags` y locale inyectado en el test.
+- Comandos: scripts `init`/`lint`/`unit`/`e2e` sobre `./gradlew` (`docs/technical-discovery.md`).
 
-### Carencias actuales
+### Current Gaps
 
-> Incluye lo que falta por confirmar por una duda abierta (no solo infraestructura ausente).
+- Divergencias visuales a cerrar (V1-V3): el buscador es un `OutlinedTextField` M3 con borde en lugar del contenedor relleno del prototipo; los chips no llevan icono ni sombra y usan `FilterChip` de M3 (dibuja su propio contorno y puede dibujar check al seleccionar); el estado «sin resultados» no es tarjeta y su acción va en `primary` en lugar de `secondary`.
+- Los tests actuales no afirman la estructura visual (iconos por chip, jerarquía del estado sin resultados).
+- Sin pipeline automatizado de muestreo de píxeles ni screenshot testing: la comprobación visual la ejecuta el validador con capturas + `adb`/`uiautomator` (igual que en `afinar-fidelidad-visual-del-formulario`).
 
-- Sin `kotlinx-coroutines-test`: hace falta para el test de debounce con tiempo virtual (se añade a `testImplementation`).
-- Sin `testTag` del buscador, los chips y el estado «sin resultados» (se añaden en `MisRecetasTestTags`).
-- Sin provisionales pendientes: las 5 dudas de la spec quedaron confirmadas por el humano el 2026-10-19 (ver «Dudas abiertas»).
+## Technical Approach
 
-## Enfoque técnico
+- **Comportamiento (ya implementado; no se cambia)**: `RecipeSearchFilter.filterRecipes(recipes, query, moment)` normaliza (minúsculas, sin tildes, trim) y aplica «contiene en título o en nombre de ingrediente» Y «momento igual» (`null` = Todas), conservando el orden de entrada e incluyendo Borradores y Publicadas. `MisRecetasViewModel` usa `debounce(300)` solo sobre el texto (el filtro se aplica al instante al tocar un chip), expone `searchQuery`/`mealMomentFilter`/`visibleRecipes` y deriva `Empty`/`WithRecipes`/`NoResults` con `misRecetasStateOf`. El estado vive en el ViewModel (memoria: se conserva al navegar y se restablece al cerrar la app).
+- **UI (retrabajo de los tres bloques de V1-V3)**: sustituir el `OutlinedTextField` por el campo relleno del prototipo; dibujar los chips de momento como píldoras con icono fijo por momento y sin checkmark (previsiblemente `Surface` + `Row` en lugar de `FilterChip`); rehacer `NoResults` como tarjeta con icono circular y botón `secondary`. Se conservan los `testTag` existentes (`SEARCH_FIELD`, `FILTER_ROW`, `FILTER_CHIP_ALL`, `FILTER_CHIP_*`, `NO_RESULTS`, `RESET_FILTERS`) y se añaden solo los necesarios para afirmar los iconos.
+- **Textos**: sin cambios; el copy es/en ya validado se conserva (Non-Goals).
+- **Tests**: el unit existente cubre el comportamiento (S3-S5, S9, S11) y no cambia salvo firmas. `BuscarYFiltrarRecetasE2ETest` se mantiene (S1-S11) y se amplía con la estructura de V1-V3 (presencia de los cinco chips con icono y etiqueta, buscador relleno, tarjeta de sin resultados con su acción). El muestreo de píxeles de S12 lo ejecuta el validador.
 
-> Estrategia suficiente para que otro agente ejecute sin replanificar. Marca como provisional lo que dependa de una duda abierta y di de qué duda depende.
+## Expected File Changes
 
-- **Regla de filtrado** en `domain/misrecetas/RecipeSearchFilter.kt` (nuevo, puro): `filterRecipes(recipes, query, moment)` con `moment: MealMoment?` (`null` = Todas). Normaliza query, títulos y nombres de ingrediente (minúsculas, sin tildes vía `java.text.Normalizer`, sin espacios exteriores; confirmado en Q-buscar-y-filtrar-recetas-2) y aplica: contiene en título o en cualquier nombre de ingrediente (RF-1, RF-3) Y momento (RF-7, RF-9, RF-10). Vacío = sin criterio de texto (RF-4). Devuelve la lista filtrada conservando el orden de entrada (RF-14); incluye Borradores y Publicadas (RF-1).
-- **Estado de pantalla**: `MisRecetasState` gana `NoResults` y `misRecetasStateOf(recipes, visible)` (compatibles con la firma actual): `Empty` si la colección está vacía (RF-13), `NoResults` si hay Recetas pero ninguna visible (RF-11), `WithRecipes` en caso contrario.
-- **ViewModel** (`MisRecetasViewModel`): `searchQuery: MutableStateFlow<String>` y `mealMomentFilter: MutableStateFlow<MealMoment?>`; `debounce(SEARCH_DEBOUNCE_MS = 300)` (fija RF-2) solo sobre el flujo de texto, de modo que el filtro se aplica al instante al tocar un chip. Acciones `onSearchQueryChanged`, `onMealMomentSelected` (selección única, RF-8), `onResetFilters` (RF-12). `MisRecetasUiState` gana `searchQuery`, `mealMomentFilter` y `visibleRecipes`. El estado vive en el ViewModel, conservándose al navegar dentro de la sesión (RF-15) y sin persistir tras cerrar la app.
-- **UI** (`MisRecetasScreen`, ramas `Empty`/`WithRecipes` más la nueva `NoResults`): fila de buscador (icono `search` + campo, hint localizado) sobre la lista; fila de chips con «Todas» + 4 momentos (chip activo en `primary`, resto en `surface-container-lowest`, como el prototipo, orientativo `P16`); `NoResults` con icono `search_off`, mensaje y botón de restablecer. Con colección vacía se mantiene el estado vacío actual sin buscador ni filtro (RF-13). Nuevos `testTag`: `SEARCH_FIELD`, `FILTER_CHIP_ALL`, `FILTER_CHIP`, `NO_RESULTS`, `RESET_FILTERS`.
-- **Textos** es/en nuevos en `strings.xml` y `values-en/strings.xml`: hint del buscador, «Todas», título y mensaje de «sin resultados», acción «Ver todas las recetas» y etiqueta accesible del filtro; se reutilizan `momento_*` existentes (NFR-1).
-- **Unit** (`app/src/test`): `RecipeSearchFilterTest` (título, ingrediente, normalización, combinación AND, momento, orden, borradores) y `MisRecetasSearchDebounceTest` con `runTest` + `advanceTimeBy` (ráfaga → una única actualización 300 ms tras la última pulsación; selección única del filtro).
-- **E2E** (`app/src/androidTest/.../BuscarYFiltrarRecetasE2ETest.kt`): patrón de `EditarRecetaE2ETest` (repositorio en memoria sembrado con 3 Recetas de distinto momento, una con ingrediente «Pollo») sobre el ViewModel y la pantalla reales: verify 1, verify 2, combinado, sin resultados + restablecer, borrado del buscador, «Todas» por defecto, selección única, colección vacía intacta y textos es/en.
+- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasScreen.kt` — modificar; buscador (V1), chips con icono (V2) y estado «sin resultados» (V3).
+- `app/src/androidTest/java/com/whatsforlunch/app/BuscarYFiltrarRecetasE2ETest.kt` — modificar; afirma la estructura visual nueva sin perder los 7 tests actuales.
+- `app/src/test/java/com/whatsforlunch/app/...` — no se prevén cambios (comportamiento intacto); tocar solo si cambian firmas.
+- `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml` — no se prevén cambios (copy ya validado).
+- `app/src/main/java/com/whatsforlunch/app/ui/theme/...`, `domain/misrecetas/...`, `MisRecetasViewModel.kt`, `gradle/...` — no se prevén cambios.
+- `docs/validations/buscar-y-filtrar-recetas.md` y `docs/evidence/buscar-y-filtrar-recetas/*.png` — crear/actualizar al validar (evidencia).
 
-## Archivos esperados
+## Visual Design Impact
 
-- `app/src/main/java/com/whatsforlunch/app/domain/misrecetas/RecipeSearchFilter.kt` — crear; filtrado y normalización.
-- `app/src/main/java/com/whatsforlunch/app/domain/misrecetas/MisRecetasState.kt` — modificar; estado `NoResults` y derivación con lista visible.
-- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasViewModel.kt` — modificar; query, filtro, debounce y UiState ampliado.
-- `app/src/main/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasScreen.kt` — modificar; buscador, chips, estado «sin resultados» y TestTags.
-- `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml` — modificar; textos nuevos es/en.
-- `gradle/libs.versions.toml`, `app/build.gradle.kts` — modificar; `kotlinx-coroutines-test` en `testImplementation`.
-- `app/src/test/java/com/whatsforlunch/app/domain/RecipeSearchFilterTest.kt` — crear; unit de filtrado.
-- `app/src/test/java/com/whatsforlunch/app/ui/misrecetas/MisRecetasSearchDebounceTest.kt` — crear; unit de debounce y selección única.
-- `app/src/androidTest/java/com/whatsforlunch/app/BuscarYFiltrarRecetasE2ETest.kt` — crear; E2E de la feature.
+- UI involved: yes
+- Design source: `DESIGN.md` + prototipo `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (fidelidad 1:1 para V1-V3, a petición del usuario 2026-10-20; ante conflicto de prosa mandan los tokens YAML de `uxdocs/DESIGN.md`, `P17`)
+- Screens or states affected: Mis Recetas con Recetas (buscador + chips sobre la lista) y estado «sin resultados»; el estado vacío no cambia
+- New design artifact required: no — el prototipo cubre los tres bloques
 
-## Impacto visual
+Requisitos de fidelidad verificables (roles de `uxdocs/DESIGN.md`; objetivo táctil ≥ 48 dp en todos los controles, `DESIGN.md`):
 
-- Fuente de diseño: `DESIGN.md` + prototipo `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (orientativo, `P16`).
-- Pantallas o estados afectados: Mis Recetas (buscador + chips sobre la lista; nuevo estado «sin resultados»); estado vacío sin cambios.
-- Fidelidad visual (NFR-2): buscador con icono, chips redondeados con activo en `primary` y estado «sin resultados» con icono `search_off` siguiendo los tokens de `DESIGN.md`; objetivos táctiles ≥ 48 dp; comparación por captura en emulador API 30+ (lista en «Evidencia a capturar»).
-- ¿Nuevo artefacto de diseño necesario?: no — el prototipo cubre buscador, chips y estado sin resultados.
+**V1 · Buscador** — fila sobre la lista, a ancho completo (el botón `tune` del prototipo abre el drawer de tiempo/dificultad, fuera de alcance):
 
-## Impacto en documentación duradera
+- Contenedor relleno `surface-container-lowest` (#FFFFFF), radio 0.75 rem (12 dp), sombra cálida `shadow-sm` ámbar-carbón (`uxdocs/DESIGN.md` §Ambient Shadow Character), sin borde `outline`.
+- Icono `search` de 20 dp en `on-surface-variant` (#59413B) a la izquierda (12 dp de margen); texto `body-sm` (14 sp, Inter) en `on-surface` (#1B1C1A); placeholder en `on-surface-variant` al 60 %.
+- Padding interno 12 dp vertical, 40 dp a la izquierda (icono) y 16 dp a la derecha; altura mínima 48 dp.
 
-- `ARCHITECTURE.md`: no necesario — no existe y la estructura de capas no cambia.
-- `CONSTRAINTS.md`: no necesario — no existe.
-- `AGENTS.md`: no necesario — sin cambios de estructura, comandos ni convenciones.
-- Otros: `docs/domain-model.md` — no necesario; el filtrado es regla de presentación de Mis Recetas que vive en `domain/misrecetas/`, sin reglas `RD##` nuevas.
+**V2 · Chips de momento** — fila desplazable horizontalmente, separación 8 dp y margen interno 16 dp:
 
-## Plan y tareas
+- Chip en píldora (radio `full`), padding 16 dp horizontal y 10 dp vertical, sombra `shadow-sm`, icono de 18 dp + etiqueta `label-md` (13 sp, Plus Jakarta Sans SemiBold).
+- Icono fijo por chip (visible también en el activo, sin checkmark): Todas `restaurant_menu`, Desayuno `bakery_dining`, Almuerzo `skillet`, Cena `ramen_dining`, Postre `icecream`.
+- Chip activo: fondo `primary` (#A83212) con icono y texto `on-primary` (#FFFFFF).
+- Chip inactivo: fondo `surface-container-lowest` (#FFFFFF), texto `on-surface` (#1B1C1A) e icono con el tinte del momento: Desayuno `tertiary` (#8D4B00), Almuerzo `primary` (#A83212), Cena `secondary` (#006C4A), Postre `tertiary-container` (#B15F00); «Todas» inactivo en `on-surface`.
+- Altura visual del prototipo (~38 dp) con área táctil ≥ 48 dp (excepción compacta, como en Q-editar-receta-6).
 
-> Solo qué + `(cubre RF-n)`; el cómo vive en «Enfoque técnico», no lo re-expliques aquí.
+**V3 · Estado «sin resultados»** — los controles de búsqueda y filtro siguen visibles; solo se sustituye la lista:
 
-- [x] T1: `RecipeSearchFilter` en domain con normalización y combinación búsqueda+momento. (cubre RF-1, RF-3, RF-4, RF-7, RF-9, RF-10, RF-14)
-- [x] T2: `MisRecetasState` con `NoResults` y derivación desde la lista visible. (cubre RF-11, RF-13)
-- [x] T3: `MisRecetasViewModel` con query, filtro, debounce y acciones. (cubre RF-2, RF-6, RF-8, RF-12, RF-15)
-- [x] T4: UI de buscador, chips y estado «sin resultados» con TestTags y textos es/en. (cubre RF-5, RF-6, RF-11, RF-12, RF-13, NFR-1, NFR-2)
-- [x] T5: unit de filtrado y debounce con `kotlinx-coroutines-test`. (cubre RF-1, RF-2, RF-3, RF-4, RF-7, RF-8, RF-9, RF-10, RF-14)
-- [x] T6: E2E con repositorio sembrado y regresión de las features previas. (cubre RF-1, RF-4, RF-5, RF-6, RF-7, RF-9, RF-10, RF-11, RF-12, RF-13, RF-15, NFR-1)
-- [x] T7: harness `init`/`lint`/`unit`/`e2e` en verde y captura de evidencia.
+- Tarjeta `surface-container-lowest` (#FFFFFF) de radio 0.75 rem (12 dp) y sombra `shadow-sm`, centrada, con padding 40 dp y separación de 8 dp entre elementos.
+- Icono `search_off` de 28 dp en `primary` dentro de un círculo de 56 dp con fondo `surface-container` (#EFEEEA).
+- Título `headline-sm` (18 sp, Plus Jakarta Sans SemiBold) en `on-surface`; mensaje `body-sm` (14 sp, Inter) en `on-surface-variant`, con ancho máximo 320 dp.
+- Acción «Ver todas las recetas»: botón compacto relleno `secondary` (#006C4A) con texto `on-secondary` (#FFFFFF), radio 0.75 rem, etiqueta `label-md`, ancho al contenido, altura visual ≈ 36 dp y área táctil ≥ 48 dp.
 
-## Plan de verificación
+Divergencias que el ciclo 6 declaró «no bloqueantes» y que V1-V3 cierran: campo con borde `outline` en lugar del contenedor relleno; chips sin icono, sin sombra y con etiqueta en `on-surface-variant`; estado sin resultados sin tarjeta, con icono suelto en `on-surface-variant` y botón `primary`.
 
-- `./init.ps1` (o `./init.sh`) → exit 0 (compila, instala y abre).
-- `./lint.ps1` y `./unit.ps1` (o `.sh`) → exit 0; unit incluye `RecipeSearchFilterTest` y `MisRecetasSearchDebounceTest`.
-- `./e2e.ps1` (o `./e2e.sh`) en emulador API 30+ con `BuscarYFiltrarRecetasE2ETest`:
-  - verify 1: tres Recetas de distinto momento (Cena, Almuerzo, Desayuno) → filtrar por Cena → solo la de Cena.
-  - verify 2: escribir «Pollo» en el buscador → solo las Recetas con un ingrediente que lo contiene.
-  - Combinado: texto + momento → intersección de ambos criterios (RF-10).
-  - Sin coincidencias → estado «sin resultados» y restablecer vuelve a la lista completa (RF-11, RF-12).
-  - Borrar el buscador con filtro activo → solo el filtro (RF-4); valores iniciales: buscador vacío y «Todas» (RF-6); elegir un momento deselecciona el anterior (RF-8); «Todas» muestra todos (RF-9); colección vacía → estado vacío sin buscador ni filtro (RF-13); textos en es/en (NFR-1).
-  - Navegar al formulario y volver a Mis Recetas → búsqueda y filtro intactos (RF-15); cerrar y reabrir la app → valores iniciales (RF-6).
-- Unit: normalización (mayúsculas/tildes/espacios, RF-3), conservación de orden (RF-14) y debounce con tiempo virtual (RF-2).
-- UI *(solo el validador)*: hasta 2 capturas de los estados clave de «Evidencia a capturar» en emulador API 30+, comparadas con `uxdocs/chefencasa_mis_recetas_y_crud/code.html` y `DESIGN.md`.
-- Scripts de verificación (`init`/`lint`/`unit`/`e2e`): no se tocan.
+Copy fuera de la fidelidad (se conserva el validado): hint «Buscar por receta o ingrediente», título «No hay recetas que coincidan», mensaje «Prueba con otro texto o momento culinario.» y acción «Ver todas las recetas» (es/en).
 
-## Evidencia a capturar
+## Durable Documentation Impact
 
-> Presupuesto: **≤4 artefactos y solo de esta feature** (1 informe + ≤2 capturas + ≤1 E2E). Al revalidar se reemplaza el set anterior. El informe resume lint/unit/e2e y la fidelidad. La lista de capturas y rutas vive solo aquí; «Impacto visual» y «Plan de verificación» la referencian sin copiarla.
+- `ARCHITECTURE.md`: not needed — no existe y las capas no cambian (el filtrado sigue en `domain/misrecetas/`).
+- `CONSTRAINTS.md`: not needed — no existe; la fidelidad exigida es de esta feature. Si el usuario quiere que «1:1 con `uxdocs/`» sea regla general (hoy el material es orientativo, `P16`), se decide aparte y tocaría `DESIGN.md`.
+- `AGENTS.md`: not needed — sin cambios de flujo, comandos ni convenciones.
+- Other docs: `docs/domain-model.md` — not needed (sin reglas `RD##` nuevas: el filtrado es presentación de Mis Recetas). `docs/risks-and-open-questions.md` — not needed salvo que surjan dudas nuevas (Q-buscar-y-filtrar-recetas-1 a -5 ya resueltas).
 
-- `docs/evidence/buscar-y-filtrar-recetas/informe-validacion.md` — resumen de `lint`/`unit`/`e2e` (con los tests de `BuscarYFiltrarRecetasE2ETest`) y de la fidelidad.
-- UI: `docs/evidence/buscar-y-filtrar-recetas/mis-recetas-filtro-cena.png` — Mis Recetas con el filtro Cena aplicado (es).
-- UI: `docs/evidence/buscar-y-filtrar-recetas/mis-recetas-sin-resultados.png` — estado «sin resultados» con su acción de restablecer (es).
+## Implementation Plan
 
-## Checklist del validador
+1. Rehacer el buscador según V1 (contenedor relleno, icono, tipografía, padding).
+2. Rehacer la fila de chips según V2 (píldora con icono por momento, colores activo/inactivo, sombra, área táctil).
+3. Rehacer el estado «sin resultados» según V3 (tarjeta, icono circular, tipografía, botón `secondary`) manteniendo visibles buscador y filtro.
+4. Actualizar y ampliar `BuscarYFiltrarRecetasE2ETest` (S1-S11 sin regresión + estructura de V1-V3); ajustar unit solo si cambian firmas.
+5. Ejecutar el harness completo, capturar la evidencia y dejar la feature en `passing` lista para `feature-validator`.
 
-- [x] La implementación se queda dentro del alcance de esta spec.
-- [x] Cada RF de la tabla de trazabilidad pasa su verificación.
-- [x] La evidencia está presente, dentro del presupuesto (≤4) y solo de esta feature.
-- [x] UI: evidencia visual (hasta 2 capturas de estados clave) y fidelidad al prototipo `uxdocs/chefencasa_mis_recetas_y_crud/code.html` (capturas de emulador).
-- [x] Cobertura E2E añadida o actualizada cuando hay flujo observable y existe harness, o justificada su ausencia.
+## Implementation Tasks
+
+- [x] T1: Buscador V1 en `MisRecetasScreen`. (S2-S7, S12)
+- [x] T2: Chips V2 con icono y tintes por momento. (S1, S6, S9, S12)
+- [x] T3: Estado «sin resultados» V3 con acción `secondary`. (S7, S12)
+- [x] T4: E2E al día: los 7 tests actuales en verde y nuevas aserciones de estructura visual. (S1-S11)
+- [x] T5: `init`/`lint`/`unit`/`e2e` en verde (unit ≥ 19 y e2e ≥ 60 tras el merge de `eliminar-receta`) y evidencia capturada. (S1-S12; la comparación de píxeles y nuevas capturas las realiza el validador según el Verification Plan).
+
+## Verification Plan
+
+- `./init.ps1` / `./init.sh` → exit 0. Es el gate de arranque estándar no bloqueante del estado actual del repo (compila, instala y abre la app en el emulador); **no debe arrancar procesos duraderos** y no se modifica. Artefactos de entorno conocidos: la carrera del `pidof` en `init.sh` (pasa al reintentar) y el exit 1 falso de `init.ps1` por el stderr de `adb shell monkey` en PowerShell 5.1 (ejecutar con `cmd /c "powershell -NoProfile -ExecutionPolicy Bypass -File init.ps1 > .harness\init.log 2>&1"`).
+- `./lint.ps1` / `./unit.ps1` (o `.sh`) → exit 0; `unit` incluye `RecipeSearchFilterTest`, `MisRecetasSearchDebounceTest` y `MisRecetasStateTest` (≥ 19 tests).
+- E2E persistente: `./e2e.ps1` / `./e2e.sh` (`connectedDebugAndroidTest`) en emulador API 30+ con `BuscarYFiltrarRecetasE2ETest`:
+  - verify 1 (S1): tres Recetas de distinto momento → filtrar por Cena → solo la de Cena.
+  - verify 2 (S2): escribir «Pollo» en el buscador → solo las Recetas con ese ingrediente.
+  - S3 combinado; S6 borrar buscador con filtro; S7 sin resultados + restablecer; S8 colección vacía; S9 valores iniciales y selección única; S10 navegar y volver + reinicio de la app; estructura de V1-V3 dentro de la suite.
+  - Unit: S4 debounce con tiempo virtual (`kotlinx-coroutines-test`), S5 normalización y S11 orden + Borradores.
+  - Regresión completa en verde (≥ 60 tests tras el merge) sin romper `crear-receta`, `editar-receta`, `eliminar-receta` ni `afinar-fidelidad-visual-del-formulario`.
+- UI (solo el validador, S12): 2 capturas en emulador API 30+ (es) + muestreo de píxeles de los roles de V1-V3 + `uiautomator` (bloques, iconos, textos y objetivos ≥ 48 dp). Sin screenshot testing en el repo, el muestreo de píxeles es manual con `adb` (justificado por el precedente de `afinar-fidelidad-visual-del-formulario`).
+- Cobertura E2E: sí se añade/actualiza, porque la feature cambia comportamiento visible; la fidelidad de píxeles queda fuera del E2E automatizado por no existir pipeline de capturas (ver arriba).
+- Los scripts del harness (`init`/`lint`/`unit`/`e2e`) no se tocan.
+
+## Evidence To Capture
+
+- `docs/validations/buscar-y-filtrar-recetas.md` — informe con `lint`/`unit`/`e2e` (nombres de test), verificación por escenario S1-S12 y comparación de fidelidad V1-V3; se resume en `evidence` de `feature_list.json` al aceptar.
+- `docs/evidence/buscar-y-filtrar-recetas/mis-recetas-filtro-cena.png` — Mis Recetas con el filtro Cena aplicado (es); reemplaza a la captura homónima del ciclo 1.
+- `docs/evidence/buscar-y-filtrar-recetas/mis-recetas-sin-resultados.png` — estado «sin resultados» con su acción de restablecer (es); reemplaza a la del ciclo 1.
+- Presupuesto ≤ 4 artefactos y solo de esta feature (1 informe + 2 capturas + opcionalmente el log de `e2e` referenciado); al revalidar se reemplaza el set anterior.
+
+## Validator Checklist
+
+- [x] La implementación se queda dentro del alcance de esta feature.
+- [x] Los escenarios de aceptación pasan (S1-S12).
+- [x] La evidencia de verificación está presente, dentro del presupuesto y solo de esta feature.
+- [x] Cobertura E2E persistente añadida o actualizada (o justificada su ausencia) y suite completa en verde.
 - [x] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
-- [x] No se añadió comportamiento ni trabajo de otras features.
-
-## Clarificación — 2026-10-19 — veredicto: APTA (intento 1 de 3)
-
-### Hallazgos
-1. [ambigüedad, menor] RF-1/RF-3: RF-3 enuncia la normalización para coincidencia completa («difiere solo en mayúsculas, tildes o espacios exteriores»); la coincidencia por subcadena normalizada (p. ej. «cancion» vs «La canción de la cena») queda resuelta por Q-2 (comparación normalizada completa) y §Enfoque técnico (normalizar ambos lados y aplicar «contiene») → observación; RF-1 podría enunciarlo explícitamente en una reescritura futura.
-2. [caso límite, menor] Crear o eliminar una Receta con búsqueda y filtro activos no está enunciado; el comportamiento se deriva (la lista visible se recalcula sobre la colección observada) → observación.
-
-### Siguiente acción
-Continuar.
+- [x] No se añadió comportamiento de producto ni trabajo de otras features.

@@ -93,6 +93,43 @@ class BuscarYFiltrarRecetasE2ETest {
     }
 
     @Test
+    fun searchAndMomentControlsExposeTheirVisualStructure() {
+        launchScreen()
+        waitForRecipeCount(3)
+
+        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(
+            MisRecetasTestTags.SEARCH_ICON,
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(
+            MisRecetasTestTags.FILTER_CHIP_ALL_ICON,
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        MealMoment.entries.forEach { moment ->
+            composeRule.onAllNodesWithTag(MisRecetasTestTags.filterChip(moment)).assertCountEquals(1)
+            composeRule.onAllNodesWithTag(
+                MisRecetasTestTags.filterChipIcon(moment),
+                useUnmergedTree = true,
+            ).assertCountEquals(1)
+        }
+
+        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD)
+            .performTextReplacement("sin coincidencia")
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MisRecetasTestTags.NO_RESULTS_CARD)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(MisRecetasTestTags.SEARCH_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.FILTER_ROW).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.NO_RESULTS_CARD).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.NO_RESULTS_ICON_CONTAINER).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.NO_RESULTS_ICON).assertIsDisplayed()
+        composeRule.onNodeWithTag(MisRecetasTestTags.RESET_FILTERS).assertIsDisplayed()
+    }
+
+    @Test
     fun searchesIngredientsCombinesCriteriaShowsNoResultsAndResets() {
         launchScreen()
         waitForRecipeCount(3)

@@ -2,6 +2,7 @@ package com.whatsforlunch.app.ui.misrecetas
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,16 +16,22 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BakeryDining
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Icecream
+import androidx.compose.material.icons.outlined.RamenDining
+import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Schedule
@@ -32,12 +39,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -47,6 +51,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -56,11 +61,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -96,16 +106,23 @@ object MisRecetasTestTags {
     const val RECIPE_EDIT = "mis_recetas_card_edit"
     const val RECIPE_DELETE = "mis_recetas_card_delete"
     const val SEARCH_FIELD = "mis_recetas_search_field"
+    const val SEARCH_ICON = "mis_recetas_search_icon"
     const val FILTER_ROW = "mis_recetas_moment_filter"
     const val FILTER_CHIP_ALL = "mis_recetas_filter_all"
+    const val FILTER_CHIP_ALL_ICON = "mis_recetas_filter_all_icon"
     const val FILTER_CHIP = "mis_recetas_filter"
+    const val FILTER_CHIP_ICON = "mis_recetas_filter_icon"
     const val NO_RESULTS = "mis_recetas_no_results"
+    const val NO_RESULTS_CARD = "mis_recetas_no_results_card"
+    const val NO_RESULTS_ICON = "mis_recetas_no_results_icon"
+    const val NO_RESULTS_ICON_CONTAINER = "mis_recetas_no_results_icon_container"
     const val RESET_FILTERS = "mis_recetas_reset_filters"
     const val DELETE_DIALOG = "mis_recetas_delete_dialog"
     const val DELETE_CONFIRM = "mis_recetas_delete_confirm"
     const val DELETE_CANCEL = "mis_recetas_delete_cancel"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
+    fun filterChipIcon(moment: MealMoment): String = "${FILTER_CHIP_ICON}_${moment.name.lowercase()}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -317,63 +334,188 @@ private fun SearchAndFilterControls(
     onSearchQueryChanged: (String) -> Unit,
     onMealMomentSelected: (MealMoment?) -> Unit,
 ) {
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = onSearchQueryChanged,
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .testTag(MisRecetasTestTags.SEARCH_FIELD),
-        placeholder = { Text(text = stringResource(R.string.mis_recetas_search_hint)) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Outlined.Search,
-                contentDescription = null,
-            )
-        },
-        singleLine = true,
-    )
+            .padding(top = 4.dp)
+            .warmShadow(shape = RoundedCornerShape(WarmRadius.md)),
+        shape = RoundedCornerShape(WarmRadius.md),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+    ) {
+        androidx.compose.foundation.text.BasicTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .testTag(MisRecetasTestTags.SEARCH_FIELD),
+            textStyle = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                Row(
+                    modifier = Modifier.padding(
+                        start = 12.dp,
+                        end = 16.dp,
+                        top = 12.dp,
+                        bottom = 12.dp,
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .testTag(MisRecetasTestTags.SEARCH_ICON),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.mis_recetas_search_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.60f),
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            },
+        )
+    }
     val filterDescription = stringResource(R.string.mis_recetas_filter_label)
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(top = WarmSpacing.sm)
             .horizontalScroll(rememberScrollState())
             .semantics { contentDescription = filterDescription }
             .testTag(MisRecetasTestTags.FILTER_ROW),
         horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        FilterChip(
+        MomentFilterChip(
+            label = stringResource(R.string.mis_recetas_filter_all),
+            icon = Icons.Outlined.RestaurantMenu,
             selected = selectedMoment == null,
+            iconTint = MaterialTheme.colorScheme.onSurface,
+            testTag = MisRecetasTestTags.FILTER_CHIP_ALL,
+            iconTestTag = MisRecetasTestTags.FILTER_CHIP_ALL_ICON,
             onClick = { onMealMomentSelected(null) },
-            label = { Text(text = stringResource(R.string.mis_recetas_filter_all)) },
-            colors = momentFilterChipColors(),
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .testTag(MisRecetasTestTags.FILTER_CHIP_ALL),
         )
         MealMoment.entries.forEach { moment ->
-            FilterChip(
+            MomentFilterChip(
+                label = stringResource(moment.labelRes()),
+                icon = moment.icon(),
                 selected = selectedMoment == moment,
+                iconTint = moment.inactiveTint(),
+                testTag = MisRecetasTestTags.filterChip(moment),
+                iconTestTag = MisRecetasTestTags.filterChipIcon(moment),
                 onClick = { onMealMomentSelected(moment) },
-                label = { Text(text = stringResource(moment.labelRes())) },
-                colors = momentFilterChipColors(),
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .testTag(MisRecetasTestTags.filterChip(moment)),
             )
         }
     }
 }
 
 @Composable
-private fun momentFilterChipColors() = FilterChipDefaults.filterChipColors(
-    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    selectedContainerColor = MaterialTheme.colorScheme.primary,
-    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-)
+private fun MomentFilterChip(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    iconTint: androidx.compose.ui.graphics.Color,
+    testTag: String,
+    iconTestTag: String,
+    onClick: () -> Unit,
+) {
+    val shape = CircleShape
+    Box(
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .testTag(testTag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            shape = shape,
+            color = if (selected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.surfaceContainerLowest,
+            modifier = Modifier.warmShadow(shape = shape),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (selected) MaterialTheme.colorScheme.onPrimary else iconTint,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .testTag(iconTestTag),
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
 
+private fun MealMoment.icon() = when (this) {
+    MealMoment.BREAKFAST -> Icons.Outlined.BakeryDining
+    MealMoment.LUNCH -> SkilletIcon
+    MealMoment.DINNER -> Icons.Outlined.RamenDining
+    MealMoment.DESSERT -> Icons.Outlined.Icecream
+}
+
+private val SkilletIcon: ImageVector = ImageVector.Builder(
+    name = "Skillet",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(fill = SolidColor(Color.Black)) {
+        moveTo(3.75f, 7.5f)
+        lineTo(16.25f, 7.5f)
+        curveTo(17.49f, 7.5f, 18.5f, 8.51f, 18.5f, 9.75f)
+        lineTo(18.5f, 11.5f)
+        curveTo(18.5f, 15.09f, 15.59f, 18f, 12f, 18f)
+        lineTo(8f, 18f)
+        curveTo(4.41f, 18f, 1.5f, 15.09f, 1.5f, 11.5f)
+        lineTo(1.5f, 9.75f)
+        curveTo(1.5f, 8.51f, 2.51f, 7.5f, 3.75f, 7.5f)
+        close()
+        moveTo(18.5f, 8.5f)
+        lineTo(20.5f, 8.5f)
+        lineTo(23f, 11f)
+        lineTo(21.5f, 12.5f)
+        lineTo(19.5f, 10.5f)
+        lineTo(18.5f, 10.5f)
+        close()
+    }
+}.build()
+
+@Composable
+private fun MealMoment.inactiveTint() = when (this) {
+    MealMoment.BREAKFAST -> MaterialTheme.colorScheme.tertiary
+    MealMoment.LUNCH -> MaterialTheme.colorScheme.primary
+    MealMoment.DINNER -> MaterialTheme.colorScheme.secondary
+    MealMoment.DESSERT -> MaterialTheme.colorScheme.tertiaryContainer
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NoResults(
     searchQuery: String,
@@ -383,6 +525,7 @@ private fun NoResults(
     onResetFilters: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cardShape = RoundedCornerShape(WarmRadius.md)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -396,41 +539,83 @@ private fun NoResults(
             onSearchQueryChanged = onSearchQueryChanged,
             onMealMomentSelected = onMealMomentSelected,
         )
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = WarmSpacing.md),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = Icons.Outlined.SearchOff,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(48.dp),
-            )
-            Text(
-                text = stringResource(R.string.mis_recetas_no_results_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = WarmSpacing.md),
-            )
-            Text(
-                text = stringResource(R.string.mis_recetas_no_results_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = WarmSpacing.xs),
-            )
-            Button(
-                onClick = onResetFilters,
+            Surface(
                 modifier = Modifier
-                    .padding(top = WarmSpacing.lg)
-                    .heightIn(min = 48.dp)
-                    .testTag(MisRecetasTestTags.RESET_FILTERS),
+                    .fillMaxWidth()
+                    .warmShadow(shape = cardShape)
+                    .testTag(MisRecetasTestTags.NO_RESULTS_CARD),
+                shape = cardShape,
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
             ) {
-                Text(text = stringResource(R.string.mis_recetas_reset_filters))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(WarmSpacing.xl),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .testTag(MisRecetasTestTags.NO_RESULTS_ICON_CONTAINER),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.SearchOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .testTag(MisRecetasTestTags.NO_RESULTS_ICON),
+                            )
+                        }
+                    }
+                    Text(
+                        text = stringResource(R.string.mis_recetas_no_results_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        text = stringResource(R.string.mis_recetas_no_results_message),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = 320.dp),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .minimumInteractiveComponentSize()
+                            .clickable(role = Role.Button, onClick = onResetFilters)
+                            .testTag(MisRecetasTestTags.RESET_FILTERS),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Surface(
+                            modifier = Modifier.height(36.dp),
+                            shape = cardShape,
+                            color = MaterialTheme.colorScheme.secondary,
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(horizontal = WarmSpacing.md),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.mis_recetas_reset_filters),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSecondary,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

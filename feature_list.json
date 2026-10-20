@@ -182,9 +182,13 @@
         "E2E: con tres recetas de distinto momento, filtrar por Cena y comprobar que solo aparece la receta de Cena",
         "E2E: escribir un ingrediente en el buscador y comprobar que aparecen las recetas que lo contienen"
       ],
-      "evidence": [],
+      "evidence": [
+        "Autoverificación: init.ps1 exit 0 (reintento tras la carrera conocida de pidof); lintDebug, testDebugUnitTest (19/19), assembleDebug y connectedDebugAndroidTest (61/61, 0 fallos) en Pixel_10_Pro API 37",
+        "BuscarYFiltrarRecetasE2ETest: searchAndMomentControlsExposeTheirVisualStructure y escenarios S1-S11 en verde; muestreo de píxeles/uiautomator S12 queda para feature-validator",
+        "Aceptación independiente (feature-validator): accept — lint exit 0 (0 errores), unit 19/19, e2e 61/61 y S12 en emulador (capturas renovadas, muestreo de píxeles y uiautomator) en verde; informe en docs/validations/buscar-y-filtrar-recetas.md"
+      ],
       "notes": "",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "gestionar-alimentos-de-la-despensa",
