@@ -2,8 +2,7 @@ package com.whatsforlunch.app.domain.misrecetas
 
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
-import java.text.Normalizer
-import java.util.Locale
+import com.whatsforlunch.app.domain.text.normalizeName
 
 /** Filters recipes by their title or ingredient names and, optionally, meal moment. */
 fun filterRecipes(
@@ -11,21 +10,15 @@ fun filterRecipes(
     query: String,
     moment: MealMoment?,
 ): List<Recipe> {
-    val normalizedQuery = normalizeRecipeSearchText(query)
+    val normalizedQuery = normalizeName(query)
 
     return recipes.filter { recipe ->
         val matchesMoment = moment == null || recipe.mealMoment == moment
         val matchesText = normalizedQuery.isEmpty() ||
-            normalizeRecipeSearchText(recipe.title).contains(normalizedQuery) ||
+            normalizeName(recipe.title).contains(normalizedQuery) ||
             recipe.ingredients.any { ingredient ->
-                normalizeRecipeSearchText(ingredient.name).contains(normalizedQuery)
+                normalizeName(ingredient.name).contains(normalizedQuery)
             }
         matchesMoment && matchesText
     }
 }
-
-private fun normalizeRecipeSearchText(value: String): String = Normalizer
-    .normalize(value.trim().lowercase(Locale.ROOT), Normalizer.Form.NFD)
-    .replace(ACCENT_MARKS, "")
-
-private val ACCENT_MARKS = Regex("\\p{Mn}+")

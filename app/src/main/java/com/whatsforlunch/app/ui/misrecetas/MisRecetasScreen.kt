@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Icecream
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.RamenDining
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.Search
@@ -41,6 +42,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -120,6 +122,7 @@ object MisRecetasTestTags {
     const val DELETE_DIALOG = "mis_recetas_delete_dialog"
     const val DELETE_CONFIRM = "mis_recetas_delete_confirm"
     const val DELETE_CANCEL = "mis_recetas_delete_cancel"
+    const val OPEN_PANTRY = "action_open_pantry"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
     fun filterChipIcon(moment: MealMoment): String = "${FILTER_CHIP_ICON}_${moment.name.lowercase()}"
@@ -132,6 +135,7 @@ fun MisRecetasScreen(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit = {},
+    onOpenPantry: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
     onResetFilters: () -> Unit = {},
@@ -156,6 +160,18 @@ fun MisRecetasScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.mis_recetas_title)) },
+                actions = {
+                    IconButton(
+                        onClick = onOpenPantry,
+                        modifier = Modifier.testTag(MisRecetasTestTags.OPEN_PANTRY),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Inventory2,
+                            contentDescription = stringResource(R.string.pantry_open_accessibility),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,

@@ -67,7 +67,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Cantidades de IngredienteReceta: mayores que 0.
 - Título de la Receta: obligatorio.
 - Publicar una Receta: título y foto obligatorios, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila de Ingrediente ni Paso inválidos (Q-crear-receta-1, que revisa `⚠ S07`: la foto pasa a ser obligatoria).
-- Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan.
+- Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan en un solo Alimento. En el alta y la edición manual de Alimentos de la Despensa, un duplicado se rechaza con aviso y no se crea fila nueva (Q-gestionar-alimentos-de-la-despensa-3): mismo resultado que la fusión del Escaneo —un solo Alimento por nombre normalizado—.
 
 ## Escenarios importantes
 
