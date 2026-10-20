@@ -4,6 +4,8 @@ import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -53,19 +55,19 @@ class PantryManagementE2ETest {
             .performClick()
         composeRule.onNodeWithTag(PantryTestTags.NAME_FIELD).performTextClearance()
         composeRule.onNodeWithTag(PantryTestTags.NAME_FIELD).performTextInput("Tomate maduro")
-        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_FIELD).performTextInput("3.5")
+        repeat(3) { composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).performClick() }
         composeRule.onNodeWithTag(PantryTestTags.SAVE_ITEM).performClick()
         composeRule.onNodeWithText("Tomate maduro").assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(localized(R.string.pantry_quantity_value, "3.5"))
+            composeRule.onAllNodesWithText(localized(R.string.pantry_quantity_value, 3))
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText(localized(R.string.pantry_quantity_value, "3.5")).assertIsDisplayed()
+        composeRule.onNodeWithText(localized(R.string.pantry_quantity_value, 3)).assertIsDisplayed()
         composeRule.onNodeWithText("Tomate fresco").assertDoesNotExist()
 
         composeRule.activityRule.scenario.recreate()
         composeRule.onNodeWithText("Tomate maduro").assertIsDisplayed()
-        composeRule.onNodeWithText(localized(R.string.pantry_quantity_value, "3.5")).assertIsDisplayed()
+        composeRule.onNodeWithText(localized(R.string.pantry_quantity_value, 3)).assertIsDisplayed()
     }
 
     @Test
@@ -85,18 +87,23 @@ class PantryManagementE2ETest {
     }
 
     @Test
-    fun invalidQuantityShowsErrorAndBlankNameCannotBeSaved() {
+    fun stepperEnforcesIntegerBoundsAndZeroSavesWithoutQuantity() {
         openPantry()
         composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).performClick()
         composeRule.onNodeWithTag(PantryTestTags.SAVE_ITEM).assertIsNotEnabled()
-        composeRule.onNodeWithTag(PantryTestTags.NAME_FIELD).performTextInput("Harina")
-        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_FIELD).performTextInput("-1")
-        composeRule.onNodeWithTag(PantryTestTags.SAVE_ITEM).performClick()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(localized(R.string.pantry_quantity_error)).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(localized(R.string.pantry_quantity_error)).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(PantryTestTags.ITEM_CARD).assertCountEquals(0)
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_STEPPER).assertIsDisplayed()
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("0")
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_DECREMENT).assertIsNotEnabled()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(1)
+
+        repeat(999) { composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).performClick() }
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("999")
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).assertIsNotEnabled()
+
+        composeRule.onNodeWithTag(PantryTestTags.CANCEL_EDIT).performClick()
+        addItem("Harina")
+        composeRule.onAllNodesWithText(localized(R.string.pantry_quantity_value, 0)).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(PantryTestTags.ITEM_CARD).assertCountEquals(1)
     }
 
     @Test

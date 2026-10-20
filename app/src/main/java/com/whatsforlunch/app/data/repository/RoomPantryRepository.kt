@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.roundToInt
 
 class RoomPantryRepository(private val dao: PantryItemDao) : PantryRepository {
     private val saveMutex = Mutex()
@@ -21,8 +22,8 @@ class RoomPantryRepository(private val dao: PantryItemDao) : PantryRepository {
 
     override suspend fun savePantryItem(item: PantryItem): PantrySaveResult = saveMutex.withLock {
         require(PantryItemValidation.isNameValid(item.name)) { "Pantry item name must not be blank" }
-        require(item.quantity == null || item.quantity.isFinite() && item.quantity >= 0.0) {
-            "Pantry item quantity must be a finite non-negative number"
+        require(item.quantity == null || PantryItemValidation.isQuantityValid(item.quantity)) {
+            "Pantry item quantity must be between ${PantryItemValidation.MIN_QUANTITY} and ${PantryItemValidation.MAX_QUANTITY}"
         }
         val normalizedName = normalizeName(item.name)
         val matchingItem = dao.findByNormalizedName(normalizedName)
@@ -33,7 +34,7 @@ class RoomPantryRepository(private val dao: PantryItemDao) : PantryRepository {
             id = item.id,
             name = item.name.trim(),
             normalizedName = normalizedName,
-            quantity = item.quantity,
+            quantity = item.quantity?.toDouble(),
         )
         try {
             if (existingItem != null) {
@@ -55,5 +56,5 @@ class RoomPantryRepository(private val dao: PantryItemDao) : PantryRepository {
 private fun PantryItemEntity.toDomain() = PantryItem(
     id = id,
     name = name,
-    quantity = quantity,
+    quantity = quantity?.roundToInt()?.coerceIn(PantryItemValidation.MIN_QUANTITY, PantryItemValidation.MAX_QUANTITY),
 )

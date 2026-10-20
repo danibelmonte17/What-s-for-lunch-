@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class PantrySaveError { InvalidName, InvalidQuantity, DuplicateName, SaveFailed, DeleteFailed }
+enum class PantrySaveError { InvalidName, DuplicateName, SaveFailed, DeleteFailed }
 
 data class PantryUiState(
     val items: List<PantryItem> = emptyList(),
@@ -35,17 +35,19 @@ class PantryViewModel(private val repository: PantryRepository) : ViewModel() {
         PantryUiState(items = items, saveError = error, saveCompleted = completed)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), PantryUiState())
 
-    fun saveItem(id: String?, name: String, quantityText: String) {
+    fun saveItem(id: String?, name: String, quantity: Int) {
         saveCompleted.value = false
         saveError.value = when {
             !PantryItemValidation.isNameValid(name) -> PantrySaveError.InvalidName
-            !PantryItemValidation.isQuantityValid(quantityText) -> PantrySaveError.InvalidQuantity
             else -> null
         }
         if (saveError.value != null) return
 
-        val quantity = PantryItemValidation.parseQuantity(quantityText)
-        val item = PantryItem(id = id ?: UUID.randomUUID().toString(), name = name.trim(), quantity = quantity)
+        val item = PantryItem(
+            id = id ?: UUID.randomUUID().toString(),
+            name = name.trim(),
+            quantity = quantity.takeUnless { it == PantryItemValidation.MIN_QUANTITY },
+        )
         viewModelScope.launch {
             try {
                 when (repository.savePantryItem(item)) {

@@ -18,6 +18,8 @@
     <string name="pantry_name_label">Name</string>
     <string name="pantry_quantity_label">Quantity (optional)</string>
     <string name="pantry_quantity_value">Quantity: %1$s</string>
+    <string name="pantry_quantity_decrease">Decrease quantity</string>
+    <string name="pantry_quantity_increase">Increase quantity</string>
     <string name="pantry_edit_accessibility">Edit</string>
     <string name="pantry_delete_accessibility">Delete</string>
     <string name="pantry_delete_title">Delete food</string>
@@ -25,7 +27,6 @@
     <string name="pantry_delete_confirm">Delete</string>
     <string name="pantry_cancel">Cancel</string>
     <string name="pantry_duplicate_error">This food is already in your Pantry.</string>
-    <string name="pantry_quantity_error">Invalid quantity.</string>
     <string name="pantry_save_error">The food couldn’t be saved. Please try again.</string>
     <string name="pantry_delete_error">The food couldn’t be deleted. Please try again.</string>
     <string name="pantry_empty_title">Your Pantry is empty</string>

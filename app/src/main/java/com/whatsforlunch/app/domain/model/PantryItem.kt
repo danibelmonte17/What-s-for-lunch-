@@ -4,5 +4,5 @@ package com.whatsforlunch.app.domain.model
 data class PantryItem(
     val id: String,
     val name: String,
-    val quantity: Double? = null,
+    val quantity: Int? = null,
 )

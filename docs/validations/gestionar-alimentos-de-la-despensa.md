@@ -63,3 +63,42 @@ Al terminar, el validador dejó el dispositivo limpio (Despensa vacía, receta d
 ## Veredicto
 
 **accept** — La implementación cumple la spec y sus dos `verification` ejecutados en el emulador, la migración 1→2 se comprobó en dispositivo sin pérdida de datos, la suite completa está en verde de forma independiente (unit 27/27, lint 0 errores, E2E 67/67) y no hay hallazgos bloqueantes en alcance, arquitectura, seguridad ni documentación.
+
+---
+
+# Revalidación del delta stepper 2026-10-20 (sesión 44)
+
+- **Estado en `feature_list.json` al validar**: `passing` (delta R1-R6 de la «Revisión 2026-10-20» de la spec: cantidad por stepper entero).
+- **Validador**: `feature-validator` independiente (posterior a la sesión 44 del implementer).
+- **Veredicto**: **accept**
+
+## Comprobaciones reraneadas por el validador
+
+| Comando | Resultado |
+|---|---|
+| `init.ps1` | exit 0 — «Entorno listo» |
+| `lintDebug` | exit 0 — BUILD SUCCESSFUL, 0 errores (31 avisos preexistentes ajenos a la feature) |
+| `testDebugUnitTest --rerun-tasks` | exit 0 — **28/28**, 0 fallos (`PantryItemValidationTest` 4/4, `InMemoryPantryRepositoryTest` 5/5) |
+| `assembleDebug` | BUILD SUCCESSFUL |
+| E2E focalizadas | `PantryManagementE2ETest` **5/5** + `PantryLocalizationE2ETest` **2/2** |
+| `connectedDebugAndroidTest` completo | exit 0 — **68/68, 0 fallos y 0 omitidos** (`Pixel_10_Pro` API 37, 6m54s; incluye regresión de Crear/Editar/Eliminar/Buscar/MisRecetas) |
+| Migración 1→2 | no reraneada, justificada: `RecipeDatabase.kt`, `PantryItemEntity.kt` y `PantryItemDao.kt` no aparecen en el diff (esquema v2 intacto, sin `fallbackToDestructiveMigration`) |
+
+## Verificación manual del delta (adb/uiautomator, es-ES y en-US)
+
+- **S4**: tres toques en «+» → tarjeta «Tomate fresco / **Cantidad: 3**» (entero, sin decimal).
+- **S7**: el diálogo tiene **solo 1 `EditText`** (el nombre); «−» `enabled=false` en 0 y «+» `enabled=false` tras 999 toques (contenedores 144×144 px = **48 dp**); guardar con 0 → tarjeta **sin línea de cantidad** y edición que reabre en 0 (ida y vuelta `0 ↔ null` correcta).
+- **S10**: locale por aplicación `en-US` → «Pantry», «Quantity (optional)», «Decrease/Increase quantity», «Delete “X”?»; locale revertido al terminar.
+- Estado dejado: Despensa vacía (alimento de prueba borrado con confirmación, revalidando S2 en inglés), app instalada, sin datos de prueba.
+
+## Hallazgos no bloqueantes del delta
+
+1. **Medio** — este informe estaba desactualizado respecto al delta (cifras de la sesión 42); se corrigió con esta sección al persistir la aceptación.
+2. **Bajo** — el descarte del diálogo de borrado por «atrás/toque fuera» (S3) no está cubierto por E2E (solo el botón «Cancelar»); preexiste al delta.
+3. **Bajo** — el protector de decimales heredados (`roundToInt` + clamp al leer de Room, p. ej. 3,5 → 4) no tiene test automatizado (Room sin Robolectric); es una guarda defensiva documentada en la spec.
+4. **Bajo** — `stepperEnforcesIntegerBoundsAndZeroSavesWithoutQuantity` tarda ~104 s (999 `performClick()`); candidato a abaratar en el futuro.
+5. **Observación** — el working tree contiene una modificación ajena a la feature: `.opencode/skills/feature-validator/SKILL.md`; debe quedar fuera del commit de la feature.
+
+## Veredicto del delta
+
+**accept** — el stepper entero 0..999 con 0 = sin cantidad cumple la revisión de la spec: gate completo reraneado en verde (unit 28/28, lint 0 errores, E2E 68/68), verificación manual S4/S7/S10 conforme, sin restos del campo de texto (grep), Room v2 intacto, docs duraderas (`docs/domain-model.md`, `docs/risks-and-open-questions.md`) actualizadas y sin hallazgos de seguridad.

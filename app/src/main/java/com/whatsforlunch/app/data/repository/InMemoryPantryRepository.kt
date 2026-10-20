@@ -19,8 +19,8 @@ class InMemoryPantryRepository : PantryRepository {
 
     override suspend fun savePantryItem(item: PantryItem): PantrySaveResult = mutex.withLock {
         require(PantryItemValidation.isNameValid(item.name)) { "Pantry item name must not be blank" }
-        require(item.quantity == null || item.quantity.isFinite() && item.quantity >= 0.0) {
-            "Pantry item quantity must be a finite non-negative number"
+        require(item.quantity == null || PantryItemValidation.isQuantityValid(item.quantity)) {
+            "Pantry item quantity must be between ${PantryItemValidation.MIN_QUANTITY} and ${PantryItemValidation.MAX_QUANTITY}"
         }
         val normalizedName = normalizeName(item.name)
         if (items.value.any { it.id != item.id && normalizeName(it.name) == normalizedName }) {

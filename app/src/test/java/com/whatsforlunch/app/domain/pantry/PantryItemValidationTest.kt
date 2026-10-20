@@ -14,19 +14,18 @@ class PantryItemValidationTest {
     }
 
     @Test
-    fun quantityIsOptionalAndAcceptsNonNegativeDecimals() {
-        assertTrue(PantryItemValidation.isQuantityValid(""))
-        assertEquals(0.0, PantryItemValidation.parseQuantity("0"))
-        assertEquals(2.5, PantryItemValidation.parseQuantity("2.5"))
-        assertEquals(2.5, PantryItemValidation.parseQuantity("2,5"))
-        assertTrue(PantryItemValidation.isQuantityValid("0"))
+    fun quantityAcceptsIntegerBoundsAndZeroRepresentsNoQuantity() {
+        assertEquals(0, PantryItemValidation.MIN_QUANTITY)
+        assertEquals(999, PantryItemValidation.MAX_QUANTITY)
+        assertTrue(PantryItemValidation.isQuantityValid(PantryItemValidation.MIN_QUANTITY))
+        assertTrue(PantryItemValidation.isQuantityValid(PantryItemValidation.MAX_QUANTITY))
+        assertTrue(PantryItemValidation.isQuantityValid(3))
     }
 
     @Test
-    fun negativeNonNumericAndNonFiniteQuantitiesAreRejected() {
-        listOf("-1", "abc", "NaN", "Infinity").forEach { value ->
-            assertFalse("$value should be invalid", PantryItemValidation.isQuantityValid(value))
-        }
+    fun quantityOutsideIntegerBoundsIsRejected() {
+        assertFalse(PantryItemValidation.isQuantityValid(-1))
+        assertFalse(PantryItemValidation.isQuantityValid(1000))
     }
 
     @Test

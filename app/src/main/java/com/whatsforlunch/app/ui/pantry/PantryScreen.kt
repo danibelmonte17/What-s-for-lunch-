@@ -14,12 +14,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Kitchen
+import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +40,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -49,10 +50,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.PantryItem
+import com.whatsforlunch.app.domain.pantry.PantryItemValidation
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -70,9 +72,11 @@ object PantryTestTags {
     const val DELETE_ITEM = "pantry_delete_item"
     const val EDIT_DIALOG = "pantry_edit_dialog"
     const val NAME_FIELD = "pantry_name_field"
-    const val QUANTITY_FIELD = "pantry_quantity_field"
+    const val QUANTITY_STEPPER = "pantry_quantity_stepper"
+    const val QUANTITY_VALUE = "pantry_quantity_value"
+    const val QUANTITY_INCREMENT = "pantry_quantity_increment"
+    const val QUANTITY_DECREMENT = "pantry_quantity_decrement"
     const val NAME_ERROR = "pantry_name_error"
-    const val QUANTITY_ERROR = "pantry_quantity_error"
     const val SAVE_ITEM = "pantry_save_item"
     const val CANCEL_EDIT = "pantry_cancel_edit"
     const val DELETE_DIALOG = "pantry_delete_dialog"
@@ -90,7 +94,7 @@ object PantryTestTags {
 fun PantryScreen(
     uiState: PantryUiState,
     onBack: () -> Unit,
-    onSaveItem: (String?, String, String) -> Unit,
+    onSaveItem: (String?, String, Int) -> Unit,
     onDeleteItem: (String) -> Unit,
     onErrorConsumed: () -> Unit,
     onSaveCompletedConsumed: () -> Unit,
@@ -253,7 +257,7 @@ private fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () ->
                 Text(item.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag(PantryTestTags.itemName(item.id)))
                 item.quantity?.let { quantity ->
                     Text(
-                        stringResource(R.string.pantry_quantity_value, quantity.toDisplayString()),
+                        stringResource(R.string.pantry_quantity_value, quantity),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp).testTag(PantryTestTags.itemQuantity(item.id)),
                     )
@@ -278,10 +282,10 @@ private fun PantryItemDialog(
     item: PantryItem?,
     error: PantrySaveError?,
     onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit,
+    onSave: (String, Int) -> Unit,
 ) {
     var name by remember(item?.id) { mutableStateOf(item?.name.orEmpty()) }
-    var quantity by remember(item?.id) { mutableStateOf(item?.quantity?.toDisplayString().orEmpty()) }
+    var quantity by remember(item?.id) { mutableIntStateOf(item?.quantity ?: PantryItemValidation.MIN_QUANTITY) }
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(PantryTestTags.EDIT_DIALOG),
@@ -299,17 +303,30 @@ private fun PantryItemDialog(
                 if (error == PantrySaveError.DuplicateName) {
                     Text(stringResource(R.string.pantry_duplicate_error), color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag(PantryTestTags.NAME_ERROR))
                 }
-                OutlinedTextField(
-                    value = quantity,
-                    onValueChange = { quantity = it },
-                    label = { Text(stringResource(R.string.pantry_quantity_label)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = error == PantrySaveError.InvalidQuantity,
-                    modifier = Modifier.fillMaxWidth().testTag(PantryTestTags.QUANTITY_FIELD),
-                )
-                if (error == PantrySaveError.InvalidQuantity) {
-                    Text(stringResource(R.string.pantry_quantity_error), color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag(PantryTestTags.QUANTITY_ERROR))
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag(PantryTestTags.QUANTITY_STEPPER),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.pantry_quantity_label), modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = { quantity = (quantity - 1).coerceAtLeast(PantryItemValidation.MIN_QUANTITY) },
+                        enabled = quantity > PantryItemValidation.MIN_QUANTITY,
+                        modifier = Modifier.size(48.dp).testTag(PantryTestTags.QUANTITY_DECREMENT),
+                    ) {
+                        Icon(Icons.Outlined.Remove, contentDescription = stringResource(R.string.pantry_quantity_decrease))
+                    }
+                    Text(
+                        quantity.toString(),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(40.dp).testTag(PantryTestTags.QUANTITY_VALUE),
+                    )
+                    IconButton(
+                        onClick = { quantity = (quantity + 1).coerceAtMost(PantryItemValidation.MAX_QUANTITY) },
+                        enabled = quantity < PantryItemValidation.MAX_QUANTITY,
+                        modifier = Modifier.size(48.dp).testTag(PantryTestTags.QUANTITY_INCREMENT),
+                    ) {
+                        Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.pantry_quantity_increase))
+                    }
                 }
             }
         },
@@ -327,5 +344,3 @@ private fun PantryItemDialog(
         },
     )
 }
-
-private fun Double.toDisplayString(): String = if (this % 1.0 == 0.0) toLong().toString() else toString()

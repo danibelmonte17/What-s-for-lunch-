@@ -19,6 +19,8 @@
     <string name="pantry_name_label">Nombre</string>
     <string name="pantry_quantity_label">Cantidad (opcional)</string>
     <string name="pantry_quantity_value">Cantidad: %1$s</string>
+    <string name="pantry_quantity_decrease">Disminuir cantidad</string>
+    <string name="pantry_quantity_increase">Aumentar cantidad</string>
     <string name="pantry_edit_accessibility">Editar</string>
     <string name="pantry_delete_accessibility">Eliminar</string>
     <string name="pantry_delete_title">Eliminar alimento</string>
@@ -26,7 +28,6 @@
     <string name="pantry_delete_confirm">Eliminar</string>
     <string name="pantry_cancel">Cancelar</string>
     <string name="pantry_duplicate_error">Este alimento ya está en la Despensa.</string>
-    <string name="pantry_quantity_error">Cantidad no válida.</string>
     <string name="pantry_save_error">No se pudo guardar el alimento. Inténtalo de nuevo.</string>
     <string name="pantry_delete_error">No se pudo eliminar el alimento. Inténtalo de nuevo.</string>
     <string name="pantry_empty_title">Tu Despensa está vacía</string>

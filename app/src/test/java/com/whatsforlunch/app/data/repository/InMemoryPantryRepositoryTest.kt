@@ -5,13 +5,14 @@ import com.whatsforlunch.app.domain.repository.PantrySaveResult
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class InMemoryPantryRepositoryTest {
     @Test
     fun savesAndObservesItems() = runBlocking {
         val repository = InMemoryPantryRepository()
-        val item = PantryItem("1", "Tomate fresco", 2.5)
+        val item = PantryItem("1", "Tomate fresco", 2)
 
         assertEquals(PantrySaveResult.Saved, repository.savePantryItem(item))
         assertEquals(listOf(item), repository.observePantryItems().first())
@@ -22,7 +23,7 @@ class InMemoryPantryRepositoryTest {
         val repository = InMemoryPantryRepository()
         repository.savePantryItem(PantryItem("1", "Tomate fresco"))
 
-        val updated = PantryItem("1", "Tomate maduro", 3.0)
+        val updated = PantryItem("1", "Tomate maduro", 3)
         assertEquals(PantrySaveResult.Saved, repository.savePantryItem(updated))
         assertEquals(listOf(updated), repository.observePantryItems().first())
     }
@@ -52,5 +53,25 @@ class InMemoryPantryRepositoryTest {
         assertEquals(1, repository.observePantryItems().first().size)
         repository.deletePantryItem("1")
         assertEquals(emptyList<PantryItem>(), repository.observePantryItems().first())
+    }
+
+    @Test
+    fun acceptsZeroAndMaximumIntegerQuantitiesAndRejectsValuesOutsideRange() = runBlocking {
+        val repository = InMemoryPantryRepository()
+        val withoutQuantity = PantryItem("0", "Harina", null)
+        val zeroQuantity = PantryItem("1", "Leche", 0)
+        val maximumQuantity = PantryItem("2", "Tomate", 999)
+
+        assertEquals(PantrySaveResult.Saved, repository.savePantryItem(withoutQuantity))
+        assertEquals(PantrySaveResult.Saved, repository.savePantryItem(zeroQuantity))
+        assertEquals(PantrySaveResult.Saved, repository.savePantryItem(maximumQuantity))
+        assertEquals(listOf(withoutQuantity, maximumQuantity, zeroQuantity).sortedBy { it.name.lowercase() }, repository.observePantryItems().first())
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { repository.savePantryItem(PantryItem("3", "Too low", -1)) }
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { repository.savePantryItem(PantryItem("4", "Too high", 1000)) }
+        }
+        Unit
     }
 }
