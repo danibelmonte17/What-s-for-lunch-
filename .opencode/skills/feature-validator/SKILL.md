@@ -12,7 +12,7 @@ Use this skill after an implementation session. The validator is independent fro
 You are the validator/evaluator, not the planner and not the implementer.
 
 - Do inspect the spec, diff, harness state, and verification evidence.
-- Do rerun checks when feasible and useful.
+- Do rerun the cheap checks (static/lint/unit) and inspect recorded evidence for expensive ones (emulator/device, external services, long runtime).
 - Do review architecture, security, maintainability, documentation, and scope.
 - Do produce a clear verdict: `accept`, `revise`, or `block`.
 - Do give concrete, executable repair instructions for every finding that prevents acceptance.
@@ -70,18 +70,32 @@ Check:
 
 ### 3. Rerun Or Inspect Verification
 
-Run the repo standard gate and focused checks when practical. If checks are expensive, unavailable, or require external services, inspect recorded evidence and state what was not rerun.
+Default policy: rerun only the cheap checks; inspect evidence for the expensive ones. Rerunning everything duplicates work the implementer already did and is not what independent validation is for.
 
-If `init.sh` exists after a runnable baseline has been created, treat it as the standard non-blocking startup/verification gate. It should execute the relevant checks and fail on errors. If it only prints commands while the repo is already bootstrapped, raise a `revise` finding with a concrete repair brief. It must not start long-running processes such as a dev server.
+Split checks into two tiers:
 
-Use this hierarchy:
+- Cheap tier (rerun by default): static/syntax/lint checks and fast unit tests. These take seconds, catch drift in the current tree, and confirm the recorded evidence still reproduces.
+- Expensive tier (inspect, do not rerun by default): checks that need an emulator/device, an external service, or a long runtime, for example `connectedDebugAndroidTest`, `e2e.sh`, `e2e.ps1`, `pnpm test:e2e`. Read the recorded evidence in `feature_list.json` and `PROGRESS.md` instead of executing them.
+
+Always state explicitly in the verdict which checks were rerun and which were inspected-only. Inspected-only is a legitimate basis for `accept` when the evidence is exact and consistent: command, result, date/environment, and count (for example `connectedDebugAndroidTest 68/68, 0 fallos, Pixel_10_Pro API 37`).
+
+Rerun an expensive check despite the default only when one of these holds:
+
+- the user explicitly asks for it,
+- the recorded evidence is missing, vague, internally inconsistent, or contradicts the current diff,
+- the diff changed after the evidence was captured,
+- a finding can only be resolved by observing runtime behavior.
+
+If `init.sh` exists after a runnable baseline has been created, treat it as the standard non-blocking startup/verification gate. It should execute the relevant checks and fail on errors. If it only prints commands while the repo is already bootstrapped, raise a `revise` finding with a concrete repair brief. It must not start long-running processes such as a dev server. Treat `init.sh` as belonging to the cheap tier: if it triggers emulator/device tests, that is a finding, not something to rerun.
+
+Use this hierarchy for what evidence is required:
 
 1. static/syntax checks,
 2. tests and runtime/startup checks,
 3. persistent E2E checks such as `pnpm test:e2e` when available and relevant,
 4. user-flow or manual smoke checks when persistent E2E is not yet available or cannot cover the case.
 
-If the repo has a persistent E2E command and the feature changes user-visible behavior, authentication, authorization, routing, or API flows, verify that focused E2E coverage was added/updated or that the spec/implementation gives a credible reason it was not needed. Missing relevant E2E coverage is normally a `revise` finding once the E2E harness exists.
+If the repo has a persistent E2E command and the feature changes user-visible behavior, authentication, authorization, routing, or API flows, verify that focused E2E coverage was added/updated or that the spec/implementation gives a credible reason it was not needed. Missing relevant E2E coverage is normally a `revise` finding once the E2E harness exists. The requirement is that the coverage exists and was run by the implementer; the validator confirming it from recorded evidence satisfies this step, rerunning it does not.
 
 ### 4. Review Quality And Risk
 
@@ -137,7 +151,7 @@ Report:
 
 - verdict,
 - feature id and spec path,
-- checks rerun and results,
+- checks rerun and results, plus which expensive checks were inspected-only and what evidence supported them,
 - findings by severity,
 - implementation repair brief when the verdict is `revise` or `block`,
 - security assessment summary, including whether the security checklist found no relevant issues, notes, or blocking findings,
