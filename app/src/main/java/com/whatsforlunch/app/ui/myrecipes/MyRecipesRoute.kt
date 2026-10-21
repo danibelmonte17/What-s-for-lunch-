@@ -11,6 +11,7 @@ fun MyRecipesRoute(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit,
+    onOpenRecipe: (String) -> Unit = {},
     onOpenPantry: () -> Unit = {},
     viewModel: MyRecipesViewModel = koinViewModel(),
 ) {
@@ -20,6 +21,7 @@ fun MyRecipesRoute(
         onCreateRecipe = onCreateRecipe,
         onScanPantry = onScanPantry,
         onEditRecipe = onEditRecipe,
+        onOpenRecipe = onOpenRecipe,
         onOpenPantry = onOpenPantry,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onMealMomentSelected = viewModel::onMealMomentSelected,

@@ -8,6 +8,23 @@
     <string name="action_back">Back</string>
     <string name="action_dismiss">Dismiss</string>
 
+    <!-- Recipe Detail -->
+    <string name="recipe_detail_metric_time">Total time</string>
+    <string name="recipe_detail_metric_time_breakdown">%1$d min prep · %2$d min cooking</string>
+    <string name="recipe_detail_metric_difficulty">Difficulty</string>
+    <string name="recipe_detail_metric_calories">Calories per serving</string>
+    <string name="recipe_detail_metric_servings">Base servings</string>
+    <string name="recipe_detail_ingredients_title">Ingredients</string>
+    <string name="recipe_detail_ingredients_count">%1$d of %2$d</string>
+    <string name="recipe_detail_ingredients_empty">No ingredients</string>
+    <string name="recipe_detail_ingredient_optional">Optional</string>
+    <string name="recipe_detail_steps_title">Steps</string>
+    <string name="recipe_detail_steps_count">%1$d Steps</string>
+    <string name="recipe_detail_steps_empty">No steps</string>
+    <string name="recipe_detail_start_cooking">Start Cooking Mode</string>
+    <string name="recipe_detail_not_found">Recipe not found</string>
+    <string name="cook_mode_title">Cooking Mode</string>
+
     <!-- Pantry -->
     <string name="pantry_title">Pantry</string>
     <string name="pantry_open_accessibility">Pantry</string>
