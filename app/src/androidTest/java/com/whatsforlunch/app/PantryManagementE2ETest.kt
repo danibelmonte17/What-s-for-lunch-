@@ -96,8 +96,8 @@ class PantryManagementE2ETest {
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_DECREMENT).assertIsNotEnabled()
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(1)
 
-        repeat(999) { composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).performClick() }
-        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("999")
+        repeat(99) { composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).performClick() }
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("99")
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).assertIsNotEnabled()
 
         composeRule.onNodeWithTag(PantryTestTags.CANCEL_EDIT).performClick()

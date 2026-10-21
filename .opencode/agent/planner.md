@@ -1,7 +1,7 @@
 ---
 description: Agente wrapper que delega el trabajo de planificación en `$feature-spec`.
 mode: subagent
-model: opencode-go/mimo-v2.6-pro
+model: devexpert/chat-pro
 permission:
   read: allow
   glob: allow

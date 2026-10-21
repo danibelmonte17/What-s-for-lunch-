@@ -6,6 +6,8 @@ import com.whatsforlunch.app.data.ai.ImageGenerator
 import com.whatsforlunch.app.data.ai.OpenAiCompatibleImageGenerator
 import com.whatsforlunch.app.data.ai.UnconfiguredAiKeyProvider
 import com.whatsforlunch.app.data.local.RecipeDatabase
+import com.whatsforlunch.app.data.scanner.FoodDetector
+import com.whatsforlunch.app.data.scanner.MediaPipeFoodDetector
 import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.photo.FilePhotoStore
 import com.whatsforlunch.app.data.photo.PhotoStore
@@ -13,6 +15,7 @@ import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.ui.pantry.PantryViewModel
+import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import okhttp3.OkHttpClient
@@ -32,6 +35,7 @@ val appModule = module {
     single { get<RecipeDatabase>().pantryItemDao() }
     single<RecipeRepository> { RoomRecipeRepository(get(), get()) }
     single<PantryRepository> { RoomPantryRepository(get()) }
+    single<FoodDetector> { MediaPipeFoodDetector(androidContext()) }
     single<PhotoStore> { FilePhotoStore(androidContext()) }
 
     single { OkHttpClient() }
@@ -42,4 +46,5 @@ val appModule = module {
     viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
+    viewModel { ScannerViewModel(get(), get()) }
 }

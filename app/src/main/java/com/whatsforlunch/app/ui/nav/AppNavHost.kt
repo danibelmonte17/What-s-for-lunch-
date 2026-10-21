@@ -2,17 +2,16 @@ package com.whatsforlunch.app.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.whatsforlunch.app.R
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
+import com.whatsforlunch.app.ui.scanner.ScannerRoute
 
 // Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18). El formulario
 // de Receta acepta un id opcional: null = alta, con id = edición (RF-1).
@@ -62,10 +61,13 @@ fun WhatsForLunchApp(
             )
         }
         composable(AppRoutes.SCAN_PANTRY) {
-            ProvisionalScreen(
-                title = stringResource(R.string.action_scan_pantry),
-                testTag = ProvisionalTestTags.SCANNER_SCREEN,
+            ScannerRoute(
                 onBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.navigate(AppRoutes.PANTRY) {
+                        popUpTo(AppRoutes.SCAN_PANTRY) { inclusive = true }
+                    }
+                },
             )
         }
         composable(AppRoutes.PANTRY) {
