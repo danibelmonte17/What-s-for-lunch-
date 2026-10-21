@@ -211,7 +211,7 @@ fun ScannerScreen(
                         )
                     }
                 }
-            } else if (uiState.cameraPreviewReady) {
+            } else if (uiState.cameraPreviewReady && !uiState.liveStopped) {
                 Text(
                     stringResource(R.string.scanner_live_hint),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md),
@@ -444,6 +444,9 @@ private fun ScannerActions(
             ) {
                 Text(stringResource(R.string.scanner_save))
             }
+        }
+        // Shown with an empty list too, so a stopped loop (D5) can always be restarted.
+        if (uiState.items.isNotEmpty() || (uiState.liveStopped && uiState.cameraPreviewReady)) {
             TextButton(
                 onClick = onRescan,
                 enabled = !uiState.isDetecting && !uiState.isSaving,

@@ -41,6 +41,8 @@ data class ScannerUiState(
     val pantryLoaded: Boolean = false,
     val manualMode: Boolean = false,
     val isDetecting: Boolean = false,
+    /** True while the live loop is stopped after a detector failure (D5) and a restart is offered. */
+    val liveStopped: Boolean = false,
     val liveDetections: List<DetectedFood> = emptyList(),
     val scan: Scan? = null,
     val items: List<ScanDraftItem> = emptyList(),
@@ -120,6 +122,7 @@ class ScannerViewModel(
         if (!state.cameraPermissionGranted || !state.cameraPreviewReady) return
         if (loopActive) return
         loopActive = true
+        _uiState.value = state.copy(liveStopped = false)
         detectionJob = viewModelScope.launch {
             try {
                 frameSource.frames()
@@ -178,6 +181,7 @@ class ScannerViewModel(
                 _uiState.value = _uiState.value.copy(
                     isDetecting = false,
                     manualMode = true,
+                    liveStopped = true,
                     liveDetections = emptyList(),
                     notice = ScannerNotice.DETECTION_FAILED,
                 )

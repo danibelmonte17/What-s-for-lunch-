@@ -120,12 +120,14 @@ class ScannerViewModelTest {
         advanceUntilIdle()
         assertEquals(ScannerNotice.DETECTION_FAILED, failed.uiState.value.notice)
         assertTrue(failed.uiState.value.manualMode)
+        assertTrue(failed.uiState.value.liveStopped)
         assertEquals(1, detector.calls)
 
         failed.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(3))))
         advanceUntilIdle()
         assertEquals(listOf("Plátano"), failed.uiState.value.items.map { it.name })
         assertFalse(failed.uiState.value.isDetecting)
+        assertFalse(failed.uiState.value.liveStopped)
     }
 
     @Test

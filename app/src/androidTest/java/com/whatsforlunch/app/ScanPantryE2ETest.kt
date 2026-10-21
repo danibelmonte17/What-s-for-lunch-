@@ -223,6 +223,32 @@ class ScanPantryE2ETest {
     }
 
     @Test
+    fun detectorFailureWithEmptyListCanBeRestartedWithRescan() {
+        launchScanner(
+            detectionResults = listOf(
+                FoodDetectionResult.Failed,
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.90))),
+            ),
+        )
+        waitForFrames(1)
+
+        composeRule.onNodeWithText(locale(R.string.scanner_detection_failed)).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(0)
+        composeRule.onNodeWithText(locale(R.string.scanner_live_hint)).assertDoesNotExist()
+        composeRule.onNodeWithTag(ScannerTestTags.RESCAN).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ScannerTestTags.RESCAN).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.EXIT_DIALOG).assertDoesNotExist()
+        composeRule.waitUntil(10_000) {
+            detector.calls >= 2 && viewModel.uiState.value.items.isNotEmpty()
+        }
+        assertFalse(viewModel.uiState.value.liveStopped)
+        composeRule.onNodeWithText("Plátano").assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.itemConfidence(viewModel.uiState.value.items.single().id))
+            .assertTextEquals("90%")
+    }
+
+    @Test
     fun englishLabelsAndScannerActionsAreLocalized() {
         launchScanner(
             detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Banana", 0.84)))),
