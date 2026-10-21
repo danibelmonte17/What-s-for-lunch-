@@ -1,8 +1,7 @@
 package com.whatsforlunch.app.ui.scanner
 
-import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,7 +40,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,15 +47,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
@@ -70,9 +70,8 @@ object ScannerTestTags {
     const val SCREEN = "scanner_screen"
     const val BACK = "scanner_back"
     const val CAMERA_PREVIEW = "scanner_camera_preview"
-    const val CAPTURED_IMAGE = "scanner_captured_image"
+    const val LIVE_HUD = "scanner_live_hud"
     const val HUD_LABEL_PREFIX = "scanner_hud_label"
-    const val CAPTURE = "scanner_capture"
     const val CAPTURE_PROGRESS = "scanner_capture_progress"
     const val FOOD_LIST = "scanner_food_list"
     const val FOOD_ITEM = "scanner_food_item"
@@ -112,7 +111,6 @@ fun ScannerScreen(
     uiState: ScannerUiState,
     previewContent: @Composable () -> Unit,
     onBack: () -> Unit,
-    onCapture: () -> Unit,
     onRescan: () -> Unit,
     onRequestExit: () -> Boolean,
     onConfirmExit: () -> Unit,
@@ -156,7 +154,6 @@ fun ScannerScreen(
         bottomBar = {
             ScannerActions(
                 uiState = uiState,
-                onCapture = onCapture,
                 onRescan = onRescan,
                 onSave = onSave,
             )
@@ -166,18 +163,19 @@ fun ScannerScreen(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
-            if (uiState.capturedImage != null) {
-                CapturedImageHud(uiState, modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md))
-            } else if (uiState.cameraPreviewReady) {
+            if (uiState.cameraPreviewReady) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md)
                         .heightIn(min = 220.dp, max = 300.dp).clip(RoundedCornerShape(WarmRadius.lg)),
-                ) { previewContent() }
+                ) {
+                    previewContent()
+                    LiveDetectionHud(detections = uiState.liveDetections)
+                }
             } else {
                 CameraPlaceholder(uiState, modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md))
             }
 
-            if (uiState.isCapturing || uiState.isDetecting) {
+            if (uiState.isDetecting) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md).testTag(ScannerTestTags.CAPTURE_PROGRESS),
                     horizontalArrangement = Arrangement.Center,
@@ -185,7 +183,7 @@ fun ScannerScreen(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     Text(
-                        stringResource(if (uiState.isCapturing) R.string.scanner_camera_loading else R.string.scanner_detection_loading),
+                        stringResource(R.string.scanner_detection_loading),
                         modifier = Modifier.padding(start = WarmSpacing.sm),
                     )
                 }
@@ -213,9 +211,9 @@ fun ScannerScreen(
                         )
                     }
                 }
-            } else if (uiState.capturedImage == null && uiState.cameraPreviewReady) {
+            } else if (uiState.cameraPreviewReady) {
                 Text(
-                    stringResource(R.string.scanner_camera_preview),
+                    stringResource(R.string.scanner_live_hint),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -268,31 +266,32 @@ private fun CameraPlaceholder(uiState: ScannerUiState, modifier: Modifier = Modi
     }
 }
 
+/** Live detection HUD: bounding boxes plus pill labels drawn over the camera preview. */
 @Composable
-private fun CapturedImageHud(state: ScannerUiState, modifier: Modifier = Modifier) {
-    val image = remember(state.capturedImage) {
-        state.capturedImage?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-    }
-    DisposableEffect(image) {
-        onDispose { image?.recycle() }
-    }
-    Box(
-        modifier = modifier.heightIn(min = 180.dp, max = 300.dp).clip(RoundedCornerShape(WarmRadius.lg))
-            .background(MaterialTheme.colorScheme.surfaceContainer).testTag(ScannerTestTags.CAPTURED_IMAGE),
-    ) {
-        if (image != null) {
-            Image(
-                bitmap = image.asImageBitmap(),
-                contentDescription = stringResource(R.string.scanner_camera_preview),
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit,
-            )
+private fun LiveDetectionHud(detections: List<DetectedFood>, modifier: Modifier = Modifier) {
+    if (detections.isEmpty()) return
+    val boxColor = MaterialTheme.colorScheme.primary
+    Box(modifier = modifier.fillMaxSize().testTag(ScannerTestTags.LIVE_HUD)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            detections.forEach { detection ->
+                val bounds = detection.boundingBox ?: return@forEach
+                val left = (bounds.left.toFloat() * size.width).coerceIn(0f, size.width)
+                val top = (bounds.top.toFloat() * size.height).coerceIn(0f, size.height)
+                val right = (bounds.right.toFloat() * size.width).coerceIn(left, size.width)
+                val bottom = (bounds.bottom.toFloat() * size.height).coerceIn(top, size.height)
+                drawRect(
+                    color = boxColor,
+                    topLeft = Offset(left, top),
+                    size = Size(right - left, bottom - top),
+                    style = Stroke(width = 2.dp.toPx()),
+                )
+            }
         }
         Column(
             modifier = Modifier.align(Alignment.TopStart).padding(WarmSpacing.sm),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            state.detections.forEachIndexed { index, detection ->
+            detections.forEachIndexed { index, detection ->
                 val confidence = (detection.confidence * 100).roundToInt()
                 val accessibilityDescription = stringResource(R.string.scanner_confidence_accessibility, confidence)
                 Text(
@@ -314,7 +313,6 @@ private fun NoticeBanner(notice: ScannerNotice, onDismiss: () -> Unit) {
     val message = when (notice) {
         ScannerNotice.CAMERA_PERMISSION_DENIED -> stringResource(R.string.scanner_camera_denied)
         ScannerNotice.CAMERA_UNAVAILABLE -> stringResource(R.string.scanner_camera_unavailable)
-        ScannerNotice.NO_FOODS_DETECTED -> stringResource(R.string.scanner_no_detections)
         ScannerNotice.DETECTION_FAILED -> stringResource(R.string.scanner_detection_failed)
         ScannerNotice.DUPLICATE_NAME -> stringResource(R.string.scanner_duplicate_error)
         ScannerNotice.INVALID_NAME -> stringResource(R.string.scanner_name_invalid)
@@ -430,7 +428,6 @@ private fun ScannerFoodCard(
 @Composable
 private fun ScannerActions(
     uiState: ScannerUiState,
-    onCapture: () -> Unit,
     onRescan: () -> Unit,
     onSave: () -> Unit,
 ) {
@@ -438,17 +435,6 @@ private fun ScannerActions(
         modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm),
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
     ) {
-        if (uiState.capturedImage == null && uiState.cameraPreviewReady && !uiState.isCapturing) {
-            Button(
-                onClick = onCapture,
-                enabled = uiState.pantryLoaded,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(ScannerTestTags.CAPTURE),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            ) {
-                Icon(Icons.Outlined.CameraAlt, contentDescription = null)
-                Text(stringResource(R.string.scanner_take_photo), modifier = Modifier.padding(start = WarmSpacing.xs))
-            }
-        }
         if (uiState.items.isNotEmpty()) {
             Button(
                 onClick = onSave,
@@ -458,8 +444,6 @@ private fun ScannerActions(
             ) {
                 Text(stringResource(R.string.scanner_save))
             }
-        }
-        if (uiState.capturedImage != null) {
             TextButton(
                 onClick = onRescan,
                 enabled = !uiState.isDetecting && !uiState.isSaving,

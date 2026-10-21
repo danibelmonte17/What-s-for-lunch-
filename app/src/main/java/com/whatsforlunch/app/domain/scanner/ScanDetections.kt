@@ -11,8 +11,40 @@ import com.whatsforlunch.app.domain.text.normalizeName
 object ScanDetections {
     const val MIN_CONFIDENCE = 0.60
 
+    /** Minimum interval between two live inferences (D1 of the live-detection spec). */
+    const val LIVE_SAMPLE_INTERVAL_MS = 300L
+
     fun eligible(detections: List<DetectedFood>): List<DetectedFood> = detections.filter {
         it.name.isNotBlank() && it.confidence in MIN_CONFIDENCE..1.0
+    }
+
+    /**
+     * Accumulates live detections into the current tray: every food enters once per
+     * normalized name and only its confidence is updated (best score observed, never
+     * below the current one); user-edited names and quantities are never overwritten.
+     */
+    fun mergeLiveDetections(items: List<ScanDraftItem>, detections: List<DetectedFood>): List<ScanDraftItem> {
+        val merged = items.toMutableList()
+        val grouped = linkedMapOf<String, MutableList<DetectedFood>>()
+        eligible(detections).forEach { detection ->
+            grouped.getOrPut(normalizeName(detection.name)) { mutableListOf() }.add(detection)
+        }
+        grouped.forEach { (normalized, group) ->
+            val best = group.maxBy(DetectedFood::confidence)
+            val index = merged.indexOfFirst { normalizeName(it.name) == normalized }
+            if (index >= 0) {
+                val existing = merged[index]
+                merged[index] = existing.copy(confidence = maxOf(existing.confidence ?: 0.0, best.confidence))
+            } else {
+                merged.add(
+                    ScanDraftItem(
+                        name = mostReadableName(group.map(DetectedFood::name)),
+                        confidence = best.confidence,
+                    ),
+                )
+            }
+        }
+        return merged
     }
 
     fun toDraftItems(detections: List<DetectedFood>): List<ScanDraftItem> {

@@ -3,8 +3,7 @@ package com.whatsforlunch.app.ui.scanner
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.scanner.FoodDetectionResult
 import com.whatsforlunch.app.data.scanner.FoodDetector
-import com.whatsforlunch.app.data.scanner.ScanCaptureResult
-import com.whatsforlunch.app.data.scanner.ScanImageSource
+import com.whatsforlunch.app.data.scanner.LiveFrameSource
 import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
@@ -12,6 +11,7 @@ import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,47 +41,96 @@ class ScannerViewModelTest {
     }
 
     @Test
-    fun captureFiltersBelowThresholdAndKeepsImageBytesOnlyInState() = runTest {
-        val image = byteArrayOf(4, 8, 15)
-        val viewModel = ScannerViewModel(
-            InMemoryPantryRepository(),
-            FakeFoodDetector(
-                FoodDetectionResult.Success(
-                    listOf(DetectedFood("Plátano", 0.599), DetectedFood("Plátano", 0.60)),
-                ),
+    fun liveFramesAddEachFoodOnceWithBestConfidenceAndConflateIntermediateFrames() = runTest {
+        val detector = FakeFoodDetector(
+            listOf(
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.72))),
+                FoodDetectionResult.Success(listOf(DetectedFood("  PLÁTANO ", 0.83), DetectedFood("Manzana", 0.65))),
             ),
         )
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), detector)
         viewModel.onCameraPermissionGranted()
+        viewModel.onCameraPreviewReady()
 
-        viewModel.capture(FakeScanImageSource(ScanCaptureResult.Success(image)))
+        viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1), byteArrayOf(2), byteArrayOf(3))))
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.capturedImage!!.contentEquals(image))
-        assertEquals(1, viewModel.uiState.value.scan?.detections?.size)
-        assertEquals(1, viewModel.uiState.value.items.size)
-        assertEquals(0.60, viewModel.uiState.value.items.single().confidence!!, 0.0001)
+        // Frame 2 is conflated away while another frame is being detected (D2): only two inferences run.
+        assertEquals(2, detector.calls)
+        val items = viewModel.uiState.value.items
+        assertEquals(listOf("Plátano", "Manzana"), items.map { it.name })
+        assertEquals(0.83, items.first().confidence!!, 0.0001)
+        assertEquals(0.65, items.last().confidence!!, 0.0001)
+        assertEquals(2, viewModel.uiState.value.scan?.detections?.size)
+        assertFalse(viewModel.uiState.value.isDetecting)
     }
 
     @Test
-    fun emptyAndFailedInferenceDegradeToManualEntry() = runTest {
-        val empty = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(FoodDetectionResult.Success(emptyList())))
-        empty.onCameraPermissionGranted()
-        empty.capture(FakeScanImageSource(ScanCaptureResult.Success(byteArrayOf(1))))
+    fun liveDetectionAccumulatesWithoutRemovingItemsAndNeverTouchesUserEdits() = runTest {
+        val detector = FakeFoodDetector(
+            listOf(
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.70))),
+                FoodDetectionResult.Success(listOf(DetectedFood("banana", 0.90), DetectedFood("Manzana", 0.61))),
+            ),
+        )
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), detector)
+        viewModel.onCameraPermissionGranted()
+        viewModel.onCameraPreviewReady()
+        viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1))))
         advanceUntilIdle()
-        assertEquals(ScannerNotice.NO_FOODS_DETECTED, empty.uiState.value.notice)
-        assertTrue(empty.uiState.value.manualMode)
 
-        val failed = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(FoodDetectionResult.Failed))
+        val id = viewModel.uiState.value.items.single().id
+        viewModel.renameItem(id, "Plátano macho")
+        viewModel.updateQuantity(id, 5)
+        viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(2))))
+        advanceUntilIdle()
+
+        // D8: the renamed item no longer shares the normalized name, so the re-detected
+        // «banana» label adds a new item; the user-edited entry stays untouched.
+        assertEquals(listOf("Plátano macho", "banana", "Manzana"), viewModel.uiState.value.items.map { it.name })
+        assertEquals(5, viewModel.uiState.value.items.first().quantity)
+        assertEquals(0.70, viewModel.uiState.value.items.first().confidence!!, 0.0001)
+        assertEquals(id, viewModel.uiState.value.items.first().id)
+    }
+
+    @Test
+    fun emptyFramesKeepManualEntryAndDetectorFailureStopsSamplingUntilRestarted() = runTest {
+        val emptyViewModel = ScannerViewModel(
+            InMemoryPantryRepository(),
+            FakeFoodDetector(listOf(FoodDetectionResult.Success(emptyList()))),
+        )
+        emptyViewModel.onCameraPermissionGranted()
+        emptyViewModel.onCameraPreviewReady()
+        emptyViewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1))))
+        advanceUntilIdle()
+        assertTrue(emptyViewModel.uiState.value.items.isEmpty())
+        assertNull(emptyViewModel.uiState.value.notice)
+        assertFalse(emptyViewModel.uiState.value.manualMode)
+
+        val detector = FakeFoodDetector(
+            listOf(
+                FoodDetectionResult.Failed,
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.90))),
+            ),
+        )
+        val failed = ScannerViewModel(InMemoryPantryRepository(), detector)
         failed.onCameraPermissionGranted()
-        failed.capture(FakeScanImageSource(ScanCaptureResult.Success(byteArrayOf(1))))
+        failed.onCameraPreviewReady()
+        failed.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1), byteArrayOf(2))))
         advanceUntilIdle()
         assertEquals(ScannerNotice.DETECTION_FAILED, failed.uiState.value.notice)
         assertTrue(failed.uiState.value.manualMode)
+        assertEquals(1, detector.calls)
+
+        failed.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(3))))
+        advanceUntilIdle()
+        assertEquals(listOf("Plátano"), failed.uiState.value.items.map { it.name })
+        assertFalse(failed.uiState.value.isDetecting)
     }
 
     @Test
     fun permissionDenialContinuesInManualMode() = runTest {
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(FoodDetectionResult.Failed))
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.onCameraPermissionDenied()
         viewModel.addManualItem("Arroz")
 
@@ -92,7 +141,7 @@ class ScannerViewModelTest {
 
     @Test
     fun manualDuplicateKeepsExistingChipAndQuantityStepperClamps() = runTest {
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(FoodDetectionResult.Failed))
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.addManualItem("Manzana")
         val firstId = viewModel.uiState.value.items.single().id
         viewModel.updateQuantity(firstId, 99)
@@ -110,9 +159,13 @@ class ScannerViewModelTest {
     fun matchedFoodIsPromptedAutomaticallyAndCanChangeDecision() = runTest {
         val repository = InMemoryPantryRepository()
         repository.savePantryItem(PantryItem("tomato", "Tomate fresco", 1))
-        val viewModel = ScannerViewModel(repository, FakeFoodDetector(FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75)))))
+        val viewModel = ScannerViewModel(
+            repository,
+            FakeFoodDetector(listOf(FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75))))),
+        )
         viewModel.onCameraPermissionGranted()
-        viewModel.capture(FakeScanImageSource(ScanCaptureResult.Success(byteArrayOf(1))))
+        viewModel.onCameraPreviewReady()
+        viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1))))
         advanceUntilIdle()
 
         val draftId = viewModel.uiState.value.items.single().id
@@ -131,13 +184,16 @@ class ScannerViewModelTest {
         val viewModel = ScannerViewModel(
             repository,
             FakeFoodDetector(
-                FoodDetectionResult.Success(
-                    listOf(DetectedFood("Tomate fresco", 0.75), DetectedFood("Plátano", 0.84)),
+                listOf(
+                    FoodDetectionResult.Success(
+                        listOf(DetectedFood("Tomate fresco", 0.75), DetectedFood("Plátano", 0.84)),
+                    ),
                 ),
             ),
         )
         viewModel.onCameraPermissionGranted()
-        viewModel.capture(FakeScanImageSource(ScanCaptureResult.Success(byteArrayOf(1))))
+        viewModel.onCameraPreviewReady()
+        viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1))))
         advanceUntilIdle()
 
         val tomato = viewModel.uiState.value.items.single { it.name == "Tomate fresco" }
@@ -160,12 +216,12 @@ class ScannerViewModelTest {
         assertNull(saved.first { it.id == "tomato" }.quantity)
         assertTrue(saved.any { it.name == "Plátano" })
         assertTrue(viewModel.uiState.value.saveCompleted)
-        assertNull(viewModel.uiState.value.capturedImage)
+        assertNull(viewModel.uiState.value.scan)
     }
 
     @Test
     fun exitAndRescanAskBeforeDiscardingManualChips() = runTest {
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(FoodDetectionResult.Failed))
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.addManualItem("Harina")
 
         assertFalse(viewModel.requestExit())
@@ -182,7 +238,7 @@ class ScannerViewModelTest {
     @Test
     fun duplicateRepositoryResultIsNotReportedAsSuccessfulSave() = runTest {
         val repository = DuplicatePantryRepository()
-        val viewModel = ScannerViewModel(repository, FakeFoodDetector(FoodDetectionResult.Failed))
+        val viewModel = ScannerViewModel(repository, FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.addManualItem("Tomate")
         viewModel.saveToPantry()
         advanceUntilIdle()
@@ -191,12 +247,15 @@ class ScannerViewModelTest {
         assertFalse(viewModel.uiState.value.saveCompleted)
     }
 
-    private class FakeScanImageSource(private val result: ScanCaptureResult) : ScanImageSource {
-        override suspend fun capture(): ScanCaptureResult = result
+    private class FakeLiveFrameSource(private val frames: List<ByteArray>) : LiveFrameSource {
+        override fun frames(): Flow<ByteArray> = flow { frames.forEach { emit(it) } }
     }
 
-    private class FakeFoodDetector(private val result: FoodDetectionResult) : FoodDetector {
-        override suspend fun detect(image: ByteArray): FoodDetectionResult = result
+    private class FakeFoodDetector(private val results: List<FoodDetectionResult>) : FoodDetector {
+        var calls: Int = 0
+            private set
+
+        override suspend fun detect(image: ByteArray): FoodDetectionResult = results[minOf(calls++, results.lastIndex)]
     }
 
     private class DuplicatePantryRepository : PantryRepository {

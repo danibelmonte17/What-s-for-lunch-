@@ -296,9 +296,12 @@
         "E2E: con fotogramas y detecciones inyectados por fakes, enfocar dos veces el mismo Alimento y comprobar que aparece una sola vez en el listado",
         "E2E: añadir un Alimento a mano al listado, ajustar su cantidad y comprobar que se guarda en la Despensa con esa cantidad"
       ],
-      "evidence": [],
+      "evidence": [
+        "Autoverificación (2026-10-21, rama feature/detectar-alimentos-en-vivo): init.ps1 exit 0; lintDebug exit 0 (0 errores); testDebugUnitTest --rerun-tasks 61/61 (ScanDetectionsTest 13/13 con 4 unit nuevos de mergeLiveDetections; ScannerViewModelTest 9/9 con el bucle en vivo: muestreo 300 ms, conflación, D3/D5/D8); assembleDebug BUILD SUCCESSFUL; connectedDebugAndroidTest 95/95, 0 fallos y 0 omitidos en Pixel_10_Pro API 37 (ScanPantryE2ETest 16/16, incluidos el verify 1 liveFramesShowFoodOnceWithBestConfidenceAndHudLabel y el verify 2 manualFoodCanBeAddedWithQuantityAndSaved; CameraXLiveFrameSourceTest 1/1, fotogramas JPEG en memoria sin ficheros; RD06 verificado con liveFramesAreNeverWrittenToCacheOrFiles).",
+        "Verificación manual en el emulador (2026-10-21): Escáner abierto con la escena virtual; visor en vivo con CameraX ImageAnalysis bindeado e inferencia continua corriendo (indicador «Detectando alimentos…») durante más de 1 minuto sin crash ni degradación del visor; HUD sin píldoras porque la escena virtual no contiene comida (limitación ya conocida en la validación de escanear-despensa-con-camara). 2 capturas en docs/evidence/detectar-alimentos-en-vivo/. Lista para validación independiente; sin declarar aceptación."
+      ],
       "notes": "Sustituye el flujo de captura congelada de escanear-despensa-con-camara; RD06 sigue vigente (fotogramas solo en memoria). El muestreo de fotogramas, la conflación del último frame y el objetivo de rendimiento se fijan en la spec.",
-      "status": "not_started"
+      "status": "passing"
     },
     {
       "id": "sumar-cantidades-al-guardar",
