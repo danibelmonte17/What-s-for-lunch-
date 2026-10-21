@@ -18,6 +18,7 @@ import com.whatsforlunch.app.ui.pantry.PantryViewModel
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
+import com.whatsforlunch.app.ui.recipedetail.RecipeDetailViewModel
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -47,4 +48,12 @@ val appModule = module {
     viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
     viewModel { ScannerViewModel(get(), get()) }
+    // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
+    viewModel { parameters ->
+        RecipeDetailViewModel(
+            recipeRepository = get(),
+            pantryRepository = get(),
+            recipeId = parameters.get(),
+        )
+    }
 }

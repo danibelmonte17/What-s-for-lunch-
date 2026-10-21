@@ -9,6 +9,23 @@
     <string name="action_back">Volver</string>
     <string name="action_dismiss">Cerrar</string>
 
+    <!-- Detalle de Receta -->
+    <string name="recipe_detail_metric_time">Tiempo total</string>
+    <string name="recipe_detail_metric_time_breakdown">%1$d min preparación · %2$d min cocción</string>
+    <string name="recipe_detail_metric_difficulty">Dificultad</string>
+    <string name="recipe_detail_metric_calories">Calorías por porción</string>
+    <string name="recipe_detail_metric_servings">Raciones base</string>
+    <string name="recipe_detail_ingredients_title">Ingredientes</string>
+    <string name="recipe_detail_ingredients_count">%1$d de %2$d</string>
+    <string name="recipe_detail_ingredients_empty">Sin ingredientes</string>
+    <string name="recipe_detail_ingredient_optional">Opcional</string>
+    <string name="recipe_detail_steps_title">Pasos</string>
+    <string name="recipe_detail_steps_count">%1$d Pasos</string>
+    <string name="recipe_detail_steps_empty">Sin pasos</string>
+    <string name="recipe_detail_start_cooking">Empezar Modo Cocina</string>
+    <string name="recipe_detail_not_found">Receta no encontrada</string>
+    <string name="cook_mode_title">Modo Cocina</string>
+
     <!-- Despensa -->
     <string name="pantry_title">Despensa</string>
     <string name="pantry_open_accessibility">Despensa</string>

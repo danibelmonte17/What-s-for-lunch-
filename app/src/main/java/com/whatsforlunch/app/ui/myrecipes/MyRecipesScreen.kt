@@ -63,12 +63,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -86,6 +84,9 @@ import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeStatus
+import com.whatsforlunch.app.ui.components.MatchBadge
+import com.whatsforlunch.app.ui.components.MomentBadge
+import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -99,6 +100,7 @@ object MyRecipesTestTags {
     const val SCAN_PANTRY = "action_scan_pantry"
     const val RECIPE_LIST = "my_recipes_list"
     const val RECIPE_CARD = "my_recipes_card"
+    const val RECIPE_BODY = "my_recipes_card_body"
     const val RECIPE_STATUS = "my_recipes_card_status"
     const val RECIPE_MOMENT = "my_recipes_card_moment"
     const val RECIPE_MATCH = "my_recipes_card_match"
@@ -137,6 +139,7 @@ fun MyRecipesScreen(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit = {},
+    onOpenRecipe: (String) -> Unit = {},
     onOpenPantry: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
@@ -194,6 +197,7 @@ fun MyRecipesScreen(
                 matches = uiState.matches,
                 onCreateRecipe = onCreateRecipe,
                 onEditRecipe = onEditRecipe,
+                onOpenRecipe = onOpenRecipe,
                 searchQuery = uiState.searchQuery,
                 selectedMoment = uiState.mealMomentFilter,
                 onSearchQueryChanged = onSearchQueryChanged,
@@ -304,6 +308,7 @@ private fun RecipeList(
     matches: Map<String, RecipeMatch>,
     onCreateRecipe: () -> Unit,
     onEditRecipe: (String) -> Unit,
+    onOpenRecipe: (String) -> Unit,
     searchQuery: String,
     selectedMoment: MealMoment?,
     onSearchQueryChanged: (String) -> Unit,
@@ -329,6 +334,7 @@ private fun RecipeList(
                 RecipeCard(
                     recipe = recipe,
                     match = matches[recipe.id],
+                    onOpen = { onOpenRecipe(recipe.id) },
                     onEdit = { onEditRecipe(recipe.id) },
                     onDelete = { onDeleteRecipe(recipe) },
                 )
@@ -500,34 +506,6 @@ private fun MealMoment.icon() = when (this) {
     MealMoment.DESSERT -> Icons.Outlined.Icecream
 }
 
-private val SkilletIcon: ImageVector = ImageVector.Builder(
-    name = "Skillet",
-    defaultWidth = 24.dp,
-    defaultHeight = 24.dp,
-    viewportWidth = 24f,
-    viewportHeight = 24f,
-).apply {
-    path(fill = SolidColor(Color.Black)) {
-        moveTo(3.75f, 7.5f)
-        lineTo(16.25f, 7.5f)
-        curveTo(17.49f, 7.5f, 18.5f, 8.51f, 18.5f, 9.75f)
-        lineTo(18.5f, 11.5f)
-        curveTo(18.5f, 15.09f, 15.59f, 18f, 12f, 18f)
-        lineTo(8f, 18f)
-        curveTo(4.41f, 18f, 1.5f, 15.09f, 1.5f, 11.5f)
-        lineTo(1.5f, 9.75f)
-        curveTo(1.5f, 8.51f, 2.51f, 7.5f, 3.75f, 7.5f)
-        close()
-        moveTo(18.5f, 8.5f)
-        lineTo(20.5f, 8.5f)
-        lineTo(23f, 11f)
-        lineTo(21.5f, 12.5f)
-        lineTo(19.5f, 10.5f)
-        lineTo(18.5f, 10.5f)
-        close()
-    }
-}.build()
-
 @Composable
 private fun MealMoment.inactiveTint() = when (this) {
     MealMoment.BREAKFAST,
@@ -652,6 +630,7 @@ private val PillShape: Shape = RoundedCornerShape(50)
 private fun RecipeCard(
     recipe: Recipe,
     match: RecipeMatch?,
+    onOpen: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -681,6 +660,7 @@ private fun RecipeCard(
                     )
                     MomentBadge(
                         mealMoment = recipe.mealMoment,
+                        testTag = MyRecipesTestTags.RECIPE_MOMENT,
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(WarmSpacing.md),
@@ -688,6 +668,7 @@ private fun RecipeCard(
                     match?.let {
                         MatchBadge(
                             match = it,
+                            testTag = MyRecipesTestTags.RECIPE_MATCH,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(WarmSpacing.md),
@@ -695,85 +676,80 @@ private fun RecipeCard(
                     }
                 }
             }
-            Column(
-                modifier = Modifier.padding(WarmSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (bitmap == null) {
-                        // RF-22: sin foto, el badge del momento va junto al título.
-                        MomentBadge(mealMoment = recipe.mealMoment)
+            // RF-DR1 (D1): el cuerpo de la tarjeta abre el Detalle. La capa clicable
+            // va detrás del contenido (patrón «background clickable») para no fusionar
+            // la semántica de los hijos ni romper «Editar»/«Eliminar», que quedan
+            // fuera de esta zona con sus propios testTags.
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(role = Role.Button, onClick = onOpen)
+                        .testTag(MyRecipesTestTags.RECIPE_BODY),
+                )
+                Column(
+                    modifier = Modifier.padding(WarmSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (bitmap == null) {
+                            // RF-22: sin foto, el badge del momento va junto al título.
+                            MomentBadge(
+                                mealMoment = recipe.mealMoment,
+                                testTag = MyRecipesTestTags.RECIPE_MOMENT,
+                            )
+                            Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                        }
+                        Text(
+                            text = recipe.title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag(MyRecipesTestTags.RECIPE_TITLE),
+                        )
                         Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                        if (bitmap == null) {
+                            match?.let {
+                                MatchBadge(match = it, testTag = MyRecipesTestTags.RECIPE_MATCH)
+                            }
+                        }
+                        if (match != null) Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                        StatusPill(status = recipe.status)
                     }
-                    Text(
-                        text = recipe.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag(MyRecipesTestTags.RECIPE_TITLE),
-                    )
-                    Spacer(modifier = Modifier.width(WarmSpacing.sm))
-                    if (bitmap == null) {
-                        match?.let { MatchBadge(match = it) }
+                    if (recipe.story.isNotBlank()) {
+                        Text(
+                            text = recipe.story,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
-                    if (match != null) Spacer(modifier = Modifier.width(WarmSpacing.sm))
-                    StatusPill(status = recipe.status)
+                    MetadataRow(recipe = recipe)
                 }
-                if (recipe.story.isNotBlank()) {
-                    Text(
-                        text = recipe.story,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                MetadataRow(recipe = recipe)
-                CardActions(onEdit = onEdit, onDelete = onDelete)
             }
+            CardActions(
+                onEdit = onEdit,
+                onDelete = onDelete,
+                modifier = Modifier.padding(
+                    start = WarmSpacing.md,
+                    end = WarmSpacing.md,
+                    top = WarmSpacing.xs,
+                    bottom = WarmSpacing.md,
+                ),
+            )
         }
-    }
-}
-
-@Composable
-private fun MatchBadge(match: RecipeMatch, modifier: Modifier = Modifier) {
-    val fullMatch = match.isFullMatch
-    val accessibilityDescription = stringResource(
-        R.string.my_recipes_card_match_content_description,
-        match.percentage,
-    )
-    Surface(
-        shape = PillShape,
-        color = if (fullMatch) MaterialTheme.colorScheme.secondary
-        else MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = if (fullMatch) MaterialTheme.colorScheme.onSecondary
-        else MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = modifier
-            .semantics {
-                contentDescription = accessibilityDescription
-            }
-            .testTag(MyRecipesTestTags.RECIPE_MATCH),
-    ) {
-        Text(
-            text = if (fullMatch) stringResource(R.string.my_recipes_card_match_full)
-            else stringResource(R.string.my_recipes_card_match, match.percentage),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-        )
     }
 }
 
 // Ambas acciones del pie de tarjeta usan botones primarios compactos.
 @Composable
-private fun CardActions(onEdit: () -> Unit, onDelete: () -> Unit) {
+private fun CardActions(onEdit: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = WarmSpacing.xs),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -900,23 +876,8 @@ private fun MetadataItem(
     }
 }
 
-// Badge de momento culinario en píldora (superpuesto a la portada o junto al título).
-@Composable
-private fun MomentBadge(mealMoment: MealMoment, modifier: Modifier = Modifier) {
-    Surface(
-        shape = PillShape,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.95f),
-        contentColor = MaterialTheme.colorScheme.primary,
-        modifier = modifier.testTag(MyRecipesTestTags.RECIPE_MOMENT),
-    ) {
-        Text(
-            text = stringResource(mealMoment.labelRes()),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-        )
-    }
-}
+// Badge de momento culinario en píldora (superpuesto a la portada o junto al título):
+// se muestra con el componente compartido MomentBadge de ui/components.
 
 // RF-19: distintivo de estado (Borrador/Publicada) como píldora.
 @Composable

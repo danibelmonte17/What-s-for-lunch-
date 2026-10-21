@@ -438,9 +438,13 @@
       "verification": [
         "E2E: abrir una receta y comprobar que muestra sus métricas, ingredientes y pasos"
       ],
-      "evidence": [],
-      "notes": "",
-      "status": "not_started"
+      "evidence": [
+        "Autoverificación sesión 48 (Pixel_10_Pro API 37): init.ps1 exit 0; lintDebug 0 errores (solo warnings preexistentes); testDebugUnitTest --rerun-tasks 56/56 (RecipeDetailViewModelTest 6/6: notFound, match 50%/100% reactivo, sin obligatorios → sin badge, despensa vacía → 0% y formato D7 es/en); assembleDebug BUILD SUCCESSFUL; connectedDebugAndroidTest 94/94, 0 fallos/0 omitidos (RecipeDetailE2ETest 7/7: S1 ficha completa, S2 apertura por tap + vuelta con búsqueda conservada, S3 badge reactivo, S4 borrador incompleto, S5 CTA → Modo Cocina provisional, S6 not-found, S7 checklist local). Regresión íntegra: los 3 fallos iniciales en MatchBadgeE2ETest/MyRecipesCardsE2ETest se debían al clickable del cuerpo fusionando la semántica de los hijos; resueltos con capa clicable de fondo (background clickable) que conserva los testTags. 1 fallo ambiental en PantryManagementE2ETest (ComposeNotIdleException) confirmado como flake de suite larga: focalizada 5/5 verde.",
+        "U1 (utensilios) resuelta por omisión en el MVP: la sección «Utensilios necesarios» NO se implementa en el Detalle; el resto de T1-T6 íntegro.",
+        "Aceptación independiente (feature-validator, sesión 48): accept — gates reranqueados por el validador sobre el árbol sin commitear en Pixel_10_Pro API 37: init exit 0, lintDebug 0 errores, testDebugUnitTest --rerun-tasks 56/56 (RecipeDetailViewModelTest 6/6), assembleDebug OK, RecipeDetailE2ETest focalizada 7/7 y connectedDebugAndroidTest completa 94/94, 0 fallos/0 omitidos (7m 3s); S1-S7 y D1-D7 reproducidas a mano con adb/uiautomator sobre la app real en es y en (tap del cuerpo abre el Detalle y Editar/Eliminar no; búsqueda «Tortilla» conservada al volver; badge 50%→100% verificado con E2E+unit por no existir recorrido de UI; borrador con «—»/«Sin ingredientes»/«Sin pasos»/sin badge; CTA → «Modo Cocina» → Volver; checklist 2 de 3 → salir → reabrir → 0 de 3; D7 0,5 kg/0.25 kg según locale); U1 verificada: la sección de utensilios NO aparece (barridos es/en = 0 hits); seguridad sin hallazgos (sin secretos/red/permisos/dependencias nuevas, Room parametrizado, fotos solo de la ruta interna). 3 hallazgos Low no bloqueantes (tap en la portada no abre el Detalle —D1 lo limita al cuerpo—, nota sobre la captura larga cosida, nota de que S3 en caliente y S6 solo son verificables con tests). Informe: docs/validations/ver-detalle-de-receta.md; 2 capturas en docs/evidence/ver-detalle-de-receta/"
+      ],
+      "notes": "Badge reutilizado de ui/components/ (D5) con testTags por pantalla; checklist marcado local sin persistencia (D3); CTA hacia destino provisional (D4). Utensilios omitidos en el MVP (U1). 3 hallazgos Low no bloqueantes en el informe de validación.",
+      "status": "accepted"
     },
     {
       "id": "escalar-raciones",
