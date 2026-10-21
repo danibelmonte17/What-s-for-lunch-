@@ -130,4 +130,57 @@
     <string name="create_recipe_notice_ai_key_missing">Configura tu API key de IA en Ajustes para generar imágenes.</string>
     <string name="create_recipe_notice_ai_failed">No se pudo generar la imagen. Puedes elegir una foto manualmente.</string>
     <string name="create_recipe_notice_camera_denied">Permiso de cámara denegado. Puedes usar la galería o generar con IA.</string>
+
+    <!-- Escáner de la Despensa -->
+    <string name="scanner_title">Escáner de la Despensa</string>
+    <string name="scanner_camera_preview">Vista previa de la cámara</string>
+    <string name="scanner_camera_loading">Preparando la cámara…</string>
+    <string name="scanner_take_photo">Tomar foto</string>
+    <string name="scanner_detection_loading">Detectando alimentos…</string>
+    <string name="scanner_no_detections">No se detectaron alimentos. Puedes añadirlos manualmente.</string>
+    <string name="scanner_camera_denied">Permiso de cámara denegado. Puedes continuar añadiendo alimentos manualmente.</string>
+    <string name="scanner_camera_unavailable">No se pudo abrir la cámara. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_detection_failed">No se pudo analizar la imagen. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_save_failed">No se pudieron guardar los alimentos. Inténtalo de nuevo.</string>
+    <string name="scanner_duplicate_error">Este alimento ya está en la Despensa.</string>
+    <string name="scanner_name_invalid">Escribe el nombre del alimento.</string>
+    <string name="scanner_manual_name">Nombre del alimento</string>
+    <string name="scanner_add_food">Añadir alimento</string>
+    <string name="scanner_add_food_confirm">Añadir</string>
+    <string name="scanner_remove_food">Quitar alimento</string>
+    <string name="scanner_item_name">Nombre</string>
+    <string name="scanner_confidence">%1$d%%</string>
+    <string name="scanner_confidence_accessibility">Confianza %1$d%%</string>
+    <string name="scanner_hud_detection">%1$s · %2$d%%</string>
+    <string name="scanner_save">Guardar en la Despensa</string>
+    <string name="scanner_rescan">Re-escanear</string>
+    <string name="scanner_quantity">Cantidad</string>
+    <string name="scanner_quantity_decrease">Disminuir cantidad</string>
+    <string name="scanner_quantity_increase">Aumentar cantidad</string>
+    <string name="scanner_already_in_pantry">Ya está en la Despensa</string>
+    <string name="scanner_duplicate_title">Alimento ya en la Despensa</string>
+    <string name="scanner_duplicate_message">«%1$s» ya está en la Despensa (%2$s). ¿Qué cantidad conservamos?</string>
+    <string name="scanner_duplicate_existing_quantity">Cantidad: %1$d</string>
+    <string name="scanner_no_quantity">sin cantidad</string>
+    <string name="scanner_duplicate_keep">Mantener cantidad</string>
+    <string name="scanner_duplicate_update">Actualizar cantidad</string>
+    <string name="scanner_exit_title">¿Salir del Escáner?</string>
+    <string name="scanner_exit_message">Tienes alimentos sin guardar. Si sales, se descartan.</string>
+    <string name="scanner_exit_confirm">Salir</string>
+    <string name="scanner_rescan_title">¿Re-escanear?</string>
+    <string name="scanner_rescan_message">Tienes alimentos sin guardar. Si continúas, se descartan y se tomará una nueva foto.</string>
+    <string name="scanner_rescan_confirm">Re-escanear</string>
+    <string name="scanner_cancel">Cancelar</string>
+
+    <!-- Etiquetas COCO alimentarias de EfficientDet-Lite2 -->
+    <string name="food_label_apple">Manzana</string>
+    <string name="food_label_banana">Plátano</string>
+    <string name="food_label_broccoli">Brócoli</string>
+    <string name="food_label_cake">Pastel</string>
+    <string name="food_label_carrot">Zanahoria</string>
+    <string name="food_label_donut">Donut</string>
+    <string name="food_label_hot_dog">Perrito caliente</string>
+    <string name="food_label_orange">Naranja</string>
+    <string name="food_label_pizza">Pizza</string>
+    <string name="food_label_sandwich">Sándwich</string>
 </resources>

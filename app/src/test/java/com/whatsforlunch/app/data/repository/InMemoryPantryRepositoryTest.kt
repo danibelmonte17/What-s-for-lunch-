@@ -60,7 +60,7 @@ class InMemoryPantryRepositoryTest {
         val repository = InMemoryPantryRepository()
         val withoutQuantity = PantryItem("0", "Harina", null)
         val zeroQuantity = PantryItem("1", "Leche", 0)
-        val maximumQuantity = PantryItem("2", "Tomate", 999)
+        val maximumQuantity = PantryItem("2", "Tomate", 99)
 
         assertEquals(PantrySaveResult.Saved, repository.savePantryItem(withoutQuantity))
         assertEquals(PantrySaveResult.Saved, repository.savePantryItem(zeroQuantity))
@@ -70,7 +70,7 @@ class InMemoryPantryRepositoryTest {
             runBlocking { repository.savePantryItem(PantryItem("3", "Too low", -1)) }
         }
         assertThrows(IllegalArgumentException::class.java) {
-            runBlocking { repository.savePantryItem(PantryItem("4", "Too high", 1000)) }
+            runBlocking { repository.savePantryItem(PantryItem("4", "Too high", 100)) }
         }
         Unit
     }

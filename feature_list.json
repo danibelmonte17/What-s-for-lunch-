@@ -269,9 +269,14 @@
         "E2E: con una imagen de prueba inyectada, comprobar que aparecen chips de alimentos detectados con su confianza",
         "E2E: confirmar los chips y comprobar que los Alimentos aparecen en la Despensa"
       ],
-      "evidence": [],
+      "evidence": [
+        "T0 (2026-10-21): usuario acepta EfficientDet-Lite2 con threshold 0.60, chips editables y RD05. Scores, SHA-256, modelo y vocabulario: docs/technical-discovery.md; RK02 mitigado en docs/risks-and-open-questions.md.",
+        "Autoverificación: init.ps1 exit 0; lintDebug exit 0; testDebugUnitTest --rerun-tasks 50/50; assembleDebug BUILD SUCCESSFUL.",
+        "E2E Pixel_10_Pro API 37: connectedDebugAndroidTest 87/87, 0 fallos/omitidos (incluye ScanPantryE2ETest S1-S12 15/15); MediaPipeFoodDetectorTest real Lite2 1/1 en API 30 y API 37; CameraXScanImageSourceTest 1/1, captura JPEG en memoria sin archivos. Informe docs/validations/escanear-despensa-con-camara.md. Lista para validación independiente; sin declarar aceptación.",
+        "Aceptación independiente (feature-validator, 2026-10-21): accept — spec con deltas D2/D3/D5/D6 (máximo 99) cumplida; gates reejecutados en Pixel_10_Pro API 37: init exit 0, lintDebug 0 errores (37 warnings, 1 nuevo), testDebugUnitTest --rerun-tasks 50/50, assembleDebug OK, connectedDebugAndroidTest focalizada ScanPantryE2ETest+PantryManagementE2ETest 20/20 y MyRecipesLocalizationE2ETest 6/6 (regresión completa 87/87 inspeccionada); verify 1 y 2 reproducidos en emulador y a mano con adb/uiautomator (chip 3 → Despensa «Cantidad: 3»; diálogo de coincidencia con «Mantener/Actualizar»); RD06 y RD05 verificados; 2 capturas en docs/evidence/escanear-despensa-con-camara/; informe en docs/validations/escanear-despensa-con-camara.md; 5 hallazgos Low no bloqueantes."
+      ],
       "notes": "Requiere el spike de MediaPipe (RK02); la foto se descarta tras la inferencia (RD06)",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "mostrar-recetas-compatibles",

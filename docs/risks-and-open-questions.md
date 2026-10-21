@@ -10,11 +10,11 @@ El banco de descubrimiento (37 preguntas, `P1`-`P37`) quedó **resuelto**: 36 re
 
 ## Bloquean la siguiente fase
 
-Ninguna.
+Ninguna. **RK02 aceptado por el usuario el 2026-10-21**: implementar EfficientDet-Lite2 con umbral mínimo 0.60, chips editables y modo manual RD05 como mitigaciones explícitas. La comparación de modelos está en `docs/technical-discovery.md`.
 
 ## Preguntas de tiempo de implementación
 
-Ninguna pendiente hoy. Las preguntas `Q-…` que surjan al redactar o implementar una spec se añaden aquí con su origen y estado, y se mueven al apéndice al resolverse.
+No hay preguntas pendientes para esta feature; la decisión de RK02 se registró como aceptada. Las preguntas `Q-…` que surjan al redactar o implementar una spec se añaden aquí con su origen y estado, y se mueven al apéndice al resolverse.
 
 ## Más adelante / No es MVP
 
@@ -44,7 +44,7 @@ Decisiones tomadas sin confirmación explícita, incluidas las tomadas para desb
 | ID | Riesgo | Probabilidad | Impacto | Mitigación o siguiente paso |
 |---|---|---|---|---|
 | RK01 | Sin backend, la API key vive en el dispositivo: posible extracción y coste no controlado de las llamadas a OpenRouter | Media | Medio | Almacenamiento cifrado (Keystore), aviso en Ajustes, límites de gasto en el panel de OpenRouter (`S05`) |
-| RK02 | MediaPipe puede no detectar alimentos con la confianza objetivo (> 88%) sin un modelo específico entrenado | Alta | Alto | Spike de validación antes de construir el Escáner; el Modo de degradación manual (RD05) ya cubre el fallo |
+| RK02 | MediaPipe no alcanza el objetivo inicial >88% con modelos genéricos COCO | Alta | Alto | **Riesgo aceptado por el usuario (2026-10-21):** EfficientDet-Lite2 con umbral de propuesta 0.60; los chips se editan antes de persistir y RD05 mantiene entrada manual ante permiso denegado, detecciones vacías o fallo de inferencia. Modelo/hash/comparativa en `docs/technical-discovery.md`. |
 | RK03 | Envío de datos a OpenRouter pese al compromiso «sin retención» (RGPD) | Baja | Alto | Verificar y configurar la política de retención del proveedor; las fotos del Escaneo nunca salen del dispositivo (detección on-device) |
 | RK04 | El material UX es orientativo y no cubre Ajustes ni estados vacío/carga/error: riesgo de divergencia visual | Media | Bajo | Seguir los tokens YAML de `uxdocs/DESIGN.md` (`P17`) y las pautas de `DESIGN.md` para las lagunas |
 | RK05 | El pivote de PWA (PRD) a Android nativo deja sin equivalente claro funcionalidades del PRD (WebRTC, Web Speech, Service Workers) | Media | Medio | Equivalencias previstas en `docs/technical-discovery.md` (CameraX/MediaPipe, APIs nativas de voz, Room offline); validar en el spike de `RK02` |
@@ -56,7 +56,7 @@ Validaciones pendientes antes o durante la construcción de las features que dep
 
 | Tarea | Para cuándo | Riesgo que cubre |
 |---|---|---|
-| Spike del modelo MediaPipe concreto: detecta alimentos con > 88% de confianza y es compatible con API 30 | antes de `escanear-despensa-con-camara` | `RK02`, `RK05` |
+| Spike MediaPipe y reintento con otros modelos (2026-10-21): cuatro detectores en API 30; decisión del usuario: EfficientDet-Lite2, umbral 0.60 | **completado; riesgo aceptado con mitigaciones RD05** | `RK02`, `RK05` |
 | Latencia y coste reales de OpenRouter para chat y sugerencias | antes de `configurar-acceso-a-ia` | `RK01` |
 | Configuración efectiva de «sin retención» de datos en OpenRouter | antes de `sugerir-recetas-con-ia` | `RK03` |
 | Precisión de `SpeechRecognizer`/`TextToSpeech` en español y flujo de permisos de cámara/micrófono | antes de `controlar-cocina-con-voz` | `S04` |
@@ -102,8 +102,9 @@ Historial de trazabilidad. Las specs citan estos IDs como origen de requisitos; 
 | Q-gestionar-alimentos-de-la-despensa-1 | ¿Dónde vive el listado de la Despensa y desde dónde se accede? (los documentos definen 8 pantallas, ninguna «Despensa») | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (confirmado por el usuario el 2026-10-20: pantalla «Despensa» nueva con ruta propia, accesible desde una acción en la barra superior de Mis Recetas, visible en lista y estado vacío; el Escáner queda intacto para `escanear-despensa-con-camara`) |
 | Q-gestionar-alimentos-de-la-despensa-2 | ¿El borrado de un Alimento pide confirmación? (RD04 exige confirmación solo para Recetas; el prototipo del Escáner borra chips de un toque) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (confirmado por el usuario el 2026-10-20: diálogo de confirmación con el nombre del Alimento, mismo patrón que `eliminar-receta`, con «Cancelar»/«Eliminar» y descarte = cancelar) |
 | Q-gestionar-alimentos-de-la-despensa-3 | ¿Qué pasa al añadir o renombrar un Alimento cuyo nombre normalizado coincide con otro existente? (el dominio fija «se fusionan» para el Escaneo) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (confirmado por el usuario el 2026-10-20: aviso «Este alimento ya está en la Despensa» y no se crea fila nueva; se conserva un solo Alimento por nombre normalizado) |
-| Q-gestionar-alimentos-de-la-despensa-4 | ¿Qué representa la «cantidad (opcional)» del Alimento en el formulario? (sin unidad en `docs/domain-model.md`) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (revisado el 2026-10-20: se sustituyó el decimal por texto por un stepper entero 0..999, sin unidad; 0 = sin cantidad) |
+| Q-gestionar-alimentos-de-la-despensa-4 | ¿Qué representa la «cantidad (opcional)» del Alimento en el formulario? (sin unidad en `docs/domain-model.md`) | `docs/specs/gestionar-alimentos-de-la-despensa.md` | no | resuelta (revisado el 2026-10-20: se sustituyó el decimal por texto por un stepper entero, sin unidad; 0 = sin cantidad. Revisado el 2026-10-21: el rango pasa a 0..99 con máximo 99, ver Q-escanear-despensa-con-camara-4) |
 | Q-escanear-despensa-con-camara-1 | ¿Qué pasa cuando un Alimento escaneado coincide (por nombre normalizado) con uno ya presente en la Despensa? | `docs/specs/escanear-despensa-con-camara.md` (D2) | no | resuelta (2026-10-21, respuesta del usuario: **«Preguntar en pantalla»** — el chip se marca «Ya está en la Despensa» y la coincidencia se resuelve con un diálogo por coincidencia: «Mantener cantidad» (el existente queda intacto, el chip no crea fila) o «Actualizar cantidad» (el existente adopta la del chip, incluido 0 = sin cantidad); varias coincidencias se resuelven una a una; se conserva «un Alimento por nombre normalizado») |
 | Q-escanear-despensa-con-camara-2 | Al salir del Escáner con chips sin guardar (atrás o cierre de pantalla), ¿se descarta el Escaneo sin confirmación o se pide confirmación? | `docs/specs/escanear-despensa-con-camara.md` (D3) | no | resuelta (2026-10-21, respuesta del usuario: **«Pedir confirmación»** — al salir con chips sin guardar se muestra un diálogo con el patrón de `eliminar-receta`; «Cancelar» conserva los chips) |
-| Q-escanear-despensa-con-camara-3 | ¿Los chips del Escáner editan la cantidad de los Alimentos detectados? | `docs/specs/escanear-despensa-con-camara.md` (D5) | no | resuelta (2026-10-21, respuesta del usuario: **«Con stepper en los chips»** — stepper entero 0..999 («−» deshabilitado en 0, «+» en 999, sin campo de texto; 0 = sin cantidad), igual que la pantalla Despensa, y se guarda la cantidad elegida en el chip) |
+| Q-escanear-despensa-con-camara-3 | ¿Los chips del Escáner editan la cantidad de los Alimentos detectados? | `docs/specs/escanear-despensa-con-camara.md` (D5) | no | resuelta (2026-10-21, respuesta del usuario: **«Con stepper en los chips»** — stepper entero 0..99 («−» deshabilitado en 0, «+» en 99, sin campo de texto; 0 = sin cantidad), igual que la pantalla Despensa, y se guarda la cantidad elegida en el chip) |
+| Q-escanear-despensa-con-camara-4 | ¿Cuál es la cantidad máxima de un Alimento? (el dominio y `PantryItemValidation` fijaban 999) | `docs/specs/escanear-despensa-con-camara.md` (D6) | no | resuelta (2026-10-21, respuesta del usuario: **máximo 99** en toda la app — `MAX_QUANTITY` pasa de 999 a 99, rango entero 0..99 con 0 = sin cantidad; afecta a Despensa, Escáner, repositorios y tests, sin migración Room) |
 | Q-ver-detalle-de-receta-1 | Los utensilios del step 1 («hero … con los utensilios») no existen en el modelo (`Recipe.kt`, Room, `docs/domain-model.md`) ni en el formulario aceptado: ¿se amplía el modelo (feature aparte con migración) o se omiten? | `docs/specs/ver-detalle-de-receta.md` (U1) | no | resuelta (decidida por el usuario el 2026-10-20: **omisión en el MVP**; la sección «Utensilios necesarios» no se implementa en el Detalle; si se quiere, una feature futura ampliará modelo + formulario con su propia spec) |

@@ -1,19 +1,26 @@
 package com.whatsforlunch.app
 
+import android.Manifest
 import android.content.res.Configuration
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.core.app.ActivityOptionsCompat
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
-import com.whatsforlunch.app.ui.nav.ProvisionalTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
+import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
 import org.junit.Before
@@ -32,6 +39,10 @@ class MyRecipesLocalizationE2ETest {
     @Before
     fun clearDatabase() {
         E2eDatabase.clear()
+        InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
+            InstrumentationRegistry.getInstrumentation().targetContext.packageName,
+            Manifest.permission.CAMERA,
+        )
     }
 
     private fun showApp(locale: Locale) {
@@ -41,7 +52,10 @@ class MyRecipesLocalizationE2ETest {
         }
         val localizedContext = baseContext.createConfigurationContext(configuration)
         composeRule.setContent {
-            CompositionLocalProvider(LocalContext provides localizedContext) {
+            CompositionLocalProvider(
+                LocalContext provides localizedContext,
+                LocalActivityResultRegistryOwner provides TestActivityResultRegistryOwner,
+            ) {
                 WhatsForLunchTheme {
                     WhatsForLunchApp()
                 }
@@ -94,8 +108,12 @@ class MyRecipesLocalizationE2ETest {
     fun scanPantryOpensProvisionalScannerAndReturns() {
         showApp(Locale("es", "ES"))
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
-        composeRule.onNodeWithTag(ProvisionalTestTags.SCANNER_SCREEN).assertIsDisplayed()
-        composeRule.onNodeWithText("Escanear la Despensa").assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithText("Escáner de la Despensa").assertIsDisplayed()
+        composeRule.waitUntil(15_000) {
+            composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_PREVIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(ScannerTestTags.CAMERA_PREVIEW).assertIsDisplayed()
         composeRule.onNodeWithText("Volver").performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
@@ -111,9 +129,22 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
 
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
-        composeRule.onNodeWithTag(ProvisionalTestTags.SCANNER_SCREEN).assertIsDisplayed()
-        composeRule.onNodeWithText("Scan your Pantry").assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithText("Pantry Scanner").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
+    }
+}
+
+private object TestActivityResultRegistryOwner : ActivityResultRegistryOwner {
+    override val activityResultRegistry: ActivityResultRegistry = object : ActivityResultRegistry() {
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: ActivityOptionsCompat?,
+        ) {
+            error("The test grants CAMERA before composing the scanner route")
+        }
     }
 }
