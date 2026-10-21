@@ -16,7 +16,7 @@ class PantryItemValidationTest {
     @Test
     fun quantityAcceptsIntegerBoundsAndZeroRepresentsNoQuantity() {
         assertEquals(0, PantryItemValidation.MIN_QUANTITY)
-        assertEquals(999, PantryItemValidation.MAX_QUANTITY)
+        assertEquals(99, PantryItemValidation.MAX_QUANTITY)
         assertTrue(PantryItemValidation.isQuantityValid(PantryItemValidation.MIN_QUANTITY))
         assertTrue(PantryItemValidation.isQuantityValid(PantryItemValidation.MAX_QUANTITY))
         assertTrue(PantryItemValidation.isQuantityValid(3))
@@ -25,7 +25,7 @@ class PantryItemValidationTest {
     @Test
     fun quantityOutsideIntegerBoundsIsRejected() {
         assertFalse(PantryItemValidation.isQuantityValid(-1))
-        assertFalse(PantryItemValidation.isQuantityValid(1000))
+        assertFalse(PantryItemValidation.isQuantityValid(100))
     }
 
     @Test

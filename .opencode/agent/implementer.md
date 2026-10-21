@@ -1,7 +1,7 @@
 ---
 description: Agente wrapper que delega la implementación en `$feature-implementer`.
 mode: subagent
-model: opencode-go/gpt-6-luna
+model: devexpert/chat
 permission:
   read: allow
   glob: allow

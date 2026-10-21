@@ -269,8 +269,56 @@
         "E2E: con una imagen de prueba inyectada, comprobar que aparecen chips de alimentos detectados con su confianza",
         "E2E: confirmar los chips y comprobar que los Alimentos aparecen en la Despensa"
       ],
-      "evidence": [],
+      "evidence": [
+        "T0 (2026-10-21): usuario acepta EfficientDet-Lite2 con threshold 0.60, chips editables y RD05. Scores, SHA-256, modelo y vocabulario: docs/technical-discovery.md; RK02 mitigado en docs/risks-and-open-questions.md.",
+        "Autoverificación: init.ps1 exit 0; lintDebug exit 0; testDebugUnitTest --rerun-tasks 50/50; assembleDebug BUILD SUCCESSFUL.",
+        "E2E Pixel_10_Pro API 37: connectedDebugAndroidTest 87/87, 0 fallos/omitidos (incluye ScanPantryE2ETest S1-S12 15/15); MediaPipeFoodDetectorTest real Lite2 1/1 en API 30 y API 37; CameraXScanImageSourceTest 1/1, captura JPEG en memoria sin archivos. Informe docs/validations/escanear-despensa-con-camara.md. Lista para validación independiente; sin declarar aceptación.",
+        "Aceptación independiente (feature-validator, 2026-10-21): accept — spec con deltas D2/D3/D5/D6 (máximo 99) cumplida; gates reejecutados en Pixel_10_Pro API 37: init exit 0, lintDebug 0 errores (37 warnings, 1 nuevo), testDebugUnitTest --rerun-tasks 50/50, assembleDebug OK, connectedDebugAndroidTest focalizada ScanPantryE2ETest+PantryManagementE2ETest 20/20 y MyRecipesLocalizationE2ETest 6/6 (regresión completa 87/87 inspeccionada); verify 1 y 2 reproducidos en emulador y a mano con adb/uiautomator (chip 3 → Despensa «Cantidad: 3»; diálogo de coincidencia con «Mantener/Actualizar»); RD06 y RD05 verificados; 2 capturas en docs/evidence/escanear-despensa-con-camara/; informe en docs/validations/escanear-despensa-con-camara.md; 5 hallazgos Low no bloqueantes."
+      ],
       "notes": "Requiere el spike de MediaPipe (RK02); la foto se descarta tras la inferencia (RD06)",
+      "status": "accepted"
+    },
+    {
+      "id": "detectar-alimentos-en-vivo",
+      "area": "funcional",
+      "title": "Detectar alimentos en vivo",
+      "user_visible_behavior": "El usuario ve cómo la app detecta Alimentos mientras enfoca con la cámara y va construyendo bajo el visor un listado sin repetidos.",
+      "depends_on": [
+        "escanear-despensa-con-camara"
+      ],
+      "steps": [
+        "Detectar Alimentos con MediaPipe de forma continua sobre el visor, sin persistir fotogramas (RD06)",
+        "Añadir al listado cada Alimento detectado una sola vez por nombre normalizado, actualizando su confianza",
+        "Permitir añadir Alimentos manualmente al listado y ajustar su cantidad con el stepper 0..99",
+        "Mantener la degradación RD05 y la confirmación al salir con Alimentos sin guardar"
+      ],
+      "verification": [
+        "E2E: con fotogramas y detecciones inyectados por fakes, enfocar dos veces el mismo Alimento y comprobar que aparece una sola vez en el listado",
+        "E2E: añadir un Alimento a mano al listado, ajustar su cantidad y comprobar que se guarda en la Despensa con esa cantidad"
+      ],
+      "evidence": [],
+      "notes": "Sustituye el flujo de captura congelada de escanear-despensa-con-camara; RD06 sigue vigente (fotogramas solo en memoria). El muestreo de fotogramas, la conflación del último frame y el objetivo de rendimiento se fijan en la spec.",
+      "status": "not_started"
+    },
+    {
+      "id": "sumar-cantidades-al-guardar",
+      "area": "funcional",
+      "title": "Sumar cantidades al guardar",
+      "user_visible_behavior": "Al guardar un Escaneo, la cantidad de cada Alimento que ya está en la Despensa se suma a la existente.",
+      "depends_on": [
+        "escanear-despensa-con-camara"
+      ],
+      "steps": [
+        "Al confirmar el Escaneo, sumar la cantidad del chip a la del Alimento existente en lugar de preguntar «Mantener cantidad» o «Actualizar cantidad»",
+        "Definir y aplicar los casos límite: Alimento existente sin cantidad, chip en 0 (sin cantidad) y suma superior a 99",
+        "Actualizar el Alimento existente sin crear filas nuevas y conservando un solo Alimento por nombre normalizado"
+      ],
+      "verification": [
+        "E2E: con «Tomate» cantidad 1 en la Despensa y un chip «Tomate» cantidad 2, guardar y comprobar que queda cantidad 3",
+        "E2E: comprobar los casos límite acordados (sin cantidad, chip en 0 y tope 99) sin crear filas nuevas"
+      ],
+      "evidence": [],
+      "notes": "Cambia el comportamiento aceptado de escanear-despensa-con-camara (S11/S12 y el Non-Goal de no sumar cantidades); los casos límite requieren decisión de producto antes de la spec. El máximo sigue siendo 99.",
       "status": "not_started"
     },
     {

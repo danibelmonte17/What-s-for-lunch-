@@ -129,4 +129,57 @@
     <string name="create_recipe_notice_ai_key_missing">Set your AI API key in Settings to generate images.</string>
     <string name="create_recipe_notice_ai_failed">The image could not be generated. You can pick a photo manually.</string>
     <string name="create_recipe_notice_camera_denied">Camera permission denied. You can use the gallery or generate with AI.</string>
+
+    <!-- Pantry scanner -->
+    <string name="scanner_title">Pantry Scanner</string>
+    <string name="scanner_camera_preview">Camera preview</string>
+    <string name="scanner_camera_loading">Preparing camera…</string>
+    <string name="scanner_take_photo">Take photo</string>
+    <string name="scanner_detection_loading">Detecting foods…</string>
+    <string name="scanner_no_detections">No foods detected. You can add them manually.</string>
+    <string name="scanner_camera_denied">Camera permission denied. You can continue by adding foods manually.</string>
+    <string name="scanner_camera_unavailable">The camera couldn’t be opened. You can add foods manually.</string>
+    <string name="scanner_detection_failed">The image couldn’t be analyzed. You can add foods manually.</string>
+    <string name="scanner_save_failed">The foods couldn’t be saved. Please try again.</string>
+    <string name="scanner_duplicate_error">This food is already in your Pantry.</string>
+    <string name="scanner_name_invalid">Enter a food name.</string>
+    <string name="scanner_manual_name">Food name</string>
+    <string name="scanner_add_food">Add food</string>
+    <string name="scanner_add_food_confirm">Add</string>
+    <string name="scanner_remove_food">Remove food</string>
+    <string name="scanner_item_name">Name</string>
+    <string name="scanner_confidence">%1$d%%</string>
+    <string name="scanner_confidence_accessibility">Confidence %1$d%%</string>
+    <string name="scanner_hud_detection">%1$s · %2$d%%</string>
+    <string name="scanner_save">Save to Pantry</string>
+    <string name="scanner_rescan">Rescan</string>
+    <string name="scanner_quantity">Quantity</string>
+    <string name="scanner_quantity_decrease">Decrease quantity</string>
+    <string name="scanner_quantity_increase">Increase quantity</string>
+    <string name="scanner_already_in_pantry">Already in the Pantry</string>
+    <string name="scanner_duplicate_title">Food already in the Pantry</string>
+    <string name="scanner_duplicate_message">“%1$s” is already in the Pantry (%2$s). Which quantity should we keep?</string>
+    <string name="scanner_duplicate_existing_quantity">Quantity: %1$d</string>
+    <string name="scanner_no_quantity">no quantity</string>
+    <string name="scanner_duplicate_keep">Keep quantity</string>
+    <string name="scanner_duplicate_update">Update quantity</string>
+    <string name="scanner_exit_title">Leave the Scanner?</string>
+    <string name="scanner_exit_message">You have unsaved foods. Leaving will discard them.</string>
+    <string name="scanner_exit_confirm">Leave</string>
+    <string name="scanner_rescan_title">Rescan?</string>
+    <string name="scanner_rescan_message">You have unsaved foods. Continuing will discard them and take a new photo.</string>
+    <string name="scanner_rescan_confirm">Rescan</string>
+    <string name="scanner_cancel">Cancel</string>
+
+    <!-- EfficientDet-Lite2 COCO food labels -->
+    <string name="food_label_apple">Apple</string>
+    <string name="food_label_banana">Banana</string>
+    <string name="food_label_broccoli">Broccoli</string>
+    <string name="food_label_cake">Cake</string>
+    <string name="food_label_carrot">Carrot</string>
+    <string name="food_label_donut">Donut</string>
+    <string name="food_label_hot_dog">Hot dog</string>
+    <string name="food_label_orange">Orange</string>
+    <string name="food_label_pizza">Pizza</string>
+    <string name="food_label_sandwich">Sandwich</string>
 </resources>
