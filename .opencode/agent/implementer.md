@@ -1,7 +1,7 @@
 ---
 description: Agente wrapper que delega la implementación en `$feature-implementer`.
 mode: subagent
-model: opencode-go/gpt-6-luna
+model: opencode-go/mimo-v2.6-flash
 permission:
   read: allow
   glob: allow
