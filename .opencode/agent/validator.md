@@ -1,7 +1,7 @@
 ---
 description: Agente wrapper que delega la validación independiente en `$feature-validator`.
 mode: subagent
-model: devexpert/chat
+
 permission:
   read: allow
   glob: allow
