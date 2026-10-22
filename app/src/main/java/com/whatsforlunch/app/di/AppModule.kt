@@ -1,10 +1,13 @@
 package com.whatsforlunch.app.di
 
 import androidx.room.Room
+import com.whatsforlunch.app.BuildConfig
 import com.whatsforlunch.app.data.ai.AiKeyProvider
+import com.whatsforlunch.app.data.ai.AiKeyStore
 import com.whatsforlunch.app.data.ai.ImageGenerator
+import com.whatsforlunch.app.data.ai.KeystoreAiKeyStore
 import com.whatsforlunch.app.data.ai.OpenAiCompatibleImageGenerator
-import com.whatsforlunch.app.data.ai.UnconfiguredAiKeyProvider
+import com.whatsforlunch.app.data.ai.PriorityAiKeyProvider
 import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.scanner.FoodDetector
 import com.whatsforlunch.app.data.scanner.MediaPipeFoodDetector
@@ -19,6 +22,7 @@ import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailViewModel
+import com.whatsforlunch.app.ui.settings.SettingsViewModel
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -40,14 +44,20 @@ val appModule = module {
     single<PhotoStore> { FilePhotoStore(androidContext()) }
 
     single { OkHttpClient() }
-    // La API key llega con configurar-acceso-a-ia (⚠ S05, Q-crear-receta-6).
-    single<AiKeyProvider> { UnconfiguredAiKeyProvider() }
-    single<ImageGenerator> { OpenAiCompatibleImageGenerator(get(), get()) }
+    // La key puede venir del build (local.properties, D7-D8) con prioridad sobre la
+    // guardada cifrada en el dispositivo (D2, ⚠ S05); ImageGenerator no cambia su
+    // comportamiento (RF-21, Q-crear-receta-6).
+    single<AiKeyStore> { KeystoreAiKeyStore(androidContext()) }
+    single<AiKeyProvider> { PriorityAiKeyProvider(BuildConfig.AI_API_KEY, get<AiKeyStore>()) }
+    single<ImageGenerator> {
+        OpenAiCompatibleImageGenerator(get(), get(), BuildConfig.AI_BASE_URL)
+    }
 
     viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
     viewModel { ScannerViewModel(get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->
         RecipeDetailViewModel(

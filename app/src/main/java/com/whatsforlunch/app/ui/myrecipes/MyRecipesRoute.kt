@@ -13,6 +13,7 @@ fun MyRecipesRoute(
     onEditRecipe: (String) -> Unit,
     onOpenRecipe: (String) -> Unit = {},
     onOpenPantry: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: MyRecipesViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -23,6 +24,7 @@ fun MyRecipesRoute(
         onEditRecipe = onEditRecipe,
         onOpenRecipe = onOpenRecipe,
         onOpenPantry = onOpenPantry,
+        onOpenSettings = onOpenSettings,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onMealMomentSelected = viewModel::onMealMomentSelected,
         onResetFilters = viewModel::onResetFilters,

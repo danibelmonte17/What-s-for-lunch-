@@ -15,6 +15,7 @@ import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailRoute
 import com.whatsforlunch.app.ui.scanner.ScannerRoute
+import com.whatsforlunch.app.ui.settings.SettingsRoute
 
 // Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18). El formulario
 // de Receta acepta un id opcional: null = alta, con id = edición (RF-1). El Detalle
@@ -27,6 +28,7 @@ object AppRoutes {
     const val PANTRY = "pantry"
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
     const val COOK_MODE_PROVISIONAL = "cook_mode_provisional"
+    const val SETTINGS = "settings"
     const val RECIPE_ID_ARG = "recipeId"
 
     fun createRecipe(): String = "create_recipe"
@@ -53,6 +55,7 @@ fun WhatsForLunchApp(
                 onEditRecipe = { recipeId -> navController.navigate(AppRoutes.editRecipe(recipeId)) },
                 onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
                 onOpenPantry = { navController.navigate(AppRoutes.PANTRY) },
+                onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )
         }
         composable(
@@ -103,6 +106,9 @@ fun WhatsForLunchApp(
         }
         composable(AppRoutes.PANTRY) {
             PantryRoute(onBack = { navController.popBackStack() })
+        }
+        composable(AppRoutes.SETTINGS) {
+            SettingsRoute(onBack = { navController.popBackStack() })
         }
     }
 }

@@ -11,13 +11,15 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 // Implementación provisional de ImageGenerator sobre una API compatible con OpenAI
-// (OpenRouter). Depende de la API key del dispositivo (⚠ S05, Q-crear-receta-6).
-// Devuelve MissingApiKey sin key y Failed ante cualquier fallo (RD05).
+// (OpenRouter). Depende de la API key del dispositivo o de la inyectada en el build
+// (⚠ S05, D7-D11). Devuelve MissingApiKey sin key y Failed ante cualquier fallo (RD05).
 class OpenAiCompatibleImageGenerator(
     private val client: OkHttpClient,
     private val aiKeyProvider: AiKeyProvider,
-    private val endpoint: String = DEFAULT_ENDPOINT,
+    baseUrl: String = AiEndpoints.DEFAULT_BASE_URL,
 ) : ImageGenerator {
+
+    private val endpoint = AiEndpoints.imageGeneration(baseUrl)
 
     override suspend fun generate(prompt: String): ImageGenerationResult {
         val key = aiKeyProvider.apiKey() ?: return ImageGenerationResult.MissingApiKey
@@ -59,7 +61,6 @@ class OpenAiCompatibleImageGenerator(
     }.getOrNull()
 
     private companion object {
-        const val DEFAULT_ENDPOINT = "https://openrouter.ai/api/v1/images/generations"
         const val MODEL = "openai/dall-e-3"
         const val JSON_MEDIA_TYPE = "application/json; charset=utf-8"
     }
