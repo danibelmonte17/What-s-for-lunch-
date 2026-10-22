@@ -15,5 +15,3 @@ sealed interface PantrySaveResult {
     data object Saved : PantrySaveResult
     data object DuplicateName : PantrySaveResult
 }
-
-enum class PantryDuplicateResolution { KeepExisting, UpdateQuantity }

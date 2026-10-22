@@ -324,9 +324,14 @@
         "E2E: con «Tomate» cantidad 1 en la Despensa y un chip «Tomate» cantidad 2, guardar y comprobar que queda cantidad 3",
         "E2E: comprobar los casos límite acordados (sin cantidad, chip en 0 y tope 99) sin crear filas nuevas"
       ],
-      "evidence": [],
+      "evidence": [
+        "Implementación lista para validación independiente: RD13 (suma con «sin cantidad» como 0 y tope 99), diálogo «Mantener/Actualizar cantidad» retirado y marca «Ya está en la Despensa» informativa; barrido de restos en app/src = 0 hits.",
+        "Gates con Pixel_9_Pro (API 37, emulator-5564) como dispositivo: init.ps1 OK; lintDebug 0 errores; testDebugUnitTest --rerun-tasks 63/63; assembleDebug OK; ScanPantryE2ETest 18/18; connectedDebugAndroidTest 97/97 (0 fallos/errores/omitidos).",
+        "Comprobación manual en español: Despensa «Tomate» 1 + chip «Tomate» 2 → «Tomate» cantidad 3 sin diálogo; chip 0 conserva la cantidad 3. Capturas: docs/evidence/sumar-cantidades-al-guardar/.",
+        "Aceptación independiente (feature-validator, sesión 55): accept. Checks baratos reranqueados sobre el árbol actual: lintDebug 0 errores; testDebugUnitTest --rerun-tasks 63/63 (ScanDetectionsTest 15/15, ScannerViewModelTest 9/9); barrido de restos 0 hits; paridad es/en 177/177. Evidencia cara inspeccionada: XML de connectedDebugAndroidTest Pixel_9_Pro API 37 97/97, 0 fallos/errores/omitidos (482,7 s), ScanPantryE2ETest 18/18 con los dos verify; capturas revisadas. Informe: docs/validations/sumar-cantidades-al-guardar.md. 3 hallazgos Low no bloqueantes (aserción E2E de la marca en inglés, captura pre-guardado del caso chip 0 y `.kotlin/` sin ignorar)."
+      ],
       "notes": "Cambia el comportamiento aceptado de escanear-despensa-con-camara (S11/S12 y el Non-Goal de no sumar cantidades); los casos límite requieren decisión de producto antes de la spec. El máximo sigue siendo 99.",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "mostrar-recetas-compatibles",

@@ -6,7 +6,6 @@ import com.whatsforlunch.app.data.scanner.FoodDetector
 import com.whatsforlunch.app.data.scanner.LiveFrameSource
 import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
-import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
 import kotlinx.coroutines.flow.Flow
@@ -158,7 +157,7 @@ class ScannerViewModelTest {
     }
 
     @Test
-    fun matchedFoodIsPromptedAutomaticallyAndCanChangeDecision() = runTest {
+    fun saveSumsMatchedChipQuantityIntoExistingPantryItem() = runTest {
         val repository = InMemoryPantryRepository()
         repository.savePantryItem(PantryItem("tomato", "Tomate fresco", 1))
         val viewModel = ScannerViewModel(
@@ -171,24 +170,33 @@ class ScannerViewModelTest {
         advanceUntilIdle()
 
         val draftId = viewModel.uiState.value.items.single().id
-        assertEquals(draftId, viewModel.uiState.value.activeDuplicateItemId)
-        viewModel.resolveDuplicate(draftId, PantryDuplicateResolution.KeepExisting)
-        assertEquals(PantryDuplicateResolution.KeepExisting, viewModel.uiState.value.duplicateDecisions[draftId])
-        viewModel.openDuplicateResolution(draftId)
-        viewModel.resolveDuplicate(draftId, PantryDuplicateResolution.UpdateQuantity)
-        assertEquals(PantryDuplicateResolution.UpdateQuantity, viewModel.uiState.value.duplicateDecisions[draftId])
+        viewModel.updateQuantity(draftId, 2)
+        viewModel.saveToPantry()
+        advanceUntilIdle()
+
+        val saved = repository.observePantryItems().first()
+        assertEquals(1, saved.size)
+        assertEquals(3, saved.single().quantity)
+        assertEquals("tomato", saved.single().id)
+        assertTrue(viewModel.uiState.value.saveCompleted)
+        assertNull(viewModel.uiState.value.scan)
     }
 
     @Test
-    fun savingWithPendingMatchesWritesNothingUntilEveryDialogIsResolved() = runTest {
+    fun saveAppliesAllSumsAndCreatesOnlyUnmatchedItems() = runTest {
         val repository = InMemoryPantryRepository()
-        repository.savePantryItem(PantryItem("tomato", "Tomate fresco", 1))
+        repository.savePantryItem(PantryItem("tomato", "Tomate", null))
+        repository.savePantryItem(PantryItem("milk", "Leche", 3))
         val viewModel = ScannerViewModel(
             repository,
             FakeFoodDetector(
                 listOf(
                     FoodDetectionResult.Success(
-                        listOf(DetectedFood("Tomate fresco", 0.75), DetectedFood("Plátano", 0.84)),
+                        listOf(
+                            DetectedFood("Tomate", 0.75),
+                            DetectedFood("Leche", 0.84),
+                            DetectedFood("Plátano", 0.90),
+                        ),
                     ),
                 ),
             ),
@@ -198,27 +206,19 @@ class ScannerViewModelTest {
         viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1))))
         advanceUntilIdle()
 
-        val tomato = viewModel.uiState.value.items.single { it.name == "Tomate fresco" }
-        viewModel.dismissDuplicateResolution()
+        val items = viewModel.uiState.value.items
+        viewModel.updateQuantity(items.first { it.name == "Tomate" }.id, 2)
+        viewModel.updateQuantity(items.first { it.name == "Leche" }.id, 0)
+        viewModel.updateQuantity(items.first { it.name == "Plátano" }.id, 4)
         viewModel.saveToPantry()
-        assertTrue(viewModel.uiState.value.pendingSave)
-        assertEquals(1, repository.observePantryItems().first().size)
-        viewModel.dismissDuplicateResolution()
-        advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.pendingSave)
-        assertEquals(1, repository.observePantryItems().first().size)
-
-        viewModel.saveToPantry()
-        assertEquals(tomato.id, viewModel.uiState.value.activeDuplicateItemId)
-        viewModel.resolveDuplicate(tomato.id, PantryDuplicateResolution.UpdateQuantity)
         advanceUntilIdle()
 
         val saved = repository.observePantryItems().first()
-        assertEquals(2, saved.size)
-        assertNull(saved.first { it.id == "tomato" }.quantity)
-        assertTrue(saved.any { it.name == "Plátano" })
+        assertEquals(3, saved.size)
+        assertEquals(2, saved.first { it.id == "tomato" }.quantity)
+        assertEquals(3, saved.first { it.id == "milk" }.quantity)
+        assertEquals(4, saved.first { it.name == "Plátano" }.quantity)
         assertTrue(viewModel.uiState.value.saveCompleted)
-        assertNull(viewModel.uiState.value.scan)
     }
 
     @Test

@@ -192,12 +192,6 @@
     <string name="scanner_quantity_decrease">Disminuir cantidad</string>
     <string name="scanner_quantity_increase">Aumentar cantidad</string>
     <string name="scanner_already_in_pantry">Ya está en la Despensa</string>
-    <string name="scanner_duplicate_title">Alimento ya en la Despensa</string>
-    <string name="scanner_duplicate_message">«%1$s» ya está en la Despensa (%2$s). ¿Qué cantidad conservamos?</string>
-    <string name="scanner_duplicate_existing_quantity">Cantidad: %1$d</string>
-    <string name="scanner_no_quantity">sin cantidad</string>
-    <string name="scanner_duplicate_keep">Mantener cantidad</string>
-    <string name="scanner_duplicate_update">Actualizar cantidad</string>
     <string name="scanner_exit_title">¿Salir del Escáner?</string>
     <string name="scanner_exit_message">Tienes alimentos sin guardar. Si sales, se descartan.</string>
     <string name="scanner_exit_confirm">Salir</string>

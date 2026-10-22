@@ -2,7 +2,6 @@ package com.whatsforlunch.app
 
 import android.content.Context
 import android.content.res.Configuration
-import android.view.KeyEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsEnabled
@@ -38,7 +38,6 @@ import com.whatsforlunch.app.data.scanner.FoodDetector
 import com.whatsforlunch.app.data.scanner.LiveFrameSource
 import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
-import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import com.whatsforlunch.app.ui.pantry.PantryScreen
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import com.whatsforlunch.app.ui.pantry.PantryUiState
@@ -298,66 +297,81 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun pantryMatchOpensDecisionDialogAndKeepOrUpdateReusesExistingRow() {
+    fun saveSumsChipQuantityIntoExistingPantryItem() {
         launchScanner(
             existing = listOf(PantryItem("tomato-id", "TOMATE fresco", 1)),
             detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75)))),
         )
         waitForItems(1)
         val draft = viewModel.uiState.value.items.single()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_DIALOG).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_TITLE)
-            .assertTextEquals(locale(R.string.scanner_duplicate_title))
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_MESSAGE)
-            .assertTextEquals(locale(R.string.scanner_duplicate_message, "Tomate fresco", locale(R.string.scanner_duplicate_existing_quantity, 1)))
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_KEEP).performClick()
-        assertEquals(PantryDuplicateResolution.KeepExisting, viewModel.uiState.value.duplicateDecisions[draft.id])
-        composeRule.onNodeWithTag(ScannerTestTags.duplicateMark(draft.id)).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_UPDATE).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.duplicateMark(draft.id))
+            .assertTextEquals(locale(R.string.scanner_already_in_pantry))
+        repeat(2) { composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(draft.id)).performClick() }
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
         composeRule.waitUntil(5_000) { showPantry.value }
 
         val items = runBlocking { repository.observePantryItems().first() }
         assertEquals(1, items.size)
         assertEquals("tomato-id", items.single().id)
-        assertEquals(null, items.single().quantity)
+        assertEquals("TOMATE fresco", items.single().name)
+        assertEquals(3, items.single().quantity)
     }
 
     @Test
-    fun multiplePendingMatchesAskSequentiallyAndDismissAbortsWholeSave() {
+    fun saveAppliesAgreedQuantityEdgeCasesWithoutNewRows() {
         launchScanner(
-            existing = listOf(PantryItem("tomato-id", "Tomate fresco", 1), PantryItem("milk-id", "Leche", 2)),
+            existing = listOf(
+                PantryItem("tomato-id", "Tomate fresco", null),
+                PantryItem("milk-id", "Leche", 3),
+                PantryItem("rice-id", "Arroz", 60),
+                PantryItem("salt-id", "Sal", null),
+            ),
             detectionResults = listOf(
-                FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75), DetectedFood("Leche", 0.88))),
+                FoodDetectionResult.Success(
+                    listOf(
+                        DetectedFood("Tomate fresco", 0.75),
+                        DetectedFood("Leche", 0.88),
+                        DetectedFood("Arroz", 0.72),
+                        DetectedFood("Sal", 0.66),
+                    ),
+                ),
             ),
         )
-        waitForItems(2)
-        val items = viewModel.uiState.value.items
-        val tomato = items.first { it.name == "Tomate fresco" }
-        val milk = items.first { it.name == "Leche" }
-
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_DIALOG).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_UPDATE).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_DIALOG).assertIsDisplayed()
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.waitForIdle()
+        waitForItems(4)
+        val chips = viewModel.uiState.value.items
+        viewModel.updateQuantity(chips.first { it.name == "Tomate fresco" }.id, 2)
+        viewModel.updateQuantity(chips.first { it.name == "Leche" }.id, 0)
+        viewModel.updateQuantity(chips.first { it.name == "Arroz" }.id, 50)
+        viewModel.updateQuantity(chips.first { it.name == "Sal" }.id, 0)
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_DIALOG).assertIsDisplayed()
-        assertEquals(2, runBlocking { repository.observePantryItems().first().size })
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        composeRule.waitForIdle()
-        assertFalse(viewModel.uiState.value.pendingSave)
-        assertEquals(2, runBlocking { repository.observePantryItems().first().size })
-        assertEquals(PantryDuplicateResolution.UpdateQuantity, viewModel.uiState.value.duplicateDecisions[tomato.id])
-        assertEquals(null, viewModel.uiState.value.duplicateDecisions[milk.id])
-
-        composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_KEEP).performClick()
         composeRule.waitUntil(5_000) { showPantry.value }
+
         val saved = runBlocking { repository.observePantryItems().first() }
-        assertEquals(2, saved.size)
-        assertNull(saved.first { it.id == "tomato-id" }.quantity)
-        assertEquals(2, saved.first { it.id == "milk-id" }.quantity)
+        assertEquals(4, saved.size)
+        assertEquals(2, saved.first { it.id == "tomato-id" }.quantity)
+        assertEquals(3, saved.first { it.id == "milk-id" }.quantity)
+        assertEquals(99, saved.first { it.id == "rice-id" }.quantity)
+        assertNull(saved.first { it.id == "salt-id" }.quantity)
+    }
+
+    @Test
+    fun saveWithPantryMatchesNeverShowsDecisionDialog() {
+        launchScanner(
+            existing = listOf(PantryItem("tomato-id", "Tomate fresco", 3)),
+            detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75)))),
+        )
+        waitForItems(1)
+        val draft = viewModel.uiState.value.items.single()
+        composeRule.onNodeWithTag(ScannerTestTags.duplicateMark(draft.id))
+            .assertIsDisplayed()
+            .assertHasNoClickAction()
+            .assertTextEquals(locale(R.string.scanner_already_in_pantry))
+        composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
+        composeRule.waitUntil(5_000) { showPantry.value }
+
+        val saved = runBlocking { repository.observePantryItems().first() }
+        assertEquals(1, saved.size)
+        assertEquals(3, saved.single().quantity)
     }
 
     @Test
@@ -458,9 +472,6 @@ class ScanPantryE2ETest {
                                 onQuantityChange = viewModel::updateQuantity,
                                 onRemoveItem = viewModel::removeItem,
                                 onSave = viewModel::saveToPantry,
-                                onOpenDuplicate = viewModel::openDuplicateResolution,
-                                onResolveDuplicate = viewModel::resolveDuplicate,
-                                onDismissDuplicate = viewModel::dismissDuplicateResolution,
                                 onClearNotice = viewModel::clearNotice,
                             )
                         }
