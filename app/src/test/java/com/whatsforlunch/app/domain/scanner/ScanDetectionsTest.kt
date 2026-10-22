@@ -3,9 +3,7 @@ package com.whatsforlunch.app.domain.scanner
 import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
-import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -153,14 +151,41 @@ class ScanDetectionsTest {
     }
 
     @Test
-    fun duplicateResolutionPreservesOrUpdatesExistingIdAndQuantity() {
-        val existing = PantryItem("same-id", "Tomate fresco", 1)
-        val update = ScanDraftItem("Tomate", null, 0, "draft")
+    fun sumIntoAddsChipQuantityToExistingQuantity() {
+        val existing = PantryItem("tomato", "Tomate", 1)
+        val summed = ScanDetections.sumInto(existing, ScanDraftItem("Tomate", null, 2, "draft"))
 
-        assertNull(ScanDetections.resolveDuplicate(existing, update, PantryDuplicateResolution.KeepExisting))
-        val updated = ScanDetections.resolveDuplicate(existing, update, PantryDuplicateResolution.UpdateQuantity)!!
-        assertEquals("same-id", updated.id)
-        assertNull(updated.quantity)
-        assertFalse(updated == existing)
+        assertEquals(3, summed.quantity)
+        assertEquals("tomato", summed.id)
+        assertEquals("Tomate", summed.name)
+    }
+
+    @Test
+    fun sumIntoTreatsNoQuantityAsAdditiveNeutral() {
+        val withoutQuantity = PantryItem("tomato", "Tomate", null)
+
+        assertEquals(
+            2,
+            ScanDetections.sumInto(withoutQuantity, ScanDraftItem("Tomate", null, 2, "draft")).quantity,
+        )
+        assertEquals(
+            3,
+            ScanDetections.sumInto(PantryItem("tomato", "Tomate", 3), ScanDraftItem("Tomate", null, 0, "draft")).quantity,
+        )
+        assertNull(
+            ScanDetections.sumInto(withoutQuantity, ScanDraftItem("Tomate", null, 0, "draft")).quantity,
+        )
+    }
+
+    @Test
+    fun sumIntoCapsTotalAtMaximumWithoutWarning() {
+        assertEquals(
+            99,
+            ScanDetections.sumInto(PantryItem("tomato", "Tomate", 60), ScanDraftItem("Tomate", null, 50, "draft")).quantity,
+        )
+        assertEquals(
+            99,
+            ScanDetections.sumInto(PantryItem("tomato", "Tomate", 99), ScanDraftItem("Tomate", null, 1, "draft")).quantity,
+        )
     }
 }

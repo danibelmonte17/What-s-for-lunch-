@@ -12,12 +12,10 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.Scan
 import com.whatsforlunch.app.domain.model.ScanDraftItem
-import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.scanner.ScanDetections
-import com.whatsforlunch.app.domain.text.normalizeName
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -53,11 +51,6 @@ data class ScannerUiState(
     val pantryItems: List<PantryItem> = emptyList(),
     val compatibleRecipes: List<CompatibleRecipe> = emptyList(),
     val matches: Map<String, PantryItem> = emptyMap(),
-    val duplicateDecisions: Map<String, PantryDuplicateResolution> = emptyMap(),
-    val activeDuplicateItemId: String? = null,
-    val duplicatePromptQueue: List<String> = emptyList(),
-    val suppressedAutoPrompts: Set<String> = emptySet(),
-    val pendingSave: Boolean = false,
     val isSaving: Boolean = false,
     val showExitConfirmation: Boolean = false,
     val rescanAfterConfirmation: Boolean = false,
@@ -212,7 +205,7 @@ class ScannerViewModel(
     fun renameItem(id: String, name: String) {
         val state = _uiState.value
         val items = ScanDetections.rename(state.items, id, name)
-        _uiState.value = recalculateItems(state, items, preferredId = id)
+        _uiState.value = recalculateItems(state, items)
     }
 
     fun updateQuantity(id: String, quantity: Int) {
@@ -225,56 +218,6 @@ class ScannerViewModel(
         _uiState.value = recalculateItems(state, state.items.filterNot { it.id == id })
     }
 
-    fun openDuplicateResolution(itemId: String) {
-        if (_uiState.value.matches.containsKey(itemId)) {
-            _uiState.value = _uiState.value.copy(activeDuplicateItemId = itemId)
-        }
-    }
-
-    fun resolveDuplicate(itemId: String, resolution: PantryDuplicateResolution) {
-        val state = _uiState.value
-        if (itemId !in state.matches) return
-        val decisions = state.duplicateDecisions + (itemId to resolution)
-        val remainingQueue = state.duplicatePromptQueue.filterNot { it == itemId }
-        val next = if (state.pendingSave) {
-            state.items.firstOrNull { it.id in state.matches && it.id !in decisions }?.id
-        } else {
-            remainingQueue.firstOrNull { it in state.matches && it !in decisions }
-        }
-        _uiState.value = state.copy(
-            duplicateDecisions = decisions,
-            activeDuplicateItemId = next,
-            duplicatePromptQueue = remainingQueue,
-        )
-        if (state.pendingSave && next == null) persistItems()
-    }
-
-    fun dismissDuplicateResolution() {
-        val state = _uiState.value
-        val itemId = state.activeDuplicateItemId ?: return
-        if (state.pendingSave) {
-            _uiState.value = state.copy(
-                pendingSave = false,
-                activeDuplicateItemId = null,
-                duplicatePromptQueue = emptyList(),
-            )
-            return
-        }
-        val item = state.items.firstOrNull { it.id == itemId }
-        val match = state.matches[itemId]
-        val suppressed = if (item != null && match != null) {
-            state.suppressedAutoPrompts + promptKey(item, match)
-        } else {
-            state.suppressedAutoPrompts
-        }
-        val queue = state.duplicatePromptQueue.filterNot { it == itemId }
-        _uiState.value = state.copy(
-            activeDuplicateItemId = queue.firstOrNull { it in state.matches && it !in state.duplicateDecisions },
-            duplicatePromptQueue = queue,
-            suppressedAutoPrompts = suppressed,
-        )
-    }
-
     fun saveToPantry() {
         val state = _uiState.value
         if (state.isSaving || state.items.isEmpty() || !state.pantryLoaded) return
@@ -282,40 +225,20 @@ class ScannerViewModel(
             _uiState.value = state.copy(notice = ScannerNotice.INVALID_NAME)
             return
         }
-        val pending = state.items.filter { it.id in state.matches && it.id !in state.duplicateDecisions }
-        if (pending.isNotEmpty()) {
-            val queue = pending.map(ScanDraftItem::id)
-            _uiState.value = state.copy(
-                pendingSave = true,
-                duplicatePromptQueue = queue,
-                activeDuplicateItemId = queue.first(),
-            )
-        } else {
-            persistItems()
-        }
+        persistItems()
     }
 
     private fun persistItems() {
         val snapshot = _uiState.value
-        if (snapshot.isSaving || snapshot.pendingSave && snapshot.activeDuplicateItemId != null) return
-        _uiState.value = snapshot.copy(isSaving = true, pendingSave = false, activeDuplicateItemId = null)
+        if (snapshot.isSaving) return
+        _uiState.value = snapshot.copy(isSaving = true)
         viewModelScope.launch {
             try {
                 snapshot.items.forEach { draft ->
                     val existing = snapshot.matches[draft.id]
-                    val result = when {
-                        existing == null -> pantryRepository.savePantryItem(ScanDetections.toPantryItem(draft))
-                        snapshot.duplicateDecisions[draft.id] == PantryDuplicateResolution.KeepExisting -> PantrySaveResult.Saved
-                        snapshot.duplicateDecisions[draft.id] == PantryDuplicateResolution.UpdateQuantity -> {
-                            val item = ScanDetections.resolveDuplicate(
-                                existing,
-                                draft,
-                                PantryDuplicateResolution.UpdateQuantity,
-                            ) ?: existing
-                            pantryRepository.savePantryItem(item)
-                        }
-                        else -> PantrySaveResult.DuplicateName
-                    }
+                    val item = existing?.let { ScanDetections.sumInto(it, draft) }
+                        ?: ScanDetections.toPantryItem(draft)
+                    val result = pantryRepository.savePantryItem(item)
                     if (result == PantrySaveResult.DuplicateName) {
                         _uiState.value = _uiState.value.copy(
                             isSaving = false,
@@ -331,9 +254,6 @@ class ScannerViewModel(
                     liveDetections = emptyList(),
                     items = emptyList(),
                     matches = emptyMap(),
-                    duplicateDecisions = emptyMap(),
-                    duplicatePromptQueue = emptyList(),
-                    suppressedAutoPrompts = emptySet(),
                     notice = null,
                 )
             } catch (exception: Exception) {
@@ -391,11 +311,6 @@ class ScannerViewModel(
             scan = null,
             items = emptyList(),
             matches = emptyMap(),
-            duplicateDecisions = emptyMap(),
-            activeDuplicateItemId = null,
-            duplicatePromptQueue = emptyList(),
-            suppressedAutoPrompts = emptySet(),
-            pendingSave = false,
             notice = null,
         )
     }
@@ -403,13 +318,12 @@ class ScannerViewModel(
     private fun updatePantryItems(pantryItems: List<PantryItem>) {
         val state = _uiState.value
         val matches = ScanDetections.matchesWithPantry(state.items, pantryItems)
-        val base = state.copy(
+        _uiState.value = state.copy(
             pantryItems = pantryItems,
             matches = matches,
             pantryLoaded = true,
             compatibleRecipes = compatibleRecipes(recipes, pantryItems),
         )
-        _uiState.value = queueNewAutomaticMatches(base, state.matches)
     }
 
     private fun updateRecipes(recipes: List<Recipe>) {
@@ -420,41 +334,8 @@ class ScannerViewModel(
         )
     }
 
-    private fun recalculateItems(
-        state: ScannerUiState,
-        items: List<ScanDraftItem>,
-        preferredId: String? = null,
-    ): ScannerUiState {
+    private fun recalculateItems(state: ScannerUiState, items: List<ScanDraftItem>): ScannerUiState {
         val matches = ScanDetections.matchesWithPantry(items, state.pantryItems)
-        val decisions = state.duplicateDecisions.filter { (id, _) ->
-            val previous = state.items.firstOrNull { it.id == id }
-            val current = items.firstOrNull { it.id == id }
-            previous != null && current != null &&
-                normalizeName(previous.name) == normalizeName(current.name) &&
-                state.matches[id]?.id == matches[id]?.id
-        }
-        val base = state.copy(items = items, matches = matches, duplicateDecisions = decisions)
-        return queueNewAutomaticMatches(base, state.matches, preferredId)
+        return state.copy(items = items, matches = matches)
     }
-
-    private fun queueNewAutomaticMatches(
-        state: ScannerUiState,
-        previousMatches: Map<String, PantryItem>,
-        preferredId: String? = null,
-    ): ScannerUiState {
-        val newMatches = state.items.filter { item ->
-            val match = state.matches[item.id]
-            match != null && previousMatches[item.id]?.id != match.id && item.id !in state.duplicateDecisions &&
-                promptKey(item, match) !in state.suppressedAutoPrompts
-        }.map(ScanDraftItem::id)
-        val queue = (state.duplicatePromptQueue + newMatches).distinct()
-            .filter { it in state.matches && it !in state.duplicateDecisions }
-        val active = state.activeDuplicateItemId?.takeIf { it in state.matches }
-            ?: preferredId?.takeIf { it in queue }
-            ?: queue.firstOrNull()
-        return state.copy(duplicatePromptQueue = queue, activeDuplicateItemId = active)
-    }
-
-    private fun promptKey(item: ScanDraftItem, pantryItem: PantryItem): String =
-        "${item.id}:${normalizeName(item.name)}:${pantryItem.id}"
 }

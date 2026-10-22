@@ -5,7 +5,7 @@
 - `id`: sumar-cantidades-al-guardar
 - `area`: funcional
 - `depends_on`: escanear-despensa-con-camara (`accepted`)
-- `status`: not_started (con spec redactada el 2026-10-22)
+- `status`: passing (implementada el 2026-10-22; pendiente de validación independiente)
 - `source`: `feature_list.json`
 
 > **Decisiones de producto cerradas antes de la spec** (2026-10-22, usuario): los tres casos límites que `feature_list.json` y `PROGRESS.md` exigen decidir antes de planificar (Alimento existente sin cantidad, chip en 0 y suma superior a 99) más el destino del diálogo de coincidencia. Registradas como `Q-sumar-cantidades-al-guardar-1..4` en `docs/risks-and-open-questions.md` y formalizadas como D1-D3 más abajo.
@@ -185,11 +185,11 @@ No inspeccionado: `PantryScreen.kt` completo (solo su contrato y su ViewModel, q
 
 ## Implementation Tasks
 
-- [ ] T1: `ScanDetections.sumInto` con la fórmula de D1/D2 y unit (null+N→N, M+0→M, 0+0→sin cantidad, 60+50→99, 99+1→99, conservación de id/nombre). (S1-S4)
-- [ ] T2: `ScannerViewModel.persistItems` con suma; retirar `duplicateDecisions`/`activeDuplicateItemId`/`duplicatePromptQueue`/`suppressedAutoPrompts`/`pendingSave`, `openDuplicateResolution`/`resolveDuplicate`/`dismissDuplicateResolution`, `queueNewAutomaticMatches`/`promptKey`; unit de guardado con una y varias coincidencias sin diálogos. (S1, S3, S4, S7)
-- [ ] T3: `ScannerScreen`/`ScannerRoute`: retirar `DuplicateResolutionDialog`, tags `DUPLICATE_*` de decisión y sus callbacks; marca `scanner_already_in_pantry` no accionable; borrar `PantryDuplicateResolution` y las cadenas es/en del diálogo (con `grep` previo de usos). (S5, S8)
-- [ ] T4: `ScanPantryE2ETest`: nuevos casos `saveSumsChipQuantityIntoExistingPantryItem` (verify 1), `saveAppliesAgreedQuantityEdgeCasesWithoutNewRows` (verify 2) y `saveWithPantryMatchesNeverShowsDecisionDialog` (S5); actualizar el harness (`ScannerScreen(...)` sin callbacks del diálogo) sin perder cobertura previa. (S1-S8)
-- [ ] T5: gates (`init`, `lint`, `unit`, `assembleDebug`, E2E focalizada + regresión completa), `docs/domain-model.md` (RD13) y notas de revisión en las specs vecinas; feature en `passing` con evidencia.
+- [x] T1: `ScanDetections.sumInto` con la fórmula de D1/D2 y unit (null+N→N, M+0→M, 0+0→sin cantidad, 60+50→99, 99+1→99, conservación de id/nombre). (S1-S4)
+- [x] T2: `ScannerViewModel.persistItems` con suma; retirar `duplicateDecisions`/`activeDuplicateItemId`/`duplicatePromptQueue`/`suppressedAutoPrompts`/`pendingSave`, `openDuplicateResolution`/`resolveDuplicate`/`dismissDuplicateResolution`, `queueNewAutomaticMatches`/`promptKey`; unit de guardado con una y varias coincidencias sin diálogos. (S1, S3, S4, S7)
+- [x] T3: `ScannerScreen`/`ScannerRoute`: retirar `DuplicateResolutionDialog`, tags `DUPLICATE_*` de decisión y sus callbacks; marca `scanner_already_in_pantry` no accionable; borrar `PantryDuplicateResolution` y las cadenas es/en del diálogo (con `grep` previo de usos). (S5, S8)
+- [x] T4: `ScanPantryE2ETest`: nuevos casos `saveSumsChipQuantityIntoExistingPantryItem` (verify 1), `saveAppliesAgreedQuantityEdgeCasesWithoutNewRows` (verify 2) y `saveWithPantryMatchesNeverShowsDecisionDialog` (S5); actualizar el harness (`ScannerScreen(...)` sin callbacks del diálogo) sin perder cobertura previa. (S1-S8)
+- [x] T5: gates (`init`, `lint`, `unit`, `assembleDebug`, E2E focalizada + regresión completa), `docs/domain-model.md` (RD13) y notas de revisión en las specs vecinas; feature en `passing` con evidencia.
 
 ## Verification Plan
 

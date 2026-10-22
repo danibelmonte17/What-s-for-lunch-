@@ -70,7 +70,6 @@ import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
-import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.theme.WarmRadius
@@ -100,11 +99,6 @@ object ScannerTestTags {
     const val EXIT_DIALOG = "scanner_exit_dialog"
     const val EXIT_CANCEL = "scanner_exit_cancel"
     const val EXIT_CONFIRM = "scanner_exit_confirm"
-    const val DUPLICATE_DIALOG = "scanner_duplicate_dialog"
-    const val DUPLICATE_TITLE = "scanner_duplicate_title"
-    const val DUPLICATE_MESSAGE = "scanner_duplicate_message"
-    const val DUPLICATE_KEEP = "scanner_duplicate_keep"
-    const val DUPLICATE_UPDATE = "scanner_duplicate_update"
     const val COMPATIBLE_SECTION = "scanner_compatible_section"
     const val COMPATIBLE_TITLE = "scanner_compatible_title"
     const val COMPATIBLE_CARD_PREFIX = "scanner_compatible_card"
@@ -141,15 +135,12 @@ fun ScannerScreen(
     onQuantityChange: (String, Int) -> Unit,
     onRemoveItem: (String) -> Unit,
     onSave: () -> Unit,
-    onOpenDuplicate: (String) -> Unit,
-    onResolveDuplicate: (String, PantryDuplicateResolution) -> Unit,
-    onDismissDuplicate: () -> Unit,
     onClearNotice: () -> Unit,
     onOpenRecipe: (String) -> Unit = {},
     onSuggestWithAi: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    BackHandler(enabled = !uiState.showExitConfirmation && uiState.activeDuplicateItemId == null) {
+    BackHandler(enabled = !uiState.showExitConfirmation) {
         if (onRequestExit()) onBack()
     }
 
@@ -230,7 +221,6 @@ fun ScannerScreen(
                             onNameChange = { onRenameItem(item.id, it) },
                             onQuantityChange = { onQuantityChange(item.id, it) },
                             onRemove = { onRemoveItem(item.id) },
-                            onOpenDuplicate = { onOpenDuplicate(item.id) },
                         )
                     }
                 } else if (uiState.cameraPreviewReady && !uiState.liveStopped) {
@@ -256,19 +246,6 @@ fun ScannerScreen(
                 onAdd = onAddManualItem,
             )
         }
-    }
-
-    val activeId = uiState.activeDuplicateItemId
-    val activeItem = activeId?.let { id -> uiState.items.firstOrNull { it.id == id } }
-    val pantryMatch = activeId?.let(uiState.matches::get)
-    if (activeId != null && activeItem != null && pantryMatch != null) {
-        DuplicateResolutionDialog(
-            item = activeItem,
-            existing = pantryMatch,
-            onKeep = { onResolveDuplicate(activeId, PantryDuplicateResolution.KeepExisting) },
-            onUpdate = { onResolveDuplicate(activeId, PantryDuplicateResolution.UpdateQuantity) },
-            onDismiss = onDismissDuplicate,
-        )
     }
 
     if (uiState.showExitConfirmation) {
@@ -397,7 +374,6 @@ private fun ScannerFoodCard(
     onNameChange: (String) -> Unit,
     onQuantityChange: (Int) -> Unit,
     onRemove: () -> Unit,
-    onOpenDuplicate: () -> Unit,
 ) {
     val shape = RoundedCornerShape(WarmRadius.lg)
     Surface(
@@ -447,10 +423,11 @@ private fun ScannerFoodCard(
                 }
                 if (match != null) {
                     Spacer(Modifier.weight(1f))
-                    TextButton(
-                        onClick = onOpenDuplicate,
-                        modifier = Modifier.heightIn(min = 48.dp).testTag(ScannerTestTags.duplicateMark(item.id)),
-                    ) { Text(stringResource(R.string.scanner_already_in_pantry), color = MaterialTheme.colorScheme.secondary) }
+                    Text(
+                        stringResource(R.string.scanner_already_in_pantry),
+                        modifier = Modifier.testTag(ScannerTestTags.duplicateMark(item.id)),
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
                 }
             }
         }
@@ -626,43 +603,6 @@ private fun ScannerActions(
             ) { Text(stringResource(R.string.scanner_rescan)) }
         }
     }
-}
-
-@Composable
-private fun DuplicateResolutionDialog(
-    item: ScanDraftItem,
-    existing: PantryItem,
-    onKeep: () -> Unit,
-    onUpdate: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val existingQuantity = existing.quantity?.let { stringResource(R.string.scanner_duplicate_existing_quantity, it) }
-        ?: stringResource(R.string.scanner_no_quantity)
-    val title = stringResource(R.string.scanner_duplicate_title)
-    val message = stringResource(R.string.scanner_duplicate_message, item.name, existingQuantity)
-    val keepLabel = stringResource(R.string.scanner_duplicate_keep)
-    val updateLabel = stringResource(R.string.scanner_duplicate_update)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(ScannerTestTags.DUPLICATE_DIALOG),
-        title = { Text(title, modifier = Modifier.testTag(ScannerTestTags.DUPLICATE_TITLE)) },
-        text = {
-            Text(
-                message,
-                modifier = Modifier.testTag(ScannerTestTags.DUPLICATE_MESSAGE),
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onKeep, modifier = Modifier.heightIn(min = 48.dp).testTag(ScannerTestTags.DUPLICATE_KEEP)) {
-                Text(keepLabel)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onUpdate, modifier = Modifier.heightIn(min = 48.dp).testTag(ScannerTestTags.DUPLICATE_UPDATE)) {
-                Text(updateLabel)
-            }
-        },
-    )
 }
 
 @Composable
