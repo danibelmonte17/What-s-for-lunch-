@@ -4,7 +4,6 @@ import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
-import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import com.whatsforlunch.app.domain.text.normalizeName
 
 /** Pure rules for converting detector output into an editable scan tray. */
@@ -94,15 +93,15 @@ object ScanDetections {
         }.toMap()
     }
 
-    fun resolveDuplicate(
-        existing: PantryItem,
-        draft: ScanDraftItem,
-        resolution: PantryDuplicateResolution,
-    ): PantryItem? = when (resolution) {
-        PantryDuplicateResolution.KeepExisting -> null
-        PantryDuplicateResolution.UpdateQuantity -> existing.copy(
-            quantity = draft.quantity.takeUnless { it == PantryItemValidation.MIN_QUANTITY },
-        )
+    /**
+     * RD13: adds the chip quantity to an existing pantry item. «No quantity» behaves as 0
+     * (null + N -> N, M + 0 -> M, null + 0 -> null) and the total is capped at the app
+     * maximum without warning (60 + 50 -> 99). The existing id and name are preserved.
+     */
+    fun sumInto(existing: PantryItem, draft: ScanDraftItem): PantryItem {
+        val total = (existing.quantity ?: PantryItemValidation.MIN_QUANTITY) + draft.quantity
+        val merged = total.coerceAtMost(PantryItemValidation.MAX_QUANTITY)
+        return existing.copy(quantity = merged.takeUnless { it == PantryItemValidation.MIN_QUANTITY })
     }
 
     fun toPantryItem(draft: ScanDraftItem, id: String = draft.id): PantryItem = PantryItem(
