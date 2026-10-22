@@ -188,7 +188,7 @@ class SettingsE2ETest {
         composeRule.onNodeWithTag(SettingsTestTags.STATUS).assertTextEquals(
             if (buildKeyActive) "Configured" else "Not configured",
         )
-        composeRule.onNodeWithText("OpenRouter API key").assertIsDisplayed()
+        composeRule.onNodeWithText("DevExpert Inference API key").assertIsDisplayed()
         composeRule.onNodeWithText("Save").assertIsDisplayed()
         composeRule.onNodeWithText(localized(R.string.settings_privacy_notice)).assertIsDisplayed()
     }

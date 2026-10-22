@@ -48,7 +48,7 @@ Cada funcionalidad avanza por cuatro estados — `not_started`, `in_progress`, `
 
 ## 5. Reglas de trabajo
 
-- Prohibido: comandos destructivos fuera del directorio del proyecto; escribir credenciales, tokens o PII en el repositorio, logs o documentos (nunca la API key de OpenRouter); commits sin Conventional Commits; modificar `uxdocs/` (solo lectura), `.opencode/` o los scripts del harness; tocar ficheros con secretos.
+- Prohibido: comandos destructivos fuera del directorio del proyecto; escribir credenciales, tokens o PII en el repositorio, logs o documentos (nunca la API key de DevExpert Inference); commits sin Conventional Commits; modificar `uxdocs/` (solo lectura), `.opencode/` o los scripts del harness; tocar ficheros con secretos.
 - Pedir confirmación humana antes de: instalar en un dispositivo físico, distribuir la APK, o ejecutar llamadas de pago a la API de IA.
 - Si la tarea toca algo marcado `⚠` en `docs/risks-and-open-questions.md`, preguntar en vez de asumir.
 - Si un cambio altera estructura, comandos, convenciones o términos, actualiza en el mismo cambio `CONTEXT.md`, `docs/technical-discovery.md` o este archivo, según corresponda.

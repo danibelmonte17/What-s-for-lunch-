@@ -4,13 +4,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 // D9: AI_BASE_URL es una base compatible con OpenAI; el endpoint de imagenes se
-// compone sin duplicar la barra final y sin base se mantiene OpenRouter.
+// compone sin duplicar la barra final y sin base se usa DevExpert Inference.
 class AiEndpointsTest {
 
     @Test
-    fun blankBaseUsesOpenRouterDefault() {
+    fun blankBaseUsesDevExpertDefault() {
         assertEquals(
-            "https://openrouter.ai/api/v1/images/generations",
+            "https://inference.devexpert.io/v1/images/generations",
             AiEndpoints.imageGeneration(""),
         )
     }
@@ -28,6 +28,14 @@ class AiEndpointsTest {
         assertEquals(
             "https://proxy.local/v1/images/generations",
             AiEndpoints.imageGeneration("https://proxy.local/v1/"),
+        )
+    }
+
+    @Test
+    fun fullEndpointIsNotDuplicated() {
+        assertEquals(
+            "https://inference.devexpert.io/v1/images/generations",
+            AiEndpoints.imageGeneration("https://inference.devexpert.io/v1/images/generations"),
         )
     }
 }

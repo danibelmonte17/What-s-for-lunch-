@@ -151,7 +151,7 @@
     <!-- Ajustes -->
     <string name="settings_title">Ajustes</string>
     <string name="settings_open_accessibility">Ajustes</string>
-    <string name="settings_api_key_label">API key de OpenRouter</string>
+    <string name="settings_api_key_label">API key de DevExpert Inference</string>
     <string name="settings_api_key_hint">Pega aquí tu API key</string>
     <string name="settings_api_key_save">Guardar</string>
     <string name="settings_api_key_delete">Eliminar API key</string>
@@ -164,7 +164,7 @@
     <string name="settings_api_key_build_source">La clave de IA proviene de la compilación (local.properties) y tiene prioridad sobre la guardada aquí.</string>
     <string name="settings_api_key_saved">API key guardada.</string>
     <string name="settings_privacy_title">Privacidad y datos</string>
-    <string name="settings_privacy_notice">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a OpenRouter desde él. El proveedor se configura sin retención de datos para entrenamiento. Las fotos del Escáner no salen del dispositivo y puedes controlar el gasto en el panel de OpenRouter.</string>
+    <string name="settings_privacy_notice">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner no salen del dispositivo y puedes controlar el gasto en tu panel de DevExpert Inference.</string>
 
     <!-- Escáner de la Despensa -->
     <string name="scanner_title">Escáner de la Despensa</string>

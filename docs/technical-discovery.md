@@ -13,7 +13,7 @@ El PRD de origen (`chefencasa_prd_y_project_brief_completo.md`) proponía una **
 - App **solo Android, Kotlin + Jetpack Compose**, un solo repositorio (`P35`, `P20`, `P24`).
 - **Sin backend en el MVP**: datos locales, sesión local, sin cuentas (`P31`, `P33`). FastAPI queda como backend **futuro** (`P34`).
 - Detección de alimentos con **Google AI Edge MediaPipe** en el dispositivo (`P23`).
-- Asistente y sugerencias vía **API compatible con OpenAI** en **OpenRouter** (`P22`, `P36`).
+- Asistente y sugerencias vía **API compatible con OpenAI** en **DevExpert Inference** (`P22`, `P36`).
 - i18n es/en con estructura de recursos **`strings.xml`** (`P19`); documentación en español y código en inglés (`P25`).
 
 El material de `uxdocs/` es **orientativo** (`P16`) y sus tokens YAML mandan sobre la prosa del propio archivo (`P17`).
@@ -25,7 +25,7 @@ El material de `uxdocs/` es **orientativo** (`P16`) y sus tokens YAML mandan sob
 | App | Kotlin + Jetpack Compose | Fijado por el usuario | — | **Confirmado** |
 | i18n | Recursos `strings.xml` (es/en) | Estructura fijada por el usuario | — | **Confirmado** |
 | Detección de alimentos | MediaPipe Tasks Vision Object Detector (on-device) | Fijado por el usuario; sustituye a YOLOv8 ONNX del PRD | TFLite directo, YOLOv8 ONNX | **Confirmado** · EfficientDet-Lite2, umbral de propuesta 0.60 (decisión del usuario, 2026-10-21; `RK02`) |
-| Proveedor de IA (chat y sugerencias) | OpenRouter (API compatible con OpenAI) | Fijado por el usuario | Groq, Mistral, modelo local | **Confirmado** |
+| Proveedor de IA (chat y sugerencias) | DevExpert Inference (API compatible con OpenAI) | Fijado por el usuario | Groq, Mistral, modelo local | **Confirmado** |
 | Backend futuro | Python FastAPI (+ PostgreSQL) | Fijado por el usuario para la fase de sincronización | Node.js | **Confirmado** (fase posterior) |
 | Datos locales | Room (SQLite) | Duradero en dispositivo, estándar Android | SQLDelight | En uso desde `crear-receta` (2.8.5 + KSP 2.3.12) |
 | Cliente HTTP | Retrofit + OkHttp | Estándar para APIs REST desde Android | Ktor client | En uso (OkHttp también para la generación de imágenes) |
@@ -78,12 +78,12 @@ Verificación: `ScanPantryE2ETest` (16 casos, fakes `FakeLiveFrameSource`/`FakeF
 
 ### Acceso a IA y API key en el dispositivo (2026-10-22, `configurar-acceso-a-ia`)
 
-- **Decisión D2**: la API key de OpenRouter se guarda con **Android Keystore directo** (clave AES-256 del Keystore, transformación `AES/GCM/NoPadding`, alias `whatsforlunch_ai_key`). Cada guardado usa un IV nuevo y persiste `Base64(IV || ciphertext)` en `SharedPreferences` `ai_key_prefs` (clave `api_key`). No se añade `androidx.security:security-crypto` (deprecado) ni ninguna dependencia nueva.
+- **Decisión D2**: la API key de DevExpert Inference se guarda con **Android Keystore directo** (clave AES-256 del Keystore, transformación `AES/GCM/NoPadding`, alias `whatsforlunch_ai_key`). Cada guardado usa un IV nuevo y persiste `Base64(IV || ciphertext)` en `SharedPreferences` `ai_key_prefs` (clave `api_key`). No se añade `androidx.security:security-crypto` (deprecado) ni ninguna dependencia nueva.
 - **Lectura y borrado**: `AiKeyStore` extiende `AiKeyProvider`; `apiKey()` descifra solo en memoria y devuelve `null` si no hay valor o el descifrado falla (datos corruptos o clave invalidada → «No configurada», sin crash). `clear()` elimina la entrada; la key nunca se registra en logs, excepciones, capturas ni repositorio (`⚠ S05`, `RK01`).
 - **Consumo**: `OpenAiCompatibleImageGenerator` recibe la baseURL (`AiEndpoints.imageGeneration`, D9); sin key sigue devolviendo `MissingApiKey` y «Generar con IA» avisa sin bloquear el formulario (RF-21, RD05).
-- **Configuración de build (D7-D11, 2026-10-22)**: `AI_BASE_URL` y `AI_API_KEY` se leen del `local.properties` de la raíz (gitignored) y se inyectan en `BuildConfig` (`buildConfig = true`) para **debug y release**, sin imprimir los valores. Si no están vacías, tienen prioridad sobre la key de Ajustes mediante `PriorityAiKeyProvider`; si faltan, el build no falla y todo sigue como antes. `AI_BASE_URL` es la base compatible con OpenAI (`https://openrouter.ai/api/v1` por defecto) y `AiEndpoints.imageGeneration` compone `<base sin barra final>/images/generations`.
+- **Configuración de build (D7-D11, 2026-10-22)**: `AI_BASE_URL` y `AI_API_KEY` se leen del `local.properties` de la raíz (gitignored) y se inyectan en `BuildConfig` (`buildConfig = true`) para **debug y release**, sin imprimir los valores. Si no están vacías, tienen prioridad sobre la key de Ajustes mediante `PriorityAiKeyProvider`; si faltan, el build no falla y todo sigue como antes. `AI_BASE_URL` es la base compatible con OpenAI (`https://inference.devexpert.io/v1` por defecto) y `AiEndpoints.imageGeneration` compone `<base sin barra final>/images/generations` (o acepta la URL completa del endpoint sin duplicarla). El modelo de imagen es el alias estable `image`, con `size = 1024x1024`; la respuesta se lee de `data[0].b64_json` o, si el proveedor devuelve una URL temporal, se descarga desde ella.
 - **Riesgo aceptado (D11)**: la key de build queda **incrustada en el APK** y es extraíble del binario; se usa solo una key de desarrollo con límite de gasto, `local.properties` no se versiona y el APK release con key real no se distribuye fuera del equipo. Retirar la inyección antes de publicar (ver `S05`/`RK01`).
-- **Sin red en Ajustes**: la validación es local (recorte + rechazo de vacío, D3) y no se comprueba la key contra OpenRouter. La medición de latencia/coste reales de OpenRouter queda **aplazada** por decisión del usuario (2026-10-22; requiere key real y llamadas de pago confirmadas).
+- **Sin red en Ajustes**: la validación es local (recorte + rechazo de vacío, D3) y no se comprueba la key contra DevExpert Inference. La medición de latencia/coste reales de DevExpert Inference queda **aplazada** por decisión del usuario (2026-10-22; requiere key real y llamadas de pago confirmadas).
 
 ## Arquitectura y flujos
 
@@ -91,16 +91,16 @@ Módulo único `app/` con tres capas (estructura confirmada en Q-arrancar-app-en
 
 - `ui/` — pantallas Compose (Mis Recetas, Escáner, Detalle, Modo Cocina, Pinche, Formulario, Lista de la Compra, Ajustes).
 - `domain/` — modelos y reglas (Coincidencia, escalado de Raciones, estados de Receta): sin dependencias de Compose.
-- `data/` — Room (Despensa, Recetas, Lista de la Compra), cliente de OpenRouter y detección MediaPipe.
+- `data/` — Room (Despensa, Recetas, Lista de la Compra), cliente de DevExpert Inference y detección MediaPipe.
 
 La UI no contiene reglas de negocio: viven en `domain/` y en `docs/domain-model.md` (IDs `RD##`).
 
-Flujos principales: Escaneo → MediaPipe → chips confirmados → Despensa → Sugerencias (OpenRouter) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja».
+Flujos principales: Escaneo → MediaPipe → chips confirmados → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja».
 
 ```mermaid
 flowchart LR
   Camara --> MediaPipe --> Chips --> Despensa
-  Despensa --> OpenRouter --> Sugerencia --> Receta
+  Despensa --> DevExpertInference["DevExpert Inference"] --> Sugerencia --> Receta
   Receta --> ModoCocina
   Receta --> ListaCompra
   Despensa --> ListaCompra
@@ -110,12 +110,12 @@ flowchart LR
 
 - **Duraderos (Room)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra.
 - **Temporales/derivados**: resultados de Escaneo (confianzas), fotos (no se persisten las de Escaneo — RD06; las de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), caché de respuestas de la IA.
-- **Credenciales**: API key de OpenRouter en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
+- **Credenciales**: API key de DevExpert Inference en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
 - **Migración o importación**: ninguna (proyecto nuevo).
 
 ## Integraciones externas
 
-- **OpenRouter (API compatible con OpenAI)** — chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
+- **DevExpert Inference (API compatible con OpenAI)** — chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). El endpoint de imagen es `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
 - **Google AI Edge MediaPipe** — inferencia on-device; no requiere red.
 
 ## Autenticación y autorización
@@ -155,7 +155,7 @@ Mínima en el MVP: logs locales de la app, sin telemetría ni alertas (`⚠ S01`
 
 - Rendimiento: arranque rápido; inferencia de visión < 800 ms como objetivo del PRD (**Por validar** en dispositivo real).
 - Accesibilidad: contraste WCAG 2.1 AA general y AAA en Modo Cocina; áreas táctiles ≥ 48×48 px.
-- Offline: toda la app funciona sin red salvo el Pinche y las Sugerencias (requieren OpenRouter).
+- Offline: toda la app funciona sin red salvo el Pinche y las Sugerencias (requieren DevExpert Inference).
 - Internacionalización: es y en vía `strings.xml`, sin más regionalización (`P12` eliminó precios).
 - Plataforma: **Android 11 (API 30) o superior**, solo móviles (Q-arrancar-app-en-mis-recetas-2).
 - Sin fecha límite ni presupuesto de IA definido (`P3`, `P30`).

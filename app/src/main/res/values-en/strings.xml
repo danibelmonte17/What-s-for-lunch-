@@ -150,7 +150,7 @@
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_open_accessibility">Settings</string>
-    <string name="settings_api_key_label">OpenRouter API key</string>
+    <string name="settings_api_key_label">DevExpert Inference API key</string>
     <string name="settings_api_key_hint">Paste your API key here</string>
     <string name="settings_api_key_save">Save</string>
     <string name="settings_api_key_delete">Delete API key</string>
@@ -163,7 +163,7 @@
     <string name="settings_api_key_build_source">The AI key comes from the build (local.properties) and takes precedence over the one saved here.</string>
     <string name="settings_api_key_saved">API key saved.</string>
     <string name="settings_privacy_title">Privacy and data</string>
-    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call OpenRouter from it. The provider is configured without data retention for training. Scanner photos never leave the device, and you can control spending in the OpenRouter dashboard.</string>
+    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos never leave the device, and you can control spending in your DevExpert Inference dashboard.</string>
 
     <!-- Pantry scanner -->
     <string name="scanner_title">Pantry Scanner</string>
