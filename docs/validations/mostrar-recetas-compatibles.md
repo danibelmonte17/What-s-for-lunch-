@@ -171,3 +171,46 @@ Ninguno. **0 Critical, 0 High, 0 Medium.**
   Pixel_8_Pro; suite completa 103/103 en Pixel_9_Pro (648 s); 2 capturas e informe de validación.
 - `PROGRESS.md`: mover la feature a aceptada y dejar como siguiente paso `sumar-cantidades-al-guardar`
   (spec ya redactada) o la prioridad que decida el usuario.
+
+## Enmienda posterior (2026-10-22, implementer)
+
+- **Origen**: petición del usuario — aunque haya Recetas compatibles, debe seguir ofreciéndose
+  «Sugerir receta con IA». Ajuste de producto sobre `RF-MRC8`/`D8`; no cambia la regla de dominio.
+- **Cambios**: `CompatibleRecipesSection` mantiene el botón siempre visible (debajo de las tarjetas o
+  del estado vacío); la spec añade S9 y actualiza RF-MRC8/D8; nuevo E2E
+  `aiSuggestionIsAvailableWhenCompatibleRecipesExist`. Se corrigió además la firma obsoleta de
+  `ScannerScreen` en `CompatibleRecipesE2ETest` (parámetros del diálogo de duplicados retirados por
+  `sumar-cantidades-al-guardar`), que impedía compilar el `androidTest`.
+- **Verificación de la enmienda**: `lintDebug` 0 errores; `testDebugUnitTest --rerun-tasks` 69/69;
+  `assembleDebug` BUILD SUCCESSFUL; `CompatibleRecipesE2ETest` **8/8** en `Pixel_9_Pro` (API 37),
+  incluido el caso nuevo. No se repitió la suite completa.
+- **Estado**: la feature volvió a `passing` hasta la validación independiente de la enmienda; el
+  veredicto `accept` anterior cubría S1-S8 y la enmienda añade S9 sobre RF-MRC8.
+
+### Validación independiente de la enmienda (2026-10-22, `feature-validator`)
+
+- **Veredicto: `accept`** → `feature_list.json` a `accepted` con la evidencia de esta validación.
+- **Alcance revisado**: diff de 5 ficheros (`ScannerScreen`, `CompatibleRecipesE2ETest`, spec, este
+  informe y `feature_list.json`). El botón `COMPATIBLE_SUGGEST_AI` sale de la rama del estado vacío y
+  queda al final de la `Column` de la sección, así que se pinta bajo el texto vacío y también bajo las
+  tarjetas; el callback `onSuggestWithAi` y el cableado `AppNavHost → ai_suggestions_provisional` no
+  cambian. La corrección de la firma de `ScannerScreen` en el E2E retira parámetros del diálogo de
+  duplicados ya inexistentes (grep de `onOpenDuplicate`/`onResolveDuplicate`/`onDismissDuplicate` en
+  `app/src` = 0 hits). Sin cambios de dominio, textos, Room, permisos ni red. S9/RF-MRC8/D8 cumplidos.
+- **Checks baratos reranqueados** (árbol actual, `JAVA_HOME=C:\Users\Daniel\.jdks\corretto-17.0.20`):
+  `lintDebug` **0 errores** (43 warnings preexistentes) · `testDebugUnitTest --rerun-tasks` **69/69**
+  (12 suites; `CompatibleRecipesTest` 6/6) · `assembleDebug` BUILD SUCCESSFUL.
+- **Evidencia cara reejecutada** en `Pixel_9_Pro` API 37 (`emulator-5554`): `CompatibleRecipesE2ETest`
+  **8/8**, 0 fallos/omitidos (19,9 s), incluido `aiSuggestionIsAvailableWhenCompatibleRecipesExist`;
+  regresión del Escáner `ScanPantryE2ETest` **18/18** (1m 19s). Un primer pase de `ScanPantryE2ETest`
+  abortó con `Process crashed` durante `liveFramesShowFoodOnceWithBestConfidenceAndHudLabel`; el caso
+  pasó en solitario (1/1) y la clase completa repitió 18/18, patrón del crash intermitente del emulador
+  ya documentado.
+- **Findings**: 0 Critical/High/Medium. **1 Low**: el E2E de S9 no asierta la vuelta atrás al Escáner
+  que menciona el escenario; el retorno está cubierto por S4 sobre el mismo `ProvisionalScreen` y el
+  cableado real se validó en la aceptación anterior. Nota de proceso: el implementer escribió en `notes`
+  de `feature_list.json` (campo reservado a `status`/`evidence`); esta validación lo restauró a su valor
+  aceptado.
+- **Documentación**: spec (Goal, RF-MRC8, S4, S9, D8, impacto visual, trazabilidad y checklist) e informe
+  son coherentes entre sí y con el código. `PROGRESS.md` todavía cita la aceptación anterior; el
+  orquestador debe actualizar su cabecera en el cierre de sesión.

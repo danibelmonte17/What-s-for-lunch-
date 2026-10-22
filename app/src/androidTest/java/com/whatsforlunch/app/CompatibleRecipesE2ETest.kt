@@ -163,6 +163,27 @@ class CompatibleRecipesE2ETest {
         composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
     }
 
+    // RF-MRC8: la sugerencia con IA sigue disponible aunque existan Recetas compatibles.
+    @Test
+    fun aiSuggestionIsAvailableWhenCompatibleRecipesExist() {
+        val recipes = InMemoryRecipeRepository()
+        val pantry = InMemoryPantryRepository()
+        val compatible = recipe(id = "compatible", title = "Tortilla de patatas", required = 2)
+        runBlocking {
+            recipes.saveRecipe(compatible)
+            addPantry(pantry, compatible, 2)
+        }
+
+        launchScanner(recipes, pantry)
+
+        composeRule.onNodeWithTag(ScannerTestTags.compatibleCard("compatible")).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_EMPTY).assertDoesNotExist()
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).performScrollTo().performClick()
+
+        composeRule.onNodeWithTag(ProvisionalTestTags.AI_SUGGESTIONS_SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithText("Sugerir receta con IA").assertIsDisplayed()
+    }
+
     // S5 (D7): tocar la tarjeta abre el Detalle real y la vuelta regresa al Escáner.
     @Test
     fun tappingCompatibleCardOpensRecipeDetailAndBackReturnsToScanner() {
@@ -282,9 +303,6 @@ class CompatibleRecipesE2ETest {
                             onQuantityChange = viewModel::updateQuantity,
                             onRemoveItem = viewModel::removeItem,
                             onSave = viewModel::saveToPantry,
-                            onOpenDuplicate = viewModel::openDuplicateResolution,
-                            onResolveDuplicate = viewModel::resolveDuplicate,
-                            onDismissDuplicate = viewModel::dismissDuplicateResolution,
                             onClearNotice = viewModel::clearNotice,
                             onOpenRecipe = {
                                 assertEquals(detailRecipeId, it)

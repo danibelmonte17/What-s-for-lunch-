@@ -457,13 +457,6 @@ private fun CompatibleRecipesSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.testTag(ScannerTestTags.COMPATIBLE_EMPTY),
             )
-            Button(
-                onClick = onSuggestWithAi,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                    .testTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI),
-            ) {
-                Text(stringResource(R.string.scanner_compatible_suggest_ai))
-            }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
                 compatibleRecipes.forEach { compatible ->
@@ -473,6 +466,14 @@ private fun CompatibleRecipesSection(
                     )
                 }
             }
+        }
+        // La sugerencia con IA sigue disponible aunque ya haya Recetas compatibles (RF-MRC8).
+        Button(
+            onClick = onSuggestWithAi,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                .testTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI),
+        ) {
+            Text(stringResource(R.string.scanner_compatible_suggest_ai))
         }
     }
 }
