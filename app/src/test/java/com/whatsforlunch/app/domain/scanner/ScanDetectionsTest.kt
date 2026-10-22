@@ -45,6 +45,67 @@ class ScanDetectionsTest {
     }
 
     @Test
+    fun liveMergeAddsEachFoodOncePerNormalizedNameWithBestConfidence() {
+        val merged = ScanDetections.mergeLiveDetections(
+            emptyList(),
+            listOf(
+                DetectedFood("banana", 0.72),
+                DetectedFood("  BANANA ", 0.83),
+                DetectedFood("Manzana", 0.65),
+            ),
+        )
+
+        assertEquals(listOf("banana", "Manzana"), merged.map { it.name })
+        assertEquals(0.83, merged.first().confidence!!, 0.0001)
+        assertEquals(0, merged.first().quantity)
+    }
+
+    @Test
+    fun liveMergeUpdatesConfidenceToHighestObservedAndNeverReduces() {
+        val first = ScanDetections.mergeLiveDetections(emptyList(), listOf(DetectedFood("banana", 0.81)))
+        val second = ScanDetections.mergeLiveDetections(first, listOf(DetectedFood("banana", 0.66)))
+        val third = ScanDetections.mergeLiveDetections(second, listOf(DetectedFood("banana", 0.83)))
+
+        assertEquals(listOf("banana"), third.map { it.name })
+        assertEquals(0.81, second.single().confidence!!, 0.0001)
+        assertEquals(0.83, third.single().confidence!!, 0.0001)
+    }
+
+    @Test
+    fun liveMergeNeverOverwritesUserEditedNameOrQuantity() {
+        val edited = ScanDraftItem("Plátano macho", 0.72, quantity = 5, id = "edited")
+
+        val merged = ScanDetections.mergeLiveDetections(
+            listOf(edited),
+            listOf(DetectedFood("banana", 0.90), DetectedFood("Manzana", 0.70)),
+        )
+
+        // D8: after the rename the item no longer matches the detected label, so «banana»
+        // becomes its own item; the edited entry is never overwritten.
+        assertEquals(listOf("Plátano macho", "banana", "Manzana"), merged.map { it.name })
+        assertEquals(5, merged.first().quantity)
+        assertEquals("edited", merged.first().id)
+        assertEquals(0.72, merged.first().confidence!!, 0.0001)
+        assertEquals(0.90, merged[1].confidence!!, 0.0001)
+        assertEquals(0.70, merged.last().confidence!!, 0.0001)
+    }
+
+    @Test
+    fun liveMergePromotesManualItemConfidenceAndIgnoresIneligibleDetections() {
+        val manual = ScanDraftItem("Manzana", null, quantity = 2, id = "manual")
+
+        val merged = ScanDetections.mergeLiveDetections(
+            listOf(manual),
+            listOf(DetectedFood("MANZANA", 0.77), DetectedFood("pera", 0.599), DetectedFood("  ", 0.99)),
+        )
+
+        assertEquals(listOf("Manzana"), merged.map { it.name })
+        assertEquals(0.77, merged.single().confidence!!, 0.0001)
+        assertEquals(2, merged.single().quantity)
+        assertEquals("manual", merged.single().id)
+    }
+
+    @Test
     fun renameCollisionKeepsEditedChipNameAndQuantityButBestConfidence() {
         val kept = ScanDraftItem("Patata", 0.75, quantity = 4, id = "kept")
         val edited = ScanDraftItem("Yuca", null, quantity = 7, id = "edited")

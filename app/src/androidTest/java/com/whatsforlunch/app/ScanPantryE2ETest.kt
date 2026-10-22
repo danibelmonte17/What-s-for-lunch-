@@ -21,15 +21,12 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.unit.dp
@@ -38,8 +35,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.scanner.FoodDetectionResult
 import com.whatsforlunch.app.data.scanner.FoodDetector
-import com.whatsforlunch.app.data.scanner.ScanCaptureResult
-import com.whatsforlunch.app.data.scanner.ScanImageSource
+import com.whatsforlunch.app.data.scanner.LiveFrameSource
 import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
@@ -52,7 +48,10 @@ import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.io.File
 import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -70,7 +69,7 @@ class ScanPantryE2ETest {
 
     private lateinit var viewModel: ScannerViewModel
     private lateinit var repository: InMemoryPantryRepository
-    private lateinit var imageSource: FakeScanImageSource
+    private lateinit var detector: FakeFoodDetector
     private lateinit var showPantry: androidx.compose.runtime.MutableState<Boolean>
     private lateinit var leftScanner: androidx.compose.runtime.MutableState<Boolean>
     private lateinit var localeContext: Context
@@ -81,25 +80,28 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun injectedCaptureShowsFoodChipConfidenceAndHudLabel() {
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84)))
-        assertTrue("Fake scanner should expose the shutter", viewModel.uiState.value.cameraPreviewReady)
-        composeRule.waitUntil(5_000) { viewModel.uiState.value.pantryLoaded }
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+    fun liveFramesShowFoodOnceWithBestConfidenceAndHudLabel() {
+        launchScanner(
+            frames = listOf(FRAME, FRAME),
+            detectionResults = listOf(
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.72))),
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84))),
+            ),
+        )
+        waitForFrames(2)
 
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURED_IMAGE).assertIsDisplayed()
-        composeRule.onNodeWithText("Plátano · 84%").assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(1)
         val id = viewModel.uiState.value.items.single().id
         composeRule.onNodeWithTag(ScannerTestTags.itemName(id)).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.itemConfidence(id)).assertTextEquals("84%")
+        composeRule.onNodeWithTag(ScannerTestTags.hudLabel(0)).assertIsDisplayed()
+        composeRule.onNodeWithText("Plátano · 84%").assertIsDisplayed()
     }
 
     @Test
     fun savePersistsChosenQuantityAndShowsPantryScreen() {
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84)))
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84)))))
+        waitForItems(1)
         val id = viewModel.uiState.value.items.single().id
         repeat(3) { composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(id)).performClick() }
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
@@ -109,14 +111,32 @@ class ScanPantryE2ETest {
         composeRule.onNodeWithText("Plátano").assertIsDisplayed()
         composeRule.onNodeWithText(locale(R.string.pantry_quantity_value, 3)).assertIsDisplayed()
         assertEquals(3, runBlocking { repository.observePantryItems().first().single().quantity })
-        assertTrue(viewModel.uiState.value.capturedImage == null)
+    }
+
+    @Test
+    fun manualFoodCanBeAddedWithQuantityAndSaved() {
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(emptyList())))
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Tomate")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+
+        val id = viewModel.uiState.value.items.single().id
+        repeat(2) { composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(id)).performClick() }
+        assertEquals(2, viewModel.uiState.value.items.single().quantity)
+        composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
+
+        composeRule.waitUntil(5_000) { showPantry.value }
+        assertEquals(2, runBlocking { repository.observePantryItems().first().single().quantity })
+        composeRule.onNodeWithText(locale(R.string.pantry_quantity_value, 2)).assertIsDisplayed()
     }
 
     @Test
     fun chipsCanBeRemovedRenamedAndAddedManually() {
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84), DetectedFood("Manzana", 0.73)))
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        launchScanner(
+            detectionResults = listOf(
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84), DetectedFood("Manzana", 0.73))),
+            ),
+        )
+        waitForItems(2)
         val firstId = viewModel.uiState.value.items.first().id
         val secondId = viewModel.uiState.value.items.last().id
 
@@ -134,13 +154,13 @@ class ScanPantryE2ETest {
     @Test
     fun detectedAndUserCreatedDuplicatesCollapseToOneChip() {
         launchScanner(
-            detections = listOf(
-                DetectedFood("TOMATE FRESCO", 0.65),
-                DetectedFood("  Tomate  fresco ", 0.81),
+            detectionResults = listOf(
+                FoodDetectionResult.Success(
+                    listOf(DetectedFood("TOMATE FRESCO", 0.65), DetectedFood("  Tomate  fresco ", 0.81)),
+                ),
             ),
         )
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        waitForItems(1)
         assertEquals(1, viewModel.uiState.value.items.size)
         assertEquals("Tomate fresco", viewModel.uiState.value.items.single().name)
 
@@ -153,9 +173,8 @@ class ScanPantryE2ETest {
 
     @Test
     fun quantityStepperHasBoundsAndNoEditableQuantityField() {
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84)))
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84)))))
+        waitForItems(1)
         val id = viewModel.uiState.value.items.single().id
 
         composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(id)).assertTextEquals("0")
@@ -173,7 +192,7 @@ class ScanPantryE2ETest {
     fun deniedPermissionContinuesWithManualEntry() {
         launchScanner(permissionGranted = false)
         composeRule.onNodeWithText(locale(R.string.scanner_camera_denied)).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(ScannerTestTags.CAPTURE).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(ScannerTestTags.LIVE_HUD).assertCountEquals(0)
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Harina")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
         composeRule.onNodeWithText("Harina").assertIsDisplayed()
@@ -181,11 +200,11 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun emptyDetectionShowsManualEntryAndCanSave() {
-        launchScanner(detections = emptyList())
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
-        composeRule.onNodeWithText(locale(R.string.scanner_no_detections)).assertIsDisplayed()
+    fun emptyFramesShowLiveHintAndManualEntryCanSave() {
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(emptyList())))
+        waitForFrames(1)
+        composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(0)
+        composeRule.onNodeWithText(locale(R.string.scanner_live_hint)).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Lentejas")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
@@ -195,9 +214,8 @@ class ScanPantryE2ETest {
 
     @Test
     fun detectorFailureShowsNoticeAndKeepsManualFlowAvailable() {
-        launchScanner(detectionResult = FoodDetectionResult.Failed)
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Failed))
+        waitForFrames(1)
         composeRule.onNodeWithText(locale(R.string.scanner_detection_failed)).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Garbanzos")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
@@ -205,11 +223,39 @@ class ScanPantryE2ETest {
     }
 
     @Test
+    fun detectorFailureWithEmptyListCanBeRestartedWithRescan() {
+        launchScanner(
+            detectionResults = listOf(
+                FoodDetectionResult.Failed,
+                FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.90))),
+            ),
+        )
+        waitForFrames(1)
+
+        composeRule.onNodeWithText(locale(R.string.scanner_detection_failed)).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(0)
+        composeRule.onNodeWithText(locale(R.string.scanner_live_hint)).assertDoesNotExist()
+        composeRule.onNodeWithTag(ScannerTestTags.RESCAN).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ScannerTestTags.RESCAN).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.EXIT_DIALOG).assertDoesNotExist()
+        composeRule.waitUntil(10_000) {
+            detector.calls >= 2 && viewModel.uiState.value.items.isNotEmpty()
+        }
+        assertFalse(viewModel.uiState.value.liveStopped)
+        composeRule.onNodeWithText("Plátano").assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.itemConfidence(viewModel.uiState.value.items.single().id))
+            .assertTextEquals("90%")
+    }
+
+    @Test
     fun englishLabelsAndScannerActionsAreLocalized() {
-        launchScanner(detections = listOf(DetectedFood("Banana", 0.84)), locale = Locale.ENGLISH)
+        launchScanner(
+            detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Banana", 0.84)))),
+            locale = Locale.ENGLISH,
+        )
         composeRule.onNodeWithText("Pantry Scanner").assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        waitForItems(1)
         composeRule.onNodeWithText("Banana · 84%").assertIsDisplayed()
         composeRule.onNodeWithText("Save to Pantry").assertIsDisplayed()
         val id = viewModel.uiState.value.items.single().id
@@ -235,10 +281,9 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun rescanningWithUnsavedChipsRequiresConfirmation() {
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84)))
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+    fun rescanningWithUnsavedChipsRequiresConfirmationAndRestartsEmpty() {
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84)))))
+        waitForItems(1)
         composeRule.onNodeWithTag(ScannerTestTags.RESCAN).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.EXIT_DIALOG).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.EXIT_CANCEL).performClick()
@@ -246,8 +291,9 @@ class ScanPantryE2ETest {
 
         composeRule.onNodeWithTag(ScannerTestTags.RESCAN).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.EXIT_CONFIRM).performClick()
-        waitForDetection()
-        assertTrue(viewModel.uiState.value.items.isNotEmpty())
+        composeRule.waitUntil(10_000) {
+            !viewModel.uiState.value.showExitConfirmation && viewModel.uiState.value.items.isNotEmpty()
+        }
         assertFalse(viewModel.uiState.value.showExitConfirmation)
     }
 
@@ -255,20 +301,15 @@ class ScanPantryE2ETest {
     fun pantryMatchOpensDecisionDialogAndKeepOrUpdateReusesExistingRow() {
         launchScanner(
             existing = listOf(PantryItem("tomato-id", "TOMATE fresco", 1)),
-            detections = listOf(DetectedFood("Tomate fresco", 0.75)),
+            detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75)))),
         )
-        composeRule.waitForIdle()
-        assertTrue("Preview state should enable the shutter: ${viewModel.uiState.value}", viewModel.uiState.value.cameraPreviewReady)
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        waitForItems(1)
         val draft = viewModel.uiState.value.items.single()
         composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_DIALOG).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_TITLE)
             .assertTextEquals(locale(R.string.scanner_duplicate_title))
         composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_MESSAGE)
             .assertTextEquals(locale(R.string.scanner_duplicate_message, "Tomate fresco", locale(R.string.scanner_duplicate_existing_quantity, 1)))
-        composeRule.onAllNodesWithText("Cantidad: 1", substring = true).assertCountEquals(1)
         composeRule.onNodeWithTag(ScannerTestTags.DUPLICATE_KEEP).performClick()
         assertEquals(PantryDuplicateResolution.KeepExisting, viewModel.uiState.value.duplicateDecisions[draft.id])
         composeRule.onNodeWithTag(ScannerTestTags.duplicateMark(draft.id)).performClick()
@@ -286,10 +327,11 @@ class ScanPantryE2ETest {
     fun multiplePendingMatchesAskSequentiallyAndDismissAbortsWholeSave() {
         launchScanner(
             existing = listOf(PantryItem("tomato-id", "Tomate fresco", 1), PantryItem("milk-id", "Leche", 2)),
-            detections = listOf(DetectedFood("Tomate fresco", 0.75), DetectedFood("Leche", 0.88)),
+            detectionResults = listOf(
+                FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75), DetectedFood("Leche", 0.88))),
+            ),
         )
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        waitForItems(2)
         val items = viewModel.uiState.value.items
         val tomato = items.first { it.name == "Tomate fresco" }
         val milk = items.first { it.name == "Leche" }
@@ -319,13 +361,12 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun capturedImageIsNeverWrittenToCacheOrFiles() {
+    fun liveFramesAreNeverWrittenToCacheOrFiles() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val cacheBefore = scanImages(context.cacheDir)
         val filesBefore = scanImages(context.filesDir)
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84)))
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84)))))
+        waitForItems(1)
         val id = viewModel.uiState.value.items.single().id
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
         composeRule.waitUntil(5_000) { showPantry.value }
@@ -336,9 +377,8 @@ class ScanPantryE2ETest {
 
     @Test
     fun quantityControlsHaveAtLeast48DpTargetsAndNoEditableQuantityField() {
-        launchScanner(detections = listOf(DetectedFood("Plátano", 0.84)))
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
-        waitForDetection()
+        launchScanner(detectionResults = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84)))))
+        waitForItems(1)
         val id = viewModel.uiState.value.items.single().id
         val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
         val decrement = composeRule.onNodeWithTag(ScannerTestTags.quantityDecrement(id)).fetchSemanticsNode().boundsInRoot.height
@@ -350,20 +390,18 @@ class ScanPantryE2ETest {
     }
 
     private fun launchScanner(
-        detections: List<DetectedFood> = listOf(DetectedFood("Plátano", 0.84)),
-        detectionResult: FoodDetectionResult = FoodDetectionResult.Success(detections),
+        frames: List<ByteArray> = listOf(FRAME),
+        detectionResults: List<FoodDetectionResult> = listOf(FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.84)))),
         existing: List<PantryItem> = emptyList(),
         permissionGranted: Boolean = true,
         locale: Locale = Locale("es", "ES"),
     ) {
         repository = InMemoryPantryRepository()
         runBlocking { existing.forEach { repository.savePantryItem(it) } }
-        val fakeSource = FakeScanImageSource(
-            InstrumentationRegistry.getInstrumentation().context.assets.open("scanner/banana.jpg").use { it.readBytes() },
-        )
+        val fakeSource = FakeLiveFrameSource(frames)
+        detector = FakeFoodDetector(detectionResults)
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            viewModel = ScannerViewModel(repository, FakeFoodDetector(detectionResult))
-            imageSource = fakeSource
+            viewModel = ScannerViewModel(repository, detector)
             if (permissionGranted) {
                 viewModel.onCameraPermissionGranted()
                 viewModel.onCameraPreviewReady()
@@ -409,11 +447,10 @@ class ScanPantryE2ETest {
                                     Box(Modifier.fillMaxWidth().height(240.dp).testTag(ScannerTestTags.CAMERA_PREVIEW))
                                 },
                                 onBack = { leftScanner.value = true },
-                                onCapture = { viewModel.capture(imageSource) },
-                                onRescan = { if (viewModel.requestRescan()) viewModel.capture(imageSource) },
+                                onRescan = { if (viewModel.requestRescan()) viewModel.startLiveDetection(fakeSource) },
                                 onRequestExit = viewModel::requestExit,
                                 onConfirmExit = {
-                                    if (viewModel.confirmExit()) viewModel.capture(imageSource) else leftScanner.value = true
+                                    if (viewModel.confirmExit()) viewModel.startLiveDetection(fakeSource) else leftScanner.value = true
                                 },
                                 onCancelExit = viewModel::cancelExitConfirmation,
                                 onAddManualItem = viewModel::addManualItem,
@@ -432,10 +469,21 @@ class ScanPantryE2ETest {
             }
         }
         composeRule.waitForIdle()
+        if (permissionGranted) {
+            viewModel.startLiveDetection(fakeSource)
+        }
     }
 
-    private fun waitForDetection() {
-        composeRule.waitUntil(10_000) { !viewModel.uiState.value.isCapturing && !viewModel.uiState.value.isDetecting }
+    private fun waitForItems(minCount: Int) {
+        composeRule.waitUntil(10_000) {
+            viewModel.uiState.value.items.size >= minCount && !viewModel.uiState.value.isDetecting
+        }
+    }
+
+    private fun waitForFrames(processedFrames: Int) {
+        composeRule.waitUntil(10_000) {
+            detector.calls >= processedFrames && !viewModel.uiState.value.isDetecting
+        }
     }
 
     private fun locale(resourceId: Int, vararg args: Any): String = localeContext.getString(resourceId, *args)
@@ -445,15 +493,28 @@ class ScanPantryE2ETest {
         .map { it.name }
         .toSet()
 
-    private class FakeScanImageSource(private val imageBytes: ByteArray) : ScanImageSource {
-        override suspend fun capture(): ScanCaptureResult = ScanCaptureResult.Success(imageBytes)
+    private class FakeLiveFrameSource(
+        private val frames: List<ByteArray>,
+        private val intervalMillis: Long = FRAME_INTERVAL_MS,
+    ) : LiveFrameSource {
+        override fun frames(): Flow<ByteArray> = flow {
+            frames.forEachIndexed { index, frame ->
+                if (index > 0) delay(intervalMillis)
+                emit(frame)
+            }
+        }
     }
 
-    private class FakeFoodDetector(private val result: FoodDetectionResult) : FoodDetector {
-        override suspend fun detect(image: ByteArray): FoodDetectionResult = result
+    private class FakeFoodDetector(private val results: List<FoodDetectionResult>) : FoodDetector {
+        @Volatile var calls: Int = 0
+            private set
+
+        override suspend fun detect(image: ByteArray): FoodDetectionResult = results[minOf(calls++, results.lastIndex)]
     }
 
     private companion object {
         const val LEFT_AFTER_EXIT = "scanner_parent_after_exit"
+        const val FRAME_INTERVAL_MS = 400L
+        val FRAME = byteArrayOf(9, 9, 9)
     }
 }

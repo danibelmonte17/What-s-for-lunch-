@@ -20,7 +20,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.whatsforlunch.app.data.scanner.CameraXScanImageSource
+import com.whatsforlunch.app.data.scanner.CameraXLiveFrameSource
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -33,7 +33,7 @@ fun ScannerRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val previewView = remember(context) { PreviewView(context) }
-    val imageSource = remember(context, lifecycleOwner) { CameraXScanImageSource(context, lifecycleOwner) }
+    val imageSource = remember(context, lifecycleOwner) { CameraXLiveFrameSource(context, lifecycleOwner) }
 
     val bindPreview = remember(imageSource, previewView, viewModel) {
         {
@@ -64,7 +64,13 @@ fun ScannerRoute(
         }
     }
     DisposableEffect(imageSource) {
-        onDispose { imageSource.unbindPreview() }
+        onDispose {
+            viewModel.stopLiveDetection()
+            imageSource.unbindPreview()
+        }
+    }
+    LaunchedEffect(uiState.cameraPreviewReady) {
+        if (uiState.cameraPreviewReady) viewModel.startLiveDetection(imageSource)
     }
     LaunchedEffect(uiState.saveCompleted) {
         if (uiState.saveCompleted) {
@@ -82,11 +88,10 @@ fun ScannerRoute(
                 modifier = Modifier.fillMaxWidth().height(300.dp).testTag(ScannerTestTags.CAMERA_PREVIEW),
             )
         },
-        onCapture = { viewModel.capture(imageSource) },
-        onRescan = { if (viewModel.requestRescan()) viewModel.capture(imageSource) },
+        onRescan = { if (viewModel.requestRescan()) viewModel.startLiveDetection(imageSource) },
         onRequestExit = viewModel::requestExit,
         onConfirmExit = {
-            if (viewModel.confirmExit()) viewModel.capture(imageSource) else onBack()
+            if (viewModel.confirmExit()) viewModel.startLiveDetection(imageSource) else onBack()
         },
         onCancelExit = viewModel::cancelExitConfirmation,
         onAddManualItem = viewModel::addManualItem,

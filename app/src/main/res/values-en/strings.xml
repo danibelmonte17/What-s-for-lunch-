@@ -151,9 +151,8 @@
     <string name="scanner_title">Pantry Scanner</string>
     <string name="scanner_camera_preview">Camera preview</string>
     <string name="scanner_camera_loading">Preparing camera…</string>
-    <string name="scanner_take_photo">Take photo</string>
+    <string name="scanner_live_hint">Point at foods and they will be added to the list.</string>
     <string name="scanner_detection_loading">Detecting foods…</string>
-    <string name="scanner_no_detections">No foods detected. You can add them manually.</string>
     <string name="scanner_camera_denied">Camera permission denied. You can continue by adding foods manually.</string>
     <string name="scanner_camera_unavailable">The camera couldn’t be opened. You can add foods manually.</string>
     <string name="scanner_detection_failed">The image couldn’t be analyzed. You can add foods manually.</string>
@@ -184,7 +183,7 @@
     <string name="scanner_exit_message">You have unsaved foods. Leaving will discard them.</string>
     <string name="scanner_exit_confirm">Leave</string>
     <string name="scanner_rescan_title">Rescan?</string>
-    <string name="scanner_rescan_message">You have unsaved foods. Continuing will discard them and take a new photo.</string>
+    <string name="scanner_rescan_message">You have unsaved foods. Continuing will discard them and start an empty list.</string>
     <string name="scanner_rescan_confirm">Rescan</string>
     <string name="scanner_cancel">Cancel</string>
 

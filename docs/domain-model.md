@@ -11,7 +11,7 @@ Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las de
 | IngredienteReceta | Cantidad de un Ingrediente en una Receta | cantidad, unidad, obligatorio (sí/no) | Receta, Ingrediente |
 | Paso | Instrucción secuencial de una Receta | orden, texto, temporizador (opcional) | Receta |
 | Alimento | Producto disponible en la Despensa | nombre, cantidad (entero 0..99; 0 = sin cantidad) | detectado en Escaneo |
-| Escaneo | Captura de la cámara y detección asociada | fecha, Alimentos detectados con nombre, confianza y cantidad propuesta (entera 0..99; 0 = sin cantidad) | propone Alimentos para la Despensa |
+| Escaneo | Detección continua de la cámara (visor en vivo) | fecha, Alimentos detectados con nombre, confianza y cantidad propuesta (entera 0..99; 0 = sin cantidad) | propone Alimentos para la Despensa |
 | Sugerencia | Receta propuesta por la IA desde la Despensa | Coincidencia, estado (propuesta/aceptada/descartada) | se materializa en una Receta al aceptarse |
 | Lista de la Compra | Conjunto de ítems pendientes de comprar | — | N ÍtemLista |
 | ÍtemLista | Artículo a comprar | nombre, cantidad, Pasillo, Origen, completado | Lista de la Compra, Receta (opcional, vía Origen) |
@@ -21,7 +21,7 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 ## Relaciones
 
 - Receta 1—N IngredienteReceta N—1 Ingrediente; Receta 1—N Paso. Borrar una Receta borra en cascada sus IngredienteReceta y Pasos.
-- Escaneo propone N Alimento para la Despensa; los duplicados dentro del propio Escaneo (mismo nombre normalizado) se fusionan en un solo chip, y una coincidencia con un Alimento ya presente en la Despensa se pregunta en pantalla antes de guardar («Mantener cantidad» o «Actualizar cantidad»); en ambos casos queda un solo Alimento por nombre normalizado.
+- Escaneo propone N Alimento para la Despensa; los duplicados dentro del propio Escaneo (mismo nombre normalizado) se fusionan en un solo chip, y una coincidencia con un Alimento ya presente en la Despensa se pregunta en pantalla antes de guardar («Mantener cantidad» o «Actualizar cantidad»); en ambos casos queda un solo Alimento por nombre normalizado. La detección es **continua sobre el visor**: cada Alimento entra una sola vez por nombre normalizado, su confianza pasa a ser la **máxima observada** (una detección posterior más floja no la reduce) y nunca se sobrescriben las ediciones del usuario (nombre y cantidad); un Alimento ya añadido **no se elimina** aunque deje de verse, solo el usuario lo quita. Si el usuario renombra un chip y el detector vuelve a proponer la etiqueta original, se crea un Alimento nuevo (ya no comparte nombre normalizado) y puede fusionarse a mano.
 - Sugerencia se materializa como máximo en una Receta (al aceptarse).
 - ÍtemLista referencia opcionalmente a una Receta vía su Origen.
 

@@ -19,9 +19,24 @@ class MediaPipeFoodDetectorTest {
         val image = instrumentation.context.assets.open("scanner/banana.jpg").use { it.readBytes() }
         val detector = MediaPipeFoodDetector(instrumentation.targetContext)
 
+        val coldStart = System.nanoTime()
         val result = detector.detect(image)
+        val coldStartMs = (System.nanoTime() - coldStart) / 1_000_000
 
         assertTrue("Lite2 should return a successful detection result", result is FoodDetectionResult.Success)
+        // D2 latency evidence: the cold call includes the one-time model load; the following
+        // calls are the steady-state per-frame inference of the live scanner. Reported in
+        // docs/technical-discovery.md; no assertion on timing (the AVD is shared).
+        val samplesMs = (1..5).map {
+            val start = System.nanoTime()
+            val sample = detector.detect(image)
+            assertTrue("Timed sample $it failed", sample is FoodDetectionResult.Success)
+            (System.nanoTime() - start) / 1_000_000
+        }
+        println(
+            "D2 latency (ms) — cold start (incl. model load): $coldStartMs, steady samples: $samplesMs, " +
+                "avg=${samplesMs.average()}, max=${samplesMs.maxOrNull()}",
+        )
         val detections = (result as FoodDetectionResult.Success).detections
         val banana = instrumentation.targetContext.getString(R.string.food_label_banana)
         assertTrue(
