@@ -147,6 +147,24 @@
     <string name="create_recipe_notice_ai_failed">The image could not be generated. You can pick a photo manually.</string>
     <string name="create_recipe_notice_camera_denied">Camera permission denied. You can use the gallery or generate with AI.</string>
 
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_open_accessibility">Settings</string>
+    <string name="settings_api_key_label">DevExpert Inference API key</string>
+    <string name="settings_api_key_hint">Paste your API key here</string>
+    <string name="settings_api_key_save">Save</string>
+    <string name="settings_api_key_delete">Delete API key</string>
+    <string name="settings_api_key_delete_title">Delete API key</string>
+    <string name="settings_api_key_delete_message">Delete your AI API key? AI features will stop working until you configure another one.</string>
+    <string name="settings_api_key_delete_confirm">Delete</string>
+    <string name="settings_api_key_delete_cancel">Cancel</string>
+    <string name="settings_api_key_state_configured">Configured</string>
+    <string name="settings_api_key_state_missing">Not configured</string>
+    <string name="settings_api_key_build_source">The AI key comes from the build (local.properties) and takes precedence over the one saved here.</string>
+    <string name="settings_api_key_saved">API key saved.</string>
+    <string name="settings_privacy_title">Privacy and data</string>
+    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos never leave the device, and you can control spending in your DevExpert Inference dashboard.</string>
+
     <!-- Pantry scanner -->
     <string name="scanner_title">Pantry Scanner</string>
     <string name="scanner_camera_preview">Camera preview</string>

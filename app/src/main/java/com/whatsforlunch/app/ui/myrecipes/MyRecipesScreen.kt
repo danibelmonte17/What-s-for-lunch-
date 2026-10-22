@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -127,6 +128,7 @@ object MyRecipesTestTags {
     const val DELETE_CONFIRM = "my_recipes_delete_confirm"
     const val DELETE_CANCEL = "my_recipes_delete_cancel"
     const val OPEN_PANTRY = "action_open_pantry"
+    const val OPEN_SETTINGS = "action_open_settings"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
     fun filterChipIcon(moment: MealMoment): String = "${FILTER_CHIP_ICON}_${moment.name.lowercase()}"
@@ -141,6 +143,7 @@ fun MyRecipesScreen(
     onEditRecipe: (String) -> Unit = {},
     onOpenRecipe: (String) -> Unit = {},
     onOpenPantry: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
     onResetFilters: () -> Unit = {},
@@ -173,6 +176,16 @@ fun MyRecipesScreen(
                         Icon(
                             imageVector = Icons.Outlined.Inventory2,
                             contentDescription = stringResource(R.string.pantry_open_accessibility),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_SETTINGS),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.settings_open_accessibility),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }

@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -6,6 +7,16 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// Configuracion de IA aportada por el desarrollador en local.properties (gitignored).
+// Se inyecta en BuildConfig para debug y release (D7-D11 de configurar-acceso-a-ia).
+// Nunca se imprimen los valores.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+fun buildConfigString(value: String): String =
+    "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
     namespace = "com.whatsforlunch.app"
@@ -18,6 +29,16 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "AI_BASE_URL",
+            buildConfigString(localProperties.getProperty("AI_BASE_URL").orEmpty().trim()),
+        )
+        buildConfigField(
+            "String",
+            "AI_API_KEY",
+            buildConfigString(localProperties.getProperty("AI_API_KEY").orEmpty().trim()),
+        )
     }
 
     buildTypes {
@@ -37,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     androidResources {
