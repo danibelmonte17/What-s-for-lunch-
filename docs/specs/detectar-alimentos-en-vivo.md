@@ -8,6 +8,8 @@
 - `status`: `not_started` en el momento de planificar
 - `source`: `feature_list.json`
 
+> **Nota de revisión (2026-10-22)**: el diálogo «Mantener cantidad»/«Actualizar cantidad» y el Non-Goal de no sumar cantidades quedan **sustituidos** por `sumar-cantidades-al-guardar` (suma al guardar, RD13 en `docs/domain-model.md`). La detección en vivo, el HUD, el muestreo de 300 ms, RD05 y RD06 no cambian.
+
 ## Goal
 
 Sustituir el flujo de captura congelada del Escáner por **detección continua sobre el visor**: mientras el usuario enfoca con la cámara, MediaPipe va detectando Alimentos **en el dispositivo** (sin red, sin persistir fotogramas — RD06) y la app va construyendo **bajo el visor un listado sin repetidos**: cada Alimento entra **una sola vez por nombre normalizado** y su confianza se actualiza con cada nueva detección. El listado sigue siendo editable (renombrar, quitar, cantidad con stepper **0..99**, alta manual) y se guarda en la Despensa igual que hoy.

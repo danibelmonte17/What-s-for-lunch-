@@ -99,9 +99,6 @@ fun ScannerRoute(
         onQuantityChange = viewModel::updateQuantity,
         onRemoveItem = viewModel::removeItem,
         onSave = viewModel::saveToPantry,
-        onOpenDuplicate = viewModel::openDuplicateResolution,
-        onResolveDuplicate = viewModel::resolveDuplicate,
-        onDismissDuplicate = viewModel::dismissDuplicateResolution,
         onClearNotice = viewModel::clearNotice,
     )
 }

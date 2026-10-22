@@ -8,6 +8,8 @@
 - `status`: `not_started` en el momento de planificar
 - `source`: `feature_list.json`
 
+> **Nota de revisión (2026-10-22)**: el diálogo «Mantener cantidad»/«Actualizar cantidad» descrito en esta spec como S11/S12 y su Non-Goal de no sumar cantidades quedan **sustituidos** por `sumar-cantidades-al-guardar` (suma al guardar, RD13 en `docs/domain-model.md`). La marca «Ya está en la Despensa» se conserva como información no accionable.
+
 ## Goal
 
 Sustituir el destino provisional `scan_pantry` por el **Escáner** real que llena la **Despensa** desde la cámara: el usuario ve el visor, captura una imagen, la detección de Alimentos ocurre **en el dispositivo** (MediaPipe, `P23`, sin red) y la app propone **chips editables** (nombre + confianza) que se corrigen, quitan o amplían antes de **confirmar y guardar** en la Despensa (Room). Es el tramo `Camara → MediaPipe → Chips → Despensa` de `docs/technical-discovery.md`.

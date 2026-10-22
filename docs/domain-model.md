@@ -21,7 +21,7 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 ## Relaciones
 
 - Receta 1—N IngredienteReceta N—1 Ingrediente; Receta 1—N Paso. Borrar una Receta borra en cascada sus IngredienteReceta y Pasos.
-- Escaneo propone N Alimento para la Despensa; los duplicados dentro del propio Escaneo (mismo nombre normalizado) se fusionan en un solo chip, y una coincidencia con un Alimento ya presente en la Despensa se pregunta en pantalla antes de guardar («Mantener cantidad» o «Actualizar cantidad»); en ambos casos queda un solo Alimento por nombre normalizado. La detección es **continua sobre el visor**: cada Alimento entra una sola vez por nombre normalizado, su confianza pasa a ser la **máxima observada** (una detección posterior más floja no la reduce) y nunca se sobrescriben las ediciones del usuario (nombre y cantidad); un Alimento ya añadido **no se elimina** aunque deje de verse, solo el usuario lo quita. Si el usuario renombra un chip y el detector vuelve a proponer la etiqueta original, se crea un Alimento nuevo (ya no comparte nombre normalizado) y puede fusionarse a mano.
+- Escaneo propone N Alimento para la Despensa; los duplicados dentro del propio Escaneo (mismo nombre normalizado) se fusionan en un solo chip, y una coincidencia con un Alimento ya presente en la Despensa **suma su cantidad a la existente** al guardar (RD13), sin preguntar; en ambos casos queda un solo Alimento por nombre normalizado. La detección es **continua sobre el visor**: cada Alimento entra una sola vez por nombre normalizado, su confianza pasa a ser la **máxima observada** (una detección posterior más floja no la reduce) y nunca se sobrescriben las ediciones del usuario (nombre y cantidad); un Alimento ya añadido **no se elimina** aunque deje de verse, solo el usuario lo quita. Si el usuario renombra un chip y el detector vuelve a proponer la etiqueta original, se crea un Alimento nuevo (ya no comparte nombre normalizado) y puede fusionarse a mano.
 - Sugerencia se materializa como máximo en una Receta (al aceptarse).
 - ÍtemLista referencia opcionalmente a una Receta vía su Origen.
 
@@ -55,6 +55,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - **RD10**: Los ingredientes opcionales no afectan a la Coincidencia.
 - **RD11**: La Despensa no tiene desglose por ubicaciones físicas.
 - **RD12**: El Escaneo solo propone detecciones de Alimentos con confianza ≥ 0.60. Umbral adoptado por decisión del usuario para EfficientDet-Lite2 (2026-10-21); los chips editables permiten corregir falsos positivos y RD05 conserva la entrada manual ante degradación.
+- **RD13**: Al guardar un Escaneo, la cantidad de cada chip se **suma** a la del Alimento existente con el mismo nombre normalizado, conservando su id y su nombre y sin crear fila nueva. «Sin cantidad» cuenta como 0 (`null + N → N`, `M + 0 → M`, `null + 0 → sin cantidad`) y la suma se recorta al máximo de 99 sin aviso. Los chips sin coincidencia crean Alimentos nuevos como hasta ahora. No hay diálogo ni decisión de «Mantener cantidad»/«Actualizar cantidad».
 
 ## Cálculos y fórmulas
 
@@ -70,7 +71,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Publicar una Receta: título y foto obligatorios, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila de Ingrediente ni Paso inválidos (Q-crear-receta-1, que revisa `⚠ S07`: la foto pasa a ser obligatoria).
 - Nombre de un ÍtemLista o Alimento: no vacío; los duplicados (mismo nombre normalizado) se fusionan en un solo Alimento (dentro de un Escaneo, en un solo chip). Al renombrar un chip hacia un duplicado, gana el chip editado (nombre/cantidad conservados, confianza máxima); al intentar añadir manualmente un duplicado, se conserva el chip ya existente. En el alta y edición manual de Alimentos de la Despensa, un duplicado se rechaza con aviso y no se crea fila nueva (Q-gestionar-alimentos-de-la-despensa-3).
 - Cantidad de un Alimento: entero entre 0 y 99; 0 equivale a sin cantidad (revisión 2026-10-21: máximo 99 en toda la app).
-- Cantidad propuesta de un Alimento en el Escaneo: misma regla que la de un Alimento —entero 0..99, 0 = sin cantidad— editada con un stepper igual que en la Despensa; al guardar se conserva la cantidad elegida en el chip.
+- Cantidad propuesta de un Alimento en el Escaneo: misma regla que la de un Alimento —entero 0..99, 0 = sin cantidad— editada con un stepper igual que en la Despensa; al guardar se suma a la del Alimento existente con el mismo nombre normalizado (RD13) o se conserva como cantidad del Alimento nuevo si no hay coincidencia.
 - Confianza de detección: valor entre 0 y 1; solo detecciones ≥ 0.60 del vocabulario alimentario COCO del modelo seleccionado pueden crear chips detectados. Los Alimentos añadidos manualmente tienen `confidence = null`.
 
 ## Escenarios importantes
@@ -86,7 +87,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 |---|---|
 | Escaneo sin detecciones | Mensaje claro y alta manual de Alimentos por chips |
 | Fallo de la IA o de la red (escáner o Pinche) | Modo de degradación: entrada manual y aviso (RD05) |
-| Ingrediente detectado duplicado | Dentro del Escaneo se fusiona en un solo chip; si su nombre normalizado coincide con un Alimento ya presente en la Despensa, se pregunta en pantalla antes de guardar («Mantener cantidad» o «Actualizar cantidad») y no se crea fila nueva |
+| Ingrediente detectado duplicado | Dentro del Escaneo se fusiona en un solo chip; si su nombre normalizado coincide con un Alimento ya presente en la Despensa, al guardar se suman las cantidades (RD13) y no se crea fila nueva |
 | Raciones fuera de límite | El escalador no permite valores fuera de 1-12 |
 | Edición concurrente desde dos dispositivos | No aplica: datos locales, un solo Usuario (P31) |
 | Receta sin foto o sin ingredientes suficientes | Sin título, foto, 1 Ingrediente y 1 Paso válidos no se puede Publicar (Q-crear-receta-1, `⚠ S07`) |
