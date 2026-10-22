@@ -76,6 +76,15 @@ El Escáner sustituyó la captura congelada por **detección continua** sobre el
 
 Verificación: `ScanPantryE2ETest` (16 casos, fakes `FakeLiveFrameSource`/`FakeFoodDetector` por secuencia) y `CameraXLiveFrameSourceTest` (1 caso) en `Pixel_10_Pro` API 37, dentro de la suite completa 95/95 en verde.
 
+### Acceso a IA y API key en el dispositivo (2026-10-22, `configurar-acceso-a-ia`)
+
+- **Decisión D2**: la API key de OpenRouter se guarda con **Android Keystore directo** (clave AES-256 del Keystore, transformación `AES/GCM/NoPadding`, alias `whatsforlunch_ai_key`). Cada guardado usa un IV nuevo y persiste `Base64(IV || ciphertext)` en `SharedPreferences` `ai_key_prefs` (clave `api_key`). No se añade `androidx.security:security-crypto` (deprecado) ni ninguna dependencia nueva.
+- **Lectura y borrado**: `AiKeyStore` extiende `AiKeyProvider`; `apiKey()` descifra solo en memoria y devuelve `null` si no hay valor o el descifrado falla (datos corruptos o clave invalidada → «No configurada», sin crash). `clear()` elimina la entrada; la key nunca se registra en logs, excepciones, capturas ni repositorio (`⚠ S05`, `RK01`).
+- **Consumo**: `OpenAiCompatibleImageGenerator` recibe la baseURL (`AiEndpoints.imageGeneration`, D9); sin key sigue devolviendo `MissingApiKey` y «Generar con IA» avisa sin bloquear el formulario (RF-21, RD05).
+- **Configuración de build (D7-D11, 2026-10-22)**: `AI_BASE_URL` y `AI_API_KEY` se leen del `local.properties` de la raíz (gitignored) y se inyectan en `BuildConfig` (`buildConfig = true`) para **debug y release**, sin imprimir los valores. Si no están vacías, tienen prioridad sobre la key de Ajustes mediante `PriorityAiKeyProvider`; si faltan, el build no falla y todo sigue como antes. `AI_BASE_URL` es la base compatible con OpenAI (`https://openrouter.ai/api/v1` por defecto) y `AiEndpoints.imageGeneration` compone `<base sin barra final>/images/generations`.
+- **Riesgo aceptado (D11)**: la key de build queda **incrustada en el APK** y es extraíble del binario; se usa solo una key de desarrollo con límite de gasto, `local.properties` no se versiona y el APK release con key real no se distribuye fuera del equipo. Retirar la inyección antes de publicar (ver `S05`/`RK01`).
+- **Sin red en Ajustes**: la validación es local (recorte + rechazo de vacío, D3) y no se comprueba la key contra OpenRouter. La medición de latencia/coste reales de OpenRouter queda **aplazada** por decisión del usuario (2026-10-22; requiere key real y llamadas de pago confirmadas).
+
 ## Arquitectura y flujos
 
 Módulo único `app/` con tres capas (estructura confirmada en Q-arrancar-app-en-mis-recetas-1, `⚠ S06`):
@@ -101,17 +110,17 @@ flowchart LR
 
 - **Duraderos (Room)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra.
 - **Temporales/derivados**: resultados de Escaneo (confianzas), fotos (no se persisten las de Escaneo — RD06; las de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), caché de respuestas de la IA.
-- **Credenciales**: API key en almacenamiento cifrado del dispositivo (Keystore / EncryptedSharedPreferences — **Candidato**), introducida por el usuario (`⚠ S05`).
+- **Credenciales**: API key de OpenRouter en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
 - **Migración o importación**: ninguna (proyecto nuevo).
 
 ## Integraciones externas
 
-- **OpenRouter (API compatible con OpenAI)** — chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key del usuario en Ajustes (`⚠ S05`). Configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
+- **OpenRouter (API compatible con OpenAI)** — chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
 - **Google AI Edge MediaPipe** — inferencia on-device; no requiere red.
 
 ## Autenticación y autorización
 
-No hay cuentas, login ni sesión en red (`P31`): la app es local y su único usuario es quien usa el dispositivo (ver «Roles y acceso» de `docs/domain-model.md`). No hay control de acceso por recursos, ni permisos que conceder, revocar ni que caduquen. La única credencial del sistema es la **API key de IA**, que aporta el propio usuario (`⚠ S05`).
+No hay cuentas, login ni sesión en red (`P31`): la app es local y su único usuario es quien usa el dispositivo (ver «Roles y acceso» de `docs/domain-model.md`). No hay control de acceso por recursos, ni permisos que conceder, revocar ni que caduquen. La única credencial del sistema es la **API key de IA**, que puede aportar el usuario desde Ajustes (guardada cifrada) o el desarrollador en tiempo de compilación con `AI_API_KEY` en `local.properties` (D7-D11; en ese caso queda incrustada en el APK, riesgo aceptado — `⚠ S05`, `RK01`).
 
 ## Despliegue y operación
 
@@ -140,7 +149,7 @@ Mínima en el MVP: logs locales de la app, sin telemetría ni alertas (`⚠ S01`
 
 - PII: no hay cuentas ni datos de identidad; los alimentos de la Despensa y las fotos son sensibles por contexto.
 - RGPD: las fotos del Escaneo se procesan y se descartan (RD06); proveedor sin retención para entrenamiento; aviso al usuario (`P27`).
-- API key: nunca en el repositorio ni hardcodeada; solo en almacenamiento cifrado del dispositivo (`⚠ S05`).
+- API key: nunca se commitea (`local.properties` está gitignored) ni se imprime en logs; en Ajustes se guarda cifrada con Android Keystore. Con D7-D11 la key de build (`AI_API_KEY`) queda **incrustada en el APK** (debug y release): riesgo aceptado para el MVP, usar solo una key de desarrollo con límite de gasto y retirar la inyección antes de distribuir (`⚠ S05`, `RK01`).
 
 ## Restricciones
 
