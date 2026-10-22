@@ -344,9 +344,13 @@
       "verification": [
         "E2E: con una receta al 100% y otra al 85%, comprobar que el carrusel las ordena y etiqueta según su coincidencia"
       ],
-      "evidence": [],
-      "notes": "",
-      "status": "not_started"
+      "evidence": [
+        "2026-10-22: init.ps1 exit 0; lintDebug 0 errores; testDebugUnitTest --rerun-tasks 67/67; assembleDebug BUILD SUCCESSFUL (validador, árbol actual).",
+        "2026-10-22: CompatibleRecipesE2ETest 7/7 en Pixel_8_Pro via connectedDebugAndroidTest y 7/7 en Pixel_9_Pro (API 37) via am instrument; suite completa 103/103 en Pixel_9_Pro (648 s). En Pixel_8_Pro la pasada Gradle hizo 102/103: unico fallo PantryManagementE2ETest.deleteCanBeCancelledOrConfirmed (flake ajeno, pasa en solitario).",
+        "2026-10-22: validación independiente accept; S1-S8/RF-MRC1..10/D1-D9 cumplidos, seguridad sin hallazgos, 0 Critical/High/Medium. Informe docs/validations/mostrar-recetas-compatibles.md y 2 capturas en docs/evidence/mostrar-recetas-compatibles/."
+      ],
+      "notes": "Aceptada por feature-validator; 4 notas Low no bloqueantes (flash del estado vacío, virtualización, cobertura NavHost y XML de suite).",
+      "status": "accepted"
     },
     {
       "id": "configurar-acceso-a-ia",

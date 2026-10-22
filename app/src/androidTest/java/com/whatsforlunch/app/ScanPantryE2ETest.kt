@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
+import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.scanner.FoodDetectionResult
 import com.whatsforlunch.app.data.scanner.FoodDetector
 import com.whatsforlunch.app.data.scanner.LiveFrameSource
@@ -69,6 +70,7 @@ class ScanPantryE2ETest {
 
     private lateinit var viewModel: ScannerViewModel
     private lateinit var repository: InMemoryPantryRepository
+    private lateinit var recipeRepository: InMemoryRecipeRepository
     private lateinit var detector: FakeFoodDetector
     private lateinit var showPantry: androidx.compose.runtime.MutableState<Boolean>
     private lateinit var leftScanner: androidx.compose.runtime.MutableState<Boolean>
@@ -397,11 +399,12 @@ class ScanPantryE2ETest {
         locale: Locale = Locale("es", "ES"),
     ) {
         repository = InMemoryPantryRepository()
+        recipeRepository = InMemoryRecipeRepository()
         runBlocking { existing.forEach { repository.savePantryItem(it) } }
         val fakeSource = FakeLiveFrameSource(frames)
         detector = FakeFoodDetector(detectionResults)
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            viewModel = ScannerViewModel(repository, detector)
+            viewModel = ScannerViewModel(repository, recipeRepository, detector)
             if (permissionGranted) {
                 viewModel.onCameraPermissionGranted()
                 viewModel.onCameraPreviewReady()

@@ -5,13 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.whatsforlunch.app.data.scanner.FoodDetectionResult
 import com.whatsforlunch.app.data.scanner.FoodDetector
 import com.whatsforlunch.app.data.scanner.LiveFrameSource
+import com.whatsforlunch.app.domain.match.CompatibleRecipe
+import com.whatsforlunch.app.domain.match.compatibleRecipes
 import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
+import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.Scan
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.repository.PantryDuplicateResolution
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
+import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.scanner.ScanDetections
 import com.whatsforlunch.app.domain.text.normalizeName
 import kotlinx.coroutines.CancellationException
@@ -47,6 +51,7 @@ data class ScannerUiState(
     val scan: Scan? = null,
     val items: List<ScanDraftItem> = emptyList(),
     val pantryItems: List<PantryItem> = emptyList(),
+    val compatibleRecipes: List<CompatibleRecipe> = emptyList(),
     val matches: Map<String, PantryItem> = emptyMap(),
     val duplicateDecisions: Map<String, PantryDuplicateResolution> = emptyMap(),
     val activeDuplicateItemId: String? = null,
@@ -62,6 +67,7 @@ data class ScannerUiState(
 
 class ScannerViewModel(
     private val pantryRepository: PantryRepository,
+    private val recipeRepository: RecipeRepository,
     private val foodDetector: FoodDetector,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScannerUiState())
@@ -69,10 +75,14 @@ class ScannerViewModel(
 
     private var detectionJob: Job? = null
     private var loopActive = false
+    private var recipes: List<Recipe> = emptyList()
 
     init {
         viewModelScope.launch {
             pantryRepository.observePantryItems().collect(::updatePantryItems)
+        }
+        viewModelScope.launch {
+            recipeRepository.observeRecipes().collect(::updateRecipes)
         }
     }
 
@@ -393,8 +403,21 @@ class ScannerViewModel(
     private fun updatePantryItems(pantryItems: List<PantryItem>) {
         val state = _uiState.value
         val matches = ScanDetections.matchesWithPantry(state.items, pantryItems)
-        val base = state.copy(pantryItems = pantryItems, matches = matches, pantryLoaded = true)
+        val base = state.copy(
+            pantryItems = pantryItems,
+            matches = matches,
+            pantryLoaded = true,
+            compatibleRecipes = compatibleRecipes(recipes, pantryItems),
+        )
         _uiState.value = queueNewAutomaticMatches(base, state.matches)
+    }
+
+    private fun updateRecipes(recipes: List<Recipe>) {
+        this.recipes = recipes
+        val state = _uiState.value
+        _uiState.value = state.copy(
+            compatibleRecipes = compatibleRecipes(recipes, state.pantryItems),
+        )
     }
 
     private fun recalculateItems(

@@ -27,6 +27,8 @@ import org.koin.androidx.compose.koinViewModel
 fun ScannerRoute(
     onBack: () -> Unit,
     onSaved: () -> Unit,
+    onOpenRecipe: (String) -> Unit,
+    onSuggestWithAi: () -> Unit,
     viewModel: ScannerViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
@@ -103,5 +105,7 @@ fun ScannerRoute(
         onResolveDuplicate = viewModel::resolveDuplicate,
         onDismissDuplicate = viewModel::dismissDuplicateResolution,
         onClearNotice = viewModel::clearNotice,
+        onOpenRecipe = onOpenRecipe,
+        onSuggestWithAi = onSuggestWithAi,
     )
 }

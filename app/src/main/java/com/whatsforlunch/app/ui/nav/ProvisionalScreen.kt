@@ -23,6 +23,7 @@ object ProvisionalTestTags {
     const val FORM_SCREEN = "provisional_form_screen"
     const val SCANNER_SCREEN = "provisional_scanner_screen"
     const val COOK_MODE_SCREEN = "provisional_cook_mode_screen"
+    const val AI_SUGGESTIONS_SCREEN = "provisional_ai_suggestions_screen"
 }
 
 // Destino provisional con título y acción de vuelta (Q-arrancar-app-en-mis-recetas-3).
