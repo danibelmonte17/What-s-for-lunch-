@@ -198,6 +198,12 @@
     <string name="scanner_rescan_message">You have unsaved foods. Continuing will discard them and start an empty list.</string>
     <string name="scanner_rescan_confirm">Rescan</string>
     <string name="scanner_cancel">Cancel</string>
+    <string name="scanner_compatible_title">Compatible Recipes</string>
+    <string name="scanner_compatible_ingredients">%1$d of %2$d ingredients in the Pantry</string>
+    <string name="scanner_compatible_empty">No recipes match your Pantry yet.</string>
+    <string name="scanner_compatible_suggest_ai">Suggest a recipe with AI</string>
+    <string name="scanner_compatible_card_accessibility">Compatible recipe: %1$s, %2$d%% match</string>
+    <string name="ai_suggestions_title">Suggest a recipe with AI</string>
 
     <!-- EfficientDet-Lite2 COCO food labels -->
     <string name="food_label_apple">Apple</string>

@@ -29,6 +29,7 @@ object AppRoutes {
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
     const val COOK_MODE_PROVISIONAL = "cook_mode_provisional"
     const val SETTINGS = "settings"
+    const val AI_SUGGESTIONS_PROVISIONAL = "ai_suggestions_provisional"
     const val RECIPE_ID_ARG = "recipeId"
 
     fun createRecipe(): String = "create_recipe"
@@ -102,6 +103,17 @@ fun WhatsForLunchApp(
                         popUpTo(AppRoutes.SCAN_PANTRY) { inclusive = true }
                     }
                 },
+                onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
+                onSuggestWithAi = { navController.navigate(AppRoutes.AI_SUGGESTIONS_PROVISIONAL) },
+            )
+        }
+        // RF-MRC8 (D8): destino provisional para «Sugerir receta con IA» con vuelta
+        // atrás; sugerir-recetas-con-ia lo sustituirá.
+        composable(AppRoutes.AI_SUGGESTIONS_PROVISIONAL) {
+            ProvisionalScreen(
+                title = stringResource(R.string.ai_suggestions_title),
+                testTag = ProvisionalTestTags.AI_SUGGESTIONS_SCREEN,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(AppRoutes.PANTRY) {

@@ -56,7 +56,7 @@ val appModule = module {
     viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
-    viewModel { ScannerViewModel(get(), get()) }
+    viewModel { ScannerViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->

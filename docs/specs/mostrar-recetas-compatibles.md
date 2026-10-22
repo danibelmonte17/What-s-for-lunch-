@@ -10,7 +10,7 @@
 
 ## Goal
 
-El Escáner de la Despensa muestra una sección **«Recetas Compatibles»** con las Recetas de Mis Recetas cuya Coincidencia con la Despensa llega al umbral de sugeribilidad de RD02 (≥ 85 %), en lista vertical y **ordenadas por Coincidencia descendente**. Cada tarjeta lleva el badge de Coincidencia («100% Match» / «N%», RD02) reutilizado de `ui/components/MatchBadge`, su miniatura y el desglose «X de Y ingredientes en la Despensa». Al tocar una tarjeta se abre el Detalle de esa Receta. Cuando ninguna Receta llega al 85 %, la sección ofrece el botón **«Sugerir receta con IA»** (destino provisional; la IA real es `sugerir-recetas-con-ia`).
+El Escáner de la Despensa muestra una sección **«Recetas Compatibles»** con las Recetas de Mis Recetas cuya Coincidencia con la Despensa llega al umbral de sugeribilidad de RD02 (≥ 85 %), en lista vertical y **ordenadas por Coincidencia descendente**. Cada tarjeta lleva el badge de Coincidencia («100% Match» / «N%», RD02) reutilizado de `ui/components/MatchBadge`, su miniatura y el desglose «X de Y ingredientes en la Despensa». Al tocar una tarjeta se abre el Detalle de esa Receta. La sección ofrece **siempre** el botón **«Sugerir receta con IA»** (destino provisional; la IA real es `sugerir-recetas-con-ia`); cuando ninguna Receta llega al 85 %, muestra además el estado vacío.
 
 ## Non-Goals
 
@@ -44,7 +44,7 @@ Prefijo propio `RF-MRC#` para no colisionar con los `RF-MB#` de `mostrar-badge-d
 - **RF-MRC5** (D5): la sección «Recetas Compatibles» es una **lista vertical** bajo los chips del Escaneo, dentro del scroll de la pantalla del Escáner (como en el prototipo), con cabecera y contenido o estado vacío.
 - **RF-MRC6**: cada tarjeta muestra: badge de Coincidencia (`MatchBadge`: «100% Match» o «N%», RD02), miniatura de la foto o placeholder, título (1 línea) y la línea «X de Y ingredientes en la Despensa» (valores de `RecipeMatch.availableRequired` / `totalRequired`).
 - **RF-MRC7** (D7): tocar la tarjeta abre el Detalle de esa Receta (`recipe_detail/{id}`), con vuelta atrás al Escáner.
-- **RF-MRC8** (D8): sin Recetas compatibles, la sección muestra el estado vacío con el botón **«Sugerir receta con IA»**, que abre un destino provisional con título y vuelta atrás (lo sustituye `sugerir-recetas-con-ia`).
+- **RF-MRC8** (D8): la sección muestra **siempre** el botón **«Sugerir receta con IA»**, haya o no Recetas compatibles; abre un destino provisional con título y vuelta atrás (lo sustituye `sugerir-recetas-con-ia`). Sin Recetas compatibles, la sección muestra además el estado vacío con el mismo botón.
 - **RF-MRC9**: el cálculo es **reactivo**: al cambiar la Despensa (alta/baja/edición o al guardar un Escaneo) o las Recetas, la sección se actualiza sin acción manual del usuario.
 - **RF-MRC10**: la sección **no depende** del estado de la cámara ni de los chips sin guardar: se calcula siempre contra la Despensa persistida (D1) y se muestra igual en modo manual (permiso denegado o fallo de cámara).
 
@@ -72,7 +72,7 @@ Then la Receta aparece en la sección sin reiniciar la app ni reabrir el Escáne
 
 Given que ninguna Receta llega al 85 % (p. ej. Despensa vacía o sin Recetas)
 When el usuario mira la sección «Recetas Compatibles»
-Then se muestra el estado vacío con el botón «Sugerir receta con IA»; al pulsarlo se abre el destino provisional con su título y se puede volver al Escáner (RF-MRC8)
+Then se muestra el estado vacío y el botón «Sugerir receta con IA»; al pulsarlo se abre el destino provisional con su título y se puede volver al Escáner (RF-MRC8)
 
 ### Scenario 5: La tarjeta abre el Detalle
 
@@ -96,6 +96,12 @@ Then esa Receta no aparece nunca, aunque la Despensa esté llena (RF-MRC4)
 
 When el idioma del sistema es inglés
 Then los textos nuevos (cabecera, línea de ingredientes, estado vacío y botón) se muestran en inglés (P19)
+
+### Scenario 9: Sugerencia con IA también con Recetas compatibles
+
+Given una sección «Recetas Compatibles» con al menos una Receta compatible
+When el usuario mira la sección
+Then las tarjetas compatibles aparecen y el botón «Sugerir receta con IA» sigue visible; al pulsarlo se abre el destino provisional y se puede volver al Escáner (RF-MRC8)
 
 ## Casos límite
 
@@ -190,7 +196,7 @@ Then los textos nuevos (cabecera, línea de ingredientes, estado vacío y botón
 - **D5 — lista vertical** de tarjetas bajo los chips (confirmado por el usuario, 2026-10-22): la palabra «carrusel» de `build-brief.md`/`DESIGN.md` es vocabulario de producto, no disposición.
 - **D6 — orden determinista**: Coincidencia desc → título ascendente normalizado → `id`.
 - **D7 — tocar la tarjeta abre el Detalle** (`recipe_detail/{id}`, confirmado por el usuario, 2026-10-22); sin CTA «Empezar a cocinar» ni botón de carrito (Non-Goals).
-- **D8 — estado vacío con «Sugerir receta con IA»** (confirmado por el usuario, 2026-10-22) → destino provisional (`ProvisionalScreen`); la feature real es `sugerir-recetas-con-ia`.
+- **D8 — «Sugerir receta con IA» siempre visible** (confirmado por el usuario, 2026-10-22; ampliado el mismo día para que también aparezca con Recetas compatibles) → destino provisional (`ProvisionalScreen`); la feature real es `sugerir-recetas-con-ia`. Sin compatibles se añade el estado vacío sobre el mismo botón.
 - **D9 — badge compartido**: `MatchBadge` con testTag propio de la pantalla («100% Match» literal, RD02; «N%» en el resto).
 
 ## Expected File Changes
@@ -206,7 +212,7 @@ Then los textos nuevos (cabecera, línea de ingredientes, estado vacío y botón
 - `app/src/test/java/com/whatsforlunch/app/domain/match/CompatibleRecipesTest.kt` — crear; unit de la regla.
 - `app/src/test/java/com/whatsforlunch/app/ui/scanner/ScannerViewModelTest.kt` — modificar; firma del constructor (~12 call sites).
 - `app/src/androidTest/java/com/whatsforlunch/app/ScanPantryE2ETest.kt` — modificar; firma en `launchScanner` (1 call site).
-- `app/src/androidTest/java/com/whatsforlunch/app/CompatibleRecipesE2ETest.kt` — crear; verify y S2-S8.
+- `app/src/androidTest/java/com/whatsforlunch/app/CompatibleRecipesE2ETest.kt` — crear; verify y S2-S9.
 - `docs/validations/mostrar-recetas-compatibles.md` y `docs/evidence/mostrar-recetas-compatibles/*.png` — crear al validar (evidencia).
 
 ## Visual Design Impact
@@ -224,7 +230,7 @@ Especificación de la sección y la tarjeta (verificable por `uiautomator` y cap
   - `MatchBadge` (píldora compartida): 100 % → «100% Match» sobre `secondary`; resto → «N%» sobre `secondaryContainer`.
   - Título 1 línea con elipsis (`titleSmall`); debajo, «X de Y ingredientes en la Despensa» (`labelSmall`, `onSurfaceVariant`).
   - Objetivo táctil: la tarjeta entera ≥ 48 dp de alto; descripción accesible `scanner_compatible_card_accessibility`.
-- **Estado vacío**: texto `scanner_compatible_empty` (`bodySmall`, `onSurfaceVariant`) + botón primario «Sugerir receta con IA» (altura mínima 52 dp, `testTag` `scanner_compatible_suggest_ai`).
+- **Estado vacío**: texto `scanner_compatible_empty` (`bodySmall`, `onSurfaceVariant`) y, siempre, botón primario «Sugerir receta con IA» (altura mínima 52 dp, `testTag` `scanner_compatible_suggest_ai`). El botón también se muestra debajo de las tarjetas cuando hay Recetas compatibles.
 - `testTags` nuevos en `ScannerTestTags`: `COMPATIBLE_SECTION`, `COMPATIBLE_TITLE`, `compatibleCard(id)`, `compatibleMatch(id)`, `compatibleIngredients(id)`, `COMPATIBLE_EMPTY`, `COMPATIBLE_SUGGEST_AI`.
 
 ## Durable Documentation Impact
@@ -247,8 +253,8 @@ Especificación de la sección y la tarjeta (verificable por `uiautomator` y cap
 - [ ] T1: `CompatibleRecipes.kt` + `CompatibleRecipesTest` (umbral 85/84, redondeo 11/13, orden y empates, `null` excluido, Borradores/Publicadas). (RF-MRC1 a RF-MRC4, S1, S2, S6, S7)
 - [ ] T2: `ScannerViewModel` + `AppModule` + firma en `ScannerViewModelTest` y `ScanPantryE2ETest`; `compatibleRecipes` reactivo. (RF-MRC9, RF-MRC10, S3)
 - [ ] T3: sección y `CompatibleRecipeCard` en `ScannerScreen` con testTags y textos es/en. (RF-MRC5, RF-MRC6, S1, S8)
-- [ ] T4: navegación tap → Detalle y botón «Sugerir receta con IA» → `ai_suggestions_provisional` (AppNavHost, ProvisionalScreen). (RF-MRC7, RF-MRC8, S4, S5)
-- [ ] T5: `CompatibleRecipesE2ETest` (verify + S2-S8) sin romper la suite existente.
+- [ ] T4: navegación tap → Detalle y botón «Sugerir receta con IA» siempre visible → `ai_suggestions_provisional` (AppNavHost, ProvisionalScreen). (RF-MRC7, RF-MRC8, S4, S5, S9)
+- [ ] T5: `CompatibleRecipesE2ETest` (verify + S2-S9) sin romper la suite existente.
 - [ ] T6: `init`/`lint`/`unit`/`e2e` en verde, evidencia capturada y `Q-mostrar-recetas-compatibles-1..4` registradas en `docs/risks-and-open-questions.md`.
 
 ## Verification Plan
@@ -260,6 +266,7 @@ Especificación de la sección y la tarjeta (verificable por `uiautomator` y cap
   - S2: una Receta al 84 % (16 de 19) y otra al 50 % no aparecen.
   - S3: reactividad — al entrar un Alimento en la Despensa que empuja una Receta al 85 %, la tarjeta aparece sin relanzar la pantalla.
   - S4: sin compatibles → `scanner_compatible_empty` + botón → destino provisional `provisional_ai_suggestions_screen` con vuelta atrás.
+  - S9: con compatibles → tarjetas visibles y el mismo botón sigue disponible → destino provisional con vuelta atrás.
   - S5: tap en la tarjeta → `recipe_detail/{id}` (Detalle real); al volver, el Escáner sigue operativo.
   - S6: un Borrador con 100 % aparece igual que una Publicada.
   - S7: Receta sin obligatorios no aparece (además de unit).
@@ -273,7 +280,7 @@ Especificación de la sección y la tarjeta (verificable por `uiautomator` y cap
 
 ## Evidence To Capture
 
-- `docs/validations/mostrar-recetas-compatibles.md` — informe con `lint`/`unit`/`e2e` (nombres de test) y verificación por escenario S1-S8.
+- `docs/validations/mostrar-recetas-compatibles.md` — informe con `lint`/`unit`/`e2e` (nombres de test) y verificación por escenario S1-S9.
 - `docs/evidence/mostrar-recetas-compatibles/escaner-compatibles-100-85.png` — sección con la tarjeta «100% Match» delante de la «85%» (es).
 - `docs/evidence/mostrar-recetas-compatibles/escaner-compatibles-vacio.png` — estado vacío con el botón «Sugerir receta con IA» (es).
 - Presupuesto ≤ 3 artefactos y solo de esta feature (1 informe + 2 capturas).
@@ -287,12 +294,13 @@ Especificación de la sección y la tarjeta (verificable por `uiautomator` y cap
 | Verify (E2E: 100 % y 85 %, orden y etiquetas) | RF-MRC1, RF-MRC2, RF-MRC6 | S1 | T5 | `CompatibleRecipesE2ETest` |
 | — (apertura del Detalle) | RF-MRC7 | S5 | T4 | `CompatibleRecipesE2ETest` |
 | — (estado vacío con IA) | RF-MRC8 | S4 | T4 | `CompatibleRecipesE2ETest` |
+| — (IA también con compatibles) | RF-MRC8 | S9 | T4 | `CompatibleRecipesE2ETest` |
 | — (accesible sin cámara, reactividad) | RF-MRC10, RF-MRC9 | S3, casos límites | T2, T5 | `CompatibleRecipesE2ETest` |
 
 ## Validator Checklist
 
 - [ ] La implementación se queda dentro del alcance de esta feature.
-- [ ] Los escenarios de aceptación pasan (S1-S8) y las decisiones D1-D9 se respetan.
+- [ ] Los escenarios de aceptación pasan (S1-S9) y las decisiones D1-D9 se respetan.
 - [ ] La evidencia de verificación está presente, dentro del presupuesto y solo de esta feature.
 - [ ] Cobertura E2E persistente añadida y suite completa en verde.
 - [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
