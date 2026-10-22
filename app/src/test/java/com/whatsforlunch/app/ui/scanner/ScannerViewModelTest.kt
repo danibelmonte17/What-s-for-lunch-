@@ -1,6 +1,7 @@
 package com.whatsforlunch.app.ui.scanner
 
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
+import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.scanner.FoodDetectionResult
 import com.whatsforlunch.app.data.scanner.FoodDetector
 import com.whatsforlunch.app.data.scanner.LiveFrameSource
@@ -47,7 +48,7 @@ class ScannerViewModelTest {
                 FoodDetectionResult.Success(listOf(DetectedFood("  PLÁTANO ", 0.83), DetectedFood("Manzana", 0.65))),
             ),
         )
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), detector)
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), InMemoryRecipeRepository(), detector)
         viewModel.onCameraPermissionGranted()
         viewModel.onCameraPreviewReady()
 
@@ -72,7 +73,7 @@ class ScannerViewModelTest {
                 FoodDetectionResult.Success(listOf(DetectedFood("banana", 0.90), DetectedFood("Manzana", 0.61))),
             ),
         )
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), detector)
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), InMemoryRecipeRepository(), detector)
         viewModel.onCameraPermissionGranted()
         viewModel.onCameraPreviewReady()
         viewModel.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1))))
@@ -96,6 +97,7 @@ class ScannerViewModelTest {
     fun emptyFramesKeepManualEntryAndDetectorFailureStopsSamplingUntilRestarted() = runTest {
         val emptyViewModel = ScannerViewModel(
             InMemoryPantryRepository(),
+            InMemoryRecipeRepository(),
             FakeFoodDetector(listOf(FoodDetectionResult.Success(emptyList()))),
         )
         emptyViewModel.onCameraPermissionGranted()
@@ -112,7 +114,7 @@ class ScannerViewModelTest {
                 FoodDetectionResult.Success(listOf(DetectedFood("Plátano", 0.90))),
             ),
         )
-        val failed = ScannerViewModel(InMemoryPantryRepository(), detector)
+        val failed = ScannerViewModel(InMemoryPantryRepository(), InMemoryRecipeRepository(), detector)
         failed.onCameraPermissionGranted()
         failed.onCameraPreviewReady()
         failed.startLiveDetection(FakeLiveFrameSource(listOf(byteArrayOf(1), byteArrayOf(2))))
@@ -131,7 +133,7 @@ class ScannerViewModelTest {
 
     @Test
     fun permissionDenialContinuesInManualMode() = runTest {
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), InMemoryRecipeRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.onCameraPermissionDenied()
         viewModel.addManualItem("Arroz")
 
@@ -142,7 +144,7 @@ class ScannerViewModelTest {
 
     @Test
     fun manualDuplicateKeepsExistingChipAndQuantityStepperClamps() = runTest {
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), InMemoryRecipeRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.addManualItem("Manzana")
         val firstId = viewModel.uiState.value.items.single().id
         viewModel.updateQuantity(firstId, 99)
@@ -162,6 +164,7 @@ class ScannerViewModelTest {
         repository.savePantryItem(PantryItem("tomato", "Tomate fresco", 1))
         val viewModel = ScannerViewModel(
             repository,
+            InMemoryRecipeRepository(),
             FakeFoodDetector(listOf(FoodDetectionResult.Success(listOf(DetectedFood("Tomate fresco", 0.75))))),
         )
         viewModel.onCameraPermissionGranted()
@@ -189,6 +192,7 @@ class ScannerViewModelTest {
         repository.savePantryItem(PantryItem("milk", "Leche", 3))
         val viewModel = ScannerViewModel(
             repository,
+            InMemoryRecipeRepository(),
             FakeFoodDetector(
                 listOf(
                     FoodDetectionResult.Success(
@@ -223,7 +227,7 @@ class ScannerViewModelTest {
 
     @Test
     fun exitAndRescanAskBeforeDiscardingManualChips() = runTest {
-        val viewModel = ScannerViewModel(InMemoryPantryRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
+        val viewModel = ScannerViewModel(InMemoryPantryRepository(), InMemoryRecipeRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.addManualItem("Harina")
 
         assertFalse(viewModel.requestExit())
@@ -240,7 +244,7 @@ class ScannerViewModelTest {
     @Test
     fun duplicateRepositoryResultIsNotReportedAsSuccessfulSave() = runTest {
         val repository = DuplicatePantryRepository()
-        val viewModel = ScannerViewModel(repository, FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
+        val viewModel = ScannerViewModel(repository, InMemoryRecipeRepository(), FakeFoodDetector(listOf(FoodDetectionResult.Failed)))
         viewModel.addManualItem("Tomate")
         viewModel.saveToPantry()
         advanceUntilIdle()

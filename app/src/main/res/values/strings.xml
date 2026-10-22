@@ -181,6 +181,12 @@
     <string name="scanner_rescan_message">Tienes alimentos sin guardar. Si continúas, se descartan y la lista empezará vacía.</string>
     <string name="scanner_rescan_confirm">Re-escanear</string>
     <string name="scanner_cancel">Cancelar</string>
+    <string name="scanner_compatible_title">Recetas Compatibles</string>
+    <string name="scanner_compatible_ingredients">%1$d de %2$d ingredientes en la Despensa</string>
+    <string name="scanner_compatible_empty">Aún no hay recetas compatibles con tu Despensa.</string>
+    <string name="scanner_compatible_suggest_ai">Sugerir receta con IA</string>
+    <string name="scanner_compatible_card_accessibility">Receta compatible: %1$s, %2$d%% de coincidencia</string>
+    <string name="ai_suggestions_title">Sugerir receta con IA</string>
 
     <!-- Etiquetas COCO alimentarias de EfficientDet-Lite2 -->
     <string name="food_label_apple">Manzana</string>
