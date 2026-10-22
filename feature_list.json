@@ -390,6 +390,32 @@
       "status": "accepted"
     },
     {
+      "id": "escanear-despensa-con-ia",
+      "area": "funcional",
+      "title": "Escanear la Despensa con IA",
+      "user_visible_behavior": "El usuario hace una foto de los alimentos, la IA la analiza y la app propone los Alimentos con su cantidad para confirmarlos en la Despensa.",
+      "depends_on": [
+        "detectar-alimentos-en-vivo",
+        "sumar-cantidades-al-guardar",
+        "configurar-acceso-a-ia"
+      ],
+      "steps": [
+        "Sustituir la detección MediaPipe en vivo por una captura de foto desde el visor CameraX, sin escribir la imagen en disco",
+        "Enviar la foto a /chat/completions de DevExpert Inference con el alias chat y un prompt que exija un objeto JSON alimento→cantidad en el idioma actual de la app",
+        "Validar y normalizar la respuesta (JSON válido, nombres no vacíos, cantidades enteras 1..99, sin duplicados) y volcar los Alimentos como chips editables",
+        "Mantener la edición manual, la suma de cantidades al guardar (RD13) y la degradación RD05 ante fallo de red, IA o API key ausente",
+        "Retirar MediaPipe, su asset y dependencias, y actualizar el aviso de privacidad y las reglas RD06/RD12"
+      ],
+      "verification": [
+        "E2E: con el cliente de IA simulado devolviendo {\"manzana\":3,\"nata\":1}, tras hacer una foto aparecen los chips Manzana (3) y Nata (1) y se guardan en la Despensa",
+        "E2E: sin API key o con el cliente en modo fallo, la app avisa y permite añadir Alimentos a mano sin bloquear el guardado",
+        "Manual (requiere confirmación de llamada de pago): una foto real devuelve JSON válido en español y en inglés y los nombres/cantidades son razonables"
+      ],
+      "evidence": [],
+      "notes": "Sustituye la detección on-device de escanear-despensa-con-camara y detectar-alimentos-en-vivo; la foto sale del dispositivo, por lo que hay que actualizar RD06/RK03 y el aviso de privacidad. Sin umbral de confianza (RD12 deja de aplicar). Modelo chat multimodal; la primera llamada real es de pago.",
+      "status": "not_started"
+    },
+    {
       "id": "sugerir-recetas-con-ia",
       "area": "funcional",
       "title": "Sugerir recetas con IA",
