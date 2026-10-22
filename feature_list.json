@@ -411,9 +411,17 @@
         "E2E: sin API key o con el cliente en modo fallo, la app avisa y permite añadir Alimentos a mano sin bloquear el guardado",
         "Manual (requiere confirmación de llamada de pago): una foto real devuelve JSON válido en español y en inglés y los nombres/cantidades son razonables"
       ],
-      "evidence": [],
+      "evidence": [
+        "Implementación autoverificada (sesión 60, 2026-10-22): captura CameraX en memoria, cliente /chat/completions con alias chat, parser tolerante, normalización D1/D2, avisos AI_KEY_MISSING/ANALYSIS_FAILED y retirada completa de MediaPipe/HUD/confianza. Docs RD06/RD12, RK02/RK03, DESIGN y notas de specs actualizadas.",
+        "Gates: init.ps1 exit 0 · lintDebug BUILD SUCCESSFUL con 0 errores · testDebugUnitTest --rerun-tasks 94/94 en 17 suites · assembleDebug BUILD SUCCESSFUL · ScanPantryE2ETest focalizada 19/19 · barrido de restos MediaPipe/confianza/HUD 0 hits.",
+        "Suite E2E completa en Pixel_10_Pro API 37: 112/113 con 1 omitido y 1 fallo ambiental ajeno (EditRecipeE2ETest, 'Activity never becomes requested state DESTROYED'); pase posterior interrumpido por INSTRUMENTATION_ABORTED/System has crashed en SearchAndFilterRecipesE2ETest. El test focalizado del fallo ajeno y toda la E2E del Escáner pasan en verde.",
+        "Verificación manual verify 3 (foto real y llamada de pago) pendiente de confirmación humana; no se ejecutó ninguna llamada real.",
+        "Comprobación manual RD05 en Pixel_10_Pro API 37 con la app sin AI_*: tras pulsar «Escanear alimentos» aparece el aviso de API key ausente y el alta manual sigue disponible; captura en docs/evidence/escanear-despensa-con-ia/scanner-degradacion-es.png.",
+        "Informe de implementación: docs/validations/escanear-despensa-con-ia.md (no es aceptación; pendiente feature-validator).",
+        "Aceptación independiente (feature-validator, 2026-10-22): accept. Checks reranqueados en el árbol actual: init.ps1 exit 0 (Pixel_10_Pro API 37; reintentos por el falso fallo de pidof) · lintDebug 0 errores (48 warnings) · testDebugUnitTest --rerun-tasks 94/94 en 17 suites · assembleDebug OK · SearchAndFilterRecipesE2ETest focalizada 8/8 (confirma como flake el fallo del último pase completo). Evidencia cara inspeccionada: ScanPantryE2ETest 19/19 (2026-10-22 18:15, posterior al diff) y suite completa 113/113 con 1 omitido y 1 fallo ajeno EditRecipeE2ETest (focalizada 14/14). Barrido MediaPipe/HUD/confianza 0 hits; paridad es/en 188/188; sin secretos. Verify 3 (foto real, llamada de pago) declarado pendiente sin autorización humana: no certifica el contrato real del proveedor y queda como puerta de release junto con RK03. 0 Critical/High/Medium; 4 notas Low no bloqueantes. Informe: docs/validations/escanear-despensa-con-ia.md (Validación independiente)."
+      ],
       "notes": "Sustituye la detección on-device de escanear-despensa-con-camara y detectar-alimentos-en-vivo; la foto sale del dispositivo, por lo que hay que actualizar RD06/RK03 y el aviso de privacidad. Sin umbral de confianza (RD12 deja de aplicar). Modelo chat multimodal; la primera llamada real es de pago.",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "sugerir-recetas-con-ia",
