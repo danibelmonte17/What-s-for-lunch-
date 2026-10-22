@@ -44,10 +44,10 @@ Decisiones tomadas sin confirmación explícita, incluidas las tomadas para desb
 | ID | Riesgo | Probabilidad | Impacto | Mitigación o siguiente paso |
 |---|---|---|---|---|
 | RK01 | Sin backend, la API key vive en el dispositivo o incrustada en el APK: posible extracción y coste no controlado de las llamadas a DevExpert Inference | Media | Medio | Almacenamiento cifrado (Keystore), aviso en Ajustes, límites de gasto en el panel de DevExpert Inference (`S05`). **Almacenamiento cifrado + aviso implementados en `configurar-acceso-a-ia` (2026-10-22)**; los límites de gasto siguen en el panel del proveedor. La fuente de build (`local.properties`, D7-D11) incrusta la key en el APK: usar solo una key de desarrollo con límite de gasto y retirar la inyección antes de distribuir. |
-| RK02 | MediaPipe puede no detectar alimentos con la confianza objetivo (> 88%) sin un modelo específico entrenado | Alta | Alto | Spike de validación antes de construir el Escáner; el Modo de degradación manual (RD05) ya cubre el fallo |
-| RK03 | Envío de datos a DevExpert Inference pese al compromiso «sin retención» (RGPD) | Baja | Alto | Verificar y configurar la política de retención del proveedor; las fotos del Escaneo nunca salen del dispositivo (detección on-device) |
+| RK02 | MediaPipe puede no detectar alimentos con la confianza objetivo (> 88%) sin un modelo específico entrenado | Alta | Alto | **Cerrado** (`escanear-despensa-con-ia`, 2026-10-22): MediaPipe, su asset y sus dependencias se retiraron; el Escaneo usa IA de visión sin umbral de confianza. Se conserva el spike histórico en `docs/technical-discovery.md`. |
+| RK03 | Envío de datos a DevExpert Inference pese al compromiso «sin retención» (RGPD) | Media | Alto | La foto del Escaneo **sí sale del dispositivo** hacia DevExpert Inference para su análisis (RD06 reformulada). Mitigación: aviso de privacidad en Ajustes y revisión de la política «sin retención» antes de `sugerir-recetas-con-ia`; la foto no se almacena localmente y se descarta tras la respuesta. |
 | RK04 | El material UX es orientativo y no cubre Ajustes ni estados vacío/carga/error: riesgo de divergencia visual | Media | Bajo | Seguir los tokens YAML de `uxdocs/DESIGN.md` (`P17`) y las pautas de `DESIGN.md` para las lagunas |
-| RK05 | El pivote de PWA (PRD) a Android nativo deja sin equivalente claro funcionalidades del PRD (WebRTC, Web Speech, Service Workers) | Media | Medio | Equivalencias previstas en `docs/technical-discovery.md` (CameraX/MediaPipe, APIs nativas de voz, Room offline); validar en el spike de `RK02` |
+| RK05 | El pivote de PWA (PRD) a Android nativo deja sin equivalente claro funcionalidades del PRD (WebRTC, Web Speech, Service Workers) | Media | Medio | Equivalencias previstas en `docs/technical-discovery.md` (CameraX, APIs nativas de voz, Room offline); el spike de cámara/visión ya está resuelto con CameraX + IA (`escanear-despensa-con-ia`) |
 | RK06 | Los KPIs del PRD (WAU, sesiones) son poco medibles con 1-5 usuarios | Alta | Bajo | Medición manual en la beta personal o redefinición de criterios (`S03`) |
 
 ## Tareas de investigación
@@ -56,7 +56,7 @@ Validaciones pendientes antes o durante la construcción de las features que dep
 
 | Tarea | Para cuándo | Riesgo que cubre |
 |---|---|---|
-| Spike del modelo MediaPipe concreto: detecta alimentos con > 88% de confianza y es compatible con API 30 | antes de `escanear-despensa-con-camara` | `RK02`, `RK05` |
+| Spike del modelo MediaPipe concreto: detecta alimentos con > 88% de confianza y es compatible con API 30 | **cerrada** (`escanear-despensa-con-ia`, 2026-10-22): MediaPipe retirado; el Escaneo usa IA de visión | `RK02`, `RK05` |
 | Latencia y coste reales de DevExpert Inference para chat y sugerencias | **aplazada** (decisión del usuario, 2026-10-22: requiere key real y llamadas de pago confirmadas) | `RK01` |
 | Configuración efectiva de «sin retención» de datos en DevExpert Inference | antes de `sugerir-recetas-con-ia` | `RK03` |
 | Precisión de `SpeechRecognizer`/`TextToSpeech` en español y flujo de permisos de cámara/micrófono | antes de `controlar-cocina-con-voz` | `S04` |

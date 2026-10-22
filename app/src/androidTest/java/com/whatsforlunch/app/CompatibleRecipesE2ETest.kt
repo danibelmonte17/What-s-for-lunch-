@@ -22,8 +22,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
-import com.whatsforlunch.app.data.scanner.FoodDetectionResult
-import com.whatsforlunch.app.data.scanner.FoodDetector
+import com.whatsforlunch.app.data.ai.ScanAnalysisResult
+import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
@@ -259,7 +259,7 @@ class CompatibleRecipesE2ETest {
         locale: Locale = Locale("es", "ES"),
         detailRecipeId: String? = null,
     ) {
-        val viewModel = ScannerViewModel(pantry, recipes, AlwaysFailingFoodDetector)
+        val viewModel = ScannerViewModel(pantry, recipes, AlwaysFailingScanAnalyzer)
         viewModel.onCameraPermissionDenied()
         val detailViewModel = detailRecipeId?.let { RecipeDetailViewModel(recipes, pantry, it) }
         val showDetail = mutableStateOf(false)
@@ -294,6 +294,7 @@ class CompatibleRecipesE2ETest {
                             uiState = state,
                             previewContent = {},
                             onBack = {},
+                            onCapture = {},
                             onRescan = {},
                             onRequestExit = { true },
                             onConfirmExit = {},
@@ -337,7 +338,7 @@ class CompatibleRecipesE2ETest {
         }
     }
 
-    private object AlwaysFailingFoodDetector : FoodDetector {
-        override suspend fun detect(image: ByteArray): FoodDetectionResult = FoodDetectionResult.Failed
+    private object AlwaysFailingScanAnalyzer : ScanImageAnalyzer {
+        override suspend fun analyze(image: ByteArray, language: String): ScanAnalysisResult = ScanAnalysisResult.Failed
     }
 }

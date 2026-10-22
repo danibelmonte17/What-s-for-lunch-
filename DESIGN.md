@@ -93,7 +93,7 @@ Dirección visual de **What's for Lunch?** para agentes de codificación: tokens
 |---|---|---|---|---|
 | `uxdocs/DESIGN.md` | DESIGN.md (tokens + guía) | Sistema «Warm Culinary Craft»: colores, tipografía, spacing, formas, componentes | Tokens YAML = source of truth (`P17`); prosa = inspiración (`P16`) | Estados vacío/carga/error; interacciones |
 | `uxdocs/chefencasa_mis_recetas_y_crud/` (`code.html`, `screen.png`) | HTML + imagen | Catálogo con buscador, filtros, tarjetas y acciones CRUD | Inspiración (`P16`) | Estados vacío/carga; pantalla de confirmación de borrado |
-| `uxdocs/chefencasa_esc_ner_de_nevera_ia/` | HTML + imagen | Visor de cámara, HUD de detección, chips, carrusel de recetas | Inspiración (`P16`) | Estado sin detecciones; fallo de la IA |
+| `uxdocs/chefencasa_esc_ner_de_nevera_ia/` | HTML + imagen | Visor de cámara, chips, carrusel de recetas | Inspiración (`P16`) | HUD de detección retirado; obturador y estado «analizando» sin referencia |
 | `uxdocs/chefencasa_detalle_de_receta/` | HTML + imagen | Hero, métricas, escalador de raciones, ingredientes, CTA Modo Cocina | Inspiración (`P16`) | Muestra «coste casero estimado», que la app no tendrá (`P12`, `⚠ S02`) |
 | `uxdocs/chefencasa_modo_cocina_paso_a_paso/` | HTML + imagen | Paso a paso, barra de avance, temporizador, voz | Inspiración (`P16`) | Alarma sonora; permisos de micrófono |
 | `uxdocs/chefencasa_pinche_asistente_de_cocina/` | HTML + imagen | Chat con chips de sugerencia y cards ejecutables | Inspiración (`P16`) | Estado sin conexión; error del proveedor de IA |
@@ -155,7 +155,7 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 | Vista | Objetivo | Componentes clave | Referencia |
 |---|---|---|---|
 | Mis Recetas (entrada de la app, `P18`) | Encontrar y gestionar recetas | Buscador con debounce, filtro por Momento culinario, tarjetas con badge de Coincidencia, FAB de creación | `chefencasa_mis_recetas_y_crud/` |
-| Escáner de la Despensa | Detectar Alimentos y obtener recetas | Visor de cámara, HUD con etiquetas y confianza, chips editables, carrusel 100%/85% | `chefencasa_esc_ner_de_nevera_ia/` |
+| Escáner de la Despensa | Fotografiar Alimentos y obtener recetas | Visor de cámara, botón «Escanear alimentos», progreso «Analizando la foto…», chips editables sin confianza, carrusel 100%/85% | `chefencasa_esc_ner_de_nevera_ia/` |
 | Detalle de Receta | Decidir y preparar la cocina | Hero, métricas, escalador de Raciones `[-] N pers [+]`, checklist, CTA Modo Cocina | `chefencasa_detalle_de_receta/` |
 | Modo Cocina | Cocinar manos libres | Barra «Paso X de Y», temporizador circular + alarma + `+1 min`, locución y comandos de voz, drawer de ingredientes | `chefencasa_modo_cocina_paso_a_paso/` |
 | Pinche | Resolver dudas al instante | Chips de sugerencia, burbujas, cards ejecutables, micrófono con dictado | `chefencasa_pinche_asistente_de_cocina/` |
@@ -166,7 +166,7 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 ## Estados a cubrir
 
 - **Vacío**: Mis Recetas vacía y Lista de la Compra vacía → CTA de crear Receta o escanear la Despensa (ver casos límite en `docs/domain-model.md`).
-- **Carga**: detección del Escaneo y respuestas del Pinche/Sugerencias → progreso claro; la app nunca se congela.
+- **Carga**: análisis de la foto del Escaneo y respuestas del Pinche/Sugerencias → progreso claro; la app nunca se congela.
 - **Error**: fallo de IA/red → Modo de degradación con entrada manual y aviso (RD05).
 - **Éxito**: confirmación al aceptar una Sugerencia, publicar una Receta o completar la Lista.
 

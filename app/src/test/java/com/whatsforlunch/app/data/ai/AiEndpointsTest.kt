@@ -38,4 +38,24 @@ class AiEndpointsTest {
             AiEndpoints.imageGeneration("https://inference.devexpert.io/v1/images/generations"),
         )
     }
+
+    @Test
+    fun blankBaseBuildsDefaultChatEndpoint() {
+        assertEquals(
+            "https://inference.devexpert.io/v1/chat/completions",
+            AiEndpoints.chatCompletions(""),
+        )
+    }
+
+    @Test
+    fun customBaseBuildsChatEndpointWithoutDuplicatingSlashOrPath() {
+        assertEquals(
+            "https://proxy.local/v1/chat/completions",
+            AiEndpoints.chatCompletions("https://proxy.local/v1/"),
+        )
+        assertEquals(
+            "https://proxy.local/v1/chat/completions",
+            AiEndpoints.chatCompletions("https://proxy.local/v1/chat/completions"),
+        )
+    }
 }

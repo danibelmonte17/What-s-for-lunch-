@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -20,7 +21,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.whatsforlunch.app.data.scanner.CameraXLiveFrameSource
+import com.whatsforlunch.app.data.scanner.CameraXScanImageSource
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -33,9 +34,11 @@ fun ScannerRoute(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val configuration = LocalConfiguration.current
+    val language = configuration.locales[0].language
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val previewView = remember(context) { PreviewView(context) }
-    val imageSource = remember(context, lifecycleOwner) { CameraXLiveFrameSource(context, lifecycleOwner) }
+    val imageSource = remember(context, lifecycleOwner) { CameraXScanImageSource(context, lifecycleOwner) }
 
     val bindPreview = remember(imageSource, previewView, viewModel) {
         {
@@ -66,13 +69,7 @@ fun ScannerRoute(
         }
     }
     DisposableEffect(imageSource) {
-        onDispose {
-            viewModel.stopLiveDetection()
-            imageSource.unbindPreview()
-        }
-    }
-    LaunchedEffect(uiState.cameraPreviewReady) {
-        if (uiState.cameraPreviewReady) viewModel.startLiveDetection(imageSource)
+        onDispose { imageSource.unbindPreview() }
     }
     LaunchedEffect(uiState.saveCompleted) {
         if (uiState.saveCompleted) {
@@ -90,11 +87,10 @@ fun ScannerRoute(
                 modifier = Modifier.fillMaxWidth().height(300.dp).testTag(ScannerTestTags.CAMERA_PREVIEW),
             )
         },
-        onRescan = { if (viewModel.requestRescan()) viewModel.startLiveDetection(imageSource) },
+        onCapture = { viewModel.captureAndAnalyze(imageSource, language) },
+        onRescan = { viewModel.requestRescan() },
         onRequestExit = viewModel::requestExit,
-        onConfirmExit = {
-            if (viewModel.confirmExit()) viewModel.startLiveDetection(imageSource) else onBack()
-        },
+        onConfirmExit = { if (!viewModel.confirmExit()) onBack() },
         onCancelExit = viewModel::cancelExitConfirmation,
         onAddManualItem = viewModel::addManualItem,
         onRenameItem = viewModel::renameItem,

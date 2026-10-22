@@ -61,10 +61,6 @@ android {
         buildConfig = true
     }
 
-    androidResources {
-        noCompress += "tflite"
-    }
-
     lint {
         // La configuración vive en la raíz del proyecto para poder excluir del análisis
         // local.properties (generado por init.ps1 sin escapar el separador ':').
@@ -100,7 +96,6 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.mediapipe.tasks.vision)
 
     ksp(libs.androidx.room.compiler)
 
@@ -109,6 +104,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.org.json)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext.junit)

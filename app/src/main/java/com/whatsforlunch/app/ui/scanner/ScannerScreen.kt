@@ -2,7 +2,6 @@ package com.whatsforlunch.app.ui.scanner
 
 import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -50,8 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -63,10 +58,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.drawscope.Stroke
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.match.CompatibleRecipe
-import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
@@ -74,19 +67,16 @@ import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
-import kotlin.math.roundToInt
 
 object ScannerTestTags {
     const val SCREEN = "scanner_screen"
     const val BACK = "scanner_back"
     const val CAMERA_PREVIEW = "scanner_camera_preview"
-    const val LIVE_HUD = "scanner_live_hud"
-    const val HUD_LABEL_PREFIX = "scanner_hud_label"
+    const val CAPTURE = "scanner_capture"
     const val CAPTURE_PROGRESS = "scanner_capture_progress"
     const val FOOD_LIST = "scanner_food_list"
     const val FOOD_ITEM = "scanner_food_item"
     const val ITEM_NAME_PREFIX = "scanner_item_name"
-    const val ITEM_CONFIDENCE_PREFIX = "scanner_item_confidence"
     const val ITEM_QUANTITY_PREFIX = "scanner_item_quantity"
     const val QUANTITY_DECREMENT_PREFIX = "scanner_quantity_decrement"
     const val QUANTITY_INCREMENT_PREFIX = "scanner_quantity_increment"
@@ -107,9 +97,7 @@ object ScannerTestTags {
     const val COMPATIBLE_EMPTY = "scanner_compatible_empty"
     const val COMPATIBLE_SUGGEST_AI = "scanner_compatible_suggest_ai"
 
-    fun hudLabel(index: Int) = "${HUD_LABEL_PREFIX}_$index"
     fun itemName(id: String) = "${ITEM_NAME_PREFIX}_$id"
-    fun itemConfidence(id: String) = "${ITEM_CONFIDENCE_PREFIX}_$id"
     fun itemQuantity(id: String) = "${ITEM_QUANTITY_PREFIX}_$id"
     fun quantityDecrement(id: String) = "${QUANTITY_DECREMENT_PREFIX}_$id"
     fun quantityIncrement(id: String) = "${QUANTITY_INCREMENT_PREFIX}_$id"
@@ -126,6 +114,7 @@ fun ScannerScreen(
     uiState: ScannerUiState,
     previewContent: @Composable () -> Unit,
     onBack: () -> Unit,
+    onCapture: () -> Unit,
     onRescan: () -> Unit,
     onRequestExit: () -> Boolean,
     onConfirmExit: () -> Unit,
@@ -183,13 +172,22 @@ fun ScannerScreen(
                         .heightIn(min = 220.dp, max = 300.dp).clip(RoundedCornerShape(WarmRadius.lg)),
                 ) {
                     previewContent()
-                    LiveDetectionHud(detections = uiState.liveDetections)
                 }
             } else {
                 CameraPlaceholder(uiState, modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md))
             }
 
-            if (uiState.isDetecting) {
+            Button(
+                onClick = onCapture,
+                enabled = uiState.cameraPreviewReady && !uiState.isAnalyzing && !uiState.isSaving,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md).heightIn(min = 52.dp)
+                    .testTag(ScannerTestTags.CAPTURE),
+            ) {
+                Icon(Icons.Outlined.CameraAlt, contentDescription = null)
+                Text(stringResource(R.string.scanner_capture), modifier = Modifier.padding(start = WarmSpacing.xs))
+            }
+
+            if (uiState.isAnalyzing) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md).testTag(ScannerTestTags.CAPTURE_PROGRESS),
                     horizontalArrangement = Arrangement.Center,
@@ -197,7 +195,7 @@ fun ScannerScreen(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     Text(
-                        stringResource(R.string.scanner_detection_loading),
+                        stringResource(R.string.scanner_analyzing),
                         modifier = Modifier.padding(start = WarmSpacing.sm),
                     )
                 }
@@ -223,10 +221,10 @@ fun ScannerScreen(
                             onRemove = { onRemoveItem(item.id) },
                         )
                     }
-                } else if (uiState.cameraPreviewReady && !uiState.liveStopped) {
+                } else if (uiState.cameraPreviewReady) {
                     item {
                         Text(
-                            stringResource(R.string.scanner_live_hint),
+                            stringResource(R.string.scanner_capture_hint),
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -275,54 +273,13 @@ private fun CameraPlaceholder(uiState: ScannerUiState, modifier: Modifier = Modi
     }
 }
 
-/** Live detection HUD: bounding boxes plus pill labels drawn over the camera preview. */
-@Composable
-private fun LiveDetectionHud(detections: List<DetectedFood>, modifier: Modifier = Modifier) {
-    if (detections.isEmpty()) return
-    val boxColor = MaterialTheme.colorScheme.primary
-    Box(modifier = modifier.fillMaxSize().testTag(ScannerTestTags.LIVE_HUD)) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            detections.forEach { detection ->
-                val bounds = detection.boundingBox ?: return@forEach
-                val left = (bounds.left.toFloat() * size.width).coerceIn(0f, size.width)
-                val top = (bounds.top.toFloat() * size.height).coerceIn(0f, size.height)
-                val right = (bounds.right.toFloat() * size.width).coerceIn(left, size.width)
-                val bottom = (bounds.bottom.toFloat() * size.height).coerceIn(top, size.height)
-                drawRect(
-                    color = boxColor,
-                    topLeft = Offset(left, top),
-                    size = Size(right - left, bottom - top),
-                    style = Stroke(width = 2.dp.toPx()),
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.align(Alignment.TopStart).padding(WarmSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            detections.forEachIndexed { index, detection ->
-                val confidence = (detection.confidence * 100).roundToInt()
-                val accessibilityDescription = stringResource(R.string.scanner_confidence_accessibility, confidence)
-                Text(
-                    stringResource(R.string.scanner_hud_detection, detection.name, confidence),
-                    modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.72f))
-                        .padding(horizontal = WarmSpacing.sm, vertical = 4.dp)
-                        .testTag(ScannerTestTags.hudLabel(index))
-                        .semantics { contentDescription = accessibilityDescription },
-                    color = MaterialTheme.colorScheme.inverseOnSurface,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun NoticeBanner(notice: ScannerNotice, onDismiss: () -> Unit) {
     val message = when (notice) {
         ScannerNotice.CAMERA_PERMISSION_DENIED -> stringResource(R.string.scanner_camera_denied)
         ScannerNotice.CAMERA_UNAVAILABLE -> stringResource(R.string.scanner_camera_unavailable)
-        ScannerNotice.DETECTION_FAILED -> stringResource(R.string.scanner_detection_failed)
+        ScannerNotice.ANALYSIS_FAILED -> stringResource(R.string.scanner_analysis_failed)
+        ScannerNotice.AI_KEY_MISSING -> stringResource(R.string.scanner_ai_key_missing)
         ScannerNotice.DUPLICATE_NAME -> stringResource(R.string.scanner_duplicate_error)
         ScannerNotice.INVALID_NAME -> stringResource(R.string.scanner_name_invalid)
         ScannerNotice.SAVE_FAILED -> stringResource(R.string.scanner_save_failed)
@@ -412,23 +369,12 @@ private fun ScannerFoodCard(
                     modifier = Modifier.size(48.dp).testTag(ScannerTestTags.quantityIncrement(item.id)),
                 ) { Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.scanner_quantity_increase)) }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                item.confidence?.let { score ->
-                    val confidence = (score * 100).roundToInt()
-                    Text(
-                        stringResource(R.string.scanner_confidence, confidence),
-                        modifier = Modifier.testTag(ScannerTestTags.itemConfidence(item.id)),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (match != null) {
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        stringResource(R.string.scanner_already_in_pantry),
-                        modifier = Modifier.testTag(ScannerTestTags.duplicateMark(item.id)),
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                }
+            if (match != null) {
+                Text(
+                    stringResource(R.string.scanner_already_in_pantry),
+                    modifier = Modifier.testTag(ScannerTestTags.duplicateMark(item.id)),
+                    color = MaterialTheme.colorScheme.secondary,
+                )
             }
         }
     }
@@ -588,18 +534,17 @@ private fun ScannerActions(
         if (uiState.items.isNotEmpty()) {
             Button(
                 onClick = onSave,
-                enabled = uiState.pantryLoaded && !uiState.isDetecting && !uiState.isSaving && uiState.items.all { it.name.isNotBlank() },
+                enabled = uiState.pantryLoaded && !uiState.isAnalyzing && !uiState.isSaving && uiState.items.all { it.name.isNotBlank() },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(ScannerTestTags.SAVE),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 Text(stringResource(R.string.scanner_save))
             }
         }
-        // Shown with an empty list too, so a stopped loop (D5) can always be restarted.
-        if (uiState.items.isNotEmpty() || (uiState.liveStopped && uiState.cameraPreviewReady)) {
+        if (uiState.items.isNotEmpty()) {
             TextButton(
                 onClick = onRescan,
-                enabled = !uiState.isDetecting && !uiState.isSaving,
+                enabled = !uiState.isAnalyzing && !uiState.isSaving,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(ScannerTestTags.RESCAN),
             ) { Text(stringResource(R.string.scanner_rescan)) }
         }

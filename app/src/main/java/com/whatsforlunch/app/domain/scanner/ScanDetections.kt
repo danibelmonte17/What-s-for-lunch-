@@ -1,68 +1,15 @@
 package com.whatsforlunch.app.domain.scanner
 
-import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
 import com.whatsforlunch.app.domain.text.normalizeName
 
-/** Pure rules for converting detector output into an editable scan tray. */
+/** Pure rules for editing the scan tray and saving it into the Pantry. */
 object ScanDetections {
-    const val MIN_CONFIDENCE = 0.60
-
-    /** Minimum interval between two live inferences (D1 of the live-detection spec). */
-    const val LIVE_SAMPLE_INTERVAL_MS = 300L
-
-    fun eligible(detections: List<DetectedFood>): List<DetectedFood> = detections.filter {
-        it.name.isNotBlank() && it.confidence in MIN_CONFIDENCE..1.0
-    }
-
-    /**
-     * Accumulates live detections into the current tray: every food enters once per
-     * normalized name and only its confidence is updated (best score observed, never
-     * below the current one); user-edited names and quantities are never overwritten.
-     */
-    fun mergeLiveDetections(items: List<ScanDraftItem>, detections: List<DetectedFood>): List<ScanDraftItem> {
-        val merged = items.toMutableList()
-        val grouped = linkedMapOf<String, MutableList<DetectedFood>>()
-        eligible(detections).forEach { detection ->
-            grouped.getOrPut(normalizeName(detection.name)) { mutableListOf() }.add(detection)
-        }
-        grouped.forEach { (normalized, group) ->
-            val best = group.maxBy(DetectedFood::confidence)
-            val index = merged.indexOfFirst { normalizeName(it.name) == normalized }
-            if (index >= 0) {
-                val existing = merged[index]
-                merged[index] = existing.copy(confidence = maxOf(existing.confidence ?: 0.0, best.confidence))
-            } else {
-                merged.add(
-                    ScanDraftItem(
-                        name = mostReadableName(group.map(DetectedFood::name)),
-                        confidence = best.confidence,
-                    ),
-                )
-            }
-        }
-        return merged
-    }
-
-    fun toDraftItems(detections: List<DetectedFood>): List<ScanDraftItem> {
-        val grouped = linkedMapOf<String, MutableList<DetectedFood>>()
-        eligible(detections).forEach { detection ->
-            grouped.getOrPut(normalizeName(detection.name)) { mutableListOf() }.add(detection)
-        }
-        return grouped.values.map { group ->
-            val highest = group.maxBy { it.confidence }
-            ScanDraftItem(
-                name = mostReadableName(group.map(DetectedFood::name)),
-                confidence = highest.confidence,
-            )
-        }
-    }
-
     /**
      * Merge chips that become duplicates after a rename/add. A directly edited chip
-     * keeps its name and quantity; confidence is always the best available score.
+     * keeps its name and quantity.
      */
     fun mergeDraftItems(items: List<ScanDraftItem>, preferredId: String? = null): List<ScanDraftItem> {
         val grouped = linkedMapOf<String, MutableList<ScanDraftItem>>()
@@ -72,8 +19,7 @@ object ScanDetections {
             grouped.getOrPut(key) { mutableListOf() }.add(item)
         }
         return grouped.values.map { group ->
-            val preferred = group.firstOrNull { it.id == preferredId } ?: group.first()
-            preferred.copy(confidence = group.mapNotNull(ScanDraftItem::confidence).maxOrNull())
+            group.firstOrNull { it.id == preferredId } ?: group.first()
         }
     }
 
@@ -109,18 +55,4 @@ object ScanDetections {
         name = draft.name.trim(),
         quantity = draft.quantity.takeUnless { it == PantryItemValidation.MIN_QUANTITY },
     )
-
-    private fun mostReadableName(names: List<String>): String = names
-        .map { it.trim().replace(Regex("\\s+"), " ") }
-        .minWithOrNull(
-            compareBy<String>({ capitalizationPenalty(it) }, { it.count(Char::isWhitespace) }, { it.length }, { it }),
-        )
-        .orEmpty()
-
-    private fun capitalizationPenalty(value: String): Int = when {
-        value.isEmpty() -> 3
-        value == value.uppercase() -> 2
-        value == value.lowercase() -> 1
-        else -> 0
-    }
 }

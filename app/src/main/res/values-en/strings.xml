@@ -163,17 +163,19 @@
     <string name="settings_api_key_build_source">The AI key comes from the build (local.properties) and takes precedence over the one saved here.</string>
     <string name="settings_api_key_saved">API key saved.</string>
     <string name="settings_privacy_title">Privacy and data</string>
-    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos never leave the device, and you can control spending in your DevExpert Inference dashboard.</string>
+    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos are sent to DevExpert Inference only for analysis, are not stored on the device and are not retained by the provider. You can control spending in your DevExpert Inference dashboard.</string>
 
     <!-- Pantry scanner -->
     <string name="scanner_title">Pantry Scanner</string>
     <string name="scanner_camera_preview">Camera preview</string>
     <string name="scanner_camera_loading">Preparing camera…</string>
-    <string name="scanner_live_hint">Point at foods and they will be added to the list.</string>
-    <string name="scanner_detection_loading">Detecting foods…</string>
+    <string name="scanner_capture">Scan foods</string>
+    <string name="scanner_analyzing">Analyzing the photo…</string>
+    <string name="scanner_capture_hint">Take a photo of the foods and the AI will propose the list.</string>
     <string name="scanner_camera_denied">Camera permission denied. You can continue by adding foods manually.</string>
     <string name="scanner_camera_unavailable">The camera couldn’t be opened. You can add foods manually.</string>
-    <string name="scanner_detection_failed">The image couldn’t be analyzed. You can add foods manually.</string>
+    <string name="scanner_analysis_failed">The photo couldn’t be analyzed. You can add foods manually.</string>
+    <string name="scanner_ai_key_missing">Set your API key in Settings to analyze photos with AI. You can add foods manually.</string>
     <string name="scanner_save_failed">The foods couldn’t be saved. Please try again.</string>
     <string name="scanner_duplicate_error">This food is already in your Pantry.</string>
     <string name="scanner_name_invalid">Enter a food name.</string>
@@ -182,9 +184,6 @@
     <string name="scanner_add_food_confirm">Add</string>
     <string name="scanner_remove_food">Remove food</string>
     <string name="scanner_item_name">Name</string>
-    <string name="scanner_confidence">%1$d%%</string>
-    <string name="scanner_confidence_accessibility">Confidence %1$d%%</string>
-    <string name="scanner_hud_detection">%1$s · %2$d%%</string>
     <string name="scanner_save">Save to Pantry</string>
     <string name="scanner_rescan">Rescan</string>
     <string name="scanner_quantity">Quantity</string>
@@ -204,16 +203,4 @@
     <string name="scanner_compatible_suggest_ai">Suggest a recipe with AI</string>
     <string name="scanner_compatible_card_accessibility">Compatible recipe: %1$s, %2$d%% match</string>
     <string name="ai_suggestions_title">Suggest a recipe with AI</string>
-
-    <!-- EfficientDet-Lite2 COCO food labels -->
-    <string name="food_label_apple">Apple</string>
-    <string name="food_label_banana">Banana</string>
-    <string name="food_label_broccoli">Broccoli</string>
-    <string name="food_label_cake">Cake</string>
-    <string name="food_label_carrot">Carrot</string>
-    <string name="food_label_donut">Donut</string>
-    <string name="food_label_hot_dog">Hot dog</string>
-    <string name="food_label_orange">Orange</string>
-    <string name="food_label_pizza">Pizza</string>
-    <string name="food_label_sandwich">Sandwich</string>
 </resources>

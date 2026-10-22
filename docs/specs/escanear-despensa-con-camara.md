@@ -9,6 +9,8 @@
 - `source`: `feature_list.json`
 
 > **Nota de revisión (2026-10-22)**: el diálogo «Mantener cantidad»/«Actualizar cantidad» descrito en esta spec como S11/S12 y su Non-Goal de no sumar cantidades quedan **sustituidos** por `sumar-cantidades-al-guardar` (suma al guardar, RD13 en `docs/domain-model.md`). La marca «Ya está en la Despensa» se conserva como información no accionable.
+>
+> **Nota de revisión (2026-10-22, `escanear-despensa-con-ia`)**: la detección on-device con MediaPipe, la confianza de los chips y el HUD descritos aquí quedan **sustituidos** por el Escaneo con IA (`POST /chat/completions`). RD12 queda derogada y RD06 se reformula: la foto se captura en memoria, se envía al proveedor para su análisis y se descarta. Se conservan el visor CameraX, los chips editables, la edición manual, el stepper 0..99, la suma RD13 y las confirmaciones de salida/re-escaneo.
 
 ## Goal
 
