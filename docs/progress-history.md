@@ -660,3 +660,12 @@ equestRescan() vacío → limpia y reinicia sin diálogo ni reintentos automáti
 - **Hallazgos**: 0 Critical/High/Medium; 4 notas Low no bloqueantes — **L1** resumen de riesgos de `PROGRESS.md` desactualizado (RK02), **L2** la suma de duplicados internos no está escrita en `docs/domain-model.md`, **L3** `settings_privacy_notice` afirma «sin retención» con `RK03` por verificar (puerta de release), **L4** sin unit del cliente real (falta `MockWebServer`, convención del repo) — y **L5** nota: el cableado de `ScannerRoute` no se ejercita en ningún test.
 - **Verify 3**: **no ejecutado** por ser llamada de pago y requerir confirmación humana (regla de `AGENTS.md`); declarado pendiente y puerta de release junto con `RK03`. `accept` no certifica el contrato real de `/chat/completions` ni la calidad de nombres/cantidades.
 - **Estado**: `escanear-despensa-con-ia` → `accepted` (árbol sin commitear en `feature/escanear-despensa-con-ia`). Informe: `docs/validations/escanear-despensa-con-ia.md` (§ Validación independiente).
+
+### Sesión 62: corrección del Escaneo real en dispositivo físico (`escanear-despensa-con-ia`)
+
+- **Síntoma**: en el V2124 (Android 13, adb inalámbrico) el Escaneo fallaba unos 2 s después del toque con «No se pudo analizar la foto…»; el fallo era demasiado rápido para el timeout de 10 s.
+- **Diagnóstico**: `CameraXScanImageSourceTest` pasó en el dispositivo; el móvil resolvía y conectaba a `inference.devexpert.io:443`; la llamada directa al proveedor devolvía HTTP 200 con JSON válido. El logcat del Vivo suprime los logs de la app, así que una sonda temporal visible en el aviso mostró `SecurityException: Permission denied (missing INTERNET permission?)`.
+- **Causa raíz**: `app/src/main/AndroidManifest.xml` declaraba `CAMERA` pero no `INTERNET`; las E2E usan un analizador simulado y no ejercitan red real.
+- **Arreglo**: añadida `<uses-permission android:name="android.permission.INTERNET" />`; retirada la instrumentación temporal (logs y sonda) para dejar el diff en una línea.
+- **Verificación**: `lintDebug` + `testDebugUnitTest` + `assembleDebug` **BUILD SUCCESSFUL**; APK final instalado en el V2124 con `android.permission.INTERNET: granted=true`; escaneos reales en español (chip «chicle» cantidad 1) e inglés (locale `en-US`, chip «mint» cantidad 1), ambos sin aviso de fallo y con la UI en el idioma activo.
+- **Estado**: `escanear-despensa-con-ia` sigue `accepted`; informe actualizado en `docs/validations/escanear-despensa-con-ia.md`.

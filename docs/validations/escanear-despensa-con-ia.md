@@ -146,3 +146,28 @@ Riesgo residual declarado: la foto del usuario sale del dispositivo y la políti
 ## Qué implica el verify 3 pendiente
 
 `accept` **no certifica** el contrato real de DevExpert Inference en `/chat/completions` con imagen (formato multimodal, alias `chat`, contenido de `choices[0].message.content`) ni la calidad de los nombres/cantidades devueltos. Queda como **puerta de release** antes de depender del Escaneo con IA en producción: una foto real en es y otra en en con key real y confirmación humana (regla de `AGENTS.md`), registrando el resultado en este informe; si el proveedor difiere del contrato OpenAI-compatible, se ajusta el parser/cliente como desviación documentada (spec, «Unknowns»). La captura de chips de un análisis real queda pendiente por el mismo motivo.
+
+---
+
+# Corrección post-aceptación: permiso `INTERNET` (2026-10-23)
+
+**Síntoma**: en el dispositivo real V2124 (Android 13, adb inalámbrico) el Escaneo fallaba unos 2 s después del toque con el aviso «No se pudo analizar la foto…». El fallo era demasiado rápido para el timeout de 10 s del `OkHttpClient`.
+
+**Diagnóstico**:
+
+- `CameraXScanImageSourceTest` pasó en el V2124: la captura CameraX funciona en el dispositivo.
+- El móvil resolvía y conectaba a `inference.devexpert.io:443` (`nc` → exit 0) y una llamada directa al proveedor devolvía HTTP 200 con JSON válido.
+- El logcat del Vivo suprime los logs de la app (ni siquiera aparecen los `Log` del APK recién instalado, aunque el APK sí los contiene), así que se añadió una sonda temporal visible en el aviso. Mostró: `SecurityException: Permission denied (missing INTERNET permission?)`.
+
+**Causa raíz**: `app/src/main/AndroidManifest.xml` declaraba `CAMERA` pero no `INTERNET`. Las E2E usan un analizador simulado y no ejercitan la red real, por lo que el gate de aceptación no lo detectó.
+
+**Arreglo**: añadida `<uses-permission android:name="android.permission.INTERNET" />` y retirada la instrumentación temporal (logs y sonda visible) para dejar el diff en una línea.
+
+**Verificación**:
+
+- `lintDebug`, `testDebugUnitTest` y `assembleDebug`: **BUILD SUCCESSFUL** (2026-10-23).
+- APK final instalado en el V2124; `dumpsys package` muestra `android.permission.INTERNET: granted=true`.
+- Escaneo real en español con llamada real al proveedor: la bandeja mostró el chip **«chicle», cantidad 1**, sin aviso de fallo.
+- Escaneo real en inglés (locale `en-US`, misma foto): la bandeja mostró el chip **«mint», cantidad 1**, con todos los textos en inglés y sin aviso de fallo.
+
+**Conclusión**: el verify 3 queda cubierto en español e inglés en dispositivo real y el bloqueo de red que impedía el Escaneo con IA está resuelto. `feature_list.json` sigue `accepted`.
