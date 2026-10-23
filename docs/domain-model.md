@@ -48,7 +48,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 
 - **RD01**: La Coincidencia se calcula solo sobre los ingredientes obligatorios: `% = obligatorios disponibles / obligatorios totales`.
 - **RD02**: Una Receta se sugiere si su Coincidencia es ≥ 85%; el badge «100% Match» se muestra cuando todos los obligatorios están en la Despensa.
-- **RD03**: Las cantidades escalan linealmente con las Raciones: `cantidad = cantidad base × (raciones / raciones base)`, con Raciones entre 1 y 12.
+- **RD03**: Las cantidades escalan linealmente con las Raciones: `cantidad = cantidad base × (raciones / raciones base)`, con Raciones entre 1 y 12. La cantidad escalada se muestra redondeada a un máximo de 1 decimal (`Q-escalar-raciones-1`); con Raciones iguales a las base se conserva la precisión original.
 - **RD04**: Eliminar una Receta requiere confirmación y es definitivo (sin papelera ni deshacer).
 - **RD05**: Ante un fallo de la IA o de la red, el flujo continúa en Modo de degradación con entrada manual (chips), sin bloquear al usuario.
 - **RD06**: Las fotos del Escaneo no se almacenan en el dispositivo: se capturan en memoria, se envían a DevExpert Inference para su análisis y se descartan al terminar (RGPD; el envío al proveedor se rige por `P27`/`RK03`). No hay ficheros, MediaStore ni tabla de Escaneos.
@@ -62,7 +62,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 ## Cálculos y fórmulas
 
 - **Coincidencia**: obligatorios disponibles / obligatorios totales. Ej.: Receta con 4 obligatorios y 3 en la Despensa → 75% → no se sugiere (umbral 85%). Con 4 de 4 → 100% → badge «100% Match».
-- **Escalado de Raciones**: base 4 Raciones, se cocinan 2 → cada cantidad se divide entre 2. Ej.: 200 g → 100 g. Límites: 1-12.
+- **Escalado de Raciones**: base 4 Raciones, se cocinan 2 → cada cantidad se divide entre 2. Ej.: 200 g → 100 g. Límites: 1-12. La cantidad escalada se muestra redondeada a máximo 1 decimal (1 × 3/4 = 0,75 → 0,8; `Q-escalar-raciones-1`); cuando las Raciones coinciden con las base se muestra la cantidad guardada con su precisión original. El escalado es solo de visualización y no cambia las cantidades base guardadas.
 - **Tiempo total de una Receta**: tiempo de preparación + tiempo de cocción.
 
 ## Validaciones de datos
