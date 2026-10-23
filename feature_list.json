@@ -445,9 +445,15 @@
         "E2E: con el cliente de IA simulado, pedir sugerencias y comprobar que se listan recetas propuestas",
         "E2E: sin API key configurada, comprobar que se pide configurarla en Ajustes"
       ],
-      "evidence": [],
+      "evidence": [
+        "Implementación autoverificada (sesión 68, 2026-10-23): pantalla real ai_suggestions con paso de selección (chips del Escaneo + Despensa, un ítem por nombre normalizado, preseleccionados, mínimo 1), una llamada a /chat/completions (alias chat, temperature 0, response_format json_object, JSON compacto t/st/mm/pm/cm/df/bs/kcal/i/p), parseo tolerante, normalización D8, Coincidencia en cliente con calculateMatch contra los alimentos seleccionados y tarjetas de solo lectura con MatchBadge, disponibilidad, ingredientes y pasos. Sin Room, sin /images/generations y sin aceptar/descartar Sugerencias.",
+        "Gates en verde (2026-10-23): init.ps1 exit 0 (AVD API 37, emulator-5554) · lintDebug 0 errores · testDebugUnitTest --rerun-tasks 118/118 en 20 suites · assembleDebug BUILD SUCCESSFUL. E2E por am instrument: AiSuggestionsE2ETest 8/8 (S1-S8), CompatibleRecipesE2ETest + ScanPantryE2ETest 31/31 y suite completa OK (127 pruebas; 2 SettingsE2ETest omitidas por Assume).",
+        "Evidencia visual es en docs/evidence/sugerir-recetas-con-ia/: sugerencias-seleccion-es.png (92.265 B, 1280x2856) y sugerencias-resultados-es.png (186.610 B, 1280x2856), PNG válidos; presupuesto 1 informe + 2 capturas. Sin llamadas reales a DevExpert Inference y sin API keys reales.",
+        "Informe de implementación: docs/validations/sugerir-recetas-con-ia.md (no es aceptación; pendiente feature-validator).",
+        "Validación independiente (feature-validator, sesión 69, 2026-10-23): accept. Checks reejecutados: lintDebug 0 errores (50 warnings), testDebugUnitTest --rerun-tasks 118/118 en 20 suites, assembleDebug OK, compileDebugAndroidTestKotlin OK; init.ps1 exit 1 por no haber emulador conectado (gate no bloqueante). Evidencia cara inspeccionada: AiSuggestionsE2ETest 8/8 (S1-S8), CompatibleRecipesE2ETest + ScanPantryE2ETest 31/31 y suite completa 127 pruebas (2 SettingsE2ETest omitidas por Assume). Contrato D1-D10 y alcance respetados; seguridad sin hallazgos; sin llamadas reales ni API keys reales; RK03 como puerta de release. 7 hallazgos Low no bloqueantes (F1-F7). Informe: docs/validations/sugerir-recetas-con-ia.md §7."
+      ],
       "notes": "Proveedor compatible con OpenAI vía OpenRouter; verificar «sin retención» (RK03); sin key → pedir configuración",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "aceptar-sugerencia-de-receta",

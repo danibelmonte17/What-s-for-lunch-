@@ -208,4 +208,17 @@
     <string name="scanner_compatible_suggest_ai">Suggest a recipe with AI</string>
     <string name="scanner_compatible_card_accessibility">Compatible recipe: %1$s, %2$d%% match</string>
     <string name="ai_suggestions_title">Suggest a recipe with AI</string>
+    <string name="ai_suggestions_selection_title">Choose the foods you want to send</string>
+    <string name="ai_suggestions_request">Ask for suggestions</string>
+    <string name="ai_suggestions_progress">Asking the AI for suggestions…</string>
+    <string name="ai_suggestions_empty">The AI didn’t propose any recipes. Please try again.</string>
+    <string name="ai_suggestions_failed">Suggestions couldn’t be fetched. Please try again.</string>
+    <string name="ai_suggestions_retry">Try again</string>
+    <string name="ai_suggestions_key_missing">Set your API key in Settings to ask for AI suggestions.</string>
+    <string name="ai_suggestions_open_settings">Open Settings</string>
+    <string name="ai_suggestions_card_ingredients">%1$d of %2$d ingredients available</string>
+    <string name="ai_suggestions_card_accessibility">Suggestion: %1$s</string>
+    <string name="ai_suggestions_selection_item_accessibility">Select %1$s</string>
+    <string name="ai_suggestions_ingredients_header">Ingredients</string>
+    <string name="ai_suggestions_steps_header">Steps</string>
 </resources>

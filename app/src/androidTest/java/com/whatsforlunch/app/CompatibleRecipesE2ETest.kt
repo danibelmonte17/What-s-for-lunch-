@@ -22,17 +22,21 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.whatsforlunch.app.R
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.ai.RecipeSuggester
+import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
+import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStatus
-import com.whatsforlunch.app.ui.nav.ProvisionalScreen
-import com.whatsforlunch.app.ui.nav.ProvisionalTestTags
+import com.whatsforlunch.app.domain.suggestion.SuggestableFood
+import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsScreen
+import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsTestTags
+import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailScreen
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailTestTags
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailViewModel
@@ -173,9 +177,9 @@ class CompatibleRecipesE2ETest {
     }
 
     // S4 (D8): sin compatibles pero con alimentos en la Despensa → estado vacío +
-    // «Sugerir receta con IA» activo → destino provisional con vuelta atrás.
+    // «Sugerir receta con IA» activo → pantalla real de Sugerencias con vuelta atrás.
     @Test
-    fun emptyStateOpensAiSuggestionsProvisionalScreen() {
+    fun emptyStateOpensRealAiSuggestionsScreen() {
         val pantry = InMemoryPantryRepository()
         runBlocking { pantry.savePantryItem(PantryItem(id = "pantry-tomate", name = "Tomate")) }
         launchScanner(InMemoryRecipeRepository(), pantry)
@@ -185,8 +189,9 @@ class CompatibleRecipesE2ETest {
             .assertIsEnabled()
             .performClick()
 
-        composeRule.onNodeWithTag(ProvisionalTestTags.AI_SUGGESTIONS_SCREEN).assertIsDisplayed()
-        composeRule.onNodeWithText("Sugerir receta con IA").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithText("Elige los alimentos que quieres enviar").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.selectionItem("Tomate")).assertIsDisplayed()
 
         composeRule.onNodeWithText("Volver").performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
@@ -209,8 +214,8 @@ class CompatibleRecipesE2ETest {
         composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_EMPTY).assertDoesNotExist()
         composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).performScrollTo().performClick()
 
-        composeRule.onNodeWithTag(ProvisionalTestTags.AI_SUGGESTIONS_SCREEN).assertIsDisplayed()
-        composeRule.onNodeWithText("Sugerir receta con IA").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.SELECTION_LIST).assertIsDisplayed()
     }
 
     // S5 (D7): tocar la tarjeta abre el Detalle real y la vuelta regresa al Escáner.
@@ -291,6 +296,7 @@ class CompatibleRecipesE2ETest {
         val viewModel = ScannerViewModel(pantry, recipes, AlwaysFailingScanAnalyzer)
         viewModel.onCameraPermissionDenied()
         val detailViewModel = detailRecipeId?.let { RecipeDetailViewModel(recipes, pantry, it) }
+        val aiSuggestionsViewModel = AiSuggestionsViewModel(pantry, ScanDraftHolder(), AlwaysFailingRecipeSuggester)
         val showDetail = mutableStateOf(false)
         val showAiSuggestions = mutableStateOf(false)
 
@@ -314,11 +320,17 @@ class CompatibleRecipesE2ETest {
                                 onStartCooking = {},
                             )
                         }
-                        showAiSuggestions.value -> ProvisionalScreen(
-                            title = localeContext.getString(R.string.ai_suggestions_title),
-                            testTag = ProvisionalTestTags.AI_SUGGESTIONS_SCREEN,
-                            onBack = { showAiSuggestions.value = false },
-                        )
+                        showAiSuggestions.value -> {
+                            val suggestionsState by aiSuggestionsViewModel.uiState.collectAsState()
+                            AiSuggestionsScreen(
+                                uiState = suggestionsState,
+                                onBack = { showAiSuggestions.value = false },
+                                onOpenSettings = {},
+                                onToggleFood = aiSuggestionsViewModel::toggleFood,
+                                onRequest = { aiSuggestionsViewModel.requestSuggestions("es") },
+                                onRetry = aiSuggestionsViewModel::retry,
+                            )
+                        }
                         else -> ScannerScreen(
                             uiState = state,
                             previewContent = {},
@@ -370,5 +382,12 @@ class CompatibleRecipesE2ETest {
 
     private object AlwaysFailingScanAnalyzer : ScanImageAnalyzer {
         override suspend fun analyze(image: ByteArray, language: String): ScanAnalysisResult = ScanAnalysisResult.Failed
+    }
+
+    private object AlwaysFailingRecipeSuggester : RecipeSuggester {
+        override suspend fun suggest(
+            foods: List<SuggestableFood>,
+            language: String,
+        ): RecipeSuggestionsResult = RecipeSuggestionsResult.Failed
     }
 }

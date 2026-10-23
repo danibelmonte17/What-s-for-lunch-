@@ -12,7 +12,7 @@ Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las de
 | Paso | Instrucción secuencial de una Receta | orden, texto, temporizador (opcional) | Receta |
 | Alimento | Producto disponible en la Despensa | nombre, cantidad (entero 0..99; 0 = sin cantidad) | detectado en Escaneo |
 | Escaneo | Foto analizada por la IA desde el visor de la cámara | Alimentos propuestos con nombre y cantidad propuesta (entera 0..99; 0 = sin cantidad) | propone Alimentos para la Despensa |
-| Sugerencia | Receta propuesta por la IA desde la Despensa | Coincidencia, estado (propuesta/aceptada/descartada) | se materializa en una Receta al aceptarse |
+| Sugerencia | Receta completa propuesta por la IA a partir de los Alimentos que el usuario elige enviar | título, historia, Momento culinario, tiempos, dificultad, calorías, Raciones base, Ingredientes, Pasos, Coincidencia, estado (propuesta/aceptada/descartada) | se materializa en una Receta al aceptarse |
 | Lista de la Compra | Conjunto de ítems pendientes de comprar | — | N ÍtemLista |
 | ÍtemLista | Artículo a comprar | nombre, cantidad, Pasillo, Origen, completado | Lista de la Compra, Receta (opcional, vía Origen) |
 
@@ -33,6 +33,8 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 - Cualquier estado → eliminada: solo con confirmación explícita y de forma definitiva (RD04).
 
 ### Sugerencia
+- Se pide desde el Escáner con una **selección de Alimentos** (chips del Escaneo sin guardar + Despensa, un ítem por nombre normalizado); la IA devuelve hasta 3 propuestas completas en JSON compacto y la app las muestra con su Coincidencia (RD01/RD10) calculada en el cliente contra esos Alimentos seleccionados.
+- En `sugerir-recetas-con-ia` la Sugerencia vive **solo en memoria** y es de **solo lectura** (tocar la tarjeta no hace nada); aceptar/descartar y sus transiciones pertenecen a `aceptar-sugerencia-de-receta`.
 - `propuesta` → `aceptada`: crea una Receta en Mis Recetas con `origen = Sugerencia` (RD07).
 - `propuesta` → `descartada`: no se guarda nada.
 
@@ -73,6 +75,8 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Cantidad de un Alimento: entero entre 0 y 99; 0 equivale a sin cantidad (revisión 2026-10-21: máximo 99 en toda la app).
 - Cantidad propuesta de un Alimento en el Escaneo: misma regla que la de un Alimento —entero 0..99, 0 = sin cantidad— editada con un stepper igual que en la Despensa; al guardar se suma a la del Alimento existente con el mismo nombre normalizado (RD13) o se conserva como cantidad del Alimento nuevo si no hay coincidencia. Las propuestas de la IA se normalizan (D2): cantidad no entera, ausente o ≤ 0 → 0 («sin cantidad») y > 99 → 99; el Alimento nunca se descarta por su cantidad, solo si su nombre queda vacío.
 - ~~Confianza de detección~~: retirada con RD12; la IA de visión no devuelve confianza y los chips no muestran porcentaje.
+- Propuesta de Sugerencia (D8 de `sugerir-recetas-con-ia`): se descarta si el título queda vacío, si no le quedan Ingredientes o Pasos tras limpiar, o si repite el título normalizado de otra propuesta (se conserva la primera); se listan como máximo 3. Cantidad de ingrediente no numérica o ≤ 0 → `1` (el ingrediente nunca se descarta por su cantidad); unidad recortada (puede quedar vacía); `opcional` distinto de booleano → obligatorio; momento o dificultad con token desconocido → Almuerzo / Media; tiempos de preparación/cocción no numéricos o < 0 → `0`; Raciones base fuera de 1..12 → `4`; calorías no numéricas o ≤ 0 → sin valor; temporizador de paso no numérico o < 0 → sin temporizador.
+- Selección de Alimentos para Sugerencias: todos preseleccionados, mínimo 1 para pedir; la selección y las propuestas no se persisten (solo memoria, sin Room ni caché).
 
 ## Escenarios importantes
 
@@ -87,6 +91,11 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 |---|---|
 | Escaneo sin alimentos reconocidos | Mensaje claro y alta manual de Alimentos por chips |
 | Fallo de la IA o de la red (escáner o Pinche) | Modo de degradación: entrada manual y aviso (RD05) |
+| Fallo de la IA en Sugerencias | Aviso mínimo con «Reintentar»; la degradación manual completa (RD05) vive en el Escáner (`degradar-ante-fallo-de-ia`) |
+| Ningún Alimento seleccionado en Sugerencias | «Pedir sugerencias» deshabilitado; no se llama a la IA |
+| Ninguna propuesta de Sugerencia válida | Estado vacío con «Reintentar» |
+| Chips del Escaneo y Despensa con el mismo Alimento | Un solo ítem en la selección por nombre normalizado |
+| Salir de Sugerencias | La selección y las propuestas se pierden (solo memoria); el Escáner conserva sus chips sin guardar |
 | Ingrediente propuesto duplicado | Dentro de la respuesta de la IA se fusiona en un solo chip; si su nombre normalizado coincide con un Alimento ya presente en la Despensa, al guardar se suman las cantidades (RD13) y no se crea fila nueva |
 | Raciones fuera de límite | El escalador no permite valores fuera de 1-12 |
 | Edición concurrente desde dos dispositivos | No aplica: datos locales, un solo Usuario (P31) |
