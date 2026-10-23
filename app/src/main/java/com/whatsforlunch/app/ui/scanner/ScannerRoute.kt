@@ -58,14 +58,18 @@ fun ScannerRoute(
         }
     }
 
-    LaunchedEffect(Unit) {
-        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-            PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            viewModel.onCameraPermissionGranted()
-            bindPreview()
+    LaunchedEffect(uiState.isScannerExpanded) {
+        if (uiState.isScannerExpanded) {
+            val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                viewModel.onCameraPermissionGranted()
+                bindPreview()
+            } else {
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
         } else {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
+            imageSource.unbindPreview()
         }
     }
     DisposableEffect(imageSource) {
@@ -87,10 +91,14 @@ fun ScannerRoute(
                 modifier = Modifier.fillMaxWidth().height(300.dp).testTag(ScannerTestTags.CAMERA_PREVIEW),
             )
         },
+        onOpenScanner = viewModel::openScanner,
+        onCloseScanner = viewModel::closeScanner,
         onCapture = { viewModel.captureAndAnalyze(imageSource, language) },
-        onRescan = { viewModel.requestRescan() },
         onRequestExit = viewModel::requestExit,
-        onConfirmExit = { if (!viewModel.confirmExit()) onBack() },
+        onConfirmExit = {
+            viewModel.confirmExit()
+            onBack()
+        },
         onCancelExit = viewModel::cancelExitConfirmation,
         onAddManualItem = viewModel::addManualItem,
         onRenameItem = viewModel::renameItem,

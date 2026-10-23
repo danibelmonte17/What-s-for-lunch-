@@ -169,13 +169,16 @@
     <string name="scanner_title">Pantry Scanner</string>
     <string name="scanner_camera_preview">Camera preview</string>
     <string name="scanner_camera_loading">Preparing camera…</string>
+    <string name="scanner_open_camera">Scan with the camera</string>
+    <string name="scanner_close_camera">Hide scanner</string>
     <string name="scanner_capture">Scan foods</string>
     <string name="scanner_analyzing">Analyzing the photo…</string>
-    <string name="scanner_capture_hint">Take a photo of the foods and the AI will propose the list.</string>
+    <string name="scanner_capture_hint">Add foods manually or tap “Scan with the camera” to analyze a photo.</string>
     <string name="scanner_camera_denied">Camera permission denied. You can continue by adding foods manually.</string>
     <string name="scanner_camera_unavailable">The camera couldn’t be opened. You can add foods manually.</string>
     <string name="scanner_analysis_failed">The photo couldn’t be analyzed. You can add foods manually.</string>
     <string name="scanner_ai_key_missing">Set your API key in Settings to analyze photos with AI. You can add foods manually.</string>
+    <string name="scanner_no_detections">No foods were detected in the photo. You can add foods manually.</string>
     <string name="scanner_save_failed">The foods couldn’t be saved. Please try again.</string>
     <string name="scanner_duplicate_error">This food is already in your Pantry.</string>
     <string name="scanner_name_invalid">Enter a food name.</string>
@@ -185,7 +188,6 @@
     <string name="scanner_remove_food">Remove food</string>
     <string name="scanner_item_name">Name</string>
     <string name="scanner_save">Save to Pantry</string>
-    <string name="scanner_rescan">Rescan</string>
     <string name="scanner_quantity">Quantity</string>
     <string name="scanner_quantity_decrease">Decrease quantity</string>
     <string name="scanner_quantity_increase">Increase quantity</string>
@@ -193,9 +195,6 @@
     <string name="scanner_exit_title">Leave the Scanner?</string>
     <string name="scanner_exit_message">You have unsaved foods. Leaving will discard them.</string>
     <string name="scanner_exit_confirm">Leave</string>
-    <string name="scanner_rescan_title">Rescan?</string>
-    <string name="scanner_rescan_message">You have unsaved foods. Continuing will discard them and start an empty list.</string>
-    <string name="scanner_rescan_confirm">Rescan</string>
     <string name="scanner_cancel">Cancel</string>
     <string name="scanner_compatible_title">Compatible Recipes</string>
     <string name="scanner_compatible_ingredients">%1$d of %2$d ingredients in the Pantry</string>

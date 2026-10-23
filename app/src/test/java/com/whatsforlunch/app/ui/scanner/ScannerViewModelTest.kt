@@ -54,6 +54,8 @@ class ScannerViewModelTest {
         assertEquals(listOf("Manzana", "Nata"), viewModel.uiState.value.items.map { it.name })
         assertEquals(listOf(3, 1), viewModel.uiState.value.items.map { it.quantity })
         assertFalse(viewModel.uiState.value.isAnalyzing)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        assertFalse(viewModel.uiState.value.cameraPreviewReady)
         assertNull(viewModel.uiState.value.notice)
     }
 
@@ -72,6 +74,7 @@ class ScannerViewModelTest {
 
         val id = viewModel.uiState.value.items.single().id
         viewModel.updateQuantity(id, 2)
+        grantCamera(viewModel)
         viewModel.captureAndAnalyze(FakeScanImageSource(), "es")
         advanceUntilIdle()
 
@@ -80,6 +83,7 @@ class ScannerViewModelTest {
         assertEquals(2, items.first().quantity)
         assertEquals(id, items.first().id)
         assertEquals(1, items.last().quantity)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
     }
 
     @Test
@@ -93,6 +97,8 @@ class ScannerViewModelTest {
         assertEquals(ScannerNotice.AI_KEY_MISSING, viewModel.uiState.value.notice)
         assertTrue(viewModel.uiState.value.manualMode)
         assertFalse(viewModel.uiState.value.isAnalyzing)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        assertFalse(viewModel.uiState.value.cameraPreviewReady)
         viewModel.addManualItem("Arroz")
         assertEquals("Arroz", viewModel.uiState.value.items.single().name)
     }
@@ -112,7 +118,10 @@ class ScannerViewModelTest {
         advanceUntilIdle()
         assertEquals(ScannerNotice.ANALYSIS_FAILED, viewModel.uiState.value.notice)
         assertTrue(viewModel.uiState.value.items.isEmpty())
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        assertFalse(viewModel.uiState.value.cameraPreviewReady)
 
+        grantCamera(viewModel)
         viewModel.captureAndAnalyze(FakeScanImageSource(), "es")
         advanceUntilIdle()
         assertEquals(listOf("Plátano"), viewModel.uiState.value.items.map { it.name })
@@ -130,17 +139,50 @@ class ScannerViewModelTest {
 
         assertEquals(ScannerNotice.ANALYSIS_FAILED, viewModel.uiState.value.notice)
         assertTrue(viewModel.uiState.value.manualMode)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
     }
 
     @Test
     fun permissionDenialContinuesInManualMode() = runTest {
         val viewModel = scannerViewModel()
+        viewModel.openScanner()
+        assertTrue(viewModel.uiState.value.isScannerExpanded)
         viewModel.onCameraPermissionDenied()
         viewModel.addManualItem("Arroz")
 
         assertEquals(ScannerNotice.CAMERA_PERMISSION_DENIED, viewModel.uiState.value.notice)
         assertEquals("Arroz", viewModel.uiState.value.items.single().name)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
         assertFalse(viewModel.uiState.value.cameraPreviewReady)
+    }
+
+    @Test
+    fun openingAndClosingScannerTogglesTheExpandedPanel() = runTest {
+        val viewModel = scannerViewModel()
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+
+        viewModel.openScanner()
+        assertTrue(viewModel.uiState.value.isScannerExpanded)
+
+        viewModel.onCameraPreviewReady()
+        viewModel.closeScanner()
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        assertFalse(viewModel.uiState.value.cameraPreviewReady)
+    }
+
+    @Test
+    fun zeroDetectionsCollapseScannerAndShowSpecificNotice() = runTest {
+        val viewModel = scannerViewModel(results = listOf(ScanAnalysisResult.Success(emptyList())))
+        grantCamera(viewModel)
+
+        viewModel.captureAndAnalyze(FakeScanImageSource(), "es")
+        advanceUntilIdle()
+
+        assertEquals(ScannerNotice.NO_DETECTIONS, viewModel.uiState.value.notice)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        assertFalse(viewModel.uiState.value.cameraPreviewReady)
+        viewModel.addManualItem("Lentejas")
+        assertEquals("Lentejas", viewModel.uiState.value.items.single().name)
     }
 
     @Test
@@ -211,7 +253,7 @@ class ScannerViewModelTest {
     }
 
     @Test
-    fun exitAndRescanAskBeforeDiscardingManualChips() = runTest {
+    fun exitAsksBeforeDiscardingManualChips() = runTest {
         val viewModel = scannerViewModel()
         viewModel.addManualItem("Harina")
 
@@ -220,9 +262,10 @@ class ScannerViewModelTest {
         viewModel.cancelExitConfirmation()
         assertEquals("Harina", viewModel.uiState.value.items.single().name)
 
-        assertFalse(viewModel.requestRescan())
-        assertTrue(viewModel.confirmExit())
+        assertFalse(viewModel.requestExit())
+        viewModel.confirmExit()
         assertTrue(viewModel.uiState.value.items.isEmpty())
+        assertFalse(viewModel.uiState.value.showExitConfirmation)
     }
 
     @Test
@@ -249,6 +292,7 @@ class ScannerViewModelTest {
     )
 
     private fun grantCamera(viewModel: ScannerViewModel) {
+        viewModel.openScanner()
         viewModel.onCameraPermissionGranted()
         viewModel.onCameraPreviewReady()
     }

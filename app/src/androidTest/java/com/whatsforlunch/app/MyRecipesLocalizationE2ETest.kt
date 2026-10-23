@@ -8,6 +8,7 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -110,6 +111,9 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Escáner de la Despensa").assertIsDisplayed()
+        composeRule.onNodeWithText("Nombre del alimento").assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_PREVIEW).assertCountEquals(0)
+        composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).performClick()
         composeRule.waitUntil(15_000) {
             composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_PREVIEW).fetchSemanticsNodes().isNotEmpty()
         }
@@ -131,6 +135,8 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Pantry Scanner").assertIsDisplayed()
+        composeRule.onNodeWithText("Food name").assertIsDisplayed()
+        composeRule.onNodeWithText("Scan with the camera").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
     }

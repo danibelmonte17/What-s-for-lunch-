@@ -27,6 +27,7 @@ enum class ScannerNotice {
     CAMERA_UNAVAILABLE,
     ANALYSIS_FAILED,
     AI_KEY_MISSING,
+    NO_DETECTIONS,
     DUPLICATE_NAME,
     INVALID_NAME,
     SAVE_FAILED,
@@ -35,6 +36,7 @@ enum class ScannerNotice {
 data class ScannerUiState(
     val cameraPermissionGranted: Boolean = false,
     val cameraPreviewReady: Boolean = false,
+    val isScannerExpanded: Boolean = false,
     val pantryLoaded: Boolean = false,
     val manualMode: Boolean = false,
     val isAnalyzing: Boolean = false,
@@ -44,7 +46,6 @@ data class ScannerUiState(
     val matches: Map<String, PantryItem> = emptyMap(),
     val isSaving: Boolean = false,
     val showExitConfirmation: Boolean = false,
-    val rescanAfterConfirmation: Boolean = false,
     val saveCompleted: Boolean = false,
     val notice: ScannerNotice? = null,
 )
@@ -68,6 +69,17 @@ class ScannerViewModel(
         }
     }
 
+    fun openScanner() {
+        _uiState.value = _uiState.value.copy(isScannerExpanded = true)
+    }
+
+    fun closeScanner() {
+        _uiState.value = _uiState.value.copy(
+            isScannerExpanded = false,
+            cameraPreviewReady = false,
+        )
+    }
+
     fun onCameraPermissionGranted() {
         _uiState.value = _uiState.value.copy(
             cameraPermissionGranted = true,
@@ -80,6 +92,7 @@ class ScannerViewModel(
         _uiState.value = _uiState.value.copy(
             cameraPermissionGranted = false,
             cameraPreviewReady = false,
+            isScannerExpanded = false,
             manualMode = true,
             isAnalyzing = false,
             notice = ScannerNotice.CAMERA_PERMISSION_DENIED,
@@ -93,6 +106,7 @@ class ScannerViewModel(
     fun onCameraPreviewFailed() {
         _uiState.value = _uiState.value.copy(
             cameraPreviewReady = false,
+            isScannerExpanded = false,
             manualMode = true,
             isAnalyzing = false,
             notice = ScannerNotice.CAMERA_UNAVAILABLE,
@@ -122,6 +136,8 @@ class ScannerViewModel(
             if (image == null) {
                 _uiState.value = _uiState.value.copy(
                     isAnalyzing = false,
+                    isScannerExpanded = false,
+                    cameraPreviewReady = false,
                     manualMode = true,
                     notice = ScannerNotice.ANALYSIS_FAILED,
                 )
@@ -138,17 +154,22 @@ class ScannerViewModel(
             }
             when (result) {
                 is ScanAnalysisResult.Success -> {
+                    val hasFoods = result.foods.any { it.name.isNotBlank() }
                     val merged = ScanAnalysis.mergeProposals(_uiState.value.items, result.foods)
                     _uiState.value = recalculateItems(_uiState.value, merged).copy(
                         isAnalyzing = false,
+                        isScannerExpanded = false,
+                        cameraPreviewReady = false,
                         manualMode = false,
-                        notice = null,
+                        notice = if (hasFoods) null else ScannerNotice.NO_DETECTIONS,
                     )
                 }
 
                 ScanAnalysisResult.MissingApiKey -> {
                     _uiState.value = _uiState.value.copy(
                         isAnalyzing = false,
+                        isScannerExpanded = false,
+                        cameraPreviewReady = false,
                         manualMode = true,
                         notice = ScannerNotice.AI_KEY_MISSING,
                     )
@@ -157,6 +178,8 @@ class ScannerViewModel(
                 ScanAnalysisResult.Failed -> {
                     _uiState.value = _uiState.value.copy(
                         isAnalyzing = false,
+                        isScannerExpanded = false,
+                        cameraPreviewReady = false,
                         manualMode = true,
                         notice = ScannerNotice.ANALYSIS_FAILED,
                     )
@@ -243,29 +266,16 @@ class ScannerViewModel(
             clearTemporaryScan()
             return true
         }
-        _uiState.value = state.copy(showExitConfirmation = true, rescanAfterConfirmation = false)
+        _uiState.value = state.copy(showExitConfirmation = true)
         return false
     }
 
-    /** Returns true when confirmation should clear the tray instead of leaving. */
-    fun confirmExit(): Boolean {
-        val shouldRescan = _uiState.value.rescanAfterConfirmation
+    fun confirmExit() {
         clearTemporaryScan()
-        return shouldRescan
-    }
-
-    fun requestRescan(): Boolean {
-        val state = _uiState.value
-        if (state.items.isNotEmpty()) {
-            _uiState.value = state.copy(showExitConfirmation = true, rescanAfterConfirmation = true)
-            return false
-        }
-        clearTemporaryScan()
-        return true
     }
 
     fun cancelExitConfirmation() {
-        _uiState.value = _uiState.value.copy(showExitConfirmation = false, rescanAfterConfirmation = false)
+        _uiState.value = _uiState.value.copy(showExitConfirmation = false)
     }
 
     fun clearNotice() {
@@ -276,7 +286,8 @@ class ScannerViewModel(
         val state = _uiState.value
         _uiState.value = state.copy(
             showExitConfirmation = false,
-            rescanAfterConfirmation = false,
+            isScannerExpanded = false,
+            cameraPreviewReady = false,
             items = emptyList(),
             matches = emptyMap(),
             notice = null,

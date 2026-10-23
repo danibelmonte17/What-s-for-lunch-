@@ -170,13 +170,16 @@
     <string name="scanner_title">Escáner de la Despensa</string>
     <string name="scanner_camera_preview">Vista previa de la cámara</string>
     <string name="scanner_camera_loading">Preparando la cámara…</string>
+    <string name="scanner_open_camera">Escanear con la cámara</string>
+    <string name="scanner_close_camera">Ocultar escáner</string>
     <string name="scanner_capture">Escanear alimentos</string>
     <string name="scanner_analyzing">Analizando la foto…</string>
-    <string name="scanner_capture_hint">Haz una foto de los alimentos y la IA propondrá el listado.</string>
+    <string name="scanner_capture_hint">Añade alimentos a mano o pulsa «Escanear con la cámara» para analizar una foto.</string>
     <string name="scanner_camera_denied">Permiso de cámara denegado. Puedes continuar añadiendo alimentos manualmente.</string>
     <string name="scanner_camera_unavailable">No se pudo abrir la cámara. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_analysis_failed">No se pudo analizar la foto. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_ai_key_missing">Configura tu API key en Ajustes para analizar fotos con IA. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_no_detections">No se detectaron alimentos en la foto. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_save_failed">No se pudieron guardar los alimentos. Inténtalo de nuevo.</string>
     <string name="scanner_duplicate_error">Este alimento ya está en la Despensa.</string>
     <string name="scanner_name_invalid">Escribe el nombre del alimento.</string>
@@ -186,7 +189,6 @@
     <string name="scanner_remove_food">Quitar alimento</string>
     <string name="scanner_item_name">Nombre</string>
     <string name="scanner_save">Guardar en la Despensa</string>
-    <string name="scanner_rescan">Re-escanear</string>
     <string name="scanner_quantity">Cantidad</string>
     <string name="scanner_quantity_decrease">Disminuir cantidad</string>
     <string name="scanner_quantity_increase">Aumentar cantidad</string>
@@ -194,9 +196,6 @@
     <string name="scanner_exit_title">¿Salir del Escáner?</string>
     <string name="scanner_exit_message">Tienes alimentos sin guardar. Si sales, se descartan.</string>
     <string name="scanner_exit_confirm">Salir</string>
-    <string name="scanner_rescan_title">¿Re-escanear?</string>
-    <string name="scanner_rescan_message">Tienes alimentos sin guardar. Si continúas, se descartan y la lista empezará vacía.</string>
-    <string name="scanner_rescan_confirm">Re-escanear</string>
     <string name="scanner_cancel">Cancelar</string>
     <string name="scanner_compatible_title">Recetas Compatibles</string>
     <string name="scanner_compatible_ingredients">%1$d de %2$d ingredientes en la Despensa</string>

@@ -155,7 +155,7 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 | Vista | Objetivo | Componentes clave | Referencia |
 |---|---|---|---|
 | Mis Recetas (entrada de la app, `P18`) | Encontrar y gestionar recetas | Buscador con debounce, filtro por Momento culinario, tarjetas con badge de Coincidencia, FAB de creación | `chefencasa_mis_recetas_y_crud/` |
-| Escáner de la Despensa | Fotografiar Alimentos y obtener recetas | Visor de cámara, botón «Escanear alimentos», progreso «Analizando la foto…», chips editables sin confianza, carrusel 100%/85% | `chefencasa_esc_ner_de_nevera_ia/` |
+| Escáner de la Despensa | Añadir Alimentos a mano o fotografiar la Despensa | Alta manual primero en el listado, botón «Escanear con la cámara» que despliega el visor con animación y lo pliega tras el análisis, progreso «Analizando la foto…», chips editables sin confianza con borrado terracota, recetas compatibles 100%/85% | `chefencasa_esc_ner_de_nevera_ia/` |
 | Detalle de Receta | Decidir y preparar la cocina | Hero, métricas, escalador de Raciones `[-] N pers [+]`, checklist, CTA Modo Cocina | `chefencasa_detalle_de_receta/` |
 | Modo Cocina | Cocinar manos libres | Barra «Paso X de Y», temporizador circular + alarma + `+1 min`, locución y comandos de voz, drawer de ingredientes | `chefencasa_modo_cocina_paso_a_paso/` |
 | Pinche | Resolver dudas al instante | Chips de sugerencia, burbujas, cards ejecutables, micrófono con dictado | `chefencasa_pinche_asistente_de_cocina/` |

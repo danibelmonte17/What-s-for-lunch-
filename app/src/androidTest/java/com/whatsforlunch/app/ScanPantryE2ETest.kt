@@ -89,6 +89,10 @@ class ScanPantryE2ETest {
         captureAndWait()
 
         composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(2)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
+        composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("scanner_rescan").assertCountEquals(0)
         val chips = viewModel.uiState.value.items
         composeRule.onNodeWithTag(ScannerTestTags.itemName(chips.first().id))
             .fetchSemanticsNode().config[SemanticsProperties.EditableText].text.let { assertEquals("Manzana", it) }
@@ -236,10 +240,12 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun deniedPermissionContinuesWithManualEntry() {
+    fun deniedPermissionContinuesWithManualEntryAndCollapsedScanner() {
         launchScanner(permissionGranted = false)
         composeRule.onNodeWithText(locale(R.string.scanner_camera_denied)).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).assertIsNotEnabled()
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAPTURE).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
+        composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Harina")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
         composeRule.onNodeWithText("Harina").assertIsDisplayed()
@@ -247,10 +253,45 @@ class ScanPantryE2ETest {
     }
 
     @Test
+    fun manualEntryIsFirstContentAndCameraPanelStartsCollapsed() {
+        launchScanner()
+
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAPTURE).assertCountEquals(0)
+
+        val manualTop = composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME)
+            .fetchSemanticsNode().boundsInRoot.top
+        val hintTop = composeRule.onNodeWithText(locale(R.string.scanner_capture_hint))
+            .fetchSemanticsNode().boundsInRoot.top
+        assertTrue(manualTop < hintTop)
+    }
+
+    @Test
+    fun cameraToggleExpandsThePanelAndCloseCollapsesIt() {
+        launchScanner()
+
+        composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ScannerTestTags.CAMERA_SECTION).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.CAMERA_PREVIEW).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.CAMERA_CLOSE).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
+        composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).assertIsDisplayed()
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+    }
+
+    @Test
     fun emptyAiResponseShowsCaptureHintAndManualEntryCanSave() {
         launchScanner(analyzerResults = listOf(ScanAnalysisResult.Success(emptyList())))
         captureAndWait()
         composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(0)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
+        composeRule.onNodeWithText(locale(R.string.scanner_no_detections)).assertIsDisplayed()
         composeRule.onNodeWithText(locale(R.string.scanner_capture_hint)).assertIsDisplayed()
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Lentejas")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
@@ -265,6 +306,8 @@ class ScanPantryE2ETest {
         captureAndWait()
 
         composeRule.onNodeWithText(locale(R.string.scanner_ai_key_missing)).assertIsDisplayed()
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Garbanzos")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).assertIsEnabled()
@@ -282,6 +325,8 @@ class ScanPantryE2ETest {
 
         composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed)).assertIsDisplayed()
         composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(0)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Garbanzos")
         composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SAVE).assertIsEnabled()
@@ -305,7 +350,7 @@ class ScanPantryE2ETest {
 
         composeRule.onNodeWithText("Banana").assertIsDisplayed()
         composeRule.onNodeWithText("Save to Pantry").assertIsDisplayed()
-        composeRule.onNodeWithText("Scan foods").assertIsDisplayed()
+        composeRule.onNodeWithText("Scan with the camera").assertIsDisplayed()
         assertEquals("en", analyzer.lastLanguage)
         composeRule.onNodeWithContentDescription("Decrease quantity").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Increase quantity").assertIsDisplayed()
@@ -328,23 +373,23 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun rescanningWithUnsavedChipsRequiresConfirmationAndClearsTheTray() {
+    fun scannerHasNoRescanActionAndPerChipDeleteRemovesOnlyThatFood() {
         launchScanner(
             analyzerResults = listOf(
-                ScanAnalysisResult.Success(listOf(AnalyzedFood("Plátano", 2.0))),
+                ScanAnalysisResult.Success(
+                    listOf(AnalyzedFood("Plátano", 2.0), AnalyzedFood("Manzana", 1.0)),
+                ),
             ),
         )
         captureAndWait()
-        composeRule.onNodeWithTag(ScannerTestTags.RESCAN).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.EXIT_DIALOG).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.EXIT_CANCEL).performClick()
-        composeRule.onNodeWithText("Plátano").assertIsDisplayed()
 
-        composeRule.onNodeWithTag(ScannerTestTags.RESCAN).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.EXIT_CONFIRM).performClick()
-        composeRule.waitUntil(5_000) { viewModel.uiState.value.items.isEmpty() }
-        assertFalse(viewModel.uiState.value.showExitConfirmation)
-        composeRule.onNodeWithText(locale(R.string.scanner_capture_hint)).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("scanner_rescan").assertCountEquals(0)
+        val removed = viewModel.uiState.value.items.first()
+        composeRule.onNodeWithTag(ScannerTestTags.removeItem(removed.id)).performClick()
+
+        assertEquals(1, viewModel.uiState.value.items.size)
+        assertTrue(viewModel.uiState.value.items.none { it.id == removed.id })
+        composeRule.onNodeWithText(removed.name).assertDoesNotExist()
     }
 
     @Test
@@ -517,10 +562,14 @@ class ScanPantryE2ETest {
                                     Box(Modifier.fillMaxWidth().height(240.dp).testTag(ScannerTestTags.CAMERA_PREVIEW))
                                 },
                                 onBack = { leftScanner.value = true },
+                                onOpenScanner = viewModel::openScanner,
+                                onCloseScanner = viewModel::closeScanner,
                                 onCapture = { viewModel.captureAndAnalyze(imageSource, locale.language) },
-                                onRescan = { viewModel.requestRescan() },
                                 onRequestExit = viewModel::requestExit,
-                                onConfirmExit = { if (!viewModel.confirmExit()) leftScanner.value = true },
+                                onConfirmExit = {
+                                    viewModel.confirmExit()
+                                    leftScanner.value = true
+                                },
                                 onCancelExit = viewModel::cancelExitConfirmation,
                                 onAddManualItem = viewModel::addManualItem,
                                 onRenameItem = viewModel::renameItem,
@@ -538,6 +587,13 @@ class ScanPantryE2ETest {
     }
 
     private fun captureAndWait(calls: Int = 1) {
+        if (composeRule.onAllNodesWithTag(ScannerTestTags.SCANNER_TOGGLE).fetchSemanticsNodes().isNotEmpty()) {
+            composeRule.onNodeWithTag(ScannerTestTags.SCANNER_TOGGLE).performClick()
+        }
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            viewModel.onCameraPreviewReady()
+        }
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag(ScannerTestTags.CAPTURE).performClick()
         composeRule.waitUntil(10_000) {
             analyzer.calls >= calls && !viewModel.uiState.value.isAnalyzing
