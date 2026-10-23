@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
+import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.data.scanner.ScanImageSource
 import com.whatsforlunch.app.domain.match.CompatibleRecipe
 import com.whatsforlunch.app.domain.match.compatibleRecipes
@@ -54,6 +55,7 @@ class ScannerViewModel(
     private val pantryRepository: PantryRepository,
     private val recipeRepository: RecipeRepository,
     private val scanImageAnalyzer: ScanImageAnalyzer,
+    private val scanDraftHolder: ScanDraftHolder = ScanDraftHolder(),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScannerUiState())
     val uiState: StateFlow<ScannerUiState> = _uiState.asStateFlow()
@@ -66,6 +68,15 @@ class ScannerViewModel(
         }
         viewModelScope.launch {
             recipeRepository.observeRecipes().collect(::updateRecipes)
+        }
+        // Los chips viven en el holder compartido (D3): así Sugerencias los lee sin
+        // guardarlos y el Escáner recupera su estado al volver.
+        viewModelScope.launch {
+            scanDraftHolder.items.collect { heldItems ->
+                if (heldItems != _uiState.value.items) {
+                    _uiState.value = recalculateItems(_uiState.value, heldItems)
+                }
+            }
         }
     }
 
@@ -204,7 +215,7 @@ class ScannerViewModel(
 
     fun updateQuantity(id: String, quantity: Int) {
         val state = _uiState.value
-        _uiState.value = state.copy(items = ScanDetections.updateQuantity(state.items, id, quantity))
+        _uiState.value = applyItems(state, ScanDetections.updateQuantity(state.items, id, quantity))
     }
 
     fun removeItem(id: String) {
@@ -248,6 +259,7 @@ class ScannerViewModel(
                     matches = emptyMap(),
                     notice = null,
                 )
+                scanDraftHolder.clear()
             } catch (exception: Exception) {
                 if (exception is CancellationException) throw exception
                 _uiState.value = _uiState.value.copy(isSaving = false, notice = ScannerNotice.SAVE_FAILED)
@@ -292,6 +304,7 @@ class ScannerViewModel(
             matches = emptyMap(),
             notice = null,
         )
+        scanDraftHolder.clear()
     }
 
     private fun updatePantryItems(pantryItems: List<PantryItem>) {
@@ -315,6 +328,11 @@ class ScannerViewModel(
 
     private fun recalculateItems(state: ScannerUiState, items: List<ScanDraftItem>): ScannerUiState {
         val matches = ScanDetections.matchesWithPantry(items, state.pantryItems)
-        return state.copy(items = items, matches = matches)
+        return applyItems(state.copy(matches = matches), items)
+    }
+
+    private fun applyItems(state: ScannerUiState, items: List<ScanDraftItem>): ScannerUiState {
+        scanDraftHolder.update(items)
+        return state.copy(items = items)
     }
 }

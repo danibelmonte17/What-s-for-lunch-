@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsRoute
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
@@ -29,7 +30,7 @@ object AppRoutes {
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
     const val COOK_MODE_PROVISIONAL = "cook_mode_provisional"
     const val SETTINGS = "settings"
-    const val AI_SUGGESTIONS_PROVISIONAL = "ai_suggestions_provisional"
+    const val AI_SUGGESTIONS = "ai_suggestions"
     const val RECIPE_ID_ARG = "recipeId"
 
     fun createRecipe(): String = "create_recipe"
@@ -104,16 +105,14 @@ fun WhatsForLunchApp(
                     }
                 },
                 onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
-                onSuggestWithAi = { navController.navigate(AppRoutes.AI_SUGGESTIONS_PROVISIONAL) },
+                onSuggestWithAi = { navController.navigate(AppRoutes.AI_SUGGESTIONS) },
             )
         }
-        // RF-MRC8 (D8): destino provisional para «Sugerir receta con IA» con vuelta
-        // atrás; sugerir-recetas-con-ia lo sustituirá.
-        composable(AppRoutes.AI_SUGGESTIONS_PROVISIONAL) {
-            ProvisionalScreen(
-                title = stringResource(R.string.ai_suggestions_title),
-                testTag = ProvisionalTestTags.AI_SUGGESTIONS_SCREEN,
+        // RF-SRC1: destino real de Sugerencias, que sustituye al provisional.
+        composable(AppRoutes.AI_SUGGESTIONS) {
+            AiSuggestionsRoute(
                 onBack = { navController.popBackStack() },
+                onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )
         }
         composable(AppRoutes.PANTRY) {
