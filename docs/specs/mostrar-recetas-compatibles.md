@@ -10,7 +10,7 @@
 
 ## Goal
 
-El Escáner de la Despensa muestra una sección **«Recetas Compatibles»** con las Recetas de Mis Recetas cuya Coincidencia con la Despensa llega al umbral de sugeribilidad de RD02 (≥ 85 %), en lista vertical y **ordenadas por Coincidencia descendente**. Cada tarjeta lleva el badge de Coincidencia («100% Match» / «N%», RD02) reutilizado de `ui/components/MatchBadge`, su miniatura y el desglose «X de Y ingredientes en la Despensa». Al tocar una tarjeta se abre el Detalle de esa Receta. La sección ofrece **siempre** el botón **«Sugerir receta con IA»** (destino provisional; la IA real es `sugerir-recetas-con-ia`); cuando ninguna Receta llega al 85 %, muestra además el estado vacío.
+El Escáner de la Despensa muestra una sección **«Recetas Compatibles»** con las Recetas de Mis Recetas cuya Coincidencia con la Despensa llega al umbral de sugeribilidad de RD02 (≥ 85 %), en lista vertical y **ordenadas por Coincidencia descendente**. Cada tarjeta lleva el badge de Coincidencia («100% Match» / «N%», RD02) reutilizado de `ui/components/MatchBadge`, su miniatura y el desglose «X de Y ingredientes en la Despensa». Al tocar una tarjeta se abre el Detalle de esa Receta. La sección ofrece **siempre visible** el botón **«Sugerir receta con IA»** (destino provisional; la IA real es `sugerir-recetas-con-ia`), **habilitado solo cuando hay al menos un Alimento en el Escaneo o en la Despensa**; cuando ninguna Receta llega al 85 %, muestra además el estado vacío. Cambio posterior a la aceptación (2026-10-23, petición del usuario).
 
 ## Non-Goals
 
@@ -44,9 +44,9 @@ Prefijo propio `RF-MRC#` para no colisionar con los `RF-MB#` de `mostrar-badge-d
 - **RF-MRC5** (D5): la sección «Recetas Compatibles» es una **lista vertical** bajo los chips del Escaneo, dentro del scroll de la pantalla del Escáner (como en el prototipo), con cabecera y contenido o estado vacío.
 - **RF-MRC6**: cada tarjeta muestra: badge de Coincidencia (`MatchBadge`: «100% Match» o «N%», RD02), miniatura de la foto o placeholder, título (1 línea) y la línea «X de Y ingredientes en la Despensa» (valores de `RecipeMatch.availableRequired` / `totalRequired`).
 - **RF-MRC7** (D7): tocar la tarjeta abre el Detalle de esa Receta (`recipe_detail/{id}`), con vuelta atrás al Escáner.
-- **RF-MRC8** (D8): la sección muestra **siempre** el botón **«Sugerir receta con IA»**, haya o no Recetas compatibles; abre un destino provisional con título y vuelta atrás (lo sustituye `sugerir-recetas-con-ia`). Sin Recetas compatibles, la sección muestra además el estado vacío con el mismo botón.
+- **RF-MRC8** (D8): la sección muestra **siempre visible** el botón **«Sugerir receta con IA»**, haya o no Recetas compatibles, pero **solo se habilita cuando hay al menos un Alimento en el Escaneo o en la Despensa**; con cero alimentos queda deshabilitado y no navega. Habilitado, abre un destino provisional con título y vuelta atrás (lo sustituye `sugerir-recetas-con-ia`). Sin Recetas compatibles, la sección muestra además el estado vacío con el mismo botón.
 - **RF-MRC9**: el cálculo es **reactivo**: al cambiar la Despensa (alta/baja/edición o al guardar un Escaneo) o las Recetas, la sección se actualiza sin acción manual del usuario.
-- **RF-MRC10**: la sección **no depende** del estado de la cámara ni de los chips sin guardar: se calcula siempre contra la Despensa persistida (D1) y se muestra igual en modo manual (permiso denegado o fallo de cámara).
+- **RF-MRC10**: el **cálculo de las Recetas compatibles no depende** del estado de la cámara ni de los chips sin guardar: se hace siempre contra la Despensa persistida (D1) y la sección se muestra igual en modo manual (permiso denegado o fallo de cámara). La habilitación del botón «Sugerir receta con IA» sí considera además los Alimentos del Escaneo sin guardar (RF-MRC8).
 
 ## Acceptance Scenarios
 
@@ -70,9 +70,15 @@ Then la Receta aparece en la sección sin reiniciar la app ni reabrir el Escáne
 
 ### Scenario 4: Estado vacío con «Sugerir receta con IA»
 
-Given que ninguna Receta llega al 85 % (p. ej. Despensa vacía o sin Recetas)
+Given que ninguna Receta llega al 85 % (p. ej. sin Recetas) y hay al menos un Alimento en el Escaneo o en la Despensa
 When el usuario mira la sección «Recetas Compatibles»
-Then se muestra el estado vacío y el botón «Sugerir receta con IA»; al pulsarlo se abre el destino provisional con su título y se puede volver al Escáner (RF-MRC8)
+Then se muestra el estado vacío y el botón «Sugerir receta con IA» habilitado; al pulsarlo se abre el destino provisional con su título y se puede volver al Escáner (RF-MRC8)
+
+### Scenario 4b: Sin alimentos no se puede pedir sugerencia
+
+Given el Escaneo y la Despensa sin ningún Alimento
+When el usuario mira la sección «Recetas Compatibles»
+Then el botón «Sugerir receta con IA» se muestra deshabilitado y no abre el destino provisional (RF-MRC8)
 
 ### Scenario 5: La tarjeta abre el Detalle
 
@@ -107,15 +113,16 @@ Then las tarjetas compatibles aparecen y el botón «Sugerir receta con IA» sig
 
 | Situación | Comportamiento esperado |
 |---|---|
-| Despensa vacía | Todas las Recetas al 0 % → estado vacío con «Sugerir receta con IA» (S4) |
+| Despensa vacía | Todas las Recetas al 0 % → estado vacío; «Sugerir receta con IA» solo se habilita si el Escaneo tiene algún Alimento (S4, S4b) |
 | Sin Recetas en Mis Recetas | Mismo estado vacío con el botón (S4) |
+| Sin alimentos (Escaneo y Despensa vacíos) | El botón «Sugerir receta con IA» se muestra deshabilitado y no navega (S4b) |
 | 85 % exacto | **Entra** (D2; RF-MRC1) |
 | 84 % | **No entra** (S2) |
 | Porcentaje no entero que redondea a 85 (11 de 13 → 85) | Entra: el umbral se aplica al porcentaje redondeado que muestra el badge (D2) |
 | Empate de Coincidencia | Título ascendente normalizado; si persiste, `id` (D6) |
 | Alimento con cantidad 0 («sin cantidad») | Cuenta como disponible: la Coincidencia es de presencia (D1 de `mostrar-badge-de-coincidencia`) |
 | Opcionales en la Despensa | No alteran nada (RD10); solo unit, ya cubierto en `RecipeMatchTest` |
-| Chips del Escaneo sin guardar | No alteran el cálculo: solo cuenta la Despensa persistida (D1, RF-MRC10) |
+| Chips del Escaneo sin guardar | No alteran el cálculo: solo cuenta la Despensa persistida (D1, RF-MRC10), pero habilitan el botón de IA si aún no hay alimentos guardados (RF-MRC8) |
 | Receta sin foto | Placeholder `SkilletIcon` en la miniatura |
 | Muchas Recetas compatibles | La lista hace scroll con la pantalla; sin límite ni paginación en el MVP |
 | Receta editada o eliminada | La sección se recalcula reactivamente (RF-MRC9) |
@@ -225,12 +232,12 @@ Then las tarjetas compatibles aparecen y el botón «Sugerir receta con IA» sig
 Especificación de la sección y la tarjeta (verificable por `uiautomator` y captura; sin exigir muestreo de píxeles):
 
 - **Cabecera**: texto `MaterialTheme.typography.titleMedium` «Recetas Compatibles», `testTag` `scanner_compatible_title`. Sin icono `auto_awesome` ni la etiqueta «Motor SQL Inteligente» del prototipo (Non-Goals).
-- **Tarjeta**: `Surface` `surfaceContainerLowest`, radio `WarmRadius.lg`, padding `WarmSpacing.sm`, separación `WarmSpacing.sm` entre tarjetas y `WarmSpacing.md` a los lados.
+- **Tarjeta**: `Surface` `surfaceContainerLowest`, radio `WarmRadius.lg`, padding `WarmSpacing.md`, separación `WarmSpacing.md` entre tarjetas y `WarmSpacing.md` a los lados.
   - Miniatura cuadrada **96 dp**, radio `WarmRadius.md`; sin foto → `SkilletIcon` sobre `surfaceContainer`.
   - `MatchBadge` (píldora compartida): 100 % → «100% Match» sobre `secondary`; resto → «N%» sobre `secondaryContainer`.
   - Título 1 línea con elipsis (`titleSmall`); debajo, «X de Y ingredientes en la Despensa» (`labelSmall`, `onSurfaceVariant`).
   - Objetivo táctil: la tarjeta entera ≥ 48 dp de alto; descripción accesible `scanner_compatible_card_accessibility`.
-- **Estado vacío**: texto `scanner_compatible_empty` (`bodySmall`, `onSurfaceVariant`) y, siempre, botón primario «Sugerir receta con IA» (altura mínima 52 dp, `testTag` `scanner_compatible_suggest_ai`). El botón también se muestra debajo de las tarjetas cuando hay Recetas compatibles.
+- **Estado vacío**: texto `scanner_compatible_empty` (`bodySmall`, `onSurfaceVariant`) y, siempre visible, botón primario «Sugerir receta con IA» (altura mínima 52 dp, `testTag` `scanner_compatible_suggest_ai`), habilitado solo si hay al menos un Alimento en el Escaneo o en la Despensa. El botón también se muestra debajo de las tarjetas cuando hay Recetas compatibles.
 - `testTags` nuevos en `ScannerTestTags`: `COMPATIBLE_SECTION`, `COMPATIBLE_TITLE`, `compatibleCard(id)`, `compatibleMatch(id)`, `compatibleIngredients(id)`, `COMPATIBLE_EMPTY`, `COMPATIBLE_SUGGEST_AI`.
 
 ## Durable Documentation Impact

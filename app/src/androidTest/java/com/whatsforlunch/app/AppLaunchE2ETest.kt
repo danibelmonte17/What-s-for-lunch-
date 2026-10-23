@@ -1,7 +1,9 @@
 package com.whatsforlunch.app
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
@@ -30,5 +32,6 @@ class AppLaunchE2ETest {
         composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_MESSAGE).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.CREATE_RECIPE).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.SCAN_PANTRY_FAB).assertCountEquals(0)
     }
 }

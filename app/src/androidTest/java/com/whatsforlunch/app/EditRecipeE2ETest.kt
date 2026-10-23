@@ -193,13 +193,13 @@ class EditRecipeE2ETest {
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
-    // RF-9: al editar un Borrador, el dock es el del alta («Guardar Borrador» y
+    // RF-9: al editar un Borrador, el dock es el del alta («Borrador» y
     // «Publicar Receta»).
     @Test
     fun draftEditingShowsCreationDock() {
         launchEditor(repositoryWith(seededRecipe(status = RecipeStatus.DRAFT)), SEEDED_ID)
 
-        composeRule.onNodeWithText(editorText(R.string.my_recipes_status_draft)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STATUS_BADGE).assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsDisplayed()
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertCountEquals(0)
@@ -260,7 +260,7 @@ class EditRecipeE2ETest {
         assertEquals(1, saved.steps.size)
     }
 
-    // RF-10: «Guardar Borrador» sobre un Borrador en edición guarda manteniendo el estado.
+    // RF-10: «Borrador» sobre un Borrador en edición guarda manteniendo el estado.
     @Test
     fun saveDraftFromEditingKeepsDraftStatus() {
         val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))

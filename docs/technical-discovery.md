@@ -12,7 +12,7 @@ El PRD de origen (`chefencasa_prd_y_project_brief_completo.md`) proponía una **
 
 - App **solo Android, Kotlin + Jetpack Compose**, un solo repositorio (`P35`, `P20`, `P24`).
 - **Sin backend en el MVP**: datos locales, sesión local, sin cuentas (`P31`, `P33`). FastAPI queda como backend **futuro** (`P34`).
-- Detección de alimentos con **Google AI Edge MediaPipe** en el dispositivo (`P23`).
+- Detección de alimentos con **IA de visión multimodal** en DevExpert Inference (`chat/completions`); la detección on-device con MediaPipe quedó retirada (`escanear-despensa-con-ia`, 2026-10-22).
 - Asistente y sugerencias vía **API compatible con OpenAI** en **DevExpert Inference** (`P22`, `P36`).
 - i18n es/en con estructura de recursos **`strings.xml`** (`P19`); documentación en español y código en inglés (`P25`).
 
@@ -24,7 +24,7 @@ El material de `uxdocs/` es **orientativo** (`P16`) y sus tokens YAML mandan sob
 |---|---|---|---|---|
 | App | Kotlin + Jetpack Compose | Fijado por el usuario | — | **Confirmado** |
 | i18n | Recursos `strings.xml` (es/en) | Estructura fijada por el usuario | — | **Confirmado** |
-| Detección de alimentos | MediaPipe Tasks Vision Object Detector (on-device) | Fijado por el usuario; sustituye a YOLOv8 ONNX del PRD | TFLite directo, YOLOv8 ONNX | **Confirmado** · EfficientDet-Lite2, umbral de propuesta 0.60 (decisión del usuario, 2026-10-21; `RK02`) |
+| Detección de alimentos | IA de visión multimodal en DevExpert Inference (`POST /chat/completions`, alias `chat`) | Fijado por el usuario al sustituir MediaPipe (`escanear-despensa-con-ia`, 2026-10-22) | Detección on-device (MediaPipe, retirada), TFLite directo, YOLOv8 ONNX | **Confirmado** · sin umbral de confianza (RD12 derogada); chips editables + RD05 como red de seguridad |
 | Proveedor de IA (chat y sugerencias) | DevExpert Inference (API compatible con OpenAI) | Fijado por el usuario | Groq, Mistral, modelo local | **Confirmado** |
 | Backend futuro | Python FastAPI (+ PostgreSQL) | Fijado por el usuario para la fase de sincronización | Node.js | **Confirmado** (fase posterior) |
 | Datos locales | Room (SQLite) | Duradero en dispositivo, estándar Android | SQLDelight | En uso desde `crear-receta` (2.8.5 + KSP 2.3.12) |
@@ -35,7 +35,9 @@ El material de `uxdocs/` es **orientativo** (`P16`) y sus tokens YAML mandan sob
 | Build | Gradle (Kotlin DSL) + Android Gradle Plugin 8.13.2, JDK 17 fijado en `gradle.properties` | Estándar Android | — | En uso desde `arrancar-app-en-mis-recetas` |
 | Interfaz | Compose + Material 3 adaptado a los tokens de `uxdocs/DESIGN.md` | Material orientativo | XML Views | En uso desde `arrancar-app-en-mis-recetas` |
 
-### Primer spike RK02: EfficientDet-Lite0 (2026-10-21)
+### Primer spike RK02: EfficientDet-Lite0 (2026-10-21) — **retirado**
+
+> Historial: esta línea de detección on-device quedó sustituida por el Escaneo con IA (`escanear-despensa-con-ia`, 2026-10-22). Se conserva el registro del spike y del modelo elegido; MediaPipe, su asset y sus dependencias ya no están en el build.
 
 - Modelo candidato: MediaPipe Tasks Vision Object Detector `efficientdet_lite0/float32/latest/efficientdet_lite0.tflite` (descarga oficial: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float32/latest/efficientdet_lite0.tflite`), dependencia `com.google.mediapipe:tasks-vision:0.10.21`.
 - Ejecución real en AVD Android API 30 / x86 (`MediaPipe_API30_x86`): la inicialización de Tasks Vision y la inferencia del modelo funcionaron; por tanto el runtime del modelo es compatible con API 30 en este entorno.
@@ -43,7 +45,9 @@ El material de `uxdocs/` es **orientativo** (`P16`) y sus tokens YAML mandan sob
 - Fuentes de fixtures: Unsplash `photo-1571771894821-ce9b6c11b08e` (banana), `photo-1560806887-1e4cd0b6cbd6` (manzanas), Wikimedia Commons `Broccoli_and_cross_section_edit.jpg`, Unsplash `photo-1579751626657-72bc17010498` (pizza). La prueba instrumentada que registró los resultados fue `MediaPipeSpikeTest.efficientDetLite0DetectsFoodWithHighConfidenceOnDevice`.
 - Incidencia de versión inicial: `tasks-vision:0.10.21` no incluía JNI x86_64 y su ABI ARM64 no funcionaba con páginas de 16 KiB. Se resolvió al usar `0.10.35`, que ejecuta el mismo Lite2 en API 37 x86_64 (ver resultado final abajo).
 
-### Reintento RK02: modelos alternativos (2026-10-21)
+### Reintento RK02: modelos alternativos (2026-10-21) — **retirado**
+
+> Historial: el modelo y el umbral descritos aquí pertenecen a la detección on-device retirada por `escanear-despensa-con-ia`.
 
 Por decisión del usuario se compararon los cuatro modelos siguientes con el mismo MediaPipe Tasks Vision Object Detector `0.10.21`, en AVD API 30 x86 y con las mismas cuatro imágenes. Se registra la confianza máxima de la etiqueta COCO esperada en cada imagen y la media aritmética de esos cuatro valores. Todos cargaron e infirieron correctamente en API 30.
 
@@ -64,7 +68,9 @@ Las imágenes idénticas del protocolo son `banana.jpg` (SHA-256 `E133F498BFBDA0
 
 La comparación instrumentada fue `MediaPipeModelComparisonTest.comparesEfficientDetLiteModelsOnTheSameFoodImages`; el usuario aceptó el resultado de Lite2 con umbral 0.60. `MediaPipeFoodDetectorTest` pasó en API 30 x86 y API 37 x86_64 con Tasks Vision `0.10.35`. No se probó un clasificador: no satisface el requisito de Object Detector con cajas/HUD y cambiaría la interacción especificada.
 
-### Detección en vivo sobre el visor (2026-10-21, `detectar-alimentos-en-vivo`)
+### Detección en vivo sobre el visor (2026-10-21, `detectar-alimentos-en-vivo`) — **retirada**
+
+> Historial: el bucle de detección continua, el HUD y la confianza se retiraron con `escanear-despensa-con-ia` (2026-10-22). La captura CameraX se conserva para el visor y el obturador, pero ahora genera una foto analizada por IA.
 
 El Escáner sustituyó la captura congelada por **detección continua** sobre el visor:
 
@@ -75,6 +81,18 @@ El Escáner sustituyó la captura congelada por **detección continua** sobre el
 - **Objetivo de rendimiento (D2)**: inferencia ≤ 800 ms por fotograma (objetivo PRD), visor nunca bloqueado y listado actualizado en ≤ 1 s; verificado a mano en el emulador sin degradación perceptible del visor. **Cifra medida (2026-10-22, AVD `Pixel_10_Pro` API 37, fixture `scanner/banana.jpg`, `MediaPipeFoodDetectorTest`)**: estado estacionario **avg 106,2 ms, máx 123 ms** (muestras `[123, 110, 99, 104, 95]`) → holgadamente por debajo de 800 ms y del intervalo de muestreo de 300 ms (el bucle no acumula retraso); **primer arranque en frío 889 ms**, coste único de carga perezosa del modelo en la primera inferencia (no se repite en fotogramas posteriores). Medición sin aserción de timing (AVD compartida); el log queda en `docs/validations/detectar-alimentos-en-vivo.md` al aceptar.
 
 Verificación: `ScanPantryE2ETest` (16 casos, fakes `FakeLiveFrameSource`/`FakeFoodDetector` por secuencia) y `CameraXLiveFrameSourceTest` (1 caso) en `Pixel_10_Pro` API 37, dentro de la suite completa 95/95 en verde.
+
+### Escaneo con IA (2026-10-22, `escanear-despensa-con-ia`)
+
+El Escáner sustituye la detección on-device por una **foto analizada por IA**:
+
+- **Captura**: `CameraXScanImageSource` conserva el visor (`Preview`) y añade `ImageCapture` con `CAPTURE_MODE_MINIMIZE_LATENCY`. `capture()` devuelve un JPEG **en memoria** (lado largo ≤ 1024 px, calidad 85, bitmap reciclado y `ImageProxy` siempre cerrado); no hay `OutputFileOptions`, ficheros ni MediaStore (RD06/D6).
+- **Cliente**: `OpenAiCompatibleScanImageAnalyzer` hace `POST <base>/chat/completions` (alias estable `chat`) con `messages[0].content = [{type:"text", text: prompt}, {type:"image_url", image_url:{url:"data:image/jpeg;base64,…"}}]` y `temperature = 0`. El prompt pide un único objeto JSON `{"alimento": cantidad}` en el idioma de la app. La respuesta se extrae de `choices[0].message.content` (admite texto o partes) y `ScanAnalysisParser` tolera vallas ```` ```json ```` y texto alrededor del primer objeto JSON. Cualquier error de red, HTTP ≠ 2xx o cuerpo ilegible → `Failed`; sin key → `MissingApiKey` (RD05).
+- **Normalización (D1/D2)**: `ScanAnalysis` es puro y unit-testable: funde propuestas por nombre normalizado sin pisar las ediciones existentes, descarta nombres vacíos, fusiona duplicados internos sumando cantidades y normaliza cantidades (no entera/≤ 0 → 0; > 99 → 99). `ScanDetections` conserva las reglas de chips y la suma RD13.
+- **UI**: obturador con progreso «Analizando la foto…», avisos de key ausente/fallo con entrada manual, sin HUD ni porcentaje de confianza. La foto se descarta tras el análisis; no hay reintentos automáticos (D5).
+- **Retirada**: dependencia `mediapipe-tasks-vision`, asset `efficientdet_lite2_detection_metadata_1.tflite`, `MediaPipeFoodDetector`, `FoodDetector`, `LiveFrameSource`, `CameraXLiveFrameSource`, `DetectedFood`, `Scan` y la confianza de `ScanDraftItem`.
+
+Verificación: unit de `ScanAnalysis`/`ScanAnalysisParser`/`ScannerViewModel`/`AiEndpoints`, `CameraXScanImageSourceTest` (JPEG en memoria, sin ficheros) y `ScanPantryE2ETest` con captura y cliente simulados (S1-S9).
 
 ### Acceso a IA y API key en el dispositivo (2026-10-22, `configurar-acceso-a-ia`)
 
@@ -91,15 +109,15 @@ Módulo único `app/` con tres capas (estructura confirmada en Q-arrancar-app-en
 
 - `ui/` — pantallas Compose (Mis Recetas, Escáner, Detalle, Modo Cocina, Pinche, Formulario, Lista de la Compra, Ajustes).
 - `domain/` — modelos y reglas (Coincidencia, escalado de Raciones, estados de Receta): sin dependencias de Compose.
-- `data/` — Room (Despensa, Recetas, Lista de la Compra), cliente de DevExpert Inference y detección MediaPipe.
+- `data/` — Room (Despensa, Recetas, Lista de la Compra), cliente de DevExpert Inference (chat multimodal, sugerencias e imágenes) y captura CameraX.
 
 La UI no contiene reglas de negocio: viven en `domain/` y en `docs/domain-model.md` (IDs `RD##`).
 
-Flujos principales: Escaneo → MediaPipe → chips confirmados → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja».
+Flujos principales: Escaneo (foto) → IA de visión → chips editables → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja».
 
 ```mermaid
 flowchart LR
-  Camara --> MediaPipe --> Chips --> Despensa
+  Camara --> Foto["Foto en memoria"] --> VisionIA["DevExpert Inference /chat/completions"] --> Chips --> Despensa
   Despensa --> DevExpertInference["DevExpert Inference"] --> Sugerencia --> Receta
   Receta --> ModoCocina
   Receta --> ListaCompra
@@ -109,14 +127,13 @@ flowchart LR
 ## Datos y almacenamiento
 
 - **Duraderos (Room)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra.
-- **Temporales/derivados**: resultados de Escaneo (confianzas), fotos (no se persisten las de Escaneo — RD06; las de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), caché de respuestas de la IA.
+- **Temporales/derivados**: resultados de Escaneo (chips en memoria), foto del Escaneo (JPEG en memoria, enviado al proveedor y descartado — RD06; las fotos de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), caché de respuestas de la IA.
 - **Credenciales**: API key de DevExpert Inference en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
 - **Migración o importación**: ninguna (proyecto nuevo).
 
 ## Integraciones externas
 
-- **DevExpert Inference (API compatible con OpenAI)** — chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). El endpoint de imagen es `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
-- **Google AI Edge MediaPipe** — inferencia on-device; no requiere red.
+- **DevExpert Inference (API compatible con OpenAI)** — Escaneo con IA (visión multimodal), chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Endpoints: `POST /v1/chat/completions` con el alias `chat` (foto como `data:image/jpeg;base64`) y `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
 
 ## Autenticación y autorización
 
@@ -130,7 +147,7 @@ No hay cuentas, login ni sesión en red (`P31`): la app es local y su único usu
 ## Pruebas y verificación
 
 - **Unitarias**: JUnit sobre `domain/` y `data/` con cliente de IA simulado (**Candidato**: JUnit5 + coroutines-test).
-- **E2E**: pruebas instrumentadas Compose sobre emulador (`connectedDebugAndroidTest`), cubriendo el flujo Escaneo → Receta → Modo Cocina con fixtures locales de alimentos/recetas y IA falsa.
+- **E2E**: pruebas instrumentadas Compose sobre emulador (`connectedDebugAndroidTest`), cubriendo el flujo Escaneo (foto) → IA simulada → chips → Despensa → Receta → Modo Cocina con fixtures locales y cliente de IA falso.
 - **Mediciones puntuales**: `adb` + uiautomator (tamaños, jerarquía, capturas); capturas en español con locale por aplicación.
 - **Comandos** (Gradle Kotlin DSL con el wrapper del repo; los scripts `init`/`lint`/`unit`/`e2e` del harness los envuelven):
   - Arrancar (compilar e instalar en dispositivo/emulador): `./gradlew installDebug`
@@ -148,14 +165,14 @@ Mínima en el MVP: logs locales de la app, sin telemetría ni alertas (`⚠ S01`
 ## Seguridad y datos sensibles
 
 - PII: no hay cuentas ni datos de identidad; los alimentos de la Despensa y las fotos son sensibles por contexto.
-- RGPD: las fotos del Escaneo se procesan y se descartan (RD06); proveedor sin retención para entrenamiento; aviso al usuario (`P27`).
+- RGPD: las fotos del Escaneo se capturan en memoria, se envían a DevExpert Inference para su análisis y se descartan; no se almacenan en el dispositivo (RD06). Proveedor sin retención para entrenamiento (por verificar, `RK03`); aviso al usuario (`P27`).
 - API key: nunca se commitea (`local.properties` está gitignored) ni se imprime en logs; en Ajustes se guarda cifrada con Android Keystore. Con D7-D11 la key de build (`AI_API_KEY`) queda **incrustada en el APK** (debug y release): riesgo aceptado para el MVP, usar solo una key de desarrollo con límite de gasto y retirar la inyección antes de distribuir (`⚠ S05`, `RK01`).
 
 ## Restricciones
 
-- Rendimiento: arranque rápido; inferencia de visión < 800 ms como objetivo del PRD (**Por validar** en dispositivo real).
+- Rendimiento: arranque rápido; análisis de visión por llamada remota (latencia del proveedor, sin objetivo medido en el MVP — D8).
 - Accesibilidad: contraste WCAG 2.1 AA general y AAA en Modo Cocina; áreas táctiles ≥ 48×48 px.
-- Offline: toda la app funciona sin red salvo el Pinche y las Sugerencias (requieren DevExpert Inference).
+- Offline: toda la app funciona sin red salvo el Escaneo con IA, el Pinche y las Sugerencias (requieren DevExpert Inference).
 - Internacionalización: es y en vía `strings.xml`, sin más regionalización (`P12` eliminó precios).
 - Plataforma: **Android 11 (API 30) o superior**, solo móviles (Q-arrancar-app-en-mis-recetas-2).
 - Sin fecha límite ni presupuesto de IA definido (`P3`, `P30`).

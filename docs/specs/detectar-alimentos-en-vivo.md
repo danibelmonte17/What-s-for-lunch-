@@ -9,6 +9,8 @@
 - `source`: `feature_list.json`
 
 > **Nota de revisión (2026-10-22)**: el diálogo «Mantener cantidad»/«Actualizar cantidad» y el Non-Goal de no sumar cantidades quedan **sustituidos** por `sumar-cantidades-al-guardar` (suma al guardar, RD13 en `docs/domain-model.md`). La detección en vivo, el HUD, el muestreo de 300 ms, RD05 y RD06 no cambian.
+>
+> **Nota de revisión (2026-10-22, `escanear-despensa-con-ia`)**: esta detección continua queda **sustituida** por el Escaneo con IA basado en una foto (`POST /chat/completions`). Se retiran MediaPipe, el HUD, la confianza, el muestreo de 300 ms y RD12; RD06 se reformula porque la foto se envía al proveedor para su análisis y no se almacena. Se conservan el visor CameraX, los chips editables, la edición manual, el stepper 0..99, la suma RD13 y las confirmaciones de salida/re-escaneo.
 
 ## Goal
 

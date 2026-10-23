@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,7 +31,6 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragIndicator
-import androidx.compose.material.icons.outlined.Drafts
 import androidx.compose.material.icons.outlined.FormatListNumbered
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.PhotoCamera
@@ -1058,7 +1058,7 @@ private fun FavoriteSection(uiState: CreateRecipeUiState, actions: CreateRecipeA
     }
 }
 
-// RF-8, RF-14, RF-15 y RF-16: dock siempre visible con «Guardar Borrador» y
+// RF-8, RF-14, RF-15 y RF-16: dock siempre visible con «Borrador» y
 // «Publicar Receta», deshabilitado (estilo distinguible) mientras falten requisitos,
 // que se enumeran junto al dock.
 // RF-5 a RF-8: al editar una Receta Publicada, el dock muestra una única acción
@@ -1074,7 +1074,11 @@ private fun ActionDock(uiState: CreateRecipeUiState, actions: CreateRecipeAction
             .testTag(CreateRecipeTestTags.ACTION_DOCK),
     ) {
         Column(
-            modifier = Modifier.padding(WarmSpacing.md),
+            modifier = Modifier
+                // El dock se dibuja bajo la barra de navegación; su contenido
+                // (acciones y errores) queda siempre visible por encima.
+                .navigationBarsPadding()
+                .padding(WarmSpacing.md),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
             if (uiState.publishErrors.isNotEmpty()) {
@@ -1124,12 +1128,6 @@ private fun ActionDock(uiState: CreateRecipeUiState, actions: CreateRecipeAction
                             .heightIn(min = 52.dp)
                             .testTag(CreateRecipeTestTags.SAVE_DRAFT),
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Drafts,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(WarmSpacing.xs))
                         Text(text = stringResource(R.string.create_recipe_save_draft))
                     }
                     Button(

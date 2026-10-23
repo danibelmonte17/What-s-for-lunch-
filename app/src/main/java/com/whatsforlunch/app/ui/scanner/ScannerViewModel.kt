@@ -2,36 +2,32 @@ package com.whatsforlunch.app.ui.scanner
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.whatsforlunch.app.data.scanner.FoodDetectionResult
-import com.whatsforlunch.app.data.scanner.FoodDetector
-import com.whatsforlunch.app.data.scanner.LiveFrameSource
+import com.whatsforlunch.app.data.ai.ScanAnalysisResult
+import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
+import com.whatsforlunch.app.data.scanner.ScanImageSource
 import com.whatsforlunch.app.domain.match.CompatibleRecipe
 import com.whatsforlunch.app.domain.match.compatibleRecipes
-import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
-import com.whatsforlunch.app.domain.model.Scan
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
 import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.domain.scanner.ScanAnalysis
 import com.whatsforlunch.app.domain.scanner.ScanDetections
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
 
 enum class ScannerNotice {
     CAMERA_PERMISSION_DENIED,
     CAMERA_UNAVAILABLE,
-    DETECTION_FAILED,
+    ANALYSIS_FAILED,
+    AI_KEY_MISSING,
+    NO_DETECTIONS,
     DUPLICATE_NAME,
     INVALID_NAME,
     SAVE_FAILED,
@@ -40,20 +36,16 @@ enum class ScannerNotice {
 data class ScannerUiState(
     val cameraPermissionGranted: Boolean = false,
     val cameraPreviewReady: Boolean = false,
+    val isScannerExpanded: Boolean = false,
     val pantryLoaded: Boolean = false,
     val manualMode: Boolean = false,
-    val isDetecting: Boolean = false,
-    /** True while the live loop is stopped after a detector failure (D5) and a restart is offered. */
-    val liveStopped: Boolean = false,
-    val liveDetections: List<DetectedFood> = emptyList(),
-    val scan: Scan? = null,
+    val isAnalyzing: Boolean = false,
     val items: List<ScanDraftItem> = emptyList(),
     val pantryItems: List<PantryItem> = emptyList(),
     val compatibleRecipes: List<CompatibleRecipe> = emptyList(),
     val matches: Map<String, PantryItem> = emptyMap(),
     val isSaving: Boolean = false,
     val showExitConfirmation: Boolean = false,
-    val rescanAfterConfirmation: Boolean = false,
     val saveCompleted: Boolean = false,
     val notice: ScannerNotice? = null,
 )
@@ -61,13 +53,11 @@ data class ScannerUiState(
 class ScannerViewModel(
     private val pantryRepository: PantryRepository,
     private val recipeRepository: RecipeRepository,
-    private val foodDetector: FoodDetector,
+    private val scanImageAnalyzer: ScanImageAnalyzer,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScannerUiState())
     val uiState: StateFlow<ScannerUiState> = _uiState.asStateFlow()
 
-    private var detectionJob: Job? = null
-    private var loopActive = false
     private var recipes: List<Recipe> = emptyList()
 
     init {
@@ -79,6 +69,17 @@ class ScannerViewModel(
         }
     }
 
+    fun openScanner() {
+        _uiState.value = _uiState.value.copy(isScannerExpanded = true)
+    }
+
+    fun closeScanner() {
+        _uiState.value = _uiState.value.copy(
+            isScannerExpanded = false,
+            cameraPreviewReady = false,
+        )
+    }
+
     fun onCameraPermissionGranted() {
         _uiState.value = _uiState.value.copy(
             cameraPermissionGranted = true,
@@ -88,13 +89,12 @@ class ScannerViewModel(
     }
 
     fun onCameraPermissionDenied() {
-        stopLiveDetection()
         _uiState.value = _uiState.value.copy(
             cameraPermissionGranted = false,
             cameraPreviewReady = false,
+            isScannerExpanded = false,
             manualMode = true,
-            isDetecting = false,
-            liveDetections = emptyList(),
+            isAnalyzing = false,
             notice = ScannerNotice.CAMERA_PERMISSION_DENIED,
         )
     }
@@ -104,90 +104,86 @@ class ScannerViewModel(
     }
 
     fun onCameraPreviewFailed() {
-        stopLiveDetection()
         _uiState.value = _uiState.value.copy(
             cameraPreviewReady = false,
+            isScannerExpanded = false,
             manualMode = true,
-            isDetecting = false,
-            liveDetections = emptyList(),
+            isAnalyzing = false,
             notice = ScannerNotice.CAMERA_UNAVAILABLE,
         )
     }
 
     /**
-     * Starts the live detection loop: sampled frames are detected one after another and
-     * accumulated into the tray (conflated: only the latest frame is pending at any time).
-     * Idempotent while the loop is active; after a detector failure or «Re-escanear» it
-     * starts a fresh loop.
+     * One photo, one AI call (D4): captures an in-memory JPEG, analyzes it and merges the
+     * proposals into the current tray (D1). There are no automatic retries (D5); the user
+     * can press the shutter again. Missing key and failures keep the manual entry available.
      */
-    fun startLiveDetection(frameSource: LiveFrameSource) {
+    fun captureAndAnalyze(imageSource: ScanImageSource, language: String) {
         val state = _uiState.value
+        if (state.isAnalyzing || state.isSaving) return
         if (!state.cameraPermissionGranted || !state.cameraPreviewReady) return
-        if (loopActive) return
-        loopActive = true
-        _uiState.value = state.copy(liveStopped = false)
-        detectionJob = viewModelScope.launch {
-            try {
-                frameSource.frames()
-                    .conflate()
-                    .collect { frame ->
-                        detectFrame(frame)
-                        delay(ScanDetections.LIVE_SAMPLE_INTERVAL_MS)
-                    }
-            } finally {
-                loopActive = false
+        _uiState.value = state.copy(isAnalyzing = true, notice = null)
+        viewModelScope.launch {
+            val image = try {
+                imageSource.capture()
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
+            } catch (_: LinkageError) {
+                null
             }
-        }
-    }
-
-    fun stopLiveDetection() {
-        detectionJob?.cancel()
-        detectionJob = null
-        if (_uiState.value.isDetecting) {
-            _uiState.value = _uiState.value.copy(isDetecting = false)
-        }
-    }
-
-    override fun onCleared() {
-        detectionJob?.cancel()
-        detectionJob = null
-        super.onCleared()
-    }
-
-    private suspend fun detectFrame(frame: ByteArray) {
-        _uiState.value = _uiState.value.copy(isDetecting = true)
-        val result = try {
-            foodDetector.detect(frame)
-        } catch (exception: CancellationException) {
-            throw exception
-        } catch (_: Exception) {
-            FoodDetectionResult.Failed
-        } catch (_: LinkageError) {
-            FoodDetectionResult.Failed
-        }
-        when (result) {
-            is FoodDetectionResult.Success -> {
-                val eligible = ScanDetections.eligible(result.detections)
-                val merged = ScanDetections.mergeLiveDetections(_uiState.value.items, eligible)
-                val base = recalculateItems(_uiState.value, merged).copy(
-                    isDetecting = false,
-                    liveDetections = eligible,
-                    scan = Scan(detections = eligible),
-                )
-                _uiState.value = base
-            }
-
-            FoodDetectionResult.Failed -> {
-                // Cancels this very coroutine: with an eager dispatcher the loop job may not
-                // be assigned yet, so cancelling only `detectionJob` would keep sampling.
-                currentCoroutineContext().cancel()
+            if (image == null) {
                 _uiState.value = _uiState.value.copy(
-                    isDetecting = false,
+                    isAnalyzing = false,
+                    isScannerExpanded = false,
+                    cameraPreviewReady = false,
                     manualMode = true,
-                    liveStopped = true,
-                    liveDetections = emptyList(),
-                    notice = ScannerNotice.DETECTION_FAILED,
+                    notice = ScannerNotice.ANALYSIS_FAILED,
                 )
+                return@launch
+            }
+            val result = try {
+                scanImageAnalyzer.analyze(image, language)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                ScanAnalysisResult.Failed
+            } catch (_: LinkageError) {
+                ScanAnalysisResult.Failed
+            }
+            when (result) {
+                is ScanAnalysisResult.Success -> {
+                    val hasFoods = result.foods.any { it.name.isNotBlank() }
+                    val merged = ScanAnalysis.mergeProposals(_uiState.value.items, result.foods)
+                    _uiState.value = recalculateItems(_uiState.value, merged).copy(
+                        isAnalyzing = false,
+                        isScannerExpanded = false,
+                        cameraPreviewReady = false,
+                        manualMode = false,
+                        notice = if (hasFoods) null else ScannerNotice.NO_DETECTIONS,
+                    )
+                }
+
+                ScanAnalysisResult.MissingApiKey -> {
+                    _uiState.value = _uiState.value.copy(
+                        isAnalyzing = false,
+                        isScannerExpanded = false,
+                        cameraPreviewReady = false,
+                        manualMode = true,
+                        notice = ScannerNotice.AI_KEY_MISSING,
+                    )
+                }
+
+                ScanAnalysisResult.Failed -> {
+                    _uiState.value = _uiState.value.copy(
+                        isAnalyzing = false,
+                        isScannerExpanded = false,
+                        cameraPreviewReady = false,
+                        manualMode = true,
+                        notice = ScannerNotice.ANALYSIS_FAILED,
+                    )
+                }
             }
         }
     }
@@ -196,9 +192,7 @@ class ScannerViewModel(
         val cleanName = name.trim()
         if (cleanName.isEmpty()) return
         val state = _uiState.value
-        val items = ScanDetections.mergeDraftItems(
-            state.items + ScanDraftItem(name = cleanName, confidence = null),
-        )
+        val items = ScanDetections.mergeDraftItems(state.items + ScanDraftItem(name = cleanName))
         _uiState.value = recalculateItems(state, items)
     }
 
@@ -250,8 +244,6 @@ class ScannerViewModel(
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
                     saveCompleted = true,
-                    scan = null,
-                    liveDetections = emptyList(),
                     items = emptyList(),
                     matches = emptyMap(),
                     notice = null,
@@ -274,29 +266,16 @@ class ScannerViewModel(
             clearTemporaryScan()
             return true
         }
-        _uiState.value = state.copy(showExitConfirmation = true, rescanAfterConfirmation = false)
+        _uiState.value = state.copy(showExitConfirmation = true)
         return false
     }
 
-    /** Returns true when confirmation should restart the live scan instead of leaving. */
-    fun confirmExit(): Boolean {
-        val shouldRescan = _uiState.value.rescanAfterConfirmation
+    fun confirmExit() {
         clearTemporaryScan()
-        return shouldRescan
-    }
-
-    fun requestRescan(): Boolean {
-        val state = _uiState.value
-        if (state.items.isNotEmpty()) {
-            _uiState.value = state.copy(showExitConfirmation = true, rescanAfterConfirmation = true)
-            return false
-        }
-        clearTemporaryScan()
-        return true
     }
 
     fun cancelExitConfirmation() {
-        _uiState.value = _uiState.value.copy(showExitConfirmation = false, rescanAfterConfirmation = false)
+        _uiState.value = _uiState.value.copy(showExitConfirmation = false)
     }
 
     fun clearNotice() {
@@ -307,8 +286,8 @@ class ScannerViewModel(
         val state = _uiState.value
         _uiState.value = state.copy(
             showExitConfirmation = false,
-            rescanAfterConfirmation = false,
-            scan = null,
+            isScannerExpanded = false,
+            cameraPreviewReady = false,
             items = emptyList(),
             matches = emptyMap(),
             notice = null,

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Icecream
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.RamenDining
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.Search
@@ -42,6 +43,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -99,6 +101,7 @@ object MyRecipesTestTags {
     const val EMPTY_MESSAGE = "my_recipes_empty_message"
     const val CREATE_RECIPE = "action_create_recipe"
     const val SCAN_PANTRY = "action_scan_pantry"
+    const val SCAN_PANTRY_FAB = "action_scan_pantry_fab"
     const val RECIPE_LIST = "my_recipes_list"
     const val RECIPE_CARD = "my_recipes_card"
     const val RECIPE_BODY = "my_recipes_card_body"
@@ -195,6 +198,21 @@ fun MyRecipesScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
             )
+        },
+        floatingActionButton = {
+            if (uiState.recipes.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = onScanPantry,
+                    modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PhotoCamera,
+                        contentDescription = stringResource(R.string.action_scan_pantry),
+                    )
+                }
+            }
         },
     ) { innerPadding ->
         when (uiState.state) {
@@ -341,6 +359,7 @@ private fun RecipeList(
                 .weight(1f)
                 .fillMaxWidth()
                 .testTag(MyRecipesTestTags.RECIPE_LIST),
+            contentPadding = PaddingValues(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
         ) {
             items(items = recipes, key = { it.id }) { recipe ->

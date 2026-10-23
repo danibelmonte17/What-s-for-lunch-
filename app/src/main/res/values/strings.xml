@@ -134,7 +134,7 @@
     <string name="create_recipe_favorite_subtitle">Acceso directo en tu biblioteca</string>
     <string name="create_recipe_ingredients_count">%1$d ítems</string>
     <string name="create_recipe_steps_count">%1$d Pasos definidos</string>
-    <string name="create_recipe_save_draft">Guardar Borrador</string>
+    <string name="create_recipe_save_draft">Borrador</string>
     <string name="create_recipe_publish">Publicar Receta</string>
     <string name="create_recipe_save_changes">Guardar cambios</string>
     <string name="create_recipe_publish_blocked">No se puede publicar todavía:</string>
@@ -164,17 +164,22 @@
     <string name="settings_api_key_build_source">La clave de IA proviene de la compilación (local.properties) y tiene prioridad sobre la guardada aquí.</string>
     <string name="settings_api_key_saved">API key guardada.</string>
     <string name="settings_privacy_title">Privacidad y datos</string>
-    <string name="settings_privacy_notice">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner no salen del dispositivo y puedes controlar el gasto en tu panel de DevExpert Inference.</string>
+    <string name="settings_privacy_notice">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner se envían a DevExpert Inference únicamente para analizarlas, no se almacenan en el dispositivo y el proveedor no las retiene. Puedes controlar el gasto en tu panel de DevExpert Inference.</string>
 
     <!-- Escáner de la Despensa -->
     <string name="scanner_title">Escáner de la Despensa</string>
     <string name="scanner_camera_preview">Vista previa de la cámara</string>
     <string name="scanner_camera_loading">Preparando la cámara…</string>
-    <string name="scanner_live_hint">Enfoca los alimentos y se irán añadiendo a la lista.</string>
-    <string name="scanner_detection_loading">Detectando alimentos…</string>
+    <string name="scanner_open_camera">Escanear con la cámara</string>
+    <string name="scanner_close_camera">Ocultar escáner</string>
+    <string name="scanner_capture">Escanear alimentos</string>
+    <string name="scanner_analyzing">Analizando la foto…</string>
+    <string name="scanner_capture_hint">Añade alimentos a mano o pulsa «Escanear con la cámara» para analizar una foto.</string>
     <string name="scanner_camera_denied">Permiso de cámara denegado. Puedes continuar añadiendo alimentos manualmente.</string>
     <string name="scanner_camera_unavailable">No se pudo abrir la cámara. Puedes añadir alimentos manualmente.</string>
-    <string name="scanner_detection_failed">No se pudo analizar la imagen. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_analysis_failed">No se pudo analizar la foto. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_ai_key_missing">Configura tu API key en Ajustes para analizar fotos con IA. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_no_detections">No se detectaron alimentos en la foto. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_save_failed">No se pudieron guardar los alimentos. Inténtalo de nuevo.</string>
     <string name="scanner_duplicate_error">Este alimento ya está en la Despensa.</string>
     <string name="scanner_name_invalid">Escribe el nombre del alimento.</string>
@@ -183,11 +188,7 @@
     <string name="scanner_add_food_confirm">Añadir</string>
     <string name="scanner_remove_food">Quitar alimento</string>
     <string name="scanner_item_name">Nombre</string>
-    <string name="scanner_confidence">%1$d%%</string>
-    <string name="scanner_confidence_accessibility">Confianza %1$d%%</string>
-    <string name="scanner_hud_detection">%1$s · %2$d%%</string>
     <string name="scanner_save">Guardar en la Despensa</string>
-    <string name="scanner_rescan">Re-escanear</string>
     <string name="scanner_quantity">Cantidad</string>
     <string name="scanner_quantity_decrease">Disminuir cantidad</string>
     <string name="scanner_quantity_increase">Aumentar cantidad</string>
@@ -195,9 +196,6 @@
     <string name="scanner_exit_title">¿Salir del Escáner?</string>
     <string name="scanner_exit_message">Tienes alimentos sin guardar. Si sales, se descartan.</string>
     <string name="scanner_exit_confirm">Salir</string>
-    <string name="scanner_rescan_title">¿Re-escanear?</string>
-    <string name="scanner_rescan_message">Tienes alimentos sin guardar. Si continúas, se descartan y la lista empezará vacía.</string>
-    <string name="scanner_rescan_confirm">Re-escanear</string>
     <string name="scanner_cancel">Cancelar</string>
     <string name="scanner_compatible_title">Recetas Compatibles</string>
     <string name="scanner_compatible_ingredients">%1$d de %2$d ingredientes en la Despensa</string>
@@ -205,16 +203,4 @@
     <string name="scanner_compatible_suggest_ai">Sugerir receta con IA</string>
     <string name="scanner_compatible_card_accessibility">Receta compatible: %1$s, %2$d%% de coincidencia</string>
     <string name="ai_suggestions_title">Sugerir receta con IA</string>
-
-    <!-- Etiquetas COCO alimentarias de EfficientDet-Lite2 -->
-    <string name="food_label_apple">Manzana</string>
-    <string name="food_label_banana">Plátano</string>
-    <string name="food_label_broccoli">Brócoli</string>
-    <string name="food_label_cake">Pastel</string>
-    <string name="food_label_carrot">Zanahoria</string>
-    <string name="food_label_donut">Donut</string>
-    <string name="food_label_hot_dog">Perrito caliente</string>
-    <string name="food_label_orange">Naranja</string>
-    <string name="food_label_pizza">Pizza</string>
-    <string name="food_label_sandwich">Sándwich</string>
 </resources>

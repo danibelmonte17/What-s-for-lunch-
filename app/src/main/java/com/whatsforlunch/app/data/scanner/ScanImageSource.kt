@@ -1,14 +1,13 @@
 package com.whatsforlunch.app.data.scanner
 
 import androidx.camera.view.PreviewView
-import kotlinx.coroutines.flow.Flow
 
 /**
- * Port for a continuous stream of in-memory scan frames. Implementations must never
- * persist the frames: they are processed and discarded (RD06).
+ * Port for a single in-memory scan capture. Implementations must never persist the
+ * image: it is analyzed and discarded (RD06).
  */
-interface LiveFrameSource {
-    fun frames(): Flow<ByteArray>
+interface ScanImageSource {
+    suspend fun capture(): ByteArray?
 }
 
 /** Camera preview lifecycle kept at the Android boundary, outside the ViewModel. */

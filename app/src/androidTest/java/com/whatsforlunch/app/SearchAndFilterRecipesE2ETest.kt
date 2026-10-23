@@ -35,6 +35,7 @@ import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,6 +53,7 @@ class SearchAndFilterRecipesE2ETest {
     private fun launchScreen(
         repository: InMemoryRecipeRepository = repositoryWithRecipes(),
         locale: Locale = Locale("es", "ES"),
+        onScanPantry: () -> Unit = {},
     ): MyRecipesViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
@@ -64,7 +66,7 @@ class SearchAndFilterRecipesE2ETest {
                     MyRecipesScreen(
                         uiState = state,
                         onCreateRecipe = {},
-                        onScanPantry = {},
+                        onScanPantry = onScanPantry,
                         onEditRecipe = {},
                         onSearchQueryChanged = viewModel::onSearchQueryChanged,
                         onMealMomentSelected = viewModel::onMealMomentSelected,
@@ -178,8 +180,23 @@ class SearchAndFilterRecipesE2ETest {
     fun emptyCollectionHidesSearchAndFilterControls() {
         launchScreen(repository = InMemoryRecipeRepository())
         composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).assertIsDisplayed()
         composeRule.onAllNodesWithTag(MyRecipesTestTags.SEARCH_FIELD).assertCountEquals(0)
         composeRule.onAllNodesWithTag(MyRecipesTestTags.FILTER_ROW).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.SCAN_PANTRY_FAB).assertCountEquals(0)
+    }
+
+    @Test
+    fun collectionWithRecipesShowsScanPantryFab() {
+        var scanRequested = false
+        launchScreen(onScanPantry = { scanRequested = true })
+        waitForRecipeCount(3)
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY_FAB)
+            .assertIsDisplayed()
+            .performClick()
+
+        assertTrue(scanRequested)
     }
 
     @Test

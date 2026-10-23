@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -684,24 +685,26 @@ private fun StartCookingBar(onStartCooking: () -> Unit) {
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
         shadowElevation = 8.dp,
     ) {
-        Button(
-            onClick = onStartCooking,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm)
-                .heightIn(min = 52.dp)
-                .testTag(RecipeDetailTestTags.START_COOKING),
-        ) {
-            Icon(
-                imageVector = SkilletIcon,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(WarmSpacing.sm))
-            Text(
-                text = stringResource(R.string.recipe_detail_start_cooking),
-                style = MaterialTheme.typography.titleMedium,
-            )
+        Box(modifier = Modifier.navigationBarsPadding()) {
+            Button(
+                onClick = onStartCooking,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm)
+                    .heightIn(min = 52.dp)
+                    .testTag(RecipeDetailTestTags.START_COOKING),
+            ) {
+                Icon(
+                    imageVector = SkilletIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                Text(
+                    text = stringResource(R.string.recipe_detail_start_cooking),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
         }
     }
 }

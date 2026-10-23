@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -17,13 +19,14 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
-import com.whatsforlunch.app.data.scanner.FoodDetectionResult
-import com.whatsforlunch.app.data.scanner.FoodDetector
+import com.whatsforlunch.app.data.ai.ScanAnalysisResult
+import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
@@ -147,14 +150,40 @@ class CompatibleRecipesE2ETest {
         composeRule.onNodeWithTag(ScannerTestTags.compatibleCard("reactive")).assertIsDisplayed()
     }
 
-    // S4 (D8): sin compatibles → estado vacío + «Sugerir receta con IA» → destino
-    // provisional con vuelta atrás.
+    // La sugerencia con IA solo se activa cuando hay al menos un Alimento en el
+    // Escaneo o en la Despensa; sin alimentos, el botón queda deshabilitado.
     @Test
-    fun emptyStateOpensAiSuggestionsProvisionalScreen() {
+    fun aiSuggestionIsDisabledWhenThereAreNoFoods() {
         launchScanner(InMemoryRecipeRepository(), InMemoryPantryRepository())
 
         composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_EMPTY).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).assertIsNotEnabled()
+    }
+
+    // Un Alimento añadido al Escaneo (aún sin guardar) ya activa la sugerencia.
+    @Test
+    fun aiSuggestionEnablesWhenAFoodIsAddedToTheScan() {
+        launchScanner(InMemoryRecipeRepository(), InMemoryPantryRepository())
+
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).assertIsNotEnabled()
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Tomate")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).assertIsEnabled()
+    }
+
+    // S4 (D8): sin compatibles pero con alimentos en la Despensa → estado vacío +
+    // «Sugerir receta con IA» activo → destino provisional con vuelta atrás.
+    @Test
+    fun emptyStateOpensAiSuggestionsProvisionalScreen() {
+        val pantry = InMemoryPantryRepository()
+        runBlocking { pantry.savePantryItem(PantryItem(id = "pantry-tomate", name = "Tomate")) }
+        launchScanner(InMemoryRecipeRepository(), pantry)
+
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_EMPTY).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI)
+            .assertIsEnabled()
+            .performClick()
 
         composeRule.onNodeWithTag(ProvisionalTestTags.AI_SUGGESTIONS_SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Sugerir receta con IA").assertIsDisplayed()
@@ -259,7 +288,7 @@ class CompatibleRecipesE2ETest {
         locale: Locale = Locale("es", "ES"),
         detailRecipeId: String? = null,
     ) {
-        val viewModel = ScannerViewModel(pantry, recipes, AlwaysFailingFoodDetector)
+        val viewModel = ScannerViewModel(pantry, recipes, AlwaysFailingScanAnalyzer)
         viewModel.onCameraPermissionDenied()
         val detailViewModel = detailRecipeId?.let { RecipeDetailViewModel(recipes, pantry, it) }
         val showDetail = mutableStateOf(false)
@@ -294,7 +323,9 @@ class CompatibleRecipesE2ETest {
                             uiState = state,
                             previewContent = {},
                             onBack = {},
-                            onRescan = {},
+                            onOpenScanner = {},
+                            onCloseScanner = {},
+                            onCapture = {},
                             onRequestExit = { true },
                             onConfirmExit = {},
                             onCancelExit = {},
@@ -337,7 +368,7 @@ class CompatibleRecipesE2ETest {
         }
     }
 
-    private object AlwaysFailingFoodDetector : FoodDetector {
-        override suspend fun detect(image: ByteArray): FoodDetectionResult = FoodDetectionResult.Failed
+    private object AlwaysFailingScanAnalyzer : ScanImageAnalyzer {
+        override suspend fun analyze(image: ByteArray, language: String): ScanAnalysisResult = ScanAnalysisResult.Failed
     }
 }

@@ -2,5 +2,10 @@
     <!-- Tema base sin ActionBar: toda la interfaz es Compose + Material 3. -->
     <style name="Theme.WhatsForLunch" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/warm_surface</item>
+        <!-- Edge-to-edge desde el primer frame: barras transparentes e iconos oscuros. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

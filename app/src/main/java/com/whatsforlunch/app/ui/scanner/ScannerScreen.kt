@@ -2,7 +2,11 @@ package com.whatsforlunch.app.ui.scanner
 
 import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,21 +15,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -35,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -46,12 +51,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -63,10 +67,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.drawscope.Stroke
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.match.CompatibleRecipe
-import com.whatsforlunch.app.domain.model.DetectedFood
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
@@ -74,19 +76,19 @@ import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
-import kotlin.math.roundToInt
 
 object ScannerTestTags {
     const val SCREEN = "scanner_screen"
     const val BACK = "scanner_back"
+    const val SCANNER_TOGGLE = "scanner_toggle"
+    const val CAMERA_SECTION = "scanner_camera_section"
+    const val CAMERA_CLOSE = "scanner_camera_close"
     const val CAMERA_PREVIEW = "scanner_camera_preview"
-    const val LIVE_HUD = "scanner_live_hud"
-    const val HUD_LABEL_PREFIX = "scanner_hud_label"
+    const val CAPTURE = "scanner_capture"
     const val CAPTURE_PROGRESS = "scanner_capture_progress"
     const val FOOD_LIST = "scanner_food_list"
     const val FOOD_ITEM = "scanner_food_item"
     const val ITEM_NAME_PREFIX = "scanner_item_name"
-    const val ITEM_CONFIDENCE_PREFIX = "scanner_item_confidence"
     const val ITEM_QUANTITY_PREFIX = "scanner_item_quantity"
     const val QUANTITY_DECREMENT_PREFIX = "scanner_quantity_decrement"
     const val QUANTITY_INCREMENT_PREFIX = "scanner_quantity_increment"
@@ -95,7 +97,6 @@ object ScannerTestTags {
     const val MANUAL_NAME = "scanner_manual_name"
     const val MANUAL_ADD = "scanner_manual_add"
     const val SAVE = "scanner_save"
-    const val RESCAN = "scanner_rescan"
     const val EXIT_DIALOG = "scanner_exit_dialog"
     const val EXIT_CANCEL = "scanner_exit_cancel"
     const val EXIT_CONFIRM = "scanner_exit_confirm"
@@ -107,9 +108,7 @@ object ScannerTestTags {
     const val COMPATIBLE_EMPTY = "scanner_compatible_empty"
     const val COMPATIBLE_SUGGEST_AI = "scanner_compatible_suggest_ai"
 
-    fun hudLabel(index: Int) = "${HUD_LABEL_PREFIX}_$index"
     fun itemName(id: String) = "${ITEM_NAME_PREFIX}_$id"
-    fun itemConfidence(id: String) = "${ITEM_CONFIDENCE_PREFIX}_$id"
     fun itemQuantity(id: String) = "${ITEM_QUANTITY_PREFIX}_$id"
     fun quantityDecrement(id: String) = "${QUANTITY_DECREMENT_PREFIX}_$id"
     fun quantityIncrement(id: String) = "${QUANTITY_INCREMENT_PREFIX}_$id"
@@ -126,7 +125,9 @@ fun ScannerScreen(
     uiState: ScannerUiState,
     previewContent: @Composable () -> Unit,
     onBack: () -> Unit,
-    onRescan: () -> Unit,
+    onOpenScanner: () -> Unit,
+    onCloseScanner: () -> Unit,
+    onCapture: () -> Unit,
     onRequestExit: () -> Boolean,
     onConfirmExit: () -> Unit,
     onCancelExit: () -> Unit,
@@ -140,6 +141,8 @@ fun ScannerScreen(
     onSuggestWithAi: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var manualName by rememberSaveable { mutableStateOf("") }
+
     BackHandler(enabled = !uiState.showExitConfirmation) {
         if (onRequestExit()) onBack()
     }
@@ -166,43 +169,17 @@ fun ScannerScreen(
             )
         },
         bottomBar = {
-            ScannerActions(
-                uiState = uiState,
-                onRescan = onRescan,
-                onSave = onSave,
-            )
+            // Solo ocupa altura cuando hay Alimentos que guardar; el fondo del
+            // Escáner sigue llegando hasta el borde inferior.
+            if (uiState.items.isNotEmpty()) {
+                ScannerActions(uiState = uiState, onSave = onSave)
+            }
         },
     ) { innerPadding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
-            if (uiState.cameraPreviewReady) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md)
-                        .heightIn(min = 220.dp, max = 300.dp).clip(RoundedCornerShape(WarmRadius.lg)),
-                ) {
-                    previewContent()
-                    LiveDetectionHud(detections = uiState.liveDetections)
-                }
-            } else {
-                CameraPlaceholder(uiState, modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md))
-            }
-
-            if (uiState.isDetecting) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md).testTag(ScannerTestTags.CAPTURE_PROGRESS),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    Text(
-                        stringResource(R.string.scanner_detection_loading),
-                        modifier = Modifier.padding(start = WarmSpacing.sm),
-                    )
-                }
-            }
-
             uiState.notice?.let { notice ->
                 NoticeBanner(notice = notice, onDismiss = onClearNotice)
             }
@@ -210,9 +187,48 @@ fun ScannerScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = WarmSpacing.md)
                     .testTag(ScannerTestTags.FOOD_LIST),
-                contentPadding = PaddingValues(vertical = WarmSpacing.xs),
-                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                contentPadding = PaddingValues(vertical = WarmSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
             ) {
+                item(key = "manual_entry") {
+                    ManualFoodEntry(
+                        name = manualName,
+                        onNameChange = { manualName = it },
+                        onAdd = {
+                            if (manualName.isNotBlank()) {
+                                onAddManualItem(manualName)
+                                manualName = ""
+                            }
+                        },
+                    )
+                    if (!uiState.isScannerExpanded) {
+                        OutlinedButton(
+                            onClick = onOpenScanner,
+                            enabled = !uiState.isAnalyzing && !uiState.isSaving,
+                            modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm).heightIn(min = 52.dp)
+                                .testTag(ScannerTestTags.SCANNER_TOGGLE),
+                        ) {
+                            Icon(Icons.Outlined.CameraAlt, contentDescription = null)
+                            Text(
+                                stringResource(R.string.scanner_open_camera),
+                                modifier = Modifier.padding(start = WarmSpacing.xs),
+                            )
+                        }
+                    }
+                    AnimatedVisibility(
+                        visible = uiState.isScannerExpanded,
+                        enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                        exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+                    ) {
+                        ScannerCameraPanel(
+                            uiState = uiState,
+                            previewContent = previewContent,
+                            onCapture = onCapture,
+                            onClose = onCloseScanner,
+                        )
+                    }
+                }
+
                 if (uiState.items.isNotEmpty()) {
                     items(uiState.items, key = ScanDraftItem::id) { item ->
                         ScannerFoodCard(
@@ -221,39 +237,105 @@ fun ScannerScreen(
                             onNameChange = { onRenameItem(item.id, it) },
                             onQuantityChange = { onQuantityChange(item.id, it) },
                             onRemove = { onRemoveItem(item.id) },
+                            modifier = Modifier.animateItem(),
                         )
                     }
-                } else if (uiState.cameraPreviewReady && !uiState.liveStopped) {
-                    item {
+                } else {
+                    item(key = "empty_hint") {
                         Text(
-                            stringResource(R.string.scanner_live_hint),
+                            stringResource(R.string.scanner_capture_hint),
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
-                item {
+
+                item(key = "compatible_recipes") {
                     CompatibleRecipesSection(
                         compatibleRecipes = uiState.compatibleRecipes,
+                        hasFoods = uiState.items.isNotEmpty() || uiState.pantryItems.isNotEmpty(),
                         onOpenRecipe = onOpenRecipe,
                         onSuggestWithAi = onSuggestWithAi,
                     )
                 }
             }
-
-            ManualFoodEntry(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md),
-                onAdd = onAddManualItem,
-            )
         }
     }
 
     if (uiState.showExitConfirmation) {
         ExitConfirmationDialog(
-            isRescan = uiState.rescanAfterConfirmation,
             onConfirm = onConfirmExit,
             onDismiss = onCancelExit,
         )
+    }
+}
+
+@Composable
+private fun ScannerCameraPanel(
+    uiState: ScannerUiState,
+    previewContent: @Composable () -> Unit,
+    onCapture: () -> Unit,
+    onClose: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.md).testTag(ScannerTestTags.CAMERA_SECTION),
+        shape = RoundedCornerShape(WarmRadius.lg),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+    ) {
+        Column(
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
+        ) {
+            if (uiState.cameraPreviewReady) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp, max = 300.dp)
+                        .clip(RoundedCornerShape(WarmRadius.lg)),
+                ) {
+                    previewContent()
+                }
+            } else {
+                CameraPlaceholder(uiState, modifier = Modifier.fillMaxWidth())
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Button(
+                    onClick = onCapture,
+                    enabled = uiState.cameraPreviewReady && !uiState.isAnalyzing && !uiState.isSaving,
+                    modifier = Modifier.weight(1f).heightIn(min = 52.dp).testTag(ScannerTestTags.CAPTURE),
+                ) {
+                    Icon(Icons.Outlined.CameraAlt, contentDescription = null)
+                    Text(stringResource(R.string.scanner_capture), modifier = Modifier.padding(start = WarmSpacing.xs))
+                }
+                IconButton(
+                    onClick = onClose,
+                    enabled = !uiState.isAnalyzing && !uiState.isSaving,
+                    modifier = Modifier.size(48.dp).testTag(ScannerTestTags.CAMERA_CLOSE),
+                ) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.scanner_close_camera),
+                    )
+                }
+            }
+
+            if (uiState.isAnalyzing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag(ScannerTestTags.CAPTURE_PROGRESS),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    Text(
+                        stringResource(R.string.scanner_analyzing),
+                        modifier = Modifier.padding(start = WarmSpacing.sm),
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -275,54 +357,14 @@ private fun CameraPlaceholder(uiState: ScannerUiState, modifier: Modifier = Modi
     }
 }
 
-/** Live detection HUD: bounding boxes plus pill labels drawn over the camera preview. */
-@Composable
-private fun LiveDetectionHud(detections: List<DetectedFood>, modifier: Modifier = Modifier) {
-    if (detections.isEmpty()) return
-    val boxColor = MaterialTheme.colorScheme.primary
-    Box(modifier = modifier.fillMaxSize().testTag(ScannerTestTags.LIVE_HUD)) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            detections.forEach { detection ->
-                val bounds = detection.boundingBox ?: return@forEach
-                val left = (bounds.left.toFloat() * size.width).coerceIn(0f, size.width)
-                val top = (bounds.top.toFloat() * size.height).coerceIn(0f, size.height)
-                val right = (bounds.right.toFloat() * size.width).coerceIn(left, size.width)
-                val bottom = (bounds.bottom.toFloat() * size.height).coerceIn(top, size.height)
-                drawRect(
-                    color = boxColor,
-                    topLeft = Offset(left, top),
-                    size = Size(right - left, bottom - top),
-                    style = Stroke(width = 2.dp.toPx()),
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.align(Alignment.TopStart).padding(WarmSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            detections.forEachIndexed { index, detection ->
-                val confidence = (detection.confidence * 100).roundToInt()
-                val accessibilityDescription = stringResource(R.string.scanner_confidence_accessibility, confidence)
-                Text(
-                    stringResource(R.string.scanner_hud_detection, detection.name, confidence),
-                    modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.72f))
-                        .padding(horizontal = WarmSpacing.sm, vertical = 4.dp)
-                        .testTag(ScannerTestTags.hudLabel(index))
-                        .semantics { contentDescription = accessibilityDescription },
-                    color = MaterialTheme.colorScheme.inverseOnSurface,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun NoticeBanner(notice: ScannerNotice, onDismiss: () -> Unit) {
     val message = when (notice) {
         ScannerNotice.CAMERA_PERMISSION_DENIED -> stringResource(R.string.scanner_camera_denied)
         ScannerNotice.CAMERA_UNAVAILABLE -> stringResource(R.string.scanner_camera_unavailable)
-        ScannerNotice.DETECTION_FAILED -> stringResource(R.string.scanner_detection_failed)
+        ScannerNotice.ANALYSIS_FAILED -> stringResource(R.string.scanner_analysis_failed)
+        ScannerNotice.AI_KEY_MISSING -> stringResource(R.string.scanner_ai_key_missing)
+        ScannerNotice.NO_DETECTIONS -> stringResource(R.string.scanner_no_detections)
         ScannerNotice.DUPLICATE_NAME -> stringResource(R.string.scanner_duplicate_error)
         ScannerNotice.INVALID_NAME -> stringResource(R.string.scanner_name_invalid)
         ScannerNotice.SAVE_FAILED -> stringResource(R.string.scanner_save_failed)
@@ -333,7 +375,7 @@ private fun NoticeBanner(notice: ScannerNotice, onDismiss: () -> Unit) {
         shape = RoundedCornerShape(WarmRadius.md),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.xs, bottom = WarmSpacing.xs),
+            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.sm, bottom = WarmSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
@@ -345,20 +387,24 @@ private fun NoticeBanner(notice: ScannerNotice, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun ManualFoodEntry(modifier: Modifier = Modifier, onAdd: (String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    Column(modifier = modifier.padding(bottom = WarmSpacing.sm)) {
+private fun ManualFoodEntry(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onAdd: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = onNameChange,
             modifier = Modifier.fillMaxWidth().testTag(ScannerTestTags.MANUAL_NAME),
             label = { Text(stringResource(R.string.scanner_manual_name)) },
             singleLine = true,
         )
         Button(
-            onClick = { onAdd(name); name = "" },
+            onClick = onAdd,
             enabled = name.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.xs).heightIn(min = 48.dp)
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                 .testTag(ScannerTestTags.MANUAL_ADD),
         ) {
             Icon(Icons.Outlined.Add, contentDescription = null)
@@ -374,15 +420,16 @@ private fun ScannerFoodCard(
     onNameChange: (String) -> Unit,
     onQuantityChange: (Int) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(WarmRadius.lg)
     Surface(
-        modifier = Modifier.fillMaxWidth().clip(shape).testTag(ScannerTestTags.FOOD_ITEM),
+        modifier = modifier.fillMaxWidth().clip(shape).testTag(ScannerTestTags.FOOD_ITEM),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
-        Column(modifier = Modifier.padding(WarmSpacing.sm), verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.padding(WarmSpacing.md), verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = item.name,
                     onValueChange = onNameChange,
@@ -391,7 +438,11 @@ private fun ScannerFoodCard(
                     singleLine = true,
                 )
                 IconButton(onClick = onRemove, modifier = Modifier.size(48.dp).testTag(ScannerTestTags.removeItem(item.id))) {
-                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.scanner_remove_food))
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = stringResource(R.string.scanner_remove_food),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -412,23 +463,12 @@ private fun ScannerFoodCard(
                     modifier = Modifier.size(48.dp).testTag(ScannerTestTags.quantityIncrement(item.id)),
                 ) { Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.scanner_quantity_increase)) }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                item.confidence?.let { score ->
-                    val confidence = (score * 100).roundToInt()
-                    Text(
-                        stringResource(R.string.scanner_confidence, confidence),
-                        modifier = Modifier.testTag(ScannerTestTags.itemConfidence(item.id)),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (match != null) {
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        stringResource(R.string.scanner_already_in_pantry),
-                        modifier = Modifier.testTag(ScannerTestTags.duplicateMark(item.id)),
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                }
+            if (match != null) {
+                Text(
+                    stringResource(R.string.scanner_already_in_pantry),
+                    modifier = Modifier.testTag(ScannerTestTags.duplicateMark(item.id)),
+                    color = MaterialTheme.colorScheme.secondary,
+                )
             }
         }
     }
@@ -437,12 +477,13 @@ private fun ScannerFoodCard(
 @Composable
 private fun CompatibleRecipesSection(
     compatibleRecipes: List<CompatibleRecipe>,
+    hasFoods: Boolean,
     onOpenRecipe: (String) -> Unit,
     onSuggestWithAi: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().testTag(ScannerTestTags.COMPATIBLE_SECTION),
-        verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
     ) {
         Text(
             stringResource(R.string.scanner_compatible_title),
@@ -458,7 +499,7 @@ private fun CompatibleRecipesSection(
                 modifier = Modifier.testTag(ScannerTestTags.COMPATIBLE_EMPTY),
             )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
+            Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.md)) {
                 compatibleRecipes.forEach { compatible ->
                     CompatibleRecipeCard(
                         compatible = compatible,
@@ -467,9 +508,11 @@ private fun CompatibleRecipesSection(
                 }
             }
         }
-        // La sugerencia con IA sigue disponible aunque ya haya Recetas compatibles (RF-MRC8).
+        // La sugerencia con IA sigue disponible aunque ya haya Recetas compatibles (RF-MRC8),
+        // pero solo se activa cuando hay al menos un Alimento en el Escaneo o en la Despensa.
         Button(
             onClick = onSuggestWithAi,
+            enabled = hasFoods,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
                 .testTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI),
         ) {
@@ -506,14 +549,14 @@ private fun CompatibleRecipeCard(
                     .testTag(ScannerTestTags.compatibleCard(recipe.id)),
             )
             Row(
-                modifier = Modifier.fillMaxWidth().padding(WarmSpacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                modifier = Modifier.fillMaxWidth().padding(WarmSpacing.md),
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.md),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CompatibleRecipeThumbnail(recipe.photoPath)
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
                 ) {
                     MatchBadge(
                         match = match,
@@ -578,43 +621,37 @@ private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {
 @Composable
 private fun ScannerActions(
     uiState: ScannerUiState,
-    onRescan: () -> Unit,
     onSave: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            // El fondo llega hasta el borde; las acciones quedan por encima de
+            // la barra de navegación del sistema.
+            .navigationBarsPadding()
+            .padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.md),
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
     ) {
-        if (uiState.items.isNotEmpty()) {
-            Button(
-                onClick = onSave,
-                enabled = uiState.pantryLoaded && !uiState.isDetecting && !uiState.isSaving && uiState.items.all { it.name.isNotBlank() },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(ScannerTestTags.SAVE),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            ) {
-                Text(stringResource(R.string.scanner_save))
-            }
-        }
-        // Shown with an empty list too, so a stopped loop (D5) can always be restarted.
-        if (uiState.items.isNotEmpty() || (uiState.liveStopped && uiState.cameraPreviewReady)) {
-            TextButton(
-                onClick = onRescan,
-                enabled = !uiState.isDetecting && !uiState.isSaving,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag(ScannerTestTags.RESCAN),
-            ) { Text(stringResource(R.string.scanner_rescan)) }
+        Button(
+            onClick = onSave,
+            enabled = uiState.pantryLoaded && !uiState.isAnalyzing && !uiState.isSaving && uiState.items.all { it.name.isNotBlank() },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(ScannerTestTags.SAVE),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        ) {
+            Text(stringResource(R.string.scanner_save))
         }
     }
 }
 
 @Composable
 private fun ExitConfirmationDialog(
-    isRescan: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val title = stringResource(if (isRescan) R.string.scanner_rescan_title else R.string.scanner_exit_title)
-    val message = stringResource(if (isRescan) R.string.scanner_rescan_message else R.string.scanner_exit_message)
-    val confirm = stringResource(if (isRescan) R.string.scanner_rescan_confirm else R.string.scanner_exit_confirm)
+    val title = stringResource(R.string.scanner_exit_title)
+    val message = stringResource(R.string.scanner_exit_message)
+    val confirm = stringResource(R.string.scanner_exit_confirm)
     val cancel = stringResource(R.string.scanner_cancel)
     AlertDialog(
         onDismissRequest = onDismiss,
