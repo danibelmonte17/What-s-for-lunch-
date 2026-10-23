@@ -203,4 +203,17 @@
     <string name="scanner_compatible_suggest_ai">Sugerir receta con IA</string>
     <string name="scanner_compatible_card_accessibility">Receta compatible: %1$s, %2$d%% de coincidencia</string>
     <string name="ai_suggestions_title">Sugerir receta con IA</string>
+    <string name="ai_suggestions_selection_title">Elige los alimentos que quieres enviar</string>
+    <string name="ai_suggestions_request">Pedir sugerencias</string>
+    <string name="ai_suggestions_progress">Pidiendo sugerencias a la IA…</string>
+    <string name="ai_suggestions_empty">La IA no propuso ninguna receta. Prueba de nuevo.</string>
+    <string name="ai_suggestions_failed">No se pudieron obtener sugerencias. Inténtalo de nuevo.</string>
+    <string name="ai_suggestions_retry">Reintentar</string>
+    <string name="ai_suggestions_key_missing">Configura tu API key en Ajustes para pedir sugerencias con IA.</string>
+    <string name="ai_suggestions_open_settings">Abrir Ajustes</string>
+    <string name="ai_suggestions_card_ingredients">%1$d de %2$d ingredientes disponibles</string>
+    <string name="ai_suggestions_card_accessibility">Sugerencia: %1$s</string>
+    <string name="ai_suggestions_selection_item_accessibility">Seleccionar %1$s</string>
+    <string name="ai_suggestions_ingredients_header">Ingredientes</string>
+    <string name="ai_suggestions_steps_header">Pasos</string>
 </resources>

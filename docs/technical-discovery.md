@@ -94,6 +94,17 @@ El Escáner sustituye la detección on-device por una **foto analizada por IA**:
 
 Verificación: unit de `ScanAnalysis`/`ScanAnalysisParser`/`ScannerViewModel`/`AiEndpoints`, `CameraXScanImageSourceTest` (JPEG en memoria, sin ficheros) y `ScanPantryE2ETest` con captura y cliente simulados (S1-S9).
 
+### Sugerencias de recetas con IA (2026-10-23, `sugerir-recetas-con-ia`)
+
+- **Dominio**: `domain/suggestion/RecipeSuggestion.kt` modela la propuesta con forma de Receta (título, historia, Momento, tiempos, dificultad, Raciones base, calorías, Ingredientes y Pasos) y `SuggestionWithMatch`; `domain/suggestion/SuggestionRules.kt` normaliza la respuesta (D8, propuestas inválidas descartadas individualmente, máximo 3 y duplicados por título) y calcula la Coincidencia con `calculateMatch` (RD01/RD10) contra los **Alimentos seleccionados**, sin tocar `RecipeMatch.kt`.
+- **Cliente**: `OpenAiCompatibleRecipeSuggester` hace `POST <base>/chat/completions` con `model = "chat"`, `temperature = 0`, `response_format = {"type":"json_object"}` y un mensaje de solo texto con la selección `nombre (cantidad)`. Sin key → `MissingApiKey`; sin alimentos, HTTP ≠ 2xx, cuerpo nulo o JSON ilegible → `Failed`; `CancellationException` se repropaga; **una sola llamada por confirmación** (D10), sin reintentos automáticos ni caché.
+- **JSON compacto (D1)**: el prompt es/en pide hasta 3 recetas con claves cortas `t/st/mm/pm/cm/df/bs/kcal/i/p` (ingredientes `n/q/u/o`, pasos `t/m`) y tokens fijos de máquina para Momento y dificultad, para minimizar los tokens de salida. `RecipeSuggestionParser` tolera vallas ```` ```json ```` y texto alrededor del primer objeto JSON.
+- **Chips compartidos**: `data/scanner/ScanDraftHolder` (singleton de Koin) expone los chips del Escaneo sin guardar como `StateFlow`; `ScannerViewModel` los delega y `AiSuggestionsViewModel` los une con la Despensa por nombre normalizado (D3). Al guardar o vaciar el Escaneo el holder se limpia.
+- **UI**: `ui/aisuggestions/` con fases selección, carga, resultados, vacío y error/aviso (`MissingApiKey`/`Failed`); selección preseleccionada con mínimo 1, tarjetas de solo lectura con `MatchBadge` y detalle completo, toque inerte (D5) y «Abrir Ajustes» hacia `settings`. Las Sugerencias viven solo en memoria (D4).
+- **Navegación**: `AppRoutes.AI_SUGGESTIONS = "ai_suggestions"` sustituye al destino provisional; `ProvisionalScreen` deja de usarse para Sugerencias.
+
+Verificación: unit de `RecipeSuggestionParser`, `SuggestionRules` y `AiSuggestionsViewModel`; E2E `AiSuggestionsE2ETest` (S1-S8) con `FakeRecipeSuggester` y captura simulada, más la regresión del Escáner y de Recetas Compatibles.
+
 ### Acceso a IA y API key en el dispositivo (2026-10-22, `configurar-acceso-a-ia`)
 
 - **Decisión D2**: la API key de DevExpert Inference se guarda con **Android Keystore directo** (clave AES-256 del Keystore, transformación `AES/GCM/NoPadding`, alias `whatsforlunch_ai_key`). Cada guardado usa un IV nuevo y persiste `Base64(IV || ciphertext)` en `SharedPreferences` `ai_key_prefs` (clave `api_key`). No se añade `androidx.security:security-crypto` (deprecado) ni ninguna dependencia nueva.
@@ -127,13 +138,13 @@ flowchart LR
 ## Datos y almacenamiento
 
 - **Duraderos (Room)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra.
-- **Temporales/derivados**: resultados de Escaneo (chips en memoria), foto del Escaneo (JPEG en memoria, enviado al proveedor y descartado — RD06; las fotos de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), caché de respuestas de la IA.
+- **Temporales/derivados**: resultados de Escaneo (chips en memoria, compartidos con Sugerencias por `ScanDraftHolder`), foto del Escaneo (JPEG en memoria, enviado al proveedor y descartado — RD06; las fotos de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), selección y Sugerencias de recetas **solo en memoria** (sin Room, migración, historial ni caché — D4), caché de respuestas de la IA.
 - **Credenciales**: API key de DevExpert Inference en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
 - **Migración o importación**: ninguna (proyecto nuevo).
 
 ## Integraciones externas
 
-- **DevExpert Inference (API compatible con OpenAI)** — Escaneo con IA (visión multimodal), chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Endpoints: `POST /v1/chat/completions` con el alias `chat` (foto como `data:image/jpeg;base64`) y `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`).
+- **DevExpert Inference (API compatible con OpenAI)** — Escaneo con IA (visión multimodal), chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Endpoints: `POST /v1/chat/completions` con el alias `chat` (foto del Escaneo como `data:image/jpeg;base64`; Sugerencias con solo texto y `response_format: json_object`) y `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`, puerta de release).
 
 ## Autenticación y autorización
 
