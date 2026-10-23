@@ -48,6 +48,7 @@ import com.whatsforlunch.app.ui.createrecipe.toActions
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesUiState
+import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -155,6 +156,13 @@ class CreateRecipeE2ETest {
     fun newFormPreselectsLunch() {
         launchForm()
         composeRule.onNodeWithTag(CreateRecipeTestTags.MOMENT_LUNCH).performScrollTo().assertIsSelected()
+    }
+
+    @Test
+    fun draftActionShowsOnlyItsLabel() {
+        launchForm()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT)
+            .assertTextContains(formText(R.string.create_recipe_save_draft))
     }
 
     @Test
@@ -333,7 +341,7 @@ class CreateRecipeE2ETest {
     }
 
     // RF-21 de la fidelidad visual (actualizado 2026-10-19): la cabecera ya no dibuja
-    // «Guardar»; el único guardado es «Guardar Borrador» del dock.
+    // «Guardar»; el único guardado es «Borrador» del dock.
     @Test
     fun headerHasNoSaveActionAndDockSavesDraft() {
         val repository = launchForm()
@@ -400,6 +408,10 @@ class CreateRecipeAppE2ETest {
         }
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_LIST).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY_FAB)
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
     }
 }
 

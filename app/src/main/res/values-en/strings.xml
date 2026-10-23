@@ -133,7 +133,7 @@
     <string name="create_recipe_favorite_subtitle">Quick access in your library</string>
     <string name="create_recipe_ingredients_count">%1$d items</string>
     <string name="create_recipe_steps_count">%1$d steps defined</string>
-    <string name="create_recipe_save_draft">Save Draft</string>
+    <string name="create_recipe_save_draft">Draft</string>
     <string name="create_recipe_publish">Publish Recipe</string>
     <string name="create_recipe_save_changes">Save changes</string>
     <string name="create_recipe_publish_blocked">Cannot publish yet:</string>

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -168,7 +169,11 @@ fun ScannerScreen(
             )
         },
         bottomBar = {
-            ScannerActions(uiState = uiState, onSave = onSave)
+            // Solo ocupa altura cuando hay Alimentos que guardar; el fondo del
+            // Escáner sigue llegando hasta el borde inferior.
+            if (uiState.items.isNotEmpty()) {
+                ScannerActions(uiState = uiState, onSave = onSave)
+            }
         },
     ) { innerPadding ->
         Column(
@@ -619,18 +624,22 @@ private fun ScannerActions(
     onSave: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.md),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            // El fondo llega hasta el borde; las acciones quedan por encima de
+            // la barra de navegación del sistema.
+            .navigationBarsPadding()
+            .padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.md),
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
     ) {
-        if (uiState.items.isNotEmpty()) {
-            Button(
-                onClick = onSave,
-                enabled = uiState.pantryLoaded && !uiState.isAnalyzing && !uiState.isSaving && uiState.items.all { it.name.isNotBlank() },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(ScannerTestTags.SAVE),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            ) {
-                Text(stringResource(R.string.scanner_save))
-            }
+        Button(
+            onClick = onSave,
+            enabled = uiState.pantryLoaded && !uiState.isAnalyzing && !uiState.isSaving && uiState.items.all { it.name.isNotBlank() },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(ScannerTestTags.SAVE),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        ) {
+            Text(stringResource(R.string.scanner_save))
         }
     }
 }
