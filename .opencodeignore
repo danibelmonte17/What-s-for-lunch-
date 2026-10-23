@@ -1,0 +1,33 @@
+# Exclusiones de datos sensibles para OpenCode
+
+# Archivo de propiedades locales y claves de API
+local.properties
+
+# Archivos de entorno y secretos
+*.env
+*.env.*
+secrets.properties
+secrets.json
+secrets.xml
+**/secrets/
+*secret*
+*credentials*
+
+# Archivos de firmas y keystores de Android
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+id_rsa
+id_ed25519
+
+# Archivos de configuración de servicios de Firebase/Google
+google-services.json
+GoogleService-Info.plist
+
+# Registros y caches del harness / gradle con datos locales
+.harness/
+.gradle/
