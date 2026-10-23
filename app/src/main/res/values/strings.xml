@@ -15,6 +15,12 @@
     <string name="recipe_detail_metric_difficulty">Dificultad</string>
     <string name="recipe_detail_metric_calories">Calorías por porción</string>
     <string name="recipe_detail_metric_servings">Raciones base</string>
+    <string name="recipe_detail_servings_scaler_title">Raciones a preparar</string>
+    <string name="recipe_detail_servings_scaler_subtitle">Cantidades adaptadas a tu mesa</string>
+    <string name="recipe_detail_servings_scaler_note">Cantidades actualizadas en vivo según la selección.</string>
+    <string name="recipe_detail_servings_scaler_unit">pers.</string>
+    <string name="recipe_detail_servings_decrease">Disminuir raciones</string>
+    <string name="recipe_detail_servings_increase">Aumentar raciones</string>
     <string name="recipe_detail_ingredients_title">Ingredientes</string>
     <string name="recipe_detail_ingredients_count">%1$d de %2$d</string>
     <string name="recipe_detail_ingredients_empty">Sin ingredientes</string>

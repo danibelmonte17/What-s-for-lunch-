@@ -195,6 +195,89 @@ class RecipeDetailViewModelTest {
         assertEquals("0,25", formatQuantity(0.25, Locale("es", "ES")))
     }
 
+    // RF-ER1/RF-ER2 y RD03: el Detalle arranca en las Raciones base y las filas
+    // del checklist se recalculan al cambiar de raciones conservando su identidad.
+    @Test
+    fun detailStartsAtBaseServingsAndScalesIngredientRows() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(
+                Recipe(
+                    id = "scaled",
+                    title = "Bizcocho",
+                    baseServings = 4,
+                    ingredients = listOf(
+                        RecipeIngredient(id = "flour", name = "Harina", quantity = 200.0, unit = "g"),
+                        RecipeIngredient(id = "egg", name = "Huevos", quantity = 2.0, unit = "uds"),
+                    ),
+                ),
+            )
+
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), "scaled")
+            viewModelStore.put("detail", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            val initial = viewModel.uiState.value as RecipeDetailUiState.Detail
+            assertEquals(4, initial.servings)
+            assertEquals(200.0, initial.ingredientRows.first { it.id == "flour" }.quantity, 0.0001)
+
+            viewModel.setServings(2)
+            runCurrent()
+
+            val half = viewModel.uiState.value as RecipeDetailUiState.Detail
+            assertEquals(2, half.servings)
+            assertEquals(100.0, half.ingredientRows.first { it.id == "flour" }.quantity, 0.0001)
+            assertEquals(1.0, half.ingredientRows.first { it.id == "egg" }.quantity, 0.0001)
+            // D5: nombre, unidad y opcionalidad intactos y misma identidad de fila.
+            assertEquals(listOf("flour", "egg"), half.ingredientRows.map { it.id })
+            assertEquals("Harina", half.ingredientRows.first().name)
+            assertEquals("g", half.ingredientRows.first().unit)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    // RF-ER3 (verify 2): la selección nunca sale de 1-12.
+    @Test
+    fun servingsSelectionNeverLeavesAllowedRange() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(Recipe(id = "range", title = "Sopa", baseServings = 4))
+
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), "range")
+            viewModelStore.put("detail", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            viewModel.setServings(0)
+            runCurrent()
+            assertEquals(1, (viewModel.uiState.value as RecipeDetailUiState.Detail).servings)
+
+            viewModel.setServings(13)
+            runCurrent()
+            assertEquals(12, (viewModel.uiState.value as RecipeDetailUiState.Detail).servings)
+
+            viewModel.setServings(5)
+            runCurrent()
+            assertEquals(5, (viewModel.uiState.value as RecipeDetailUiState.Detail).servings)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
     private fun recipe(id: String, ingredients: List<RecipeIngredient>) = Recipe(
         id = id,
         title = "Receta $id",

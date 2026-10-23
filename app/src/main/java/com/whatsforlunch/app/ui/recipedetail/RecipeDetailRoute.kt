@@ -22,6 +22,7 @@ fun RecipeDetailRoute(
         uiState = uiState,
         onBack = onBack,
         onStartCooking = onStartCooking,
+        onServingsChange = viewModel::setServings,
         modifier = modifier,
     )
 }

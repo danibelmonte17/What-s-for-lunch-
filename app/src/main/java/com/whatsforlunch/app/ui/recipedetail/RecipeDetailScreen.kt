@@ -21,16 +21,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.SyncAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -62,6 +66,7 @@ import com.whatsforlunch.app.domain.match.RecipeMatch
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.domain.servings.ServingsScaling
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.MomentBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
@@ -82,6 +87,10 @@ object RecipeDetailTestTags {
     const val DIFFICULTY = "recipe_detail_difficulty"
     const val CALORIES = "recipe_detail_calories"
     const val SERVINGS = "recipe_detail_servings"
+    const val SERVINGS_SCALER = "recipe_detail_servings_scaler"
+    const val SERVINGS_DECREASE = "recipe_detail_servings_decrease"
+    const val SERVINGS_VALUE = "recipe_detail_servings_value"
+    const val SERVINGS_INCREASE = "recipe_detail_servings_increase"
     const val INGREDIENTS = "recipe_detail_ingredients"
     const val INGREDIENT_ROW = "recipe_detail_ingredient_row"
     const val INGREDIENT_CHECK = "recipe_detail_ingredient_check"
@@ -112,6 +121,7 @@ fun RecipeDetailScreen(
     onBack: () -> Unit,
     onStartCooking: () -> Unit,
     modifier: Modifier = Modifier,
+    onServingsChange: (Int) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.testTag(RecipeDetailTestTags.SCREEN),
@@ -159,6 +169,9 @@ fun RecipeDetailScreen(
             is RecipeDetailUiState.Detail -> RecipeDetailContent(
                 recipe = uiState.recipe,
                 match = uiState.match,
+                servings = uiState.servings,
+                ingredientRows = uiState.ingredientRows,
+                onServingsChange = onServingsChange,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -198,6 +211,9 @@ private fun NotFoundContent(onBack: () -> Unit, modifier: Modifier = Modifier) {
 private fun RecipeDetailContent(
     recipe: Recipe,
     match: RecipeMatch?,
+    servings: Int,
+    ingredientRows: List<RecipeIngredient>,
+    onServingsChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -212,9 +228,125 @@ private fun RecipeDetailContent(
             caloriesPerServing = recipe.caloriesPerServing,
             baseServings = recipe.baseServings,
         )
-        IngredientChecklist(recipe = recipe)
+        ServingsScaler(servings = servings, onServingsChange = onServingsChange)
+        IngredientChecklist(recipeId = recipe.id, ingredients = ingredientRows)
         StepsSummary(recipe = recipe)
         Spacer(modifier = Modifier.height(WarmSpacing.md))
+    }
+}
+
+// RF-ER1, RF-ER3 y D1/D4: bloque «Raciones a preparar» entre las métricas y el
+// checklist, con stepper [-] N pers. [+] y sus botones deshabilitados en 1 y 12
+// (patrón del stepper de la Despensa). La selección cambia las cantidades (RD03).
+@Composable
+private fun ServingsScaler(
+    servings: Int,
+    onServingsChange: (Int) -> Unit,
+) {
+    Surface(
+        shape = CardShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = WarmSpacing.md)
+            .warmShadow(shape = CardShape)
+            .testTag(RecipeDetailTestTags.SERVINGS_SCALER),
+    ) {
+        Column(
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.recipe_detail_servings_scaler_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.recipe_detail_servings_scaler_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(modifier = Modifier.width(WarmSpacing.sm))
+                Row(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = RoundedCornerShape(WarmRadius.md),
+                        )
+                        .padding(horizontal = WarmSpacing.xs, vertical = WarmSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(
+                        onClick = { onServingsChange(servings - 1) },
+                        enabled = servings > ServingsScaling.MIN_SERVINGS,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(RecipeDetailTestTags.SERVINGS_DECREASE),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Remove,
+                            contentDescription = stringResource(
+                                R.string.recipe_detail_servings_decrease,
+                            ),
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.width(56.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = servings.toString(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.testTag(RecipeDetailTestTags.SERVINGS_VALUE),
+                        )
+                        Text(
+                            text = stringResource(R.string.recipe_detail_servings_scaler_unit),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(
+                        onClick = { onServingsChange(servings + 1) },
+                        enabled = servings < ServingsScaling.MAX_SERVINGS,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(RecipeDetailTestTags.SERVINGS_INCREASE),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = stringResource(
+                                R.string.recipe_detail_servings_increase,
+                            ),
+                        )
+                    }
+                }
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.SyncAlt,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    text = stringResource(R.string.recipe_detail_servings_scaler_note),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        }
     }
 }
 
@@ -418,13 +550,18 @@ private fun MetricCard(
     }
 }
 
-// RF-DR5 y D3: checklist con marcado local (se reinicia al salir), obligatorios
-// primero y opcionales con su píldora (D6), y contador «N de M».
+// RF-DR5, D3 y D5: checklist con marcado local (se reinicia al salir),
+// obligatorios primero y opcionales con su píldora (D6), contador «N de M» y las
+// cantidades ya escaladas por RD03 (RF-ER2). La identidad de fila no depende de la
+// cantidad escalada para no perder las marcas al cambiar raciones.
 @Composable
-private fun IngredientChecklist(recipe: Recipe) {
+private fun IngredientChecklist(
+    recipeId: String,
+    ingredients: List<RecipeIngredient>,
+) {
     val locale = LocalConfiguration.current.locales[0]
     var checkedIds by rememberSaveable(
-        recipe.id,
+        recipeId,
         stateSaver = listSaver(
             save = { it.toList() },
             restore = { it.toSet() },
@@ -457,10 +594,8 @@ private fun IngredientChecklist(recipe: Recipe) {
                 Text(
                     text = stringResource(
                         R.string.recipe_detail_ingredients_count,
-                        recipe.ingredients.count { ingredient ->
-                            ingredient.key() in checkedIds
-                        },
-                        recipe.ingredients.size,
+                        ingredients.count { ingredient -> ingredient.key() in checkedIds },
+                        ingredients.size,
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
@@ -472,7 +607,7 @@ private fun IngredientChecklist(recipe: Recipe) {
             }
         }
 
-        if (recipe.ingredients.isEmpty()) {
+        if (ingredients.isEmpty()) {
             Text(
                 text = stringResource(R.string.recipe_detail_ingredients_empty),
                 style = MaterialTheme.typography.bodyMedium,
@@ -481,7 +616,7 @@ private fun IngredientChecklist(recipe: Recipe) {
         }
 
         // D6: primero los obligatorios en su orden de modelo y luego los opcionales.
-        recipe.ingredients
+        ingredients
             .sortedBy { it.optional }
             .forEach { ingredient ->
                 IngredientRow(
@@ -569,8 +704,9 @@ private fun ingredientLine(ingredient: RecipeIngredient, locale: Locale): String
         .joinToString(" ")
 }
 
-// Identidad estable de la fila para el marcado local del checklist (D3).
-private fun RecipeIngredient.key(): String = id.ifBlank { "$name-$quantity-$unit" }
+// Identidad estable de la fila para el marcado local del checklist (D3, D5):
+// nunca incluye la cantidad, que cambia al escalar las raciones.
+private fun RecipeIngredient.key(): String = id.ifBlank { "$name-$unit-$optional" }
 
 // RF-DR6: pasos resumidos con número de paso, texto completo y chip «N min» cuando
 // el Paso tiene temporizador; cabecera con el número de pasos.

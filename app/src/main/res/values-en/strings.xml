@@ -14,6 +14,12 @@
     <string name="recipe_detail_metric_difficulty">Difficulty</string>
     <string name="recipe_detail_metric_calories">Calories per serving</string>
     <string name="recipe_detail_metric_servings">Base servings</string>
+    <string name="recipe_detail_servings_scaler_title">Servings to prepare</string>
+    <string name="recipe_detail_servings_scaler_subtitle">Quantities adapted to your table</string>
+    <string name="recipe_detail_servings_scaler_note">Quantities update live with your selection.</string>
+    <string name="recipe_detail_servings_scaler_unit">servings</string>
+    <string name="recipe_detail_servings_decrease">Decrease servings</string>
+    <string name="recipe_detail_servings_increase">Increase servings</string>
     <string name="recipe_detail_ingredients_title">Ingredients</string>
     <string name="recipe_detail_ingredients_count">%1$d of %2$d</string>
     <string name="recipe_detail_ingredients_empty">No ingredients</string>

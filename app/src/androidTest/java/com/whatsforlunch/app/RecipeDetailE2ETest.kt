@@ -9,7 +9,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -116,11 +119,14 @@ class RecipeDetailE2ETest {
         composeRule.onNodeWithTag(RecipeDetailTestTags.CALORIES).assertIsDisplayed()
         composeRule.onNodeWithText("450").assertIsDisplayed()
         composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS).assertIsDisplayed()
-        composeRule.onNodeWithText("4").assertIsDisplayed()
+        composeRule.onAllNodesWithText("4").assertCountEquals(2)
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_VALUE).assertTextEquals("4")
 
         // RF-DR5: checklist con contador, cantidades en español y píldora «Opcional».
-        composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS).assertIsDisplayed()
-        composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS_COUNT).assertIsDisplayed()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS_COUNT)
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onNodeWithText("0 de 3").assertIsDisplayed()
         composeRule.onNodeWithText("4 uds Huevos").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("0,5 kg Patatas").performScrollTo().assertIsDisplayed()
@@ -187,8 +193,12 @@ class RecipeDetailE2ETest {
         composeRule.onAllNodesWithText("La receta de la abuela.").assertCountEquals(0)
         composeRule.onNodeWithTag(RecipeDetailTestTags.CALORIES).assertIsDisplayed()
         composeRule.onNodeWithText("—").assertIsDisplayed()
-        composeRule.onNodeWithText("Sin ingredientes").assertIsDisplayed()
-        composeRule.onNodeWithText("Sin pasos").assertIsDisplayed()
+        composeRule.onNodeWithText("Sin ingredientes").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Sin pasos").performScrollTo().assertIsDisplayed()
+        // RF-ER6: el bloque de raciones se muestra también sin ingredientes.
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_SCALER)
+            .performScrollTo()
+            .assertIsDisplayed()
         // Sin obligatorios no hay badge de Coincidencia (RF-MB6).
         composeRule.onAllNodesWithTag(RecipeDetailTestTags.MATCH).assertCountEquals(0)
     }
@@ -232,10 +242,15 @@ class RecipeDetailE2ETest {
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_BODY).performClick()
         composeRule.onNodeWithTag(RecipeDetailTestTags.SCREEN).assertIsDisplayed()
 
-        composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK)[0].performClick()
-        composeRule.onNodeWithText("1 de 2").assertIsDisplayed()
-        composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK)[1].performClick()
-        composeRule.onNodeWithText("2 de 2").assertIsDisplayed()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS_COUNT).performScrollTo()
+        composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK)[0]
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithText("1 de 2").performScrollTo().assertIsDisplayed()
+        composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK)[1]
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithText("2 de 2").performScrollTo().assertIsDisplayed()
 
         // D3: al salir y volver a entrar, todas las filas están sin marcar.
         composeRule.onNodeWithText("Volver").performClick()
@@ -246,7 +261,7 @@ class RecipeDetailE2ETest {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK).fetchSemanticsNodes().size == 2
         }
-        composeRule.onNodeWithText("0 de 2").assertIsDisplayed()
+        composeRule.onNodeWithText("0 de 2").performScrollTo().assertIsDisplayed()
         composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK)[0].assertIsOff()
         composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_CHECK)[1].assertIsOff()
     }
@@ -318,6 +333,158 @@ class RecipeDetailE2ETest {
         composeRule.onNodeWithTag(RecipeDetailTestTags.SCREEN).assertIsDisplayed()
     }
 
+    // RF-ER2 (verify 1): una Receta de 4 raciones baja a 2 y las cantidades se
+    // reducen a la mitad sin tocar la Receta.
+    @Test
+    fun loweringServingsHalvesIngredientQuantities() {
+        val recipes = InMemoryRecipeRepository()
+        runBlocking {
+            recipes.saveRecipe(
+                Recipe(
+                    id = "scaled",
+                    title = "Bizcocho",
+                    baseServings = 4,
+                    ingredients = listOf(
+                        RecipeIngredient(id = "flour", name = "Harina", quantity = 200.0, unit = "g"),
+                        RecipeIngredient(id = "egg", name = "Huevos", quantity = 2.0, unit = "uds"),
+                    ),
+                ),
+            )
+        }
+
+        launchDetail(recipes, InMemoryPantryRepository(), recipeId = "scaled")
+
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_SCALER)
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Raciones a preparar").assertIsDisplayed()
+        composeRule.onNodeWithText("200 g Harina").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("2 uds Huevos").performScrollTo().assertIsDisplayed()
+
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_VALUE).assertTextEquals("2")
+
+        composeRule.onNodeWithText("100 g Harina").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("1 uds Huevos").performScrollTo().assertIsDisplayed()
+    }
+
+    // RF-ER2 y Q-escalar-raciones-1: el escalado se redondea a máximo 1 decimal.
+    @Test
+    fun scaledQuantitiesRoundToAtMostOneDecimal() {
+        val recipes = InMemoryRecipeRepository()
+        runBlocking {
+            recipes.saveRecipe(
+                Recipe(
+                    id = "decimal",
+                    title = "Revuelto",
+                    baseServings = 4,
+                    ingredients = listOf(
+                        RecipeIngredient(id = "egg", name = "Huevo", quantity = 1.0, unit = "uds"),
+                    ),
+                ),
+            )
+        }
+
+        launchDetail(recipes, InMemoryPantryRepository(), recipeId = "decimal")
+
+        // 1 × (3 / 4) = 0,75 → «0,8».
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithText("0,8 uds Huevo").performScrollTo().assertIsDisplayed()
+    }
+
+    // RF-ER3 (verify 2): en 1 el botón «−» y en 12 el «+» quedan deshabilitados.
+    @Test
+    fun servingsStepperIsDisabledAtLowerBound() {
+        val recipes = InMemoryRecipeRepository()
+        runBlocking {
+            recipes.saveRecipe(
+                Recipe(
+                    id = "single",
+                    title = "Ración única",
+                    baseServings = 1,
+                    ingredients = listOf(
+                        RecipeIngredient(id = "soup", name = "Sopa", quantity = 250.0, unit = "ml"),
+                    ),
+                ),
+            )
+        }
+
+        launchDetail(recipes, InMemoryPantryRepository(), recipeId = "single")
+
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).assertIsNotEnabled()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_INCREASE).assertIsEnabled()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_INCREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).assertIsEnabled()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_VALUE).assertTextEquals("1")
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).assertIsNotEnabled()
+    }
+
+    @Test
+    fun servingsStepperIsDisabledAtUpperBound() {
+        val recipes = InMemoryRecipeRepository()
+        runBlocking {
+            recipes.saveRecipe(
+                Recipe(
+                    id = "banquet",
+                    title = "Banquete",
+                    baseServings = 12,
+                    ingredients = listOf(
+                        RecipeIngredient(id = "rice", name = "Arroz", quantity = 1200.0, unit = "g"),
+                    ),
+                ),
+            )
+        }
+
+        launchDetail(recipes, InMemoryPantryRepository(), recipeId = "banquet")
+
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_INCREASE).assertIsNotEnabled()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).assertIsEnabled()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_INCREASE).assertIsEnabled()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_INCREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_INCREASE).assertIsNotEnabled()
+    }
+
+    // RF-ER4: la selección no se persiste; al volver a abrir el Detalle se ven las
+    // Raciones base y sus cantidades originales.
+    @Test
+    fun servingsSelectionIsNotPersistedWhenReopeningDetail() {
+        seedRoomRecipe(
+            Recipe(
+                id = "scaled",
+                title = "Bizcocho",
+                baseServings = 4,
+                ingredients = listOf(
+                    RecipeIngredient(id = "flour", name = "Harina", quantity = 200.0, unit = "g"),
+                ),
+            ),
+        )
+        launchFullApp()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().size == 1
+        }
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_BODY).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SCREEN).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_DECREASE).performClick()
+        composeRule.onNodeWithText("100 g Harina").performScrollTo().assertIsDisplayed()
+
+        composeRule.onNodeWithText("Volver").performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_BODY).performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_ROW)
+                .fetchSemanticsNodes().size == 1
+        }
+        composeRule.onNodeWithText("200 g Harina").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_VALUE).assertTextEquals("4")
+    }
+
     private fun spanishContext() = InstrumentationRegistry.getInstrumentation().targetContext
         .let { baseContext ->
             baseContext.createConfigurationContext(
@@ -345,7 +512,12 @@ class RecipeDetailE2ETest {
                 LocalResources provides context.resources,
             ) {
                 WhatsForLunchTheme {
-                    RecipeDetailScreen(uiState = state, onBack = onBack, onStartCooking = {})
+                    RecipeDetailScreen(
+                        uiState = state,
+                        onBack = onBack,
+                        onStartCooking = {},
+                        onServingsChange = viewModel::setServings,
+                    )
                 }
             }
         }
