@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -17,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
@@ -147,14 +150,40 @@ class CompatibleRecipesE2ETest {
         composeRule.onNodeWithTag(ScannerTestTags.compatibleCard("reactive")).assertIsDisplayed()
     }
 
-    // S4 (D8): sin compatibles → estado vacío + «Sugerir receta con IA» → destino
-    // provisional con vuelta atrás.
+    // La sugerencia con IA solo se activa cuando hay al menos un Alimento en el
+    // Escaneo o en la Despensa; sin alimentos, el botón queda deshabilitado.
     @Test
-    fun emptyStateOpensAiSuggestionsProvisionalScreen() {
+    fun aiSuggestionIsDisabledWhenThereAreNoFoods() {
         launchScanner(InMemoryRecipeRepository(), InMemoryPantryRepository())
 
         composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_EMPTY).assertIsDisplayed()
-        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).assertIsNotEnabled()
+    }
+
+    // Un Alimento añadido al Escaneo (aún sin guardar) ya activa la sugerencia.
+    @Test
+    fun aiSuggestionEnablesWhenAFoodIsAddedToTheScan() {
+        launchScanner(InMemoryRecipeRepository(), InMemoryPantryRepository())
+
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).assertIsNotEnabled()
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Tomate")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).assertIsEnabled()
+    }
+
+    // S4 (D8): sin compatibles pero con alimentos en la Despensa → estado vacío +
+    // «Sugerir receta con IA» activo → destino provisional con vuelta atrás.
+    @Test
+    fun emptyStateOpensAiSuggestionsProvisionalScreen() {
+        val pantry = InMemoryPantryRepository()
+        runBlocking { pantry.savePantryItem(PantryItem(id = "pantry-tomate", name = "Tomate")) }
+        launchScanner(InMemoryRecipeRepository(), pantry)
+
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_EMPTY).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI)
+            .assertIsEnabled()
+            .performClick()
 
         composeRule.onNodeWithTag(ProvisionalTestTags.AI_SUGGESTIONS_SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Sugerir receta con IA").assertIsDisplayed()

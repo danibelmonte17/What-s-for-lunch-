@@ -173,7 +173,7 @@ fun ScannerScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
             uiState.notice?.let { notice ->
                 NoticeBanner(notice = notice, onDismiss = onClearNotice)
@@ -182,8 +182,8 @@ fun ScannerScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = WarmSpacing.md)
                     .testTag(ScannerTestTags.FOOD_LIST),
-                contentPadding = PaddingValues(vertical = WarmSpacing.xs),
-                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                contentPadding = PaddingValues(vertical = WarmSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
             ) {
                 item(key = "manual_entry") {
                     ManualFoodEntry(
@@ -200,7 +200,7 @@ fun ScannerScreen(
                         OutlinedButton(
                             onClick = onOpenScanner,
                             enabled = !uiState.isAnalyzing && !uiState.isSaving,
-                            modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.xs).heightIn(min = 52.dp)
+                            modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm).heightIn(min = 52.dp)
                                 .testTag(ScannerTestTags.SCANNER_TOGGLE),
                         ) {
                             Icon(Icons.Outlined.CameraAlt, contentDescription = null)
@@ -248,6 +248,7 @@ fun ScannerScreen(
                 item(key = "compatible_recipes") {
                     CompatibleRecipesSection(
                         compatibleRecipes = uiState.compatibleRecipes,
+                        hasFoods = uiState.items.isNotEmpty() || uiState.pantryItems.isNotEmpty(),
                         onOpenRecipe = onOpenRecipe,
                         onSuggestWithAi = onSuggestWithAi,
                     )
@@ -272,13 +273,13 @@ private fun ScannerCameraPanel(
     onClose: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm).testTag(ScannerTestTags.CAMERA_SECTION),
+        modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.md).testTag(ScannerTestTags.CAMERA_SECTION),
         shape = RoundedCornerShape(WarmRadius.lg),
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
         Column(
-            modifier = Modifier.padding(WarmSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
         ) {
             if (uiState.cameraPreviewReady) {
                 Box(
@@ -293,7 +294,7 @@ private fun ScannerCameraPanel(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Button(
@@ -369,7 +370,7 @@ private fun NoticeBanner(notice: ScannerNotice, onDismiss: () -> Unit) {
         shape = RoundedCornerShape(WarmRadius.md),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.xs, bottom = WarmSpacing.xs),
+            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.sm, bottom = WarmSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
@@ -387,7 +388,7 @@ private fun ManualFoodEntry(
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
@@ -398,7 +399,7 @@ private fun ManualFoodEntry(
         Button(
             onClick = onAdd,
             enabled = name.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.xs).heightIn(min = 48.dp)
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                 .testTag(ScannerTestTags.MANUAL_ADD),
         ) {
             Icon(Icons.Outlined.Add, contentDescription = null)
@@ -422,8 +423,8 @@ private fun ScannerFoodCard(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
-        Column(modifier = Modifier.padding(WarmSpacing.sm), verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.padding(WarmSpacing.md), verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = item.name,
                     onValueChange = onNameChange,
@@ -471,12 +472,13 @@ private fun ScannerFoodCard(
 @Composable
 private fun CompatibleRecipesSection(
     compatibleRecipes: List<CompatibleRecipe>,
+    hasFoods: Boolean,
     onOpenRecipe: (String) -> Unit,
     onSuggestWithAi: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().testTag(ScannerTestTags.COMPATIBLE_SECTION),
-        verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
     ) {
         Text(
             stringResource(R.string.scanner_compatible_title),
@@ -492,7 +494,7 @@ private fun CompatibleRecipesSection(
                 modifier = Modifier.testTag(ScannerTestTags.COMPATIBLE_EMPTY),
             )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
+            Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.md)) {
                 compatibleRecipes.forEach { compatible ->
                     CompatibleRecipeCard(
                         compatible = compatible,
@@ -501,9 +503,11 @@ private fun CompatibleRecipesSection(
                 }
             }
         }
-        // La sugerencia con IA sigue disponible aunque ya haya Recetas compatibles (RF-MRC8).
+        // La sugerencia con IA sigue disponible aunque ya haya Recetas compatibles (RF-MRC8),
+        // pero solo se activa cuando hay al menos un Alimento en el Escaneo o en la Despensa.
         Button(
             onClick = onSuggestWithAi,
+            enabled = hasFoods,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
                 .testTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI),
         ) {
@@ -540,14 +544,14 @@ private fun CompatibleRecipeCard(
                     .testTag(ScannerTestTags.compatibleCard(recipe.id)),
             )
             Row(
-                modifier = Modifier.fillMaxWidth().padding(WarmSpacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                modifier = Modifier.fillMaxWidth().padding(WarmSpacing.md),
+                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.md),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CompatibleRecipeThumbnail(recipe.photoPath)
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
                 ) {
                     MatchBadge(
                         match = match,
@@ -615,7 +619,7 @@ private fun ScannerActions(
     onSave: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm),
+        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.md),
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
     ) {
         if (uiState.items.isNotEmpty()) {
