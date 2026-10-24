@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.data.ai
 
+import android.util.Log
 import java.io.IOException
 import java.util.Base64
 import kotlinx.coroutines.CancellationException
@@ -28,6 +29,7 @@ class OpenAiCompatibleScanImageAnalyzer(
         if (image.isEmpty()) return ScanAnalysisResult.Failed
         val key = aiKeyProvider.apiKey() ?: return ScanAnalysisResult.MissingApiKey
         return withContext(Dispatchers.IO) {
+            val startedAt = System.nanoTime()
             try {
                 val request = Request.Builder()
                     .url(endpoint)
@@ -35,21 +37,52 @@ class OpenAiCompatibleScanImageAnalyzer(
                     .post(buildBody(image, language))
                     .build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@withContext ScanAnalysisResult.Failed
-                    val body = response.body?.string() ?: return@withContext ScanAnalysisResult.Failed
-                    val content = messageContent(body) ?: return@withContext ScanAnalysisResult.Failed
-                    val foods = ScanAnalysisParser.parse(content) ?: return@withContext ScanAnalysisResult.Failed
+                    val elapsed = elapsedMs(startedAt)
+                    if (!response.isSuccessful) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
+                        return@withContext ScanAnalysisResult.Failed
+                    }
+                    val body = response.body?.string()
+                    if (body == null) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
+                        return@withContext ScanAnalysisResult.Failed
+                    }
+                    val content = messageContent(body)
+                    if (content == null) {
+                        Log.w(
+                            TAG,
+                            "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
+                                "without message content (body ${body.length} chars)",
+                        )
+                        return@withContext ScanAnalysisResult.Failed
+                    }
+                    val foods = ScanAnalysisParser.parse(content)
+                    if (foods == null) {
+                        Log.w(
+                            TAG,
+                            "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
+                                "with unparseable content (${content.length} chars)",
+                        )
+                        return@withContext ScanAnalysisResult.Failed
+                    }
+                    Log.i(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms, ${foods.size} foods")
                     ScanAnalysisResult.Success(foods)
                 }
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (_: IOException) {
+            } catch (exception: IOException) {
+                Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
                 ScanAnalysisResult.Failed
-            } catch (_: Exception) {
+            } catch (exception: Exception) {
+                Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
                 ScanAnalysisResult.Failed
             }
         }
     }
+
+    private fun elapsedMs(startedAt: Long): Long = (System.nanoTime() - startedAt) / 1_000_000
+
+    private fun Exception.describe(): String = "${javaClass.simpleName}: ${message.orEmpty()}"
 
     private fun buildBody(image: ByteArray, language: String): okhttp3.RequestBody {
         val encoded = Base64.getEncoder().encodeToString(image)
@@ -86,6 +119,7 @@ class OpenAiCompatibleScanImageAnalyzer(
         if (language.lowercase().startsWith("en")) ENGLISH_PROMPT else SPANISH_PROMPT
 
     private companion object {
+        const val TAG = "ScanImageAnalyzer"
         // Stable DevExpert Inference alias for /chat/completions.
         const val MODEL = "chat"
         const val JSON_MEDIA_TYPE = "application/json; charset=utf-8"

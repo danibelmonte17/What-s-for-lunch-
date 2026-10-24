@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.data.ai
 
+import android.util.Log
 import com.whatsforlunch.app.domain.suggestion.SuggestionRules
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
 import java.io.IOException
@@ -34,6 +35,7 @@ class OpenAiCompatibleRecipeSuggester(
         if (foods.isEmpty()) return RecipeSuggestionsResult.Failed
         val key = aiKeyProvider.apiKey() ?: return RecipeSuggestionsResult.MissingApiKey
         return withContext(Dispatchers.IO) {
+            val startedAt = System.nanoTime()
             try {
                 val request = Request.Builder()
                     .url(endpoint)
@@ -41,22 +43,52 @@ class OpenAiCompatibleRecipeSuggester(
                     .post(buildBody(foods, language, existingRecipes))
                     .build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@withContext RecipeSuggestionsResult.Failed
-                    val body = response.body?.string() ?: return@withContext RecipeSuggestionsResult.Failed
-                    val content = messageContent(body) ?: return@withContext RecipeSuggestionsResult.Failed
+                    val elapsed = elapsedMs(startedAt)
+                    if (!response.isSuccessful) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
+                        return@withContext RecipeSuggestionsResult.Failed
+                    }
+                    val body = response.body?.string()
+                    if (body == null) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
+                        return@withContext RecipeSuggestionsResult.Failed
+                    }
+                    val content = messageContent(body)
+                    if (content == null) {
+                        Log.w(
+                            TAG,
+                            "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
+                                "without message content (body ${body.length} chars)",
+                        )
+                        return@withContext RecipeSuggestionsResult.Failed
+                    }
                     val raw = RecipeSuggestionParser.parse(content)
-                        ?: return@withContext RecipeSuggestionsResult.Failed
+                    if (raw == null) {
+                        Log.w(
+                            TAG,
+                            "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
+                                "with unparseable content (${content.length} chars)",
+                        )
+                        return@withContext RecipeSuggestionsResult.Failed
+                    }
+                    Log.i(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms, ${raw.size} proposals")
                     RecipeSuggestionsResult.Success(SuggestionRules.normalize(raw))
                 }
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (_: IOException) {
+            } catch (exception: IOException) {
+                Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
                 RecipeSuggestionsResult.Failed
-            } catch (_: Exception) {
+            } catch (exception: Exception) {
+                Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
                 RecipeSuggestionsResult.Failed
             }
         }
     }
+
+    private fun elapsedMs(startedAt: Long): Long = (System.nanoTime() - startedAt) / 1_000_000
+
+    private fun Exception.describe(): String = "${javaClass.simpleName}: ${message.orEmpty()}"
 
     private fun buildBody(
         foods: List<SuggestableFood>,
@@ -90,6 +122,7 @@ class OpenAiCompatibleRecipeSuggester(
     }.getOrNull()
 
     private companion object {
+        const val TAG = "RecipeSuggester"
         // Stable DevExpert Inference alias for /chat/completions.
         const val MODEL = "chat"
         const val JSON_MEDIA_TYPE = "application/json; charset=utf-8"
