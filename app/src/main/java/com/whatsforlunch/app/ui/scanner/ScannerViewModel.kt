@@ -6,14 +6,10 @@ import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.data.scanner.ScanImageSource
-import com.whatsforlunch.app.domain.match.CompatibleRecipe
-import com.whatsforlunch.app.domain.match.compatibleRecipes
 import com.whatsforlunch.app.domain.model.PantryItem
-import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
-import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.scanner.ScanAnalysis
 import com.whatsforlunch.app.domain.scanner.ScanDetections
 import kotlinx.coroutines.CancellationException
@@ -43,7 +39,6 @@ data class ScannerUiState(
     val isAnalyzing: Boolean = false,
     val items: List<ScanDraftItem> = emptyList(),
     val pantryItems: List<PantryItem> = emptyList(),
-    val compatibleRecipes: List<CompatibleRecipe> = emptyList(),
     val matches: Map<String, PantryItem> = emptyMap(),
     val isSaving: Boolean = false,
     val showExitConfirmation: Boolean = false,
@@ -53,21 +48,15 @@ data class ScannerUiState(
 
 class ScannerViewModel(
     private val pantryRepository: PantryRepository,
-    private val recipeRepository: RecipeRepository,
     private val scanImageAnalyzer: ScanImageAnalyzer,
     private val scanDraftHolder: ScanDraftHolder = ScanDraftHolder(),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScannerUiState())
     val uiState: StateFlow<ScannerUiState> = _uiState.asStateFlow()
 
-    private var recipes: List<Recipe> = emptyList()
-
     init {
         viewModelScope.launch {
             pantryRepository.observePantryItems().collect(::updatePantryItems)
-        }
-        viewModelScope.launch {
-            recipeRepository.observeRecipes().collect(::updateRecipes)
         }
         // Los chips viven en el holder compartido (D3): así Sugerencias los lee sin
         // guardarlos y el Escáner recupera su estado al volver.
@@ -314,15 +303,6 @@ class ScannerViewModel(
             pantryItems = pantryItems,
             matches = matches,
             pantryLoaded = true,
-            compatibleRecipes = compatibleRecipes(recipes, pantryItems),
-        )
-    }
-
-    private fun updateRecipes(recipes: List<Recipe>) {
-        this.recipes = recipes
-        val state = _uiState.value
-        _uiState.value = state.copy(
-            compatibleRecipes = compatibleRecipes(recipes, state.pantryItems),
         )
     }
 

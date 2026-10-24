@@ -36,7 +36,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
-import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.scanner.ScanImageSource
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.scanner.AnalyzedFood
@@ -67,7 +66,6 @@ class ScanPantryE2ETest {
 
     private lateinit var viewModel: ScannerViewModel
     private lateinit var repository: InMemoryPantryRepository
-    private lateinit var recipeRepository: InMemoryRecipeRepository
     private lateinit var analyzer: FakeScanImageAnalyzer
     private lateinit var imageSource: FakeScanImageSource
     private lateinit var showPantry: androidx.compose.runtime.MutableState<Boolean>
@@ -77,6 +75,24 @@ class ScanPantryE2ETest {
     @Before
     fun clearDatabase() {
         E2eDatabase.clear()
+    }
+
+    // RF-SDR7 / S5: el Escáner ya solo escanea; la sección de Recetas Compatibles y
+    // su botón de IA viven ahora en «Recetas con mi Despensa» (0 hits aquí).
+    @Test
+    fun scannerNoLongerShowsCompatibleRecipesOrTheAiSuggestionButton() {
+        launchScanner(
+            analyzerResults = listOf(
+                ScanAnalysisResult.Success(listOf(AnalyzedFood("Manzana", 3.0))),
+            ),
+        )
+        captureAndWait()
+
+        composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_LIST).assertCountEquals(1)
+        composeRule.onNodeWithText("Recetas Compatibles").assertDoesNotExist()
+        composeRule.onNodeWithText("Sugerir receta con IA").assertDoesNotExist()
+        composeRule.onAllNodesWithTag("scanner_compatible_section").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("scanner_compatible_suggest_ai").assertCountEquals(0)
     }
 
     @Test
@@ -511,12 +527,11 @@ class ScanPantryE2ETest {
         locale: Locale = Locale("es", "ES"),
     ) {
         repository = InMemoryPantryRepository()
-        recipeRepository = InMemoryRecipeRepository()
         runBlocking { existing.forEach { repository.savePantryItem(it) } }
         imageSource = FakeScanImageSource()
         analyzer = FakeScanImageAnalyzer(analyzerResults)
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            viewModel = ScannerViewModel(repository, recipeRepository, analyzer)
+            viewModel = ScannerViewModel(repository, analyzer)
             if (permissionGranted) {
                 viewModel.onCameraPermissionGranted()
                 viewModel.onCameraPreviewReady()

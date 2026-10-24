@@ -3,7 +3,6 @@ package com.whatsforlunch.app.ui.scanner
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
-import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.scanner.ScanImageSource
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.repository.PantryRepository
@@ -287,7 +286,6 @@ class ScannerViewModelTest {
         results: List<ScanAnalysisResult>? = null,
     ): ScannerViewModel = ScannerViewModel(
         repository,
-        InMemoryRecipeRepository(),
         results?.let { FakeScanImageAnalyzer(it) } ?: analyzer,
     )
 

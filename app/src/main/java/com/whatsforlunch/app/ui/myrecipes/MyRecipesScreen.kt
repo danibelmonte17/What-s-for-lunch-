@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.BakeryDining
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Delete
@@ -131,6 +132,7 @@ object MyRecipesTestTags {
     const val DELETE_CONFIRM = "my_recipes_delete_confirm"
     const val DELETE_CANCEL = "my_recipes_delete_cancel"
     const val OPEN_PANTRY = "action_open_pantry"
+    const val OPEN_PANTRY_RECIPES = "action_open_pantry_recipes"
     const val OPEN_SETTINGS = "action_open_settings"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
@@ -145,6 +147,7 @@ fun MyRecipesScreen(
     onScanPantry: () -> Unit,
     onEditRecipe: (String) -> Unit = {},
     onOpenRecipe: (String) -> Unit = {},
+    onOpenPantryRecipes: () -> Unit = {},
     onOpenPantry: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
@@ -172,6 +175,16 @@ fun MyRecipesScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.my_recipes_title)) },
                 actions = {
+                    IconButton(
+                        onClick = onOpenPantryRecipes,
+                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                            contentDescription = stringResource(R.string.recommendations_open_accessibility),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     IconButton(
                         onClick = onOpenPantry,
                         modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY),
