@@ -456,6 +456,38 @@
       "status": "accepted"
     },
     {
+      "id": "separar-despensa-y-busqueda-de-recetas",
+      "area": "funcional",
+      "title": "Separar la Despensa de la búsqueda de recetas",
+      "user_visible_behavior": "El Escáner solo escanea la Despensa; las Recetas Compatibles y la sugerencia con IA se consultan en una pantalla propia «Recetas con mi Despensa».",
+      "depends_on": [
+        "mostrar-recetas-compatibles",
+        "sugerir-recetas-con-ia",
+        "escanear-despensa-con-ia"
+      ],
+      "steps": [
+        "Extraer la sección «Recetas Compatibles» y el botón «Sugerir receta con IA» del Escáner a una pantalla propia «Recetas con mi Despensa» (ruta pantry_recipes), con cabecera, tarjetas, estado vacío y vuelta atrás",
+        "Reutilizar la regla de dominio compatibleRecipes() (RD02, umbral 85 %, orden Coincidencia desc → título normalizado asc → id asc) y los componentes de tarjeta sin cambiar calculateMatch ni MatchBadge",
+        "Crear RecommendationsViewModel observando PantryRepository y RecipeRepository para exponer las Recetas compatibles de forma reactiva y hasFoods (Despensa persistida) para habilitar la sugerencia con IA",
+        "Añadir la entrada desde Mis Recetas mediante una acción en la top bar; mantener el FAB de cámara y la pantalla Despensa sin cambios",
+        "Eliminar del Escáner la sección de compatibles, sus callbacks y la dependencia de RecipeRepository y compatibleRecipes en ScannerViewModel, conservando alta manual, cámara, chips, cantidades, guardado, duplicados y avisos",
+        "Renombrar los textos scanner_compatible_* a recommendations_* y mantener la paridad de claves es/en",
+        "Actualizar AppNavHost, AppModule, la spec de mostrar-recetas-compatibles y la documentación de diseño; reapuntar los E2E que montan ScannerScreen directamente a la nueva pantalla"
+      ],
+      "verification": [
+        "E2E: abrir «Recetas con mi Despensa» desde Mis Recetas y comprobar que lista las Recetas compatibles ordenadas (100 % y 85 %) con su badge y la línea «X de Y ingredientes en la Despensa»",
+        "E2E: tocar una tarjeta compatible, comprobar que abre el Detalle y que al volver se regresa a la nueva pantalla",
+        "E2E: pulsar «Sugerir receta con IA» y comprobar que abre Sugerencias; con la Despensa vacía el botón aparece deshabilitado",
+        "E2E: comprobar que el Escáner ya no muestra «Recetas Compatibles» ni «Sugerir receta con IA» y que guardar Alimentos sigue navegando a la Despensa",
+        "E2E: comprobar la actualización reactiva de la lista al añadir, editar o eliminar Alimentos y al crear, editar o eliminar Recetas, sin reiniciar la app",
+        "E2E: comprobar los textos en español e inglés de la nueva pantalla y de la acción de entrada",
+        "Unit: RecommendationsViewModel calcula las Recetas compatibles y hasFoods; ScannerViewModel ya no depende de RecipeRepository"
+      ],
+      "evidence": [],
+      "notes": "Cambio de producto sobre una feature aceptada: sustituye RF-MRC5 de mostrar-recetas-compatibles (la sección deja de estar dentro del Escáner) y conserva RF-MRC7 a RF-MRC10 en la nueva pantalla. Decisiones del usuario (2026-10-24): pantalla propia, mantener el FAB de cámara en Mis Recetas, Despensa sin cambios, entrada mediante acción de top bar, nueva feature con spec y validación independiente. Fuera de alcance: bottom navigation, mover cámara o alta manual a la Despensa, y tocar calculateMatch, MatchBadge, el umbral 85 %, Room o la IA.",
+      "status": "not_started"
+    },
+    {
       "id": "aceptar-sugerencia-de-receta",
       "area": "funcional",
       "title": "Aceptar sugerencia de receta",
