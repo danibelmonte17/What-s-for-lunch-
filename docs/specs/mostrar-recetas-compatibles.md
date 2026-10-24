@@ -8,6 +8,8 @@
 - `status`: `not_started`
 - `source`: `feature_list.json`
 
+> **Nota de sustitución (2026-10-24)**: la feature `separar-despensa-y-busqueda-de-recetas` (`docs/specs/separar-despensa-y-busqueda-de-recetas.md`) sustituye **RF-MRC5**: la sección «Recetas Compatibles» y el botón «Sugerir receta con IA» dejan de vivir dentro del Escáner y pasan a la pantalla propia **«Recetas con mi Despensa»** (ruta `pantry_recipes`), con entrada desde la top bar de Mis Recetas. Se conservan sin cambios RF-MRC1 a RF-MRC4 y RF-MRC6 a RF-MRC10, aplicados ahora en la nueva pantalla (RF-SDR1 a RF-SDR8). Esta nota no borra la historia de la feature ya aceptada.
+
 ## Goal
 
 El Escáner de la Despensa muestra una sección **«Recetas Compatibles»** con las Recetas de Mis Recetas cuya Coincidencia con la Despensa llega al umbral de sugeribilidad de RD02 (≥ 85 %), en lista vertical y **ordenadas por Coincidencia descendente**. Cada tarjeta lleva el badge de Coincidencia («100% Match» / «N%», RD02) reutilizado de `ui/components/MatchBadge`, su miniatura y el desglose «X de Y ingredientes en la Despensa». Al tocar una tarjeta se abre el Detalle de esa Receta. La sección ofrece **siempre visible** el botón **«Sugerir receta con IA»** (destino provisional; la IA real es `sugerir-recetas-con-ia`), **habilitado solo cuando hay al menos un Alimento en el Escaneo o en la Despensa**; cuando ninguna Receta llega al 85 %, muestra además el estado vacío. Cambio posterior a la aceptación (2026-10-23, petición del usuario).

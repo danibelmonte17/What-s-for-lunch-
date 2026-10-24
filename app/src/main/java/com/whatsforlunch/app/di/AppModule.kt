@@ -22,6 +22,7 @@ import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
 import com.whatsforlunch.app.ui.pantry.PantryViewModel
+import com.whatsforlunch.app.ui.recommendations.RecommendationsViewModel
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
@@ -67,7 +68,8 @@ val appModule = module {
     viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get()) }
     viewModel { PantryViewModel(get()) }
-    viewModel { ScannerViewModel(get(), get(), get(), get()) }
+    viewModel { ScannerViewModel(get(), get()) }
+    viewModel { RecommendationsViewModel(get(), get()) }
     viewModel { AiSuggestionsViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).

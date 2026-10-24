@@ -5,7 +5,6 @@ import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
-import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
@@ -165,7 +164,6 @@ class AiSuggestionsViewModelTest {
         val holder = ScanDraftHolder()
         val scanner = ScannerViewModel(
             pantryRepository = InMemoryPantryRepository(),
-            recipeRepository = InMemoryRecipeRepository(),
             scanImageAnalyzer = FailingScanAnalyzer,
             scanDraftHolder = holder,
         )

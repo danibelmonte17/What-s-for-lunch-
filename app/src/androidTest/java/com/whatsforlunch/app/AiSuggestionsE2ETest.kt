@@ -37,8 +37,9 @@ import com.whatsforlunch.app.domain.suggestion.SuggestableFood
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsScreen
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsTestTags
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
-import com.whatsforlunch.app.ui.scanner.ScannerScreen
-import com.whatsforlunch.app.ui.scanner.ScannerTestTags
+import com.whatsforlunch.app.ui.recommendations.RecommendationsScreen
+import com.whatsforlunch.app.ui.recommendations.RecommendationsTestTags
+import com.whatsforlunch.app.ui.recommendations.RecommendationsViewModel
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
@@ -217,18 +218,19 @@ class AiSuggestionsE2ETest {
         composeRule.onNodeWithText("Steps").assertIsDisplayed()
     }
 
-    // S7: desde el Escáner, el botón abre la selección con chips y Despensa
-    // preseleccionados; al volver, los chips sin guardar siguen intactos.
+    // S7: desde «Recetas con mi Despensa», el botón abre la selección con chips del
+    // Escaneo y la Despensa preseleccionados; al volver, los chips sin guardar siguen
+    // intactos (RF-SDR4, D7).
     @Test
-    fun scannerChipsAndPantryArrivePreselectedAndSurviveTheRoundTrip() {
+    fun pantryRecipesButtonOpensSelectionWithChipsAndPantryPreselected() {
         val pantry = pantryWith(PantryItem("tomate", "Tomate", 1))
         val holder = ScanDraftHolder()
         val scannerViewModel = ScannerViewModel(
             pantryRepository = pantry,
-            recipeRepository = InMemoryRecipeRepository(),
             scanImageAnalyzer = AlwaysFailingScanAnalyzer,
             scanDraftHolder = holder,
         )
+        val recommendationsViewModel = RecommendationsViewModel(pantry, InMemoryRecipeRepository())
         val suggestionsViewModel = AiSuggestionsViewModel(pantry, holder, FakeRecipeSuggester(emptyList()))
         val showSuggestions = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
@@ -238,7 +240,7 @@ class AiSuggestionsE2ETest {
         val localeContext = baseContext.createConfigurationContext(configuration)
 
         composeRule.setContent {
-            val scannerState by scannerViewModel.uiState.collectAsState()
+            val recommendationsState by recommendationsViewModel.uiState.collectAsState()
             val suggestionsState by suggestionsViewModel.uiState.collectAsState()
             CompositionLocalProvider(
                 LocalContext provides localeContext,
@@ -255,22 +257,10 @@ class AiSuggestionsE2ETest {
                             onRetry = suggestionsViewModel::retry,
                         )
                     } else {
-                        ScannerScreen(
-                            uiState = scannerState,
-                            previewContent = {},
+                        RecommendationsScreen(
+                            uiState = recommendationsState,
                             onBack = {},
-                            onOpenScanner = {},
-                            onCloseScanner = {},
-                            onCapture = {},
-                            onRequestExit = { true },
-                            onConfirmExit = {},
-                            onCancelExit = {},
-                            onAddManualItem = scannerViewModel::addManualItem,
-                            onRenameItem = scannerViewModel::renameItem,
-                            onQuantityChange = scannerViewModel::updateQuantity,
-                            onRemoveItem = scannerViewModel::removeItem,
-                            onSave = scannerViewModel::saveToPantry,
-                            onClearNotice = scannerViewModel::clearNotice,
+                            onOpenRecipe = {},
                             onSuggestWithAi = { showSuggestions.value = true },
                         )
                     }
@@ -282,7 +272,7 @@ class AiSuggestionsE2ETest {
         scannerViewModel.addManualItem("Mint")
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI).performScrollTo().performClick()
+        composeRule.onNodeWithTag(RecommendationsTestTags.SUGGEST_AI).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(AiSuggestionsTestTags.selectionItem("Chicle")).assertIsDisplayed()
@@ -293,9 +283,8 @@ class AiSuggestionsE2ETest {
         composeRule.onNodeWithTag(AiSuggestionsTestTags.selectionToggle("Tomate")).assertIsOn()
 
         composeRule.onNodeWithText("Volver").performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithTag(RecommendationsTestTags.SCREEN).assertIsDisplayed()
         assertEquals(listOf("Chicle", "Mint"), holder.items.value.map { it.name })
-        composeRule.onNodeWithText("Chicle").assertIsDisplayed()
     }
 
     // S8: los opcionales no alteran la Coincidencia (RD10).

@@ -1,15 +1,12 @@
 package com.whatsforlunch.app.ui.scanner
 
-import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,30 +47,19 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
-import com.whatsforlunch.app.domain.match.CompatibleRecipe
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
-import com.whatsforlunch.app.ui.components.MatchBadge
-import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 
@@ -100,13 +86,6 @@ object ScannerTestTags {
     const val EXIT_DIALOG = "scanner_exit_dialog"
     const val EXIT_CANCEL = "scanner_exit_cancel"
     const val EXIT_CONFIRM = "scanner_exit_confirm"
-    const val COMPATIBLE_SECTION = "scanner_compatible_section"
-    const val COMPATIBLE_TITLE = "scanner_compatible_title"
-    const val COMPATIBLE_CARD_PREFIX = "scanner_compatible_card"
-    const val COMPATIBLE_MATCH_PREFIX = "scanner_compatible_match"
-    const val COMPATIBLE_INGREDIENTS_PREFIX = "scanner_compatible_ingredients"
-    const val COMPATIBLE_EMPTY = "scanner_compatible_empty"
-    const val COMPATIBLE_SUGGEST_AI = "scanner_compatible_suggest_ai"
 
     fun itemName(id: String) = "${ITEM_NAME_PREFIX}_$id"
     fun itemQuantity(id: String) = "${ITEM_QUANTITY_PREFIX}_$id"
@@ -114,9 +93,6 @@ object ScannerTestTags {
     fun quantityIncrement(id: String) = "${QUANTITY_INCREMENT_PREFIX}_$id"
     fun removeItem(id: String) = "${REMOVE_ITEM_PREFIX}_$id"
     fun duplicateMark(id: String) = "${DUPLICATE_MARK_PREFIX}_$id"
-    fun compatibleCard(id: String) = "${COMPATIBLE_CARD_PREFIX}_$id"
-    fun compatibleMatch(id: String) = "${COMPATIBLE_MATCH_PREFIX}_$id"
-    fun compatibleIngredients(id: String) = "${COMPATIBLE_INGREDIENTS_PREFIX}_$id"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,8 +113,6 @@ fun ScannerScreen(
     onRemoveItem: (String) -> Unit,
     onSave: () -> Unit,
     onClearNotice: () -> Unit,
-    onOpenRecipe: (String) -> Unit = {},
-    onSuggestWithAi: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var manualName by rememberSaveable { mutableStateOf("") }
@@ -248,15 +222,6 @@ fun ScannerScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                }
-
-                item(key = "compatible_recipes") {
-                    CompatibleRecipesSection(
-                        compatibleRecipes = uiState.compatibleRecipes,
-                        hasFoods = uiState.items.isNotEmpty() || uiState.pantryItems.isNotEmpty(),
-                        onOpenRecipe = onOpenRecipe,
-                        onSuggestWithAi = onSuggestWithAi,
-                    )
                 }
             }
         }
@@ -471,150 +436,6 @@ private fun ScannerFoodCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun CompatibleRecipesSection(
-    compatibleRecipes: List<CompatibleRecipe>,
-    hasFoods: Boolean,
-    onOpenRecipe: (String) -> Unit,
-    onSuggestWithAi: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().testTag(ScannerTestTags.COMPATIBLE_SECTION),
-        verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
-    ) {
-        Text(
-            stringResource(R.string.scanner_compatible_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = WarmSpacing.sm).testTag(ScannerTestTags.COMPATIBLE_TITLE),
-        )
-        if (compatibleRecipes.isEmpty()) {
-            Text(
-                stringResource(R.string.scanner_compatible_empty),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag(ScannerTestTags.COMPATIBLE_EMPTY),
-            )
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.md)) {
-                compatibleRecipes.forEach { compatible ->
-                    CompatibleRecipeCard(
-                        compatible = compatible,
-                        onOpen = { onOpenRecipe(compatible.recipe.id) },
-                    )
-                }
-            }
-        }
-        // La sugerencia con IA sigue disponible aunque ya haya Recetas compatibles (RF-MRC8),
-        // pero solo se activa cuando hay al menos un Alimento en el Escaneo o en la Despensa.
-        Button(
-            onClick = onSuggestWithAi,
-            enabled = hasFoods,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                .testTag(ScannerTestTags.COMPATIBLE_SUGGEST_AI),
-        ) {
-            Text(stringResource(R.string.scanner_compatible_suggest_ai))
-        }
-    }
-}
-
-@Composable
-private fun CompatibleRecipeCard(
-    compatible: CompatibleRecipe,
-    onOpen: () -> Unit,
-) {
-    val recipe = compatible.recipe
-    val match = compatible.match
-    val shape = RoundedCornerShape(WarmRadius.lg)
-    val accessibilityDescription = stringResource(
-        R.string.scanner_compatible_card_accessibility,
-        recipe.title,
-        match.percentage,
-    )
-    Surface(
-        modifier = Modifier.fillMaxWidth().clip(shape),
-        shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-    ) {
-        // Capa clicable de fondo (patrón de la sesión 48): conserva la semántica de
-        // los hijos y hace que toda la tarjeta abra el Detalle (RF-MRC7).
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier.matchParentSize()
-                    .clickable(role = Role.Button, onClick = onOpen)
-                    .semantics { contentDescription = accessibilityDescription }
-                    .testTag(ScannerTestTags.compatibleCard(recipe.id)),
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(WarmSpacing.md),
-                horizontalArrangement = Arrangement.spacedBy(WarmSpacing.md),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CompatibleRecipeThumbnail(recipe.photoPath)
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-                ) {
-                    MatchBadge(
-                        match = match,
-                        testTag = ScannerTestTags.compatibleMatch(recipe.id),
-                    )
-                    Text(
-                        recipe.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        stringResource(
-                            R.string.scanner_compatible_ingredients,
-                            match.availableRequired,
-                            match.totalRequired,
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.testTag(ScannerTestTags.compatibleIngredients(recipe.id)),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompatibleRecipeThumbnail(photoPath: String?) {
-    val bitmap = rememberBitmap(photoPath)
-    val shape = RoundedCornerShape(WarmRadius.md)
-    Box(
-        modifier = Modifier.size(96.dp).clip(shape).background(MaterialTheme.colorScheme.surfaceContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            androidx.compose.material3.Icon(
-                imageVector = SkilletIcon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {
-    path?.let { file ->
-        runCatching { BitmapFactory.decodeFile(file)?.asImageBitmap() }.getOrNull()
     }
 }
 
