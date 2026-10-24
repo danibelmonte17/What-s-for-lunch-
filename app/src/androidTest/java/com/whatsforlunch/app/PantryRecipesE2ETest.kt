@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
@@ -282,7 +283,12 @@ class PantryRecipesE2ETest {
     ) {
         val viewModel = RecommendationsViewModel(pantry, recipes)
         val detailViewModel = detailRecipeId?.let { RecipeDetailViewModel(recipes, pantry, it) }
-        val aiSuggestionsViewModel = AiSuggestionsViewModel(pantry, ScanDraftHolder(), AlwaysFailingRecipeSuggester)
+        val aiSuggestionsViewModel = AiSuggestionsViewModel(
+            pantry,
+            ScanDraftHolder(),
+            AlwaysFailingRecipeSuggester,
+            recipes,
+        )
         val showDetail = mutableStateOf(false)
         val showAiSuggestions = mutableStateOf(false)
 
@@ -315,6 +321,8 @@ class PantryRecipesE2ETest {
                                 onToggleFood = aiSuggestionsViewModel::toggleFood,
                                 onRequest = { aiSuggestionsViewModel.requestSuggestions("es") },
                                 onRetry = aiSuggestionsViewModel::retry,
+                                onAccept = aiSuggestionsViewModel::acceptSuggestion,
+                                onDiscard = aiSuggestionsViewModel::discardSuggestion,
                             )
                         }
                         else -> RecommendationsScreen(
@@ -357,6 +365,7 @@ class PantryRecipesE2ETest {
         override suspend fun suggest(
             foods: List<SuggestableFood>,
             language: String,
+            existingRecipes: List<RecipeAvoidance>,
         ): RecipeSuggestionsResult = RecipeSuggestionsResult.Failed
     }
 }

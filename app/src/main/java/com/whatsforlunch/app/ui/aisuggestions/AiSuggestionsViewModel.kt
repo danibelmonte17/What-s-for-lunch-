@@ -2,13 +2,17 @@ package com.whatsforlunch.app.ui.aisuggestions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.repository.PantryRepository
+import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
 import com.whatsforlunch.app.domain.suggestion.SuggestionRules
+import com.whatsforlunch.app.domain.suggestion.SuggestionState
 import com.whatsforlunch.app.domain.suggestion.SuggestionWithMatch
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
 import com.whatsforlunch.app.domain.text.normalizeName
@@ -17,13 +21,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-// Avisos de la pantalla: key ausente (S05/RF-SRC7) y fallo mínimo de la IA
-// (RF-SRC4/RD05). Se muestran fuera del contenido principal, como en el Escáner.
+// Avisos de la pantalla: key ausente (S05/RF-SRC7), fallo mínimo de la IA
+// (RF-SRC4/RD05) y confirmación breve tras aceptar una Sugerencia (RF-ASR5). Se
+// muestran fuera del contenido principal, como en el Escáner.
 enum class AiSuggestionsNotice {
     AI_KEY_MISSING,
     FAILED,
+    SAVED,
 }
 
 sealed interface AiSuggestionsPhase {
@@ -35,7 +42,11 @@ sealed interface AiSuggestionsPhase {
 
     data object Loading : AiSuggestionsPhase
 
-    data class Results(val items: List<SuggestionWithMatch>) : AiSuggestionsPhase
+    data class Results(
+        val items: List<SuggestionWithMatch>,
+        // Estado por propuesta (D3-D5); clave = id estable de la Receta destino.
+        val states: Map<String, SuggestionState> = emptyMap(),
+    ) : AiSuggestionsPhase
 
     data object Empty : AiSuggestionsPhase
 }
@@ -57,6 +68,7 @@ class AiSuggestionsViewModel(
     pantryRepository: PantryRepository,
     private val scanDraftHolder: ScanDraftHolder,
     private val recipeSuggester: RecipeSuggester,
+    private val recipeRepository: RecipeRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AiSuggestionsUiState())
@@ -114,6 +126,37 @@ class AiSuggestionsViewModel(
         _uiState.value = _uiState.value.copy(notice = null)
     }
 
+    /**
+     * RF-ASR2/RF-ASR3/RF-ASR5 (D1, D3, D5): guarda la propuesta como Borrador con
+     * `origen = SUGGESTION` y la marca «Aceptada» sin salir de la lista. Al ser un
+     * upsert por id estable, una segunda aceptación reescribe la misma Receta.
+     */
+    fun acceptSuggestion(id: String) {
+        val phase = _uiState.value.phase as? AiSuggestionsPhase.Results ?: return
+        val item = phase.items.firstOrNull {
+            SuggestionAcceptance.suggestionRecipeId(it.suggestion.title) == id
+        } ?: return
+        val recipe = SuggestionAcceptance.suggestionToRecipe(item.suggestion)
+        _uiState.value = _uiState.value.copy(
+            phase = phase.copy(states = phase.states + (id to SuggestionState.ACCEPTED)),
+            notice = AiSuggestionsNotice.SAVED,
+        )
+        viewModelScope.launch { recipeRepository.saveRecipe(recipe) }
+    }
+
+    /**
+     * RF-ASR4 (D4): descarta la propuesta sin guardar nada; la tarjeta queda
+     * «Descartada» y permanece visible en la lista.
+     */
+    fun discardSuggestion(id: String) {
+        val phase = _uiState.value.phase as? AiSuggestionsPhase.Results ?: return
+        val isProposed = phase.states[id] == SuggestionState.PROPOSED
+        if (!isProposed) return
+        _uiState.value = _uiState.value.copy(
+            phase = phase.copy(states = phase.states + (id to SuggestionState.DISCARDED)),
+        )
+    }
+
     private fun runRequest(
         selectedFoods: List<SuggestableFood>,
         language: String,
@@ -122,8 +165,19 @@ class AiSuggestionsViewModel(
         isRequesting = true
         _uiState.value = _uiState.value.copy(phase = AiSuggestionsPhase.Loading, notice = null)
         viewModelScope.launch {
+            // D2: solo salen del dispositivo el título y los Ingredientes de las
+            // Recetas existentes con Coincidencia > 60 % con los Alimentos elegidos.
+            val existingRecipes = runCatching { recipeRepository.observeRecipes().first() }
+                .getOrDefault(emptyList())
+            val avoidance = SuggestionAcceptance.recipesToAvoid(selectedFoods, existingRecipes)
+                .map { recipe ->
+                    RecipeAvoidance(
+                        title = recipe.title,
+                        ingredientNames = recipe.ingredients.map { it.name },
+                    )
+                }
             val result = try {
-                recipeSuggester.suggest(selectedFoods, language)
+                recipeSuggester.suggest(selectedFoods, language, avoidance)
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
@@ -133,9 +187,16 @@ class AiSuggestionsViewModel(
             when (result) {
                 is RecipeSuggestionsResult.Success -> {
                     val items = SuggestionRules.suggestionMatches(result.suggestions, selectedFoods)
+                    // RF-ASR7: cada lista nueva empieza entera en estado propuesta.
                     _uiState.value = _uiState.value.copy(
                         phase = if (items.isEmpty()) AiSuggestionsPhase.Empty
-                        else AiSuggestionsPhase.Results(items),
+                        else AiSuggestionsPhase.Results(
+                            items = items,
+                            states = items.associate {
+                                SuggestionAcceptance.suggestionRecipeId(it.suggestion.title) to
+                                    SuggestionState.PROPOSED
+                            },
+                        ),
                         notice = null,
                     )
                 }

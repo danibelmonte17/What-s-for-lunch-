@@ -28,6 +28,7 @@ import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailViewModel
 import com.whatsforlunch.app.ui.settings.SettingsViewModel
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -47,7 +48,17 @@ val appModule = module {
     single<PantryRepository> { RoomPantryRepository(get()) }
     single<PhotoStore> { FilePhotoStore(androidContext()) }
 
-    single { OkHttpClient() }
+    // La respuesta de los modelos generativos (con razonamiento activado) puede tardar
+    // bastante más que los 10 s por defecto de OkHttp; se amplía la lectura y se fija un
+    // tope global de llamada para no colgar la pantalla indefinidamente.
+    single {
+        OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(90, TimeUnit.SECONDS)
+            .build()
+    }
     // La key puede venir del build (local.properties, D7-D8) con prioridad sobre la
     // guardada cifrada en el dispositivo (D2, ⚠ S05); ImageGenerator no cambia su
     // comportamiento (RF-21, Q-crear-receta-6).
@@ -70,7 +81,7 @@ val appModule = module {
     viewModel { PantryViewModel(get()) }
     viewModel { ScannerViewModel(get(), get()) }
     viewModel { RecommendationsViewModel(get(), get()) }
-    viewModel { AiSuggestionsViewModel(get(), get(), get()) }
+    viewModel { AiSuggestionsViewModel(get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->

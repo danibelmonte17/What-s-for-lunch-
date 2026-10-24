@@ -25,6 +25,8 @@ fun AiSuggestionsRoute(
         onToggleFood = viewModel::toggleFood,
         onRequest = { viewModel.requestSuggestions(language) },
         onRetry = viewModel::retry,
+        onAccept = viewModel::acceptSuggestion,
+        onDiscard = viewModel::discardSuggestion,
         modifier = modifier,
     )
 }

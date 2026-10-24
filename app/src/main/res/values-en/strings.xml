@@ -223,4 +223,9 @@
     <string name="ai_suggestions_selection_item_accessibility">Select %1$s</string>
     <string name="ai_suggestions_ingredients_header">Ingredients</string>
     <string name="ai_suggestions_steps_header">Steps</string>
+    <string name="ai_suggestions_accept">Accept</string>
+    <string name="ai_suggestions_discard">Discard</string>
+    <string name="ai_suggestions_state_accepted">Accepted</string>
+    <string name="ai_suggestions_state_discarded">Discarded</string>
+    <string name="ai_suggestions_accepted_notice">Saved to My Recipes</string>
 </resources>
