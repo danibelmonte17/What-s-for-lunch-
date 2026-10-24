@@ -70,7 +70,7 @@ val appModule = module {
     viewModel { PantryViewModel(get()) }
     viewModel { ScannerViewModel(get(), get()) }
     viewModel { RecommendationsViewModel(get(), get()) }
-    viewModel { AiSuggestionsViewModel(get(), get(), get()) }
+    viewModel { AiSuggestionsViewModel(get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->

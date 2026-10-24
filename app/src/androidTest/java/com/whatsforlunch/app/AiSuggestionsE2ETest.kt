@@ -14,12 +14,14 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
@@ -30,21 +32,29 @@ import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
+import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.domain.model.RecipeOrigin
+import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
+import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsScreen
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsTestTags
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import com.whatsforlunch.app.ui.recommendations.RecommendationsScreen
 import com.whatsforlunch.app.ui.recommendations.RecommendationsTestTags
 import com.whatsforlunch.app.ui.recommendations.RecommendationsViewModel
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -231,7 +241,12 @@ class AiSuggestionsE2ETest {
             scanDraftHolder = holder,
         )
         val recommendationsViewModel = RecommendationsViewModel(pantry, InMemoryRecipeRepository())
-        val suggestionsViewModel = AiSuggestionsViewModel(pantry, holder, FakeRecipeSuggester(emptyList()))
+        val suggestionsViewModel = AiSuggestionsViewModel(
+            pantry,
+            holder,
+            FakeRecipeSuggester(emptyList()),
+            InMemoryRecipeRepository(),
+        )
         val showSuggestions = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
@@ -255,6 +270,8 @@ class AiSuggestionsE2ETest {
                             onToggleFood = suggestionsViewModel::toggleFood,
                             onRequest = { suggestionsViewModel.requestSuggestions("es") },
                             onRetry = suggestionsViewModel::retry,
+                            onAccept = suggestionsViewModel::acceptSuggestion,
+                            onDiscard = suggestionsViewModel::discardSuggestion,
                         )
                     } else {
                         RecommendationsScreen(
@@ -320,14 +337,273 @@ class AiSuggestionsE2ETest {
         composeRule.onNodeWithText("Opcional").assertIsDisplayed()
     }
 
+    // S1 (verify 1 de `aceptar-sugerencia-de-receta`): aceptar guarda la propuesta como
+    // Borrador con origen Sugerencia (RD07), muestra el aviso y la Receta aparece en
+    // Mis Recetas con su badge «Borrador».
+    @Test
+    fun acceptingSavesTheSuggestionAsADraftRecipeVisibleInMyRecipes() {
+        val pantry = pantryWith(
+            PantryItem("manzana", "Manzana", 3),
+            PantryItem("nata", "Nata", 1),
+        )
+        val recipes = InMemoryRecipeRepository()
+        val suggester = FakeRecipeSuggester(
+            listOf(
+                RecipeSuggestionsResult.Success(
+                    listOf(
+                        suggestion(title = "Tarta de manzana", required = listOf("Manzana", "Harina")),
+                        suggestion(title = "Sopa de nata", required = listOf("Nata")),
+                    ),
+                ),
+            ),
+        )
+        val viewModel = AiSuggestionsViewModel(pantry, ScanDraftHolder(), suggester, recipes)
+        val myRecipesViewModel = MyRecipesViewModel(recipes, pantry)
+        val showMyRecipes = mutableStateOf(false)
+        val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val configuration = Configuration(baseContext.resources.configuration).apply {
+            setLocale(Locale("es", "ES"))
+        }
+        val localeContext = baseContext.createConfigurationContext(configuration)
+
+        composeRule.setContent {
+            val suggestionsState by viewModel.uiState.collectAsState()
+            val myRecipesState by myRecipesViewModel.uiState.collectAsState()
+            CompositionLocalProvider(
+                LocalContext provides localeContext,
+                LocalConfiguration provides localeContext.resources.configuration,
+            ) {
+                WhatsForLunchTheme {
+                    if (showMyRecipes.value) {
+                        MyRecipesScreen(
+                            uiState = myRecipesState,
+                            onCreateRecipe = {},
+                            onScanPantry = {},
+                        )
+                    } else {
+                        AiSuggestionsScreen(
+                            uiState = suggestionsState,
+                            onBack = {},
+                            onOpenSettings = {},
+                            onToggleFood = viewModel::toggleFood,
+                            onRequest = { viewModel.requestSuggestions("es") },
+                            onRetry = viewModel::retry,
+                            onAccept = viewModel::acceptSuggestion,
+                            onDiscard = viewModel::discardSuggestion,
+                        )
+                    }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0))
+            .assertIsEnabled()
+            .performClick()
+
+        composeRule.onNodeWithText("Guardada en Mis Recetas").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionState(0)).assertIsDisplayed()
+        composeRule.onNodeWithText("Aceptada").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionDiscard(0)).assertIsNotEnabled()
+
+        val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
+        composeRule.waitUntil(5_000) { runBlocking { recipes.getRecipe(id) } != null }
+        val saved = runBlocking { recipes.getRecipe(id) }!!
+        assertEquals(RecipeStatus.DRAFT, saved.status)
+        assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
+        assertNull(saved.photoPath)
+        assertEquals(listOf("$id-ingredient-0", "$id-ingredient-1"), saved.ingredients.map { it.id })
+        assertEquals(listOf("$id-step-0"), saved.steps.map { it.id })
+
+        showMyRecipes.value = true
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Tarta de manzana").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Tarta de manzana").assertIsDisplayed()
+        composeRule.onNodeWithText("Borrador").assertIsDisplayed()
+    }
+
+    // S2 (verify 2 de `aceptar-sugerencia-de-receta`): aceptar dos veces la misma
+    // Sugerencia reescribe la misma Receta (id estable + upsert) y no duplica.
+    @Test
+    fun acceptingTheSameSuggestionTwiceDoesNotDuplicateTheRecipe() {
+        val recipes = InMemoryRecipeRepository()
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de manzana")))),
+        )
+        val viewModel = launchSuggestions(
+            pantry = pantryWith(PantryItem("manzana", "Manzana", 3)),
+            suggester = suggester,
+            recipes = recipes,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).performClick()
+
+        val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
+        composeRule.runOnIdle { viewModel.acceptSuggestion(id) }
+        composeRule.waitForIdle()
+
+        assertEquals(1, runBlocking { recipes.observeRecipes().first() }.size)
+    }
+
+    // S3: descartar no guarda nada y deja la tarjeta «Descartada» con las acciones
+    // deshabilitadas, sin retirarla de la lista.
+    @Test
+    fun discardingKeepsTheCardWithDisabledActionsAndSavesNothing() {
+        val recipes = InMemoryRecipeRepository()
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de manzana")))),
+        )
+        launchSuggestions(
+            pantry = pantryWith(PantryItem("manzana", "Manzana", 3)),
+            suggester = suggester,
+            recipes = recipes,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionDiscard(0)).performClick()
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionCard(0)).assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionState(0)).assertIsDisplayed()
+        composeRule.onNodeWithText("Descartada").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionDiscard(0)).assertIsNotEnabled()
+        assertTrue(runBlocking { recipes.observeRecipes().first() }.isEmpty())
+    }
+
+    // S4: solo las Recetas existentes con Coincidencia > 60 % viajan al prompt.
+    @Test
+    fun onlyExistingRecipesAboveSixtyPercentAreSentToThePrompt() {
+        val recipes = InMemoryRecipeRepository()
+        runBlocking {
+            recipes.saveRecipe(storedRecipe("Tarta de manzana", listOf("Manzana")))
+            recipes.saveRecipe(storedRecipe("Ensalada", listOf("Lechuga", "Harina")))
+        }
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de pera")))),
+        )
+        launchSuggestions(
+            pantry = pantryWith(PantryItem("manzana", "Manzana", 3)),
+            suggester = suggester,
+            recipes = recipes,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        assertEquals(1, suggester.lastAvoidance.size)
+        assertEquals("Tarta de manzana", suggester.lastAvoidance.single().title)
+        assertEquals(listOf("Manzana"), suggester.lastAvoidance.single().ingredientNames)
+    }
+
+    // S5: aceptar y descartar conviven en la misma lista; una lista nueva vuelve a
+    // empezar con todas las propuestas en estado propuesta (RF-ASR7).
+    @Test
+    fun mixedStatesCoexistAndANewListStartsEverySuggestionAsProposed() {
+        val suggester = FakeRecipeSuggester(
+            listOf(
+                RecipeSuggestionsResult.Success(
+                    listOf(
+                        suggestion(title = "Tarta de manzana"),
+                        suggestion(title = "Tarta de pera"),
+                        suggestion(title = "Tarta de nata"),
+                    ),
+                ),
+            ),
+        )
+        val viewModel = launchSuggestions(
+            pantry = pantryWith(PantryItem("manzana", "Manzana", 3)),
+            suggester = suggester,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).performClick()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionDiscard(1)).performScrollTo().performClick()
+
+        composeRule.onNodeWithText("Aceptada").assertIsDisplayed()
+        composeRule.onNodeWithText("Descartada").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(2))
+            .performScrollTo()
+            .assertIsEnabled()
+
+        composeRule.runOnIdle { viewModel.retry() }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        assertTrue(
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.suggestionState(0))
+                .fetchSemanticsNodes().isEmpty(),
+        )
+        assertTrue(
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.suggestionState(1))
+                .fetchSemanticsNodes().isEmpty(),
+        )
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).assertIsEnabled()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionDiscard(1))
+            .performScrollTo()
+            .assertIsEnabled()
+    }
+
+    // S6: acciones, estados y aviso en inglés.
+    @Test
+    fun acceptingAndDiscardingAreLocalizedInEnglish() {
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Apple tart")))),
+        )
+        launchSuggestions(
+            pantry = pantryWith(PantryItem("apple", "Apple", 3)),
+            suggester = suggester,
+            locale = Locale.ENGLISH,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Accept").assertIsDisplayed()
+        composeRule.onNodeWithText("Discard").assertIsDisplayed()
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).performClick()
+
+        composeRule.onNodeWithText("Saved to My Recipes").assertIsDisplayed()
+        composeRule.onNodeWithText("Accepted").assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).assertIsNotEnabled()
+    }
+
     private fun launchSuggestions(
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         holder: ScanDraftHolder = ScanDraftHolder(),
         suggester: RecipeSuggester = FakeRecipeSuggester(emptyList()),
+        recipes: InMemoryRecipeRepository = InMemoryRecipeRepository(),
         locale: Locale = Locale("es", "ES"),
         onOpenSettings: () -> Unit = {},
-    ) {
-        val viewModel = AiSuggestionsViewModel(pantry, holder, suggester)
+    ): AiSuggestionsViewModel {
+        val viewModel = AiSuggestionsViewModel(pantry, holder, suggester, recipes)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         val localeContext = baseContext.createConfigurationContext(configuration)
@@ -347,17 +623,27 @@ class AiSuggestionsE2ETest {
                         onToggleFood = viewModel::toggleFood,
                         onRequest = { viewModel.requestSuggestions(language) },
                         onRetry = viewModel::retry,
+                        onAccept = viewModel::acceptSuggestion,
+                        onDiscard = viewModel::discardSuggestion,
                     )
                 }
             }
         }
         composeRule.waitForIdle()
+        return viewModel
     }
 
     private fun pantryWith(vararg items: PantryItem): InMemoryPantryRepository =
         InMemoryPantryRepository().apply {
             runBlocking { items.forEach { savePantryItem(it) } }
         }
+
+    private fun storedRecipe(title: String, required: List<String>): Recipe = Recipe(
+        id = title,
+        title = title,
+        ingredients = required.map { RecipeIngredient(name = it, quantity = 1.0) },
+        steps = listOf(RecipeStep(text = "Cocina")),
+    )
 
     private fun suggestion(
         title: String,
@@ -390,11 +676,18 @@ class AiSuggestionsE2ETest {
     ) : RecipeSuggester {
         var calls: Int = 0
             private set
+        var lastFoods: List<SuggestableFood> = emptyList()
+            private set
+        var lastAvoidance: List<RecipeAvoidance> = emptyList()
+            private set
 
         override suspend fun suggest(
             foods: List<SuggestableFood>,
             language: String,
+            existingRecipes: List<RecipeAvoidance>,
         ): RecipeSuggestionsResult {
+            lastFoods = foods
+            lastAvoidance = existingRecipes
             if (results.isEmpty()) return RecipeSuggestionsResult.Success(emptyList())
             return results[minOf(calls++, results.lastIndex)]
         }

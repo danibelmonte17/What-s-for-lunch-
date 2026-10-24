@@ -33,16 +33,17 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 - Cualquier estado → eliminada: solo con confirmación explícita y de forma definitiva (RD04).
 
 ### Sugerencia
-- Se pide desde el Escáner con una **selección de Alimentos** (chips del Escaneo sin guardar + Despensa, un ítem por nombre normalizado); la IA devuelve hasta 3 propuestas completas en JSON compacto y la app las muestra con su Coincidencia (RD01/RD10) calculada en el cliente contra esos Alimentos seleccionados.
-- En `sugerir-recetas-con-ia` la Sugerencia vive **solo en memoria** y es de **solo lectura** (tocar la tarjeta no hace nada); aceptar/descartar y sus transiciones pertenecen a `aceptar-sugerencia-de-receta`.
-- `propuesta` → `aceptada`: crea una Receta en Mis Recetas con `origen = Sugerencia` (RD07).
-- `propuesta` → `descartada`: no se guarda nada.
+- Se pide desde el Escáner con una **selección de Alimentos** (chips del Escaneo sin guardar + Despensa, un ítem por nombre normalizado); la IA devuelve hasta 3 propuestas completas en JSON compacto y la app las muestra con su Coincidencia (RD01/RD10) calculada en el cliente contra esos Alimentos seleccionados. El prompt pide además no proponer recetas iguales ni equivalentes a las Recetas de Mis Recetas con Coincidencia > 60 % con esos Alimentos.
+- La Sugerencia vive **solo en memoria** (tarjeta con acciones, estados `propuesta`/`aceptada`/`descartada`) y se pierde al salir; el cuerpo de la tarjeta sigue siendo inerte.
+- `propuesta` → `aceptada`: crea una Receta **Borrador** sin foto en Mis Recetas, con `origen = Sugerencia` (RD07) e **id estable** derivado del título normalizado. Se muestra el aviso «Guardada en Mis Recetas», la tarjeta queda «Aceptada» con sus acciones deshabilitadas y el usuario permanece en la lista.
+- `propuesta` → `descartada`: no se guarda nada, la tarjeta queda «Descartada» con sus acciones deshabilitadas y sigue visible.
+- Cada lista nueva de propuestas (nueva petición o reintento) empieza con todas en `propuesta`.
 
 ### ÍtemLista
 - `pendiente` → `completado`: el usuario marca el checkbox.
 - `completado` → `pendiente`: se puede desmarcar.
 
-Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); ninguna Sugerencia se acepta dos veces (la segunda aceptación no crea otra Receta).
+Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); ninguna Sugerencia se acepta dos veces (la segunda aceptación reescribe la misma Receta por id estable y upsert, nunca crea otra).
 
 ## Reglas de negocio
 
@@ -77,6 +78,8 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - ~~Confianza de detección~~: retirada con RD12; la IA de visión no devuelve confianza y los chips no muestran porcentaje.
 - Propuesta de Sugerencia (D8 de `sugerir-recetas-con-ia`): se descarta si el título queda vacío, si no le quedan Ingredientes o Pasos tras limpiar, o si repite el título normalizado de otra propuesta (se conserva la primera); se listan como máximo 3. Cantidad de ingrediente no numérica o ≤ 0 → `1` (el ingrediente nunca se descarta por su cantidad); unidad recortada (puede quedar vacía); `opcional` distinto de booleano → obligatorio; momento o dificultad con token desconocido → Almuerzo / Media; tiempos de preparación/cocción no numéricos o < 0 → `0`; Raciones base fuera de 1..12 → `4`; calorías no numéricas o ≤ 0 → sin valor; temporizador de paso no numérico o < 0 → sin temporizador.
 - Selección de Alimentos para Sugerencias: todos preseleccionados, mínimo 1 para pedir; la selección y las propuestas no se persisten (solo memoria, sin Room ni caché).
+- Aceptación de una Sugerencia: la Receta destino es un Borrador con `photoPath = null`, `favorite = false`, `origen = Sugerencia`, los Ingredientes y Pasos de la propuesta (con cantidad, unidad, opcionalidad y temporizador) e ids de hijos `"$id-ingredient-$index"` / `"$id-step-$index"`. El id de la Receta es `UUID.nameUUIDFromBytes("suggestion:" + normalizeName(título))`, de modo que aceptar dos veces la misma propuesta reescribe la misma fila. Descartar no guarda nada.
+- Anti-duplicados del prompt (D2 de `aceptar-sugerencia-de-receta`): solo entran las Recetas de Mis Recetas (Borrador o Publicada, cualquier origen) cuya Coincidencia con los Alimentos seleccionados es **estrictamente mayor que 60 %** (porcentaje redondeado, misma base que RD02). Las Recetas sin ingredientes obligatorios no tienen Coincidencia y quedan fuera; con 60 % exacto tampoco se envían.
 
 ## Escenarios importantes
 
@@ -95,7 +98,9 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 | Ningún Alimento seleccionado en Sugerencias | «Pedir sugerencias» deshabilitado; no se llama a la IA |
 | Ninguna propuesta de Sugerencia válida | Estado vacío con «Reintentar» |
 | Chips del Escaneo y Despensa con el mismo Alimento | Un solo ítem en la selección por nombre normalizado |
-| Salir de Sugerencias | La selección y las propuestas se pierden (solo memoria); el Escáner conserva sus chips sin guardar |
+| Salir de Sugerencias | La selección y las propuestas se pierden (solo memoria); el Escáner conserva sus chips sin guardar. Las Recetas aceptadas permanecen en Mis Recetas |
+| Sugerencia aceptada y luego editada | El estado «Aceptada» deshabilita las acciones; si se forzara otra aceptación, reescribe la Receta por id estable (upsert) |
+| Receta existente con Coincidencia exactamente 60 % | No se envía al prompt anti-duplicados (umbral estrictamente `> 60`) |
 | Ingrediente propuesto duplicado | Dentro de la respuesta de la IA se fusiona en un solo chip; si su nombre normalizado coincide con un Alimento ya presente en la Despensa, al guardar se suman las cantidades (RD13) y no se crea fila nueva |
 | Raciones fuera de límite | El escalador no permite valores fuera de 1-12 |
 | Edición concurrente desde dos dispositivos | No aplica: datos locales, un solo Usuario (P31) |

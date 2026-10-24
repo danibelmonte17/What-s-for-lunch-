@@ -509,9 +509,14 @@
         "E2E: aceptar una sugerencia y comprobar que la receta aparece en Mis Recetas con origen Sugerencia",
         "E2E: aceptar la misma sugerencia dos veces y comprobar que no se duplica la receta"
       ],
-      "evidence": [],
+      "evidence": [
+        "Implementación autoverificada (feature-implementer, sesión 74, 2026-10-24): passing (no es aceptación). Aceptar guarda la propuesta como Receta Borrador sin foto con origin=SUGGESTION e id estable (UUID.nameUUIDFromBytes sobre el título normalizado, upsert por id); la tarjeta queda Aceptada/Descartada con acciones deshabilitadas, aviso «Guardada en Mis Recetas» y permanencia en la lista; el prompt envía solo Recetas de Mis Recetas con Coincidencia estrictamente > 60 % con los Alimentos seleccionados, con título e ingredientes e instrucción anti-duplicados (es/en).",
+        "Gates en AVD Pixel_10_Pro API 37 (emulator-5554; el dispositivo físico conectado no se tocó): init.ps1 exit 0; lintDebug 0 errores / 49 warnings (ninguno nuevo); testDebugUnitTest --rerun-tasks 146/146 en 24 suites; assembleDebug y assembleDebugAndroidTest BUILD SUCCESSFUL; AiSuggestionsE2ETest 14/14 (S1-S6 nuevas + 8 previas); suite E2E completa OK (137 tests) en 1.202,5 s por am instrument.",
+        "Evidencia: docs/validations/aceptar-sugerencia-de-receta.md (no es aceptación). Capturas es de la tarjeta con acciones/estado y de Mis Recetas con la Receta aceptada pendientes del validador según el Plan de verificación de la spec (UI solo el validador). Sin llamadas reales a DevExpert Inference ni API keys reales.",
+        "Aceptación independiente (feature-validator, sesión 75, 2026-10-24): accept. Checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554): testDebugUnitTest --rerun-tasks 146/146 en 24 suites (SuggestionAcceptanceTest 6/6, SuggestionPromptTest 3/3, AiSuggestionsViewModelTest 12/12); lintDebug 0 errores / 49 warnings (ninguno nuevo); init.ps1 llega a «Entorno listo» con exit 1 del wrapper por el falso fallo conocido de adb shell monkey/pidof (no bloqueante); AiSuggestionsE2ETest 14/14 reejecutada; paridad es/en 213/213; 2 PNG binarios válidos de 1280x2856; sin secretos. S1-S6 verificados y D1-D5 respetadas (Borrador sin foto con origin=SUGGESTION, id estable + upsert sin duplicados, descartar no guarda, permanencia en la lista con aviso, prompt solo con Recetas > 60 %), alcance intacto (sin Room/migraciones, publicar, navegación nueva, badge de origen ni cambios en calculateMatch/MatchBadge/RD13). Suite E2E completa 137 tests inspeccionada y coherente. Sin hallazgos Critical/High/Medium; 4 notas Low no bloqueantes (L1 technical-discovery cita S1-S8, L2 aviso SAVED sin autodescartar, L3 acceptSuggestion sin guarda de estado, L4 T7/cabecera de la spec — L1 y L4 cerrados por el orquestador). Sin llamadas reales a la IA ni API keys reales. Informe: docs/validations/aceptar-sugerencia-de-receta.md (§9); capturas: docs/evidence/aceptar-sugerencia-de-receta/."
+      ],
       "notes": "origen = Sugerencia (RD07); una Sugerencia no se acepta dos veces",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "degradar-ante-fallo-de-ia",

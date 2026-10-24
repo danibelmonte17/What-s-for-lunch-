@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +44,8 @@ import com.whatsforlunch.app.domain.match.RecipeMatch
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
+import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
+import com.whatsforlunch.app.domain.suggestion.SuggestionState
 import com.whatsforlunch.app.domain.suggestion.SuggestionWithMatch
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.theme.WarmRadius
@@ -72,6 +75,12 @@ object AiSuggestionsTestTags {
     fun suggestionCard(index: Int) = "ai_suggestions_suggestion_card_$index"
 
     fun suggestionMatch(index: Int) = "ai_suggestions_suggestion_match_$index"
+
+    fun suggestionState(index: Int) = "ai_suggestions_suggestion_state_$index"
+
+    fun suggestionAccept(index: Int) = "ai_suggestions_suggestion_accept_$index"
+
+    fun suggestionDiscard(index: Int) = "ai_suggestions_suggestion_discard_$index"
 }
 
 private val CardShape = RoundedCornerShape(WarmRadius.lg)
@@ -86,6 +95,8 @@ fun AiSuggestionsScreen(
     onToggleFood: (String) -> Unit,
     onRequest: () -> Unit,
     onRetry: () -> Unit,
+    onAccept: (String) -> Unit,
+    onDiscard: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val phase = uiState.phase
@@ -137,7 +148,12 @@ fun AiSuggestionsScreen(
 
                 AiSuggestionsPhase.Loading -> LoadingContent()
 
-                is AiSuggestionsPhase.Results -> ResultsContent(items = phase.items)
+                is AiSuggestionsPhase.Results -> ResultsContent(
+                    items = phase.items,
+                    states = phase.states,
+                    onAccept = onAccept,
+                    onDiscard = onDiscard,
+                )
 
                 AiSuggestionsPhase.Empty -> EmptyContent(onRetry = onRetry)
             }
@@ -301,8 +317,11 @@ private fun NoticeBanner(
         ) {
             Text(
                 text = stringResource(
-                    if (notice == AiSuggestionsNotice.AI_KEY_MISSING) R.string.ai_suggestions_key_missing
-                    else R.string.ai_suggestions_failed,
+                    when (notice) {
+                        AiSuggestionsNotice.AI_KEY_MISSING -> R.string.ai_suggestions_key_missing
+                        AiSuggestionsNotice.FAILED -> R.string.ai_suggestions_failed
+                        AiSuggestionsNotice.SAVED -> R.string.ai_suggestions_accepted_notice
+                    },
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -313,7 +332,7 @@ private fun NoticeBanner(
                 ) {
                     Text(stringResource(R.string.ai_suggestions_open_settings))
                 }
-            } else {
+            } else if (notice == AiSuggestionsNotice.FAILED) {
                 RetryButton(onRetry = onRetry)
             }
         }
@@ -331,7 +350,12 @@ private fun RetryButton(onRetry: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ResultsContent(items: List<SuggestionWithMatch>) {
+private fun ResultsContent(
+    items: List<SuggestionWithMatch>,
+    states: Map<String, SuggestionState>,
+    onAccept: (String) -> Unit,
+    onDiscard: (String) -> Unit,
+) {
     val locale = LocalConfiguration.current.locales[0]
     LazyColumn(
         modifier = Modifier
@@ -341,22 +365,30 @@ private fun ResultsContent(items: List<SuggestionWithMatch>) {
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
     ) {
         itemsIndexed(items) { index, item ->
+            val id = SuggestionAcceptance.suggestionRecipeId(item.suggestion.title)
             SuggestionCard(
                 item = item,
                 index = index,
                 locale = locale,
+                state = states[id] ?: SuggestionState.PROPOSED,
+                onAccept = { onAccept(id) },
+                onDiscard = { onDiscard(id) },
             )
         }
     }
 }
 
-// Tarjeta de solo lectura (D5): muestra la propuesta completa y su Coincidencia,
-// sin foto ni acción al tocarla.
+// Tarjeta de Sugerencia (D5 de `sugerir-recetas-con-ia`, RF-ASR1): el cuerpo sigue
+// siendo inerte y el pie ofrece «Aceptar» y «Descartar», deshabilitados en cuanto la
+// propuesta se acepta o se descarta (RF-ASR3, RF-ASR4).
 @Composable
 private fun SuggestionCard(
     item: SuggestionWithMatch,
     index: Int,
     locale: Locale,
+    state: SuggestionState,
+    onAccept: () -> Unit,
+    onDiscard: () -> Unit,
 ) {
     val suggestion = item.suggestion
     val accessibility = stringResource(R.string.ai_suggestions_card_accessibility, suggestion.title)
@@ -381,6 +413,19 @@ private fun SuggestionCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f).testTag(AiSuggestionsTestTags.SUGGESTION_TITLE),
                 )
+                if (state != SuggestionState.PROPOSED) {
+                    Text(
+                        stringResource(
+                            if (state == SuggestionState.ACCEPTED) R.string.ai_suggestions_state_accepted
+                            else R.string.ai_suggestions_state_discarded,
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(start = WarmSpacing.sm)
+                            .testTag(AiSuggestionsTestTags.suggestionState(index)),
+                    )
+                }
                 item.match?.let { match ->
                     MatchBadge(
                         match = match,
@@ -399,6 +444,52 @@ private fun SuggestionCard(
             }
             IngredientsSection(ingredients = suggestion.ingredients, locale = locale)
             StepsSection(steps = suggestion.steps)
+            SuggestionActions(
+                index = index,
+                enabled = state == SuggestionState.PROPOSED,
+                onAccept = onAccept,
+                onDiscard = onDiscard,
+            )
+        }
+    }
+}
+
+// Pie de acciones de la tarjeta: «Aceptar» primario y «Descartar» secundario, ambos
+// de ≥ 48 dp y deshabilitados fuera del estado propuesta (RF-ASR1, RF-ASR3, RF-ASR4).
+@Composable
+private fun SuggestionActions(
+    index: Int,
+    enabled: Boolean,
+    onAccept: () -> Unit,
+    onDiscard: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+    ) {
+        Button(
+            onClick = onAccept,
+            enabled = enabled,
+            modifier = Modifier
+                .weight(1f)
+                .heightIn(min = 48.dp)
+                .testTag(AiSuggestionsTestTags.suggestionAccept(index)),
+        ) {
+            Text(stringResource(R.string.ai_suggestions_accept))
+        }
+        Button(
+            onClick = onDiscard,
+            enabled = enabled,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .heightIn(min = 48.dp)
+                .testTag(AiSuggestionsTestTags.suggestionDiscard(index)),
+        ) {
+            Text(stringResource(R.string.ai_suggestions_discard))
         }
     }
 }
