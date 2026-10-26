@@ -663,17 +663,23 @@
         "aceptar-sugerencia-de-receta"
       ],
       "steps": [
-        "Implementar la conversación del Pinche con chips de sugerencias",
-        "Mostrar cards ejecutables de receta con acceso al Modo Cocina",
-        "Permitir el dictado por voz de la consulta según S04"
+        "Implementar la conversación del Pinche con chips de sugerencias y function calling de solo lectura (Despensa y Mis Recetas)",
+        "Mostrar la Propuesta del Pinche en una Ficha con ingredientes, pasos y Faltantes",
+        "Guardar la Propuesta como Borrador en Mis Recetas desde su Ficha"
       ],
       "verification": [
-        "E2E: con el cliente de IA simulado, consultar por texto y comprobar que se muestra la respuesta con su card de receta",
-        "E2E: pulsar una card y comprobar que abre la receta propuesta"
+        "E2E: con el cliente de IA simulado, consultar por texto y comprobar que se muestra la respuesta con su Ficha (ingredientes, pasos y Faltantes)",
+        "E2E: guardar la Ficha y comprobar que aparece como Borrador en Mis Recetas; guardarla dos veces no duplica",
+        "E2E: sin API key o con fallo del proveedor, comprobar el aviso y la acción de reintentar o abrir Ajustes"
       ],
-      "evidence": [],
-      "notes": "Dictado por voz según ⚠ S04; degrada con RD05 ante fallo de IA/red",
-      "status": "not_started"
+      "evidence": [
+        "Implementación autoverificada 2026-10-26 (recuperada y corregida): init.ps1 exit 0 (AVD Pixel_10_Pro API 37, emulator-5554); lintDebug 0 errores / 49 warnings; testDebugUnitTest --rerun-tasks 173/173 en 27 suites (PincheChatProtocolTest 10/10, PincheProposalRulesTest 6/6, PincheViewModelTest 11/11); assembleDebug BUILD SUCCESSFUL.",
+        "E2E ./e2e.ps1 (connectedDebugAndroidTest) BUILD SUCCESSFUL en 6m57s: 148 ejecutados, 0 fallos, 0 errores, 1 omitido (SettingsE2ETest por Assume con key de build); PincheE2ETest 11/11 (S1-S10 y los 3 verify: respuesta con Ficha, guardado como Borrador sin duplicar, sin key/Failed y Reintentar) y regresión de Sugerencias 14/14, Recetas con mi Despensa 8/8, Escáner 22/22 y Detalle 12/12 en verde.",
+        "T0 (llamada real autorizada, previa): HTTP 200 con el alias chat, finish_reason tool_calls y get_pantry con arguments {}; no se repitió ninguna llamada real. Verificación automática solo con FakePincheChatClient. Informe: docs/validations/resolver-dudas-con-pinche.md; 2 PNG es válidos en docs/evidence/resolver-dudas-con-pinche/.",
+        "Aceptación independiente (feature-validator, sesión 79, 2026-10-26): accept — checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554, arrancado y apagado por el validador): lintDebug 0 errores / 49 warnings; testDebugUnitTest --rerun-tasks 173/173 en 27 suites; assembleDebug BUILD SUCCESSFUL; PincheE2ETest 11/11 y suite E2E completa 148 ejecutados / 0 fallos / 0 errores / 1 omitido (SettingsE2ETest por Assume); paridad es/en 238/238; T0 documentado sin repetir la llamada real y toda la verificación con FakePincheChatClient; 2 PNG válidos revisados; comprobación manual de entrada/vuelta con adb/uiautomator. Sin hallazgos Critical/High/Medium ni de seguridad; 3 notas Low no bloqueantes (cobertura del bucle de tools por inspección, init.ps1 no reproducible exit 0 por el falso fallo de monkey y detalles documentales). Informe: docs/validations/resolver-dudas-con-pinche.md §7."
+      ],
+      "notes": "Sin voz (diferida con ⚠ S04); conversación y Propuestas solo en memoria; function calling de solo lectura (⚠ S08); Faltantes solo se muestran (la Lista es de anadir-faltantes-a-la-lista)",
+      "status": "accepted"
     },
     {
       "id": "anadir-faltantes-a-la-lista",

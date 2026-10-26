@@ -3,6 +3,8 @@ package com.whatsforlunch.app.ui.createrecipe
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.whatsforlunch.app.data.ai.AiFailureCause
+import com.whatsforlunch.app.data.ai.PromptSource
+import com.whatsforlunch.app.data.ai.renderDishPhotoPrompt
 import com.whatsforlunch.app.data.photo.NoOpPhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
@@ -93,6 +95,7 @@ data class CreateRecipeUiState(
 class CreateRecipeViewModel(
     private val repository: RecipeRepository,
     private val photoStore: PhotoStore,
+    private val promptSource: PromptSource,
     // Id de la Receta a editar; null = alta de una Receta nueva (RF-1).
     initialRecipeId: String? = null,
 ) : ViewModel() {
@@ -191,7 +194,16 @@ class CreateRecipeViewModel(
 
     fun onTakePhoto() = acquirePhoto { photoAcquirer.takePhoto() }
 
-    fun onGeneratePhotoWithAi() = acquirePhoto { photoAcquirer.generate(photoPrompt()) }
+    fun onGeneratePhotoWithAi(language: String) = acquirePhoto {
+        photoAcquirer.generate(
+            renderDishPhotoPrompt(
+                title = _uiState.value.title,
+                story = _uiState.value.story,
+                language = language,
+                source = promptSource,
+            ),
+        )
+    }
 
     fun onRemovePhoto() {
         val current = _uiState.value.photoPath
@@ -269,21 +281,6 @@ class CreateRecipeViewModel(
         viewModelScope.launch {
             repository.saveRecipe(recipe)
             mutate { it.copy(saved = true) }
-        }
-    }
-
-    private fun photoPrompt(): String {
-        val state = _uiState.value
-        val dish = state.title.ifBlank { state.story }.trim()
-        return buildString {
-            append("Fotografía gastronómica apetitosa del plato \"")
-            append(dish)
-            append('"')
-            if (state.story.isNotBlank()) {
-                append(". ")
-                append(state.story.trim())
-            }
-            append('.')
         }
     }
 

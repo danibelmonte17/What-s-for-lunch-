@@ -14,6 +14,7 @@ import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsRoute
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
+import com.whatsforlunch.app.ui.pinche.PincheRoute
 import com.whatsforlunch.app.ui.recommendations.RecommendationsRoute
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailRoute
 import com.whatsforlunch.app.ui.scanner.ScannerRoute
@@ -33,6 +34,7 @@ object AppRoutes {
     const val COOK_MODE_PROVISIONAL = "cook_mode_provisional"
     const val SETTINGS = "settings"
     const val AI_SUGGESTIONS = "ai_suggestions"
+    const val PINCHE = "pinche"
     const val RECIPE_ID_ARG = "recipeId"
 
     fun createRecipe(): String = "create_recipe"
@@ -61,6 +63,7 @@ fun WhatsForLunchApp(
                 onOpenPantryRecipes = { navController.navigate(AppRoutes.PANTRY_RECIPES) },
                 onOpenPantry = { navController.navigate(AppRoutes.PANTRY) },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+                onOpenPinche = { navController.navigate(AppRoutes.PINCHE) },
             )
         }
         composable(
@@ -121,6 +124,13 @@ fun WhatsForLunchApp(
         // RF-SRC1: destino real de Sugerencias, que sustituye al provisional.
         composable(AppRoutes.AI_SUGGESTIONS) {
             AiSuggestionsRoute(
+                onBack = { navController.popBackStack() },
+                onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+            )
+        }
+        // RF-PCH1: el Pinche se abre desde la top bar de Mis Recetas.
+        composable(AppRoutes.PINCHE) {
+            PincheRoute(
                 onBack = { navController.popBackStack() },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )

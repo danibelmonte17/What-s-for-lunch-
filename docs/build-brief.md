@@ -6,6 +6,7 @@
 - **Desperdicio alimentario**: los alimentos frescos se tiran por falta de planificación.
 - **Fricción al cocinar**: consultar la pantalla con las manos ocupadas o sucias arruina tiempos y cocciones.
 - **Desconexión receta-Despensa**: los recetarios piden ingredientes que no se tienen.
+- **Dudas sin resolver al momento**: sustituciones, técnicas, cantidades o «¿qué hago con esto?» obligan a salir a buscar en otra app o web.
 
 ## Sistema actual / workaround
 
@@ -19,9 +20,10 @@ Uso personal (1-5 usuarios): personas que cocinan en casa, con poco tiempo para 
 
 ## Objetivos
 
-- **Principal**: decidir y cocinar «¿qué hay hoy?» en pocos minutos, usando solo los alimentos de la Despensa.
+- **Principal**: decidir y cocinar «¿qué hay hoy?» en pocos minutos usando los alimentos de la Despensa, y poder salir de esa restricción con el Pinche cuando la Despensa no alcanza.
 - Aprovechar los alimentos que ya hay en casa y reducir el desperdicio alimentario.
 - Cocinar manos libres: guía paso a paso legible a distancia con voz y temporizadores.
+- Resolver dudas de cocina en el momento y pedir recetas sin quedar atado a lo que haya en la Despensa.
 - Cerrar el ciclo Despensa → Receta → compra: lo que falta para una Receta acaba en la Lista de la Compra.
 
 ## Qué construimos (Rebanada MVP)
@@ -29,11 +31,12 @@ Uso personal (1-5 usuarios): personas que cocinan en casa, con poco tiempo para 
 La rebanada que prueba el valor de punta a punta: **el usuario escanea lo que tiene en casa, obtiene Recetas compatibles, acepta una y cocina guiado, sin salir de la app y sin red salvo la IA**. El comportamiento más arriesgado (detección de alimentos on-device + sugerencias por IA real) queda dentro del MVP en lugar de posponerse (`P4`, `RK02`).
 
 - **Mis Recetas (CRUD)** — vista de entrada de la app; buscador, filtro por Momento culinario, tarjetas con badge de Coincidencia, alta, edición y borrado de Recetas.
-- **Escáner de la Despensa** — captura con la cámara, detección de Alimentos en el dispositivo, chips editables para corregir/confirmar, y carrusel de Recetas compatibles (100% / 85%).
+- **Escáner de la Despensa** — alta manual y captura con la cámara; la IA analiza la foto y propone Alimentos con cantidad como chips editables que se guardan en la Despensa. Solo llena la Despensa: las Recetas compatibles viven en su propia pantalla.
+- **Recetas con mi Despensa** — lista las Recetas compatibles (RD02) con su badge y desglose, y da paso a las Sugerencias de IA.
 - **Sugerencias de recetas por IA** — la IA propone Recetas compatibles con lo escaneado; al aceptar una, se guarda en Mis Recetas.
-- **Detalle de Receta** — métricas (tiempo total, dificultad, calorías por porción), escalador de Raciones (1-12) con recálculo de cantidades, checklist de ingredientes (obligatorios/opcionales), utensilios, pasos resumidos y CTA de Modo Cocina.
+- **Detalle de Receta** — métricas (tiempo total, dificultad, calorías por porción), escalador de Raciones (1-12) con recálculo de cantidades, checklist de ingredientes (obligatorios/opcionales), pasos resumidos y CTA de Modo Cocina.
 - **Modo Cocina** — paso a paso manos libres, alto contraste legible a distancia, barra de avance, temporizador con alarma y `+1 min`, locución de instrucciones, comandos de voz y drawer con los ingredientes del Paso activo.
-- **Pinche** — asistente conversacional con chips de sugerencias, cards ejecutables de Receta y dictado por voz.
+- **Pinche** — asistente conversacional con chips de sugerencias y burbujas. Responde dudas de cocina y propone recetas **sin depender de la Despensa**; la propuesta se muestra en una Ficha con sus ingredientes, pasos y Faltantes, y desde ella se guarda como Borrador o se descarta. La app expone al modelo dos funciones de **solo lectura** (Despensa y Mis Recetas) para que pida contexto cuando lo necesita. Conversación solo en memoria. Dictado por voz y envío de Faltantes a la Lista de la Compra quedan para sus features (ver «Qué NO construimos»).
 - **Formulario de Receta** — creación/edición con foto, metadatos, ingredientes con unidades y opcionalidad, Pasos con temporizador, y guardado dual Borrador/Publicar.
 - **Lista de la Compra** — alta de ítems manuales o por voz, detección de faltantes tras escaneos o visualización de recetas, agrupación por Pasillo o por Receta, badge de Origen y progreso con checkboxes.
 - **Interfaz en español e inglés**.
@@ -52,6 +55,9 @@ El desglose por sesiones de implementación vive en `feature_list.json`; este do
 - **Tablet, escritorio y PWA web** — el MVP es solo Android (`P20`).
 - **Publicación en Play Store** — distribución por APK instalada a mano (`P28`).
 - **Catálogo compartido entre usuarios** — las Recetas aceptadas van solo a Mis Recetas del usuario (`P32`).
+- **Dictado por voz en el Pinche** — llega con la voz del Modo Cocina y la Lista de la Compra (`⚠ S04`); esta versión del Pinche es solo texto.
+- **Enviar los Faltantes del Pinche a la Lista de la Compra** — la Ficha solo los muestra; el alta llega con `anadir-faltantes-a-la-lista`.
+- **Historial de conversación entre sesiones** — la conversación del Pinche vive solo en memoria mientras dura la pantalla.
 - **Desglose por ubicaciones físicas** (nevera/vinagrera/especiero del PRD) — solo existe la Despensa (`P37`).
 
 ### Fuera del producto (no es su propósito)
@@ -59,12 +65,14 @@ El desglose por sesiones de implementación vive en `feature_list.json`; este do
 - **Compra de alimentos online o delivery** — la Lista de la Compra es manual.
 - **Red social o feed de recetas** — no hay contenido público entre usuarios.
 - **Nutrición clínica o dietas médicas** — las calorías son informativas, no prescripción.
+- **Asistente generalista** — el Pinche solo atiende dudas de cocina y recetas; no responde temas ajenos a la cocina.
 
 ## Restricciones relevantes
 
 - Solo Android (plataforma móvil), un solo repositorio (`P20`, `P24`).
 - Sin backend en el MVP; datos duraderos en el dispositivo (`P31`, `P33`).
 - IA real desde el MVP: detección de alimentos en el propio dispositivo y asistente/sugerencias vía un proveedor de IA externo (`P4`); las tecnologías concretas en `docs/technical-discovery.md`.
+- El Pinche usa **function calling**: la app expone dos funciones de solo lectura (Despensa y Mis Recetas) y el modelo decide cuándo pedirlas (`⚠ S08`). Si el proveedor no las admite, la app falla de forma visible con «Reintentar» y no cambia en silencio los datos que salen del dispositivo.
 - RGPD: las fotos de escaneo no se almacenan y el proveedor de IA no retiene datos (`P27`).
 - La API key de IA la introduce el usuario en Ajustes; nunca se guarda en el repositorio (`⚠ S05`).
 - Interfaz en español e inglés; documentación en español y código en inglés (`P19`, `P25`).

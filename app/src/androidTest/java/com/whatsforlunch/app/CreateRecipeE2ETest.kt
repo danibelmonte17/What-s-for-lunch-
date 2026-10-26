@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.ai.AiFailureCause
+import com.whatsforlunch.app.data.ai.AssetPromptSource
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
 import com.whatsforlunch.app.data.photo.PhotoStore
@@ -125,13 +126,13 @@ class CreateRecipeE2ETest {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         formContext = baseContext.createConfigurationContext(configuration)
-        val viewModel = CreateRecipeViewModel(repository, FakePhotoStore())
+        val viewModel = CreateRecipeViewModel(repository, FakePhotoStore(), AssetPromptSource(baseContext))
         viewModel.setPhotoAcquirer(photoAcquirer)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides formContext) {
                 WhatsForLunchTheme {
-                    CreateRecipeScreen(uiState = state, actions = viewModel.toActions {})
+                    CreateRecipeScreen(uiState = state, actions = viewModel.toActions({}, locale.language))
                 }
             }
         }
