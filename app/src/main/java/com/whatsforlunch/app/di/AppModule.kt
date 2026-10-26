@@ -22,8 +22,10 @@ import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.photo.FilePhotoStore
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
+import com.whatsforlunch.app.data.repository.RoomShoppingListRepository
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
+import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
 import com.whatsforlunch.app.ui.pantry.PantryViewModel
 import com.whatsforlunch.app.ui.recommendations.RecommendationsViewModel
@@ -33,6 +35,7 @@ import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
 import com.whatsforlunch.app.ui.pinche.PincheViewModel
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailViewModel
 import com.whatsforlunch.app.ui.settings.SettingsViewModel
+import com.whatsforlunch.app.ui.shoppinglist.ShoppingListViewModel
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
@@ -44,13 +47,15 @@ import org.koin.dsl.module
 val appModule = module {
     single {
         Room.databaseBuilder(androidContext(), RecipeDatabase::class.java, "whatsforlunch.db")
-            .addMigrations(RecipeDatabase.MIGRATION_1_2)
+            .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3)
             .build()
     }
     single { get<RecipeDatabase>().recipeDao() }
     single { get<RecipeDatabase>().pantryItemDao() }
+    single { get<RecipeDatabase>().shoppingListDao() }
     single<RecipeRepository> { RoomRecipeRepository(get(), get()) }
     single<PantryRepository> { RoomPantryRepository(get()) }
+    single<ShoppingListRepository> { RoomShoppingListRepository(get(), get()) }
     single<PhotoStore> { FilePhotoStore(androidContext()) }
 
     // La respuesta de los modelos generativos (con razonamiento activado) puede tardar
@@ -89,15 +94,17 @@ val appModule = module {
     viewModel { CreateRecipeViewModel(get(), get(), get()) }
     viewModel { PantryViewModel(get()) }
     viewModel { ScannerViewModel(get(), get()) }
-    viewModel { RecommendationsViewModel(get(), get()) }
+    viewModel { RecommendationsViewModel(get(), get(), get()) }
     viewModel { AiSuggestionsViewModel(get(), get(), get(), get()) }
-    viewModel { PincheViewModel(get(), get(), get()) }
+    viewModel { PincheViewModel(get(), get(), get(), get()) }
+    viewModel { ShoppingListViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->
         RecipeDetailViewModel(
             recipeRepository = get(),
             pantryRepository = get(),
+            shoppingListRepository = get(),
             recipeId = parameters.get(),
         )
     }

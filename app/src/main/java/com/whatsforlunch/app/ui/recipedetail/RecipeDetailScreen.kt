@@ -21,13 +21,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.SyncAlt
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -37,12 +40,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -95,6 +102,9 @@ object RecipeDetailTestTags {
     const val INGREDIENT_ROW = "recipe_detail_ingredient_row"
     const val INGREDIENT_CHECK = "recipe_detail_ingredient_check"
     const val INGREDIENTS_COUNT = "recipe_detail_ingredients_count"
+    const val MATCH_BANNER = "recipe_detail_match_banner"
+    const val ADD_TO_LIST = "recipe_detail_add_to_list"
+    const val ADDED_SNACKBAR = "recipe_detail_added_snackbar"
     const val STEPS = "recipe_detail_steps"
     const val STEP_ROW = "recipe_detail_step_row"
     const val STEP_TIMER = "recipe_detail_step_timer"
@@ -122,10 +132,28 @@ fun RecipeDetailScreen(
     onStartCooking: () -> Unit,
     modifier: Modifier = Modifier,
     onServingsChange: (Int) -> Unit = {},
+    onAddMissingToShoppingList: () -> Unit = {},
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val addedMessage = stringResource(R.string.recipe_detail_added_to_list)
+    val addToListCount = (uiState as? RecipeDetailUiState.Detail)?.addToListCount ?: 0
+
+    LaunchedEffect(addToListCount) {
+        if (addToListCount > 0) {
+            snackbarHostState.showSnackbar(addedMessage)
+        }
+    }
+
     Scaffold(
         modifier = modifier.testTag(RecipeDetailTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(modifier = Modifier.testTag(RecipeDetailTestTags.ADDED_SNACKBAR)) {
+                    Text(data.visuals.message)
+                }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {},
@@ -171,7 +199,9 @@ fun RecipeDetailScreen(
                 match = uiState.match,
                 servings = uiState.servings,
                 ingredientRows = uiState.ingredientRows,
+                missingIngredients = uiState.missingIngredients,
                 onServingsChange = onServingsChange,
+                onAddMissingToShoppingList = onAddMissingToShoppingList,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -213,7 +243,9 @@ private fun RecipeDetailContent(
     match: RecipeMatch?,
     servings: Int,
     ingredientRows: List<RecipeIngredient>,
+    missingIngredients: List<RecipeIngredient>,
     onServingsChange: (Int) -> Unit,
+    onAddMissingToShoppingList: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -229,7 +261,13 @@ private fun RecipeDetailContent(
             baseServings = recipe.baseServings,
         )
         ServingsScaler(servings = servings, onServingsChange = onServingsChange)
-        IngredientChecklist(recipeId = recipe.id, ingredients = ingredientRows)
+        IngredientChecklist(
+            recipeId = recipe.id,
+            ingredients = ingredientRows,
+            match = match,
+            hasMissing = missingIngredients.isNotEmpty(),
+            onAddMissingToShoppingList = onAddMissingToShoppingList,
+        )
         StepsSummary(recipe = recipe)
         Spacer(modifier = Modifier.height(WarmSpacing.md))
     }
@@ -558,6 +596,9 @@ private fun MetricCard(
 private fun IngredientChecklist(
     recipeId: String,
     ingredients: List<RecipeIngredient>,
+    match: RecipeMatch?,
+    hasMissing: Boolean,
+    onAddMissingToShoppingList: () -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var checkedIds by rememberSaveable(
@@ -584,7 +625,27 @@ private fun IngredientChecklist(
                 text = stringResource(R.string.recipe_detail_ingredients_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
             )
+            if (hasMissing) {
+                TextButton(
+                    onClick = onAddMissingToShoppingList,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(RecipeDetailTestTags.ADD_TO_LIST),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.PlaylistAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                    Text(
+                        text = stringResource(R.string.recipe_detail_add_to_list),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
             Surface(
                 shape = PillShape,
                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -606,6 +667,8 @@ private fun IngredientChecklist(
                 )
             }
         }
+
+        match?.let { MatchBanner(match = it) }
 
         if (ingredients.isEmpty()) {
             Text(
@@ -632,6 +695,42 @@ private fun IngredientChecklist(
                     locale = locale,
                 )
             }
+    }
+}
+
+@Composable
+private fun MatchBanner(match: RecipeMatch) {
+    val isFull = match.isFullMatch
+    Surface(
+        shape = CardShape,
+        color = if (isFull) MaterialTheme.colorScheme.secondaryContainer
+        else MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = if (isFull) MaterialTheme.colorScheme.onSecondaryContainer
+        else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(RecipeDetailTestTags.MATCH_BANNER),
+    ) {
+        Row(
+            modifier = Modifier.padding(WarmSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        ) {
+            Icon(
+                imageVector = if (isFull) Icons.Outlined.CheckCircle
+                else Icons.Outlined.WarningAmber,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = stringResource(
+                    R.string.recipe_detail_match_banner,
+                    match.percentage,
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 

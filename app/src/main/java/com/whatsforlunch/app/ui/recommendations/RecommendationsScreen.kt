@@ -18,9 +18,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AddShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.match.CompatibleRecipe
+import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.theme.WarmRadius
@@ -61,12 +65,16 @@ object RecommendationsTestTags {
     const val CARD_PREFIX = "recommendations_card"
     const val MATCH_PREFIX = "recommendations_match"
     const val INGREDIENTS_PREFIX = "recommendations_ingredients"
+    const val MISSING_PREFIX = "recommendations_missing"
+    const val ADD_MISSING_PREFIX = "recommendations_add_missing"
     const val EMPTY = "recommendations_empty"
     const val SUGGEST_AI = "recommendations_suggest_ai"
 
     fun card(id: String) = "${CARD_PREFIX}_$id"
     fun match(id: String) = "${MATCH_PREFIX}_$id"
     fun ingredients(id: String) = "${INGREDIENTS_PREFIX}_$id"
+    fun missing(id: String) = "${MISSING_PREFIX}_$id"
+    fun addMissing(id: String) = "${ADD_MISSING_PREFIX}_$id"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,6 +85,7 @@ fun RecommendationsScreen(
     onOpenRecipe: (String) -> Unit,
     onSuggestWithAi: () -> Unit,
     modifier: Modifier = Modifier,
+    onAddMissingToShoppingList: (String) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.testTag(RecommendationsTestTags.SCREEN),
@@ -152,7 +161,9 @@ fun RecommendationsScreen(
                 items(uiState.compatibleRecipes, key = { it.recipe.id }) { compatible ->
                     CompatibleRecipeCard(
                         compatible = compatible,
+                        missing = uiState.missingByRecipe[compatible.recipe.id].orEmpty(),
                         onOpen = { onOpenRecipe(compatible.recipe.id) },
+                        onAddMissing = { onAddMissingToShoppingList(compatible.recipe.id) },
                     )
                 }
             }
@@ -163,7 +174,9 @@ fun RecommendationsScreen(
 @Composable
 private fun CompatibleRecipeCard(
     compatible: CompatibleRecipe,
+    missing: List<RecipeIngredient>,
     onOpen: () -> Unit,
+    onAddMissing: () -> Unit,
 ) {
     val recipe = compatible.recipe
     val match = compatible.match
@@ -218,6 +231,36 @@ private fun CompatibleRecipeCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.testTag(RecommendationsTestTags.ingredients(recipe.id)),
                     )
+                    if (missing.isNotEmpty()) {
+                        Text(
+                            stringResource(
+                                R.string.recommendations_missing,
+                                missing.joinToString(", ") { it.name },
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.testTag(
+                                RecommendationsTestTags.missing(recipe.id),
+                            ),
+                        )
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    IconButton(
+                        onClick = onAddMissing,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(RecommendationsTestTags.addMissing(recipe.id)),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AddShoppingCart,
+                            contentDescription = stringResource(
+                                R.string.recommendations_add_missing,
+                                recipe.title,
+                            ),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             }
         }

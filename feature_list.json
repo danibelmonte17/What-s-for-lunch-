@@ -698,9 +698,17 @@
         "E2E: abrir una receta con ingredientes ausentes y comprobar que sus ítems aparecen en la Lista con el badge de origen",
         "E2E: repetir la acción y comprobar que no se duplican los ítems"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/anadir-faltantes-a-la-lista/informe.md",
+        "docs/evidence/anadir-faltantes-a-la-lista/detalle-faltantes-es.png",
+        "docs/evidence/anadir-faltantes-a-la-lista/lista-compra-es.png",
+        "Gates finales 2026-10-26 (AVD Pixel_10_Pro API 37, emulator-5554): init.ps1 exit 0 · lint.ps1 0 errores / 49 warnings (sin nuevos sobre baseline) · unit.ps1 205/205 en 34 suites · assembleDebug OK · e2e.ps1 164 pruebas, 0 fallos, 0 errores, 2 omitidas (SettingsE2ETest por Assume), 446,233 s · ShoppingListE2ETest 10/10 (S1-S8 + migración 2→3 + persistencia Room)",
+        "Reparación del revise (sesión 85): ShoppingListFlowTest cubre Ficha → guardar → Detalle del Borrador sin duplicar (H1); plurals y modifier (L1); reversión y aviso del Pinche (L2); Room reopen/delete/restore y migración con escritura/lectura (L3); spec/docs actualizados (L4). Paridad es/en 266/266.",
+        "Validación independiente (feature-validator, sesión 85, 2026-10-26): accept — H1 y L1-L4 cerrados; checks reejecutados con --rerun-tasks: lint 0 errores/49 warnings, unit 205/205 en 34 suites, init.ps1 exit 0, assembleDebug OK y paridad es/en 266/266; E2E 164/0/0/2 ejecutada (ShoppingListE2ETest 10/10). Informe en docs/validations/anadir-faltantes-a-la-lista.md §9.",
+        "Histórico: validación independiente de la sesión 84 → revise (S5 sin guardar/repetir desde el Borrador; 4 warnings nuevos); repair brief aplicado y revalidado en la sesión 85."
+      ],
       "notes": "Cada ítem conserva su Origen (RD09)",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "anadir-item-a-la-lista",

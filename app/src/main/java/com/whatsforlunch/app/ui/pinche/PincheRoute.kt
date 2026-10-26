@@ -27,6 +27,7 @@ fun PincheRoute(
         onQuickSuggestion = { text -> viewModel.sendQuickSuggestion(text, language) },
         onRetry = { viewModel.retry(language) },
         onSaveProposal = viewModel::saveProposal,
+        onAddMissingToShoppingList = viewModel::addMissingToShoppingList,
         onClearNotice = viewModel::clearNotice,
         modifier = modifier,
     )

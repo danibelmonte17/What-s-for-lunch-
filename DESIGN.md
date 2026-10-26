@@ -154,14 +154,14 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 
 | Vista | Objetivo | Componentes clave | Referencia |
 |---|---|---|---|
-| Mis Recetas (entrada de la app, `P18`) | Encontrar y gestionar recetas | Buscador con debounce, filtro por Momento culinario, tarjetas con badge de Coincidencia, FAB de creación, acciones de top bar: «Recetas con mi Despensa», Despensa y Ajustes | `chefencasa_mis_recetas_y_crud/` |
+| Mis Recetas (entrada de la app, `P18`) | Encontrar y gestionar recetas | Buscador con debounce, filtro por Momento culinario, tarjetas con badge de Coincidencia, FAB de creación, acciones de top bar: «Recetas con mi Despensa», Despensa, Lista de la Compra, Pinche y Ajustes | `chefencasa_mis_recetas_y_crud/` |
 | Escáner de la Despensa | Añadir Alimentos a mano o fotografiar la Despensa | Alta manual primero en el listado, botón «Escanear con la cámara» que despliega el visor con animación y lo pliega tras el análisis, progreso «Analizando la foto…», chips editables sin confianza con borrado terracota y guardado en la Despensa (sin Recetas compatibles, que viven en su propia pantalla) | `chefencasa_esc_ner_de_nevera_ia/` |
 | Recetas con mi Despensa | Decidir qué cocinar con lo que hay | Cabecera con «Volver» y título, sección «Recetas Compatibles» con tarjetas (badge 100 %/86 %, miniatura, título y «X de Y ingredientes en la Despensa»), estado vacío y botón «Sugerir receta con IA» habilitado solo con Despensa no vacía | Sin referencia `uxdocs` (composición de componentes existentes) |
 | Detalle de Receta | Decidir y preparar la cocina | Hero, métricas, escalador de Raciones `[-] N pers [+]`, checklist, CTA Modo Cocina | `chefencasa_detalle_de_receta/` |
 | Modo Cocina | Cocinar manos libres | Barra «Paso X de Y», temporizador circular + alarma + `+1 min`, locución y comandos de voz, drawer de ingredientes | `chefencasa_modo_cocina_paso_a_paso/` |
 | Pinche | Resolver dudas al instante | Chips de sugerencia al inicio, burbujas de conversación, Ficha con ingredientes, pasos y Faltantes, acciones «Guardar en Mis Recetas»; **sin micrófono** (dictado diferido, `⚠ S04`) | `chefencasa_pinche_asistente_de_cocina/` |
 | Formulario de Receta | Crear/editar con foto | Metadatos, gestor de ingredientes con unidades y opcionalidad, Pasos con temporizador, Borrador/Publicar | `chefencasa_registrar_y_editar_receta/` |
-| Lista de la Compra | Comprar solo lo que falta | Tabs por Pasillo/Receta, badges de Origen, checkboxes, barra de progreso, alta manual/voz | `chefencasa_lista_de_la_compra_sincronizada/` |
+| Lista de la Compra | Comprar solo lo que falta | **Primera versión**: lista plana con nombre y cantidad («{nombre} ({cantidad} {unidad})»), badge de Origen «Para: {Receta}»/«Para: N recetas», borrado con «Deshacer», estado vacío con «Escanear la Despensa» y entrada desde la top bar de Mis Recetas. Tabs por Pasillo/Receta, checkboxes, barra de progreso y alta manual/voz son de `agrupar-y-completar-la-lista`/`anadir-item-a-la-lista` | `chefencasa_lista_de_la_compra_sincronizada/` |
 | Ajustes | Configurar la app | Idioma (es/en), API key de IA, aviso de privacidad | Sin referencia (`RK04`) |
 
 ## Estados a cubrir
@@ -170,7 +170,7 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 - **Carga**: análisis de la foto del Escaneo y respuestas del Pinche/Sugerencias → progreso claro; la app nunca se congela. En el Pinche, la entrada se deshabilita mientras se espera la respuesta.
 - **Error**: fallo de IA/red → Modo de degradación con entrada manual y aviso (RD05). En el Pinche no hay entrada manual: aviso claro con «Reintentar» sin perder lo escrito; sin key → acceso a Ajustes. Si el proveedor no admite function calling, el mismo aviso (RD17).
 - **Éxito**: confirmación al aceptar una Sugerencia, publicar una Receta o completar la Lista. Al guardar una Propuesta del Pinche, la Ficha queda marcada como guardada con el aviso «Guardada en Mis Recetas» y el usuario sigue en el chat.
-- **Ficha del Pinche**: se despliega dentro del hilo (no modal), con ingredientes obligatorios/opcionales, pasos y Faltantes destacados; el botón «Añadir faltantes a la Lista de la Compra» **no** aparece hasta que exista la Lista.
+- **Ficha del Pinche**: se despliega dentro del hilo (no modal), con ingredientes obligatorios/opcionales, pasos y Faltantes destacados; el botón «Añadir faltantes a la Lista de la Compra» aparece desde que existe la Lista y, tras pulsarlo, queda «Añadido a la Lista de la Compra» deshabilitado (mismo tratamiento que «Guardada en Mis Recetas»).
 - **Actualización en caliente**: la lista de «Recetas con mi Despensa» se recalcula al cambiar la Despensa o las Recetas, sin reiniciar ni reabrir la pantalla.
 
 ## Base responsive

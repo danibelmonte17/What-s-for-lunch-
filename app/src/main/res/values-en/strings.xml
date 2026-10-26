@@ -259,7 +259,29 @@
     <string name="pinche_save">Save to My Recipes</string>
     <string name="pinche_saved">Saved to My Recipes</string>
     <string name="pinche_save_failed">The recipe couldn’t be saved. Please try again.</string>
+    <string name="pinche_shopping_list_failed">The missing items couldn’t be added to the Shopping List. Please try again.</string>
     <string name="pinche_timer_minutes">%1$d min</string>
     <string name="pinche_notice_dismiss">Dismiss notice</string>
     <string name="pinche_message_accessibility">Message from %1$s</string>
+    <string name="action_open_shopping_list">Shopping List</string>
+    <string name="shopping_list_title">Shopping List</string>
+    <string name="shopping_list_item_line">%1$s (%2$s)</string>
+    <string name="shopping_list_item_deleted">Item removed</string>
+    <string name="shopping_list_undo">Undo</string>
+    <string name="shopping_list_delete">Remove item</string>
+    <string name="shopping_list_origin_single">For: %1$s</string>
+    <plurals name="shopping_list_origin_multiple">
+        <item quantity="one">For: %1$d recipe</item>
+        <item quantity="other">For: %1$d recipes</item>
+    </plurals>
+    <string name="shopping_list_origin_accessibility">Origin: %1$s</string>
+    <string name="shopping_list_empty_title">Your Shopping List is empty</string>
+    <string name="shopping_list_empty_message">Add the ingredients you\'re missing from a Recipe or from the Pinche.</string>
+    <string name="recipe_detail_match_banner">You have %1$d%% of the ingredients at home!</string>
+    <string name="recipe_detail_add_to_list">Add to list</string>
+    <string name="recipe_detail_added_to_list">Added to the Shopping List</string>
+    <string name="recommendations_missing">You\'re missing: %1$s</string>
+    <string name="recommendations_add_missing">Add %1$s missing ingredients to the Shopping List</string>
+    <string name="pinche_add_missing">Add missing items to the Shopping List</string>
+    <string name="pinche_added_missing">Added to the Shopping List</string>
 </resources>

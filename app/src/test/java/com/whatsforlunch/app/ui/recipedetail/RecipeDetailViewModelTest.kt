@@ -3,6 +3,7 @@ package com.whatsforlunch.app.ui.recipedetail
 import androidx.lifecycle.ViewModelStore
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
@@ -11,6 +12,7 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -35,6 +37,7 @@ class RecipeDetailViewModelTest {
             val viewModel = RecipeDetailViewModel(
                 recipeRepository = InMemoryRecipeRepository(),
                 pantryRepository = InMemoryPantryRepository(),
+                shoppingListRepository = InMemoryShoppingListRepository(),
                 recipeId = "missing",
             )
             viewModelStore.put("detail", viewModel)
@@ -70,7 +73,7 @@ class RecipeDetailViewModelTest {
             )
             pantry.savePantryItem(PantryItem("chicken", "Pollo"))
 
-            val viewModel = RecipeDetailViewModel(recipes, pantry, "pollo-arroz")
+            val viewModel = RecipeDetailViewModel(recipes, pantry, InMemoryShoppingListRepository(), "pollo-arroz")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -107,7 +110,7 @@ class RecipeDetailViewModelTest {
             )
             pantry.savePantryItem(PantryItem("chicken", "Pollo"))
 
-            val viewModel = RecipeDetailViewModel(recipes, pantry, "partial")
+            val viewModel = RecipeDetailViewModel(recipes, pantry, InMemoryShoppingListRepository(), "partial")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -141,7 +144,7 @@ class RecipeDetailViewModelTest {
                 ),
             )
 
-            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), "optional-only")
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), InMemoryShoppingListRepository(), "optional-only")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -170,7 +173,7 @@ class RecipeDetailViewModelTest {
                 ),
             )
 
-            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), "empty-pantry")
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), InMemoryShoppingListRepository(), "empty-pantry")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -215,7 +218,7 @@ class RecipeDetailViewModelTest {
                 ),
             )
 
-            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), "scaled")
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), InMemoryShoppingListRepository(), "scaled")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -253,7 +256,7 @@ class RecipeDetailViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(Recipe(id = "range", title = "Sopa", baseServings = 4))
 
-            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), "range")
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), InMemoryShoppingListRepository(), "range")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -271,6 +274,61 @@ class RecipeDetailViewModelTest {
             viewModel.setServings(5)
             runCurrent()
             assertEquals(5, (viewModel.uiState.value as RecipeDetailUiState.Detail).servings)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    // RF-AFL2/D8: los Faltantes del Detalle llevan las cantidades visibles (RD03) y
+    // añadirlos es idempotente por fuente (RD18).
+    @Test
+    fun addingMissingUsesTheVisibleScaledQuantitiesAndDoesNotDouble() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            val shoppingList = InMemoryShoppingListRepository()
+            recipes.saveRecipe(
+                Recipe(
+                    id = "paella",
+                    title = "Paella",
+                    baseServings = 4,
+                    ingredients = listOf(
+                        RecipeIngredient(id = "rice", name = "Arroz", quantity = 400.0, unit = "g"),
+                        RecipeIngredient(id = "saffron", name = "Azafrán", quantity = 2.0, unit = "g"),
+                        RecipeIngredient(id = "seafood", name = "Mariscos", quantity = 600.0, unit = "g"),
+                    ),
+                ),
+            )
+            val pantry = InMemoryPantryRepository()
+            pantry.savePantryItem(PantryItem("rice", "Arroz"))
+
+            val viewModel = RecipeDetailViewModel(recipes, pantry, shoppingList, "paella")
+            viewModelStore.put("detail", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            viewModel.setServings(2)
+            runCurrent()
+            val state = viewModel.uiState.value as RecipeDetailUiState.Detail
+            assertEquals(listOf("Azafrán", "Mariscos"), state.missingIngredients.map { it.name })
+            assertEquals(1.0, state.missingIngredients.first().quantity, 0.0001)
+
+            viewModel.addMissingToShoppingList()
+            runCurrent()
+            viewModel.addMissingToShoppingList()
+            runCurrent()
+
+            val items = shoppingList.observeItems().first()
+            assertEquals(2, items.size)
+            val saffronItem = items.first { it.name == "Azafrán" }
+            assertEquals(1.0, saffronItem.quantity!!, 0.0001)
+            assertEquals(listOf("paella"), saffronItem.sources.map { it.sourceKey })
+            assertEquals(2, (viewModel.uiState.value as RecipeDetailUiState.Detail).addToListCount)
         } finally {
             viewModelStore.clear()
             runCurrent()

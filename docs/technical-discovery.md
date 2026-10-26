@@ -121,6 +121,14 @@ Verificación: unit de `RecipeSuggestionParser`, `SuggestionRules`, `SuggestionA
 - **Diagnóstico**: logcat con código HTTP, duración, número de rondas y clase de error, **nunca** el texto de la conversación, la Despensa, las Recetas ni la API key.
 - **Verificación**: unit del parser, del mapeo de tools, del cálculo de Faltantes y de la normalización de la Propuesta (`PincheChatProtocolTest`, `PincheProposalRulesTest`, `PincheViewModelTest`); E2E `PincheE2ETest` con un `FakePincheChatClient` que simula `tool_calls`, respuestas con y sin Propuesta, error del proveedor, falta de key y guardado (incluido guardar dos veces sin duplicar).
 
+### Lista de la Compra (2026-10-26, `anadir-faltantes-a-la-lista`)
+
+- **Room v3**: `RecipeDatabase` pasa a `version = 3` y añade `MIGRATION_2_3`, que crea `shopping_items` (`id` PK, `name`, `normalizedName` con índice único, `quantity REAL NULL`, `unit`, `aisle NULL`, `completed INTEGER NOT NULL`) y `shopping_item_sources` (PK compuesta `itemId` + `sourceKey`, `sourceTitle`, FK a `shopping_items.id` `ON DELETE CASCADE` con índice por `itemId`) sin tocar `recipes`, `ingredients`, `steps` ni `pantry_items`. `shoppingListDao()` expone `ShoppingItemWithSources` (`@Relation`). Comandos Gradle sin cambios.
+- **Reglas puras**: `domain/shoppinglist/ShoppingListRules.kt` (RD18) calcula los Faltantes (delegado desde `PincheProposalRules.missingRequired`, comportamiento intacto salvo que excluye nombres normalizados vacíos), el id estable `UUID.nameUUIDFromBytes("shopping:" + normalizeName(nombre))` y la fusión idempotente de aportaciones: un ítem por nombre normalizado, cada `sourceKey` suma una sola vez, cantidades solo si la unidad normalizada coincide y el Origen conserva todas las fuentes. Sin conversiones de unidades ni tope 99 (el máximo de 99 es de Alimentos).
+- **Persistencia**: `RoomShoppingListRepository` guarda ítem + fuentes en una transacción (`Mutex` + `withTransaction`), reinscribiendo las filas padre con `INSERT OR REPLACE` para que el borrado en cascada de las fuentes no deje huérfanas; `InMemoryShoppingListRepository` cubre los tests JVM. Clave de fuente = `recipe.id`; en una Propuesta del Pinche, `PincheProposalRules.proposalRecipeId(título)` (RD16), de modo que Ficha y Detalle del Borrador guardado comparten fuente.
+- **Superficies**: Detalle (banner de Coincidencia + «Añadir a la lista» con cantidades visibles escaladas, RD03), tarjetas de «Recetas con mi Despensa» («Te falta: …» + carrito con cantidades base) y Ficha del Pinche (botón que queda «Añadido a la Lista de la Compra» deshabilitado). Pantalla `shopping_list` (lista plana, badge de Origen, borrado con «Deshacer» y estado vacío → Escáner) accesible desde la top bar de Mis Recetas. Sin cambios en `calculateMatch`/RD01/RD02/RD10/RD13 ni en el esquema de Recetas/Despensa.
+- **Verificación**: unit de `ShoppingListRules`, `InMemoryShoppingListRepository`, `ShoppingListViewModel` y los ViewModels de las tres superficies, más la integración `ShoppingListFlowTest` (Ficha → guardar → Detalle del Borrador sin duplicar); E2E `ShoppingListE2ETest` (S1-S8 con fixtures locales y `FakePincheChatClient`), persistencia Room con cierre/reapertura y borrado/restauración, y migración 2→3 con inserción/lectura de un ÍtemLista y su fuente.
+
 ### Acceso a IA y API key en el dispositivo (2026-10-22, `configurar-acceso-a-ia`)
 
 - **Decisión D2**: la API key de DevExpert Inference se guarda con **Android Keystore directo** (clave AES-256 del Keystore, transformación `AES/GCM/NoPadding`, alias `whatsforlunch_ai_key`). Cada guardado usa un IV nuevo y persiste `Base64(IV || ciphertext)` en `SharedPreferences` `ai_key_prefs` (clave `api_key`). No se añade `androidx.security:security-crypto` (deprecado) ni ninguna dependencia nueva.
@@ -142,7 +150,7 @@ Módulo único `app/` con tres capas (estructura confirmada en Q-arrancar-app-en
 
 La UI no contiene reglas de negocio: viven en `domain/` y en `docs/domain-model.md` (IDs `RD##`).
 
-Flujos principales: Escaneo (foto) → IA de visión → chips editables → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja». Pinche (texto) → function calling de solo lectura (Despensa / Mis Recetas) → Propuesta del Pinche → guardar → Borrador en Mis Recetas.
+Flujos principales: Escaneo (foto) → IA de visión → chips editables → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. La Lista de la Compra se alimenta de los Faltantes de una Receta (Detalle y tarjetas de «Recetas con mi Despensa») y de la Ficha del Pinche; «Despensa baja» y el alta manual llegan en features posteriores. Pinche (texto) → function calling de solo lectura (Despensa / Mis Recetas) → Propuesta del Pinche → guardar → Borrador en Mis Recetas.
 
 ```mermaid
 flowchart LR
@@ -158,10 +166,10 @@ flowchart LR
 
 ## Datos y almacenamiento
 
-- **Duraderos (Room)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra.
+- **Duraderos (Room v3)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra (`shopping_items`) con sus fuentes de Origen (`shopping_item_sources`).
 - **Temporales/derivados**: resultados de Escaneo (chips en memoria, compartidos con Sugerencias por `ScanDraftHolder`), foto del Escaneo (JPEG en memoria, enviado al proveedor y descartado — RD06; las fotos de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), selección y Sugerencias de recetas **solo en memoria** (sin Room, migración, historial ni caché — D4), conversación y Propuestas del Pinche **solo en memoria** (RD17), caché de respuestas de la IA.
 - **Credenciales**: API key de DevExpert Inference en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
-- **Migración o importación**: ninguna (proyecto nuevo).
+- **Migración o importación**: migraciones internas de Room `1→2` (Despensa) y `2→3` (Lista de la Compra, `shopping_items` + `shopping_item_sources`) aplicadas al abrir la base; sin importación externa ni backend (proyecto nuevo, `P33`).
 
 ## Integraciones externas
 

@@ -28,6 +28,7 @@ import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
@@ -503,7 +504,7 @@ class RecipeDetailE2ETest {
         val context = spanishContext()
         // Fuera del lambda de composición: lint prohíbe construir ViewModels dentro
         // de un composable (patrón de MatchBadgeE2ETest).
-        val viewModel = RecipeDetailViewModel(recipes, pantry, recipeId)
+        val viewModel = RecipeDetailViewModel(recipes, pantry, InMemoryShoppingListRepository(), recipeId)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(
