@@ -4,6 +4,7 @@ import com.whatsforlunch.app.data.ai.PincheChatClient
 import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
@@ -12,18 +13,21 @@ import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
 import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
+import com.whatsforlunch.app.domain.model.ShoppingListItem
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -209,6 +213,7 @@ class PincheViewModelTest {
             pincheChatClient = FakePincheChatClient(
                 listOf(success("Prueba esto.", proposal())),
             ),
+            shoppingListRepository = InMemoryShoppingListRepository(),
         )
 
         viewModel.onInputChange("Dame una receta")
@@ -216,6 +221,60 @@ class PincheViewModelTest {
         runBlocking { pantry.savePantryItem(PantryItem("2", "Harina", 1)) }
 
         assertEquals(listOf("Harina"), viewModel.uiState.value.messages.last().proposal?.missingIngredients)
+    }
+
+    // RF-AFL4/D8/D9: la Ficha aporta las cantidades base con la clave de fuente de
+    // la Propuesta (RD16) y queda marcada como añadida sin duplicar.
+    @Test
+    fun addingMissingUsesBaseQuantitiesAndMarksTheProposalAsAdded() = runTest {
+        val shoppingList = InMemoryShoppingListRepository()
+        val viewModel = viewModel(
+            pantry = pantryWith(PantryItem("tomate", "Tomate", 3)),
+            client = FakePincheChatClient(listOf(success("Prueba esto.", proposal()))),
+            shoppingList = shoppingList,
+        )
+
+        viewModel.onInputChange("Dame una receta")
+        viewModel.send("es")
+        advanceUntilIdle()
+        val message = viewModel.uiState.value.messages.last()
+
+        viewModel.addMissingToShoppingList(message.id)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.messages.last().addedToList)
+        val item = shoppingList.observeItems().first().single()
+        assertEquals("Harina", item.name)
+        assertEquals(1.0, item.quantity!!, 0.0001)
+        assertEquals("ud", item.unit)
+        assertEquals(
+            listOf(PincheProposalRules.proposalRecipeId("Arroz con tomate")),
+            item.sources.map { it.sourceKey },
+        )
+
+        viewModel.addMissingToShoppingList(message.id)
+        advanceUntilIdle()
+        assertEquals(1, shoppingList.observeItems().first().size)
+    }
+
+    @Test
+    fun failedShoppingListAddRevertsTheCardAndShowsTheNotice() = runTest {
+        val viewModel = viewModel(
+            pantry = pantryWith(PantryItem("tomate", "Tomate", 3)),
+            client = FakePincheChatClient(listOf(success("Prueba esto.", proposal()))),
+            shoppingList = ThrowingShoppingListRepository(),
+        )
+
+        viewModel.onInputChange("Dame una receta")
+        viewModel.send("es")
+        advanceUntilIdle()
+        val message = viewModel.uiState.value.messages.last()
+
+        viewModel.addMissingToShoppingList(message.id)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.messages.last().addedToList)
+        assertEquals(PincheNotice.SHOPPING_LIST_FAILED, viewModel.uiState.value.notice)
     }
 
     @Test
@@ -249,7 +308,8 @@ class PincheViewModelTest {
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         recipes: RecipeRepository = InMemoryRecipeRepository(),
         client: FakePincheChatClient = FakePincheChatClient(emptyList()),
-    ) = PincheViewModel(pantry, recipes, client)
+        shoppingList: ShoppingListRepository = InMemoryShoppingListRepository(),
+    ) = PincheViewModel(pantry, recipes, client, shoppingList)
 
     private fun pantryWith(vararg items: PantryItem): InMemoryPantryRepository =
         InMemoryPantryRepository().apply {
@@ -303,5 +363,21 @@ class PincheViewModelTest {
         }
 
         override suspend fun deleteRecipe(id: String) = Unit
+    }
+
+    private class ThrowingShoppingListRepository : ShoppingListRepository {
+        override fun observeItems(): Flow<List<ShoppingListItem>> = emptyFlow()
+
+        override suspend fun addMissing(
+            sourceKey: String,
+            sourceTitle: String,
+            ingredients: List<RecipeIngredient>,
+        ) {
+            throw IllegalStateException("shopping list failed")
+        }
+
+        override suspend fun deleteItem(id: String) = Unit
+
+        override suspend fun restoreItem(item: ShoppingListItem) = Unit
     }
 }

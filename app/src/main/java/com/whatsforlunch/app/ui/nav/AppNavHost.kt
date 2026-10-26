@@ -19,6 +19,7 @@ import com.whatsforlunch.app.ui.recommendations.RecommendationsRoute
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailRoute
 import com.whatsforlunch.app.ui.scanner.ScannerRoute
 import com.whatsforlunch.app.ui.settings.SettingsRoute
+import com.whatsforlunch.app.ui.shoppinglist.ShoppingListRoute
 
 // Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18). El formulario
 // de Receta acepta un id opcional: null = alta, con id = edición (RF-1). El Detalle
@@ -35,6 +36,7 @@ object AppRoutes {
     const val SETTINGS = "settings"
     const val AI_SUGGESTIONS = "ai_suggestions"
     const val PINCHE = "pinche"
+    const val SHOPPING_LIST = "shopping_list"
     const val RECIPE_ID_ARG = "recipeId"
 
     fun createRecipe(): String = "create_recipe"
@@ -64,6 +66,7 @@ fun WhatsForLunchApp(
                 onOpenPantry = { navController.navigate(AppRoutes.PANTRY) },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
                 onOpenPinche = { navController.navigate(AppRoutes.PINCHE) },
+                onOpenShoppingList = { navController.navigate(AppRoutes.SHOPPING_LIST) },
             )
         }
         composable(
@@ -133,6 +136,14 @@ fun WhatsForLunchApp(
             PincheRoute(
                 onBack = { navController.popBackStack() },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+            )
+        }
+        // RD18: la Lista de la Compra se abre desde la top bar de Mis Recetas y su
+        // estado vacío lleva al Escáner (RF-AFL6/RF-AFL7).
+        composable(AppRoutes.SHOPPING_LIST) {
+            ShoppingListRoute(
+                onBack = { navController.popBackStack() },
+                onScanPantry = { navController.navigate(AppRoutes.SCAN_PANTRY) },
             )
         }
         composable(AppRoutes.PANTRY) {

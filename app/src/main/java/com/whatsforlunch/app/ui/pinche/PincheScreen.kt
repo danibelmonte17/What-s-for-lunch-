@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -76,6 +77,8 @@ object PincheTestTags {
     const val PROPOSAL_MISSING = "pinche_proposal_missing"
     const val SAVE = "pinche_save"
     const val SAVED_LABEL = "pinche_saved_label"
+    const val ADD_MISSING = "pinche_add_missing"
+    const val ADDED_MISSING_LABEL = "pinche_added_missing_label"
 
     fun userMessage(index: Int) = "pinche_user_message_$index"
 
@@ -103,6 +106,7 @@ fun PincheScreen(
     onSaveProposal: (String) -> Unit,
     onClearNotice: () -> Unit,
     modifier: Modifier = Modifier,
+    onAddMissingToShoppingList: (String) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.testTag(PincheTestTags.SCREEN),
@@ -143,6 +147,7 @@ fun PincheScreen(
                 uiState = uiState,
                 onQuickSuggestion = onQuickSuggestion,
                 onSaveProposal = onSaveProposal,
+                onAddMissingToShoppingList = onAddMissingToShoppingList,
                 modifier = Modifier.weight(1f),
             )
             if (uiState.isSending) {
@@ -163,6 +168,7 @@ private fun MessageList(
     uiState: PincheUiState,
     onQuickSuggestion: (String) -> Unit,
     onSaveProposal: (String) -> Unit,
+    onAddMissingToShoppingList: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -236,8 +242,10 @@ private fun MessageList(
                                     index = index,
                                     proposal = proposal,
                                     state = message.proposalState,
+                                    addedToList = message.addedToList,
                                     locale = locale,
                                     onSave = { onSaveProposal(message.id) },
+                                    onAddMissing = { onAddMissingToShoppingList(message.id) },
                                 )
                             }
                         }
@@ -356,6 +364,7 @@ private fun NoticeBanner(
                         PincheNotice.AI_KEY_MISSING -> R.string.pinche_key_missing
                         PincheNotice.FAILED -> R.string.pinche_failed
                         PincheNotice.SAVE_FAILED -> R.string.pinche_save_failed
+                        PincheNotice.SHOPPING_LIST_FAILED -> R.string.pinche_shopping_list_failed
                     },
                 ),
                 style = MaterialTheme.typography.bodySmall,
@@ -378,6 +387,8 @@ private fun NoticeBanner(
                 }
 
                 PincheNotice.SAVE_FAILED -> Unit
+
+                PincheNotice.SHOPPING_LIST_FAILED -> Unit
             }
             IconButton(
                 onClick = onDismiss,
@@ -397,8 +408,10 @@ private fun ProposalCard(
     index: Int,
     proposal: PincheProposal,
     state: PincheProposalState,
+    addedToList: Boolean,
     locale: Locale,
     onSave: () -> Unit,
+    onAddMissing: () -> Unit,
 ) {
     val recipe = proposal.recipe
     Surface(
@@ -460,6 +473,28 @@ private fun ProposalCard(
                 )
                 if (proposal.missingIngredients.isNotEmpty()) {
                     MissingSection(missing = proposal.missingIngredients)
+                    if (addedToList) {
+                        Button(
+                            onClick = {},
+                            enabled = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 52.dp)
+                                .testTag(PincheTestTags.ADDED_MISSING_LABEL),
+                        ) {
+                            Text(stringResource(R.string.pinche_added_missing))
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = onAddMissing,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 52.dp)
+                                .testTag(PincheTestTags.ADD_MISSING),
+                        ) {
+                            Text(stringResource(R.string.pinche_add_missing))
+                        }
+                    }
                 }
                 if (state == PincheProposalState.SAVED) {
                     Button(

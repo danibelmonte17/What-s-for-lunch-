@@ -260,7 +260,29 @@
     <string name="pinche_save">Guardar en Mis Recetas</string>
     <string name="pinche_saved">Guardada en Mis Recetas</string>
     <string name="pinche_save_failed">No se pudo guardar la receta. Inténtalo de nuevo.</string>
+    <string name="pinche_shopping_list_failed">No se pudieron añadir los faltantes a la Lista de la Compra. Inténtalo de nuevo.</string>
     <string name="pinche_timer_minutes">%1$d min</string>
     <string name="pinche_notice_dismiss">Descartar aviso</string>
     <string name="pinche_message_accessibility">Mensaje de %1$s</string>
+    <string name="action_open_shopping_list">Lista de la Compra</string>
+    <string name="shopping_list_title">Lista de la Compra</string>
+    <string name="shopping_list_item_line">%1$s (%2$s)</string>
+    <string name="shopping_list_item_deleted">Ítem eliminado</string>
+    <string name="shopping_list_undo">Deshacer</string>
+    <string name="shopping_list_delete">Eliminar ítem</string>
+    <string name="shopping_list_origin_single">Para: %1$s</string>
+    <plurals name="shopping_list_origin_multiple">
+        <item quantity="one">Para: %1$d receta</item>
+        <item quantity="other">Para: %1$d recetas</item>
+    </plurals>
+    <string name="shopping_list_origin_accessibility">Origen: %1$s</string>
+    <string name="shopping_list_empty_title">Tu Lista de la Compra está vacía</string>
+    <string name="shopping_list_empty_message">Añade los ingredientes que te faltan desde una Receta o desde el Pinche.</string>
+    <string name="recipe_detail_match_banner">¡Tienes el %1$d%% de ingredientes en casa!</string>
+    <string name="recipe_detail_add_to_list">Añadir a la lista</string>
+    <string name="recipe_detail_added_to_list">Añadido a la Lista de la Compra</string>
+    <string name="recommendations_missing">Te falta: %1$s</string>
+    <string name="recommendations_add_missing">Añadir faltantes de %1$s a la Lista de la Compra</string>
+    <string name="pinche_add_missing">Añadir faltantes a la Lista de la Compra</string>
+    <string name="pinche_added_missing">Añadido a la Lista de la Compra</string>
 </resources>

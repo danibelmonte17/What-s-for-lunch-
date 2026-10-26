@@ -4,6 +4,7 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeOrigin
 import com.whatsforlunch.app.domain.model.RecipeStatus
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
@@ -26,17 +27,9 @@ object PincheProposalRules {
     fun missingRequired(
         proposal: RecipeSuggestion,
         pantryItems: List<PantryItem>,
-    ): List<String> {
-        val available = pantryItems.mapTo(mutableSetOf()) { normalizeName(it.name) }
-        val seen = mutableSetOf<String>()
-        return proposal.ingredients
-            .filter { !it.optional }
-            .filter { ingredient ->
-                val normalized = normalizeName(ingredient.name)
-                normalized !in available && seen.add(normalized)
-            }
-            .map { it.name.trim() }
-    }
+    ): List<String> = ShoppingListRules
+        .missingRequiredIngredients(proposal.ingredients, pantryItems)
+        .map { it.name.trim() }
 
     /**
      * RD16: id estable de la Receta que materializa la Propuesta; mismo título

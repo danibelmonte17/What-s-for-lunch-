@@ -40,6 +40,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -136,6 +137,7 @@ object MyRecipesTestTags {
     const val OPEN_PANTRY_RECIPES = "action_open_pantry_recipes"
     const val OPEN_SETTINGS = "action_open_settings"
     const val OPEN_PINCHE = "action_open_pinche"
+    const val OPEN_SHOPPING_LIST = "action_open_shopping_list"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
     fun filterChipIcon(moment: MealMoment): String = "${FILTER_CHIP_ICON}_${moment.name.lowercase()}"
@@ -153,6 +155,7 @@ fun MyRecipesScreen(
     onOpenPantry: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenPinche: () -> Unit = {},
+    onOpenShoppingList: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
     onResetFilters: () -> Unit = {},
@@ -178,6 +181,16 @@ fun MyRecipesScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.my_recipes_title)) },
                 actions = {
+                    IconButton(
+                        onClick = onOpenShoppingList,
+                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_SHOPPING_LIST),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ShoppingCart,
+                            contentDescription = stringResource(R.string.action_open_shopping_list),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     IconButton(
                         onClick = onOpenPinche,
                         modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PINCHE),

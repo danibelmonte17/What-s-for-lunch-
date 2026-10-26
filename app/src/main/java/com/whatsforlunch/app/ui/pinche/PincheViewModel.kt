@@ -12,7 +12,9 @@ import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
+import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +29,7 @@ enum class PincheNotice {
     AI_KEY_MISSING,
     FAILED,
     SAVE_FAILED,
+    SHOPPING_LIST_FAILED,
 }
 
 // Mensaje en memoria de la conversación (D2). Una respuesta del asistente puede
@@ -37,6 +40,8 @@ data class PincheMessage(
     val text: String,
     val proposal: PincheProposal? = null,
     val proposalState: PincheProposalState = PincheProposalState.PROPOSED,
+    // RF-AFL4: estado en memoria de la Ficha, como «Guardada en Mis Recetas».
+    val addedToList: Boolean = false,
 )
 
 data class PincheUiState(
@@ -59,6 +64,7 @@ class PincheViewModel(
     private val pantryRepository: PantryRepository,
     private val recipeRepository: RecipeRepository,
     private val pincheChatClient: PincheChatClient,
+    private val shoppingListRepository: ShoppingListRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PincheUiState())
@@ -134,6 +140,48 @@ class PincheViewModel(
 
     fun clearNotice() {
         _uiState.value = _uiState.value.copy(notice = null)
+    }
+
+    /**
+     * RF-AFL4/D8/D9: añade los Faltantes del snapshot RD15 con cantidades base y la
+     * clave de fuente de la Propuesta (RD16), de modo que la Ficha y el Detalle del
+     * Borrador guardado no dupliquen. La Ficha queda «Añadido…» deshabilitada.
+     */
+    fun addMissingToShoppingList(messageId: String) {
+        val message = _uiState.value.messages.firstOrNull { it.id == messageId } ?: return
+        val proposal = message.proposal ?: return
+        if (message.addedToList || proposal.missingIngredients.isEmpty()) return
+        val missingNames = proposal.missingIngredients.mapTo(mutableSetOf(), ::normalizeName)
+        val seen = mutableSetOf<String>()
+        val ingredients = proposal.recipe.ingredients
+            .filter { !it.optional }
+            .filter { ingredient ->
+                val normalized = normalizeName(ingredient.name)
+                normalized in missingNames && seen.add(normalized)
+            }
+        if (ingredients.isEmpty()) return
+        _uiState.value = _uiState.value.copy(
+            messages = _uiState.value.messages.map { current ->
+                if (current.id == messageId) current.copy(addedToList = true) else current
+            },
+        )
+        viewModelScope.launch {
+            val added = runCatching {
+                shoppingListRepository.addMissing(
+                    sourceKey = PincheProposalRules.proposalRecipeId(proposal.recipe.title),
+                    sourceTitle = proposal.recipe.title,
+                    ingredients = ingredients,
+                )
+            }.isSuccess
+            if (!added) {
+                _uiState.value = _uiState.value.copy(
+                    messages = _uiState.value.messages.map { current ->
+                        if (current.id == messageId) current.copy(addedToList = false) else current
+                    },
+                    notice = PincheNotice.SHOPPING_LIST_FAILED,
+                )
+            }
+        }
     }
 
     private fun runRequest(language: String) {

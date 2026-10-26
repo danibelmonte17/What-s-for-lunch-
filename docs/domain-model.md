@@ -15,7 +15,7 @@ Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las de
 | Sugerencia | Receta completa propuesta por la IA a partir de los Alimentos que el usuario elige enviar | título, historia, Momento culinario, tiempos, dificultad, calorías, Raciones base, Ingredientes, Pasos, Coincidencia, estado (propuesta/aceptada/descartada) | se materializa en una Receta al aceptarse |
 | Propuesta del Pinche | Receta que devuelve el Pinche en una conversación, sin depender de la Despensa | texto de la respuesta, título, historia, Momento culinario, tiempos, dificultad, calorías, Raciones base, Ingredientes, Pasos, Faltantes | se materializa en una Receta solo al guardarse desde su Ficha |
 | Lista de la Compra | Conjunto de ítems pendientes de comprar | — | N ÍtemLista |
-| ÍtemLista | Artículo a comprar | nombre, cantidad, Pasillo, Origen, completado | Lista de la Compra, Receta (opcional, vía Origen) |
+| ÍtemLista | Artículo a comprar | nombre, cantidad, unidad, Pasillo, Origen (una o varias fuentes), completado | Lista de la Compra, Recetas y/o Propuestas del Pinche (vía Origen) |
 
 Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis Recetas; se distinguen por el atributo `origen` (`P6`, `P32`).
 
@@ -26,7 +26,7 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 - Sugerencia se materializa como máximo en una Receta (al aceptarse).
 - Propuesta del Pinche se materializa como máximo en una Receta (al guardarse); si no se guarda, desaparece con la conversación.
 - La Despensa y la Lista de la Compra son independientes: un Alimento no se convierte en ÍtemLista al agotarse ni al revés. Los Faltantes de una Propuesta solo se muestran; convertirlos en ÍtemLista es de `anadir-faltantes-a-la-lista`.
-- ÍtemLista referencia opcionalmente a una Receta vía su Origen.
+- ÍtemLista referencia opcionalmente a una o varias fuentes (Recetas o Propuestas del Pinche) vía su Origen; un ítem aportado por varias fuentes conserva todas (RD18).
 
 ## Estados y ciclos de vida
 
@@ -69,9 +69,11 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - **RD12**: *(Derogada por `escanear-despensa-con-ia`.)* La detección on-device con umbral de confianza ≥ 0.60 se retiró junto con MediaPipe y el HUD. La IA de visión no devuelve confianza: todos los Alimentos propuestos entran como chips editables y RD05 conserva la entrada manual ante degradación. Se mantiene el ID para no renumerar el resto de reglas.
 - **RD13**: Al guardar un Escaneo, la cantidad de cada chip se **suma** a la del Alimento existente con el mismo nombre normalizado, conservando su id y su nombre y sin crear fila nueva. «Sin cantidad» cuenta como 0 (`null + N → N`, `M + 0 → M`, `null + 0 → sin cantidad`) y la suma se recorta al máximo de 99 sin aviso. Los chips sin coincidencia crean Alimentos nuevos como hasta ahora. No hay diálogo ni decisión de «Mantener cantidad»/«Actualizar cantidad».
 - **RD14**: El Pinche puede proponer recetas **con independencia de la Despensa**. La Coincidencia y el umbral de RD02 no se aplican a las Propuestas del Pinche: ninguna Propuesta se descarta por no alcanzar el 85 % ni por tener Faltantes.
-- **RD15**: Un **Faltante** es un Ingrediente **obligatorio** de la Propuesta del Pinche que no está en la Despensa por nombre normalizado; los opcionales no son Faltantes (RD10). Se calcula en el dispositivo al mostrar la Ficha; el conjunto se congela con la Despensa del momento de recibir la respuesta (guardar más tarde no lo recalcula).
+- **RD15**: Un **Faltante** es un Ingrediente **obligatorio** que no está en la Despensa por nombre normalizado; los opcionales no son Faltantes (RD10). En una Propuesta del Pinche se calcula en el dispositivo al mostrar la Ficha y el conjunto se congela con la Despensa del momento de recibir la respuesta (guardar más tarde no lo recalcula). La misma definición se aplica a los Faltantes de una Receta en su Detalle y en las tarjetas de «Recetas con mi Despensa» (RD18).
 - **RD16**: Guardar una Propuesta del Pinche crea una Receta **Borrador** sin foto, con `origen = Sugerencia` e id estable `UUID.nameUUIDFromBytes("pinche:" + normalizeName(título))`; guardar dos veces la misma Propuesta reescribe la misma Receta (upsert) y nunca duplica.
 - **RD17**: El Pinche solo **lee** datos mediante dos funciones expuestas al modelo (Despensa y Mis Recetas); no escribe Recetas, Alimentos ni ÍtemLista. La conversación y las Propuestas no se persisten. Si el proveedor no admite function calling, se muestra un fallo con «Reintentar» y no se envía contexto por otra vía.
+- **RD18**: Al añadir Faltantes a la Lista de la Compra se crea un **ÍtemLista por nombre normalizado**; cada fuente (Receta o Propuesta del Pinche) suma su cantidad **una sola vez** cuando la unidad normalizada coincide, repetir la acción desde la misma fuente no cambia nada y el Origen conserva todas las fuentes («Para: {Receta}» con una, «Para: N recetas» con varias). Los ítems nacen sin Pasillo y con `completado = false`; las unidades distintas no se convierten (se conserva la cantidad/unidad actual y la fuente se registra igualmente) y las cantidades de compra no tienen tope 99. Clave de fuente: `recipe.id` o, para una Propuesta del Pinche, `PincheProposalRules.proposalRecipeId(título)` (RD16), de modo que Ficha y Detalle del Borrador guardado no suman dos veces. El Detalle aporta las cantidades visibles del checklist (escaladas, RD03); las tarjetas y la Ficha, las cantidades base. La delegación de `PincheProposalRules.missingRequired` en `ShoppingListRules` excluye los ingredientes cuyo nombre normalizado queda vacío (no son Faltantes).
+- **Implementación de la Lista de la Compra (`anadir-faltantes-a-la-lista`, 2026-10-26)**: las reglas puras viven en `ShoppingListRules` (`missingRequiredIngredients`, `itemIdFor`, `addContributions`) y `PincheProposalRules.missingRequired` delega en ellas. Room v3 añade `shopping_items` (índice único por `normalizedName`) y `shopping_item_sources` (PK `(itemId, sourceKey)`, FK `ON DELETE CASCADE`); `RoomShoppingListRepository` fusiona y persiste en una transacción con `Mutex`, reinsertando las fuentes porque `INSERT OR REPLACE` dispara el borrado en cascada. La pantalla es una lista plana con badge de Origen, borrado directo y «Deshacer»; se abre desde la barra superior de Mis Recetas.
 - **Implementación del Pinche (`resolver-dudas-con-pinche`, 2026-10-26)**: `get_pantry` devuelve nombre y cantidad (máximo 100 Alimentos); `get_my_recipes` devuelve título, Momento culinario e ingredientes (máximo 50 Recetas y 20 nombres por Receta, sin pasos, foto ni estado). El contexto se limita a 20 mensajes y 500 caracteres por mensaje del usuario. Cada turno admite **máximo 3 llamadas HTTP** (inicial + 2 rondas de tools) sin reintentos automáticos; agotarlo es un turno fallido. La respuesta final viaja sin `response_format`: texto y, si procede, un bloque cercado `receta` con `{"s":[{…}]}`; un JSON inválido deja solo el texto. Tool desconocida → `{"error":"unknown_function"}`; excepción de la tool → `{"error":"unavailable"}`.
 
 ## Cálculos y fórmulas
@@ -102,7 +104,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 
 1. **Escaneo → Sugerencia → Receta**: el usuario hace una foto de la Despensa, revisa los chips de Alimentos propuestos por la IA, recibe Sugerencias compatibles (RD02), acepta una y queda en Mis Recetas con `origen = Sugerencia` (RD07).
 2. **Alta manual → cocina**: el usuario crea una Receta en el Formulario, la guarda como Borrador o la Publica (⚠ S07), la abre en el Detalle, ajusta Raciones (RD03) y arranca el Modo Cocina.
-3. **Faltantes → Lista de la Compra**: desde el Detalle o tras un Escaneo, lo que falta acaba como ÍtemLista con su Origen (RD09); la compra se agrupa por Pasillo o por Receta.
+3. **Faltantes → Lista de la Compra**: desde el Detalle, una tarjeta de «Recetas con mi Despensa» o la Ficha del Pinche, lo que falta se convierte en ÍtemLista con su Origen (RD09/RD18); en esta primera versión la Lista es plana y la agrupación por Pasillo o por Receta llega con `agrupar-y-completar-la-lista`.
 4. **Fallo de IA o red**: Escáner, Sugerencias y formulario degradan con un aviso por causa (sin conexión / proveedor / respuesta no válida) y conservan su salida manual (chips, «Reintentar» o galería/cámara) según RD05; el Pinche muestra el fallo del turno con «Reintentar» y acceso a Ajustes si falta la API key.
 5. **Duda o receta libre en el Pinche**: el usuario pregunta por una sustitución o pide una receta sin tener los ingredientes; el Pinche pide a la app la Despensa y/o Mis Recetas solo si lo necesita (function calling), responde y puede devolver una Propuesta con su Ficha. El usuario la guarda como Borrador o la deja pasar; los Faltantes se muestran, no se compran todavía.
 
@@ -134,7 +136,11 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 | Raciones fuera de límite | El escalador no permite valores fuera de 1-12 |
 | Edición concurrente desde dos dispositivos | No aplica: datos locales, un solo Usuario (P31) |
 | Receta sin foto o sin ingredientes suficientes | Sin título, foto, 1 Ingrediente y 1 Paso válidos no se puede Publicar (Q-crear-receta-1, `⚠ S07`) |
-| Lista de la Compra vacía | Estado vacío con CTA para escanear la Despensa o añadir ítems |
+| Lista de la Compra vacía | Estado vacío con CTA para escanear la Despensa o añadir ítems (en esta feature, «Escanear la Despensa») |
+| Dos fuentes con el mismo ingrediente y la misma unidad | Un solo ÍtemLista; las cantidades se suman una vez por fuente (200 g + 500 g = 700 g) y el badge dice «Para: N recetas» (RD18) |
+| Dos fuentes con el mismo ingrediente y unidades distintas | Un solo ÍtemLista; se conserva su cantidad/unidad y la fuente se registra igualmente para no doblar después (sin conversiones) |
+| Repetir «Añadir a la lista» desde la misma fuente | No-op: ni filas nuevas ni cantidades dobladas (RD18) |
+| Propuesta del Pinche guardada y añadida también desde el Detalle del Borrador | Misma clave de fuente (RD16): el ÍtemLista no se duplica ni se suma dos veces |
 | Colección de Recetas vacía | Estado vacío con CTA para crear una Receta o escanear la Despensa |
 
 ## Roles y acceso

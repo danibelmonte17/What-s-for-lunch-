@@ -23,6 +23,7 @@ fun RecipeDetailRoute(
         onBack = onBack,
         onStartCooking = onStartCooking,
         onServingsChange = viewModel::setServings,
+        onAddMissingToShoppingList = viewModel::addMissingToShoppingList,
         modifier = modifier,
     )
 }

@@ -2,11 +2,13 @@ package com.whatsforlunch.app.ui.recommendations
 
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -53,7 +55,7 @@ class RecommendationsViewModelTest {
         addPantry(pantry, draft, 2)
         addPantry(pantry, eightyFour, 16)
 
-        val viewModel = RecommendationsViewModel(pantry, recipes)
+        val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -68,7 +70,7 @@ class RecommendationsViewModelTest {
         val pantry = InMemoryPantryRepository()
         recipes.saveRecipe(recipe(id = "pasta", title = "Pasta", required = 19))
 
-        val viewModel = RecommendationsViewModel(pantry, recipes)
+        val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.compatibleRecipes.isEmpty())
@@ -83,7 +85,7 @@ class RecommendationsViewModelTest {
         recipes.saveRecipe(target)
         addPantry(pantry, target, 16)
 
-        val viewModel = RecommendationsViewModel(pantry, recipes)
+        val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.compatibleRecipes.isEmpty())
         assertTrue(viewModel.uiState.value.hasFoods)
@@ -104,7 +106,7 @@ class RecommendationsViewModelTest {
         val target = recipe(id = "target", title = "Ensalada", required = 2)
         addPantry(pantry, target, 2)
 
-        val viewModel = RecommendationsViewModel(pantry, recipes)
+        val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.compatibleRecipes.isEmpty())
 
@@ -121,7 +123,7 @@ class RecommendationsViewModelTest {
     fun hasFoodsFollowsThePersistedPantryOnly() = runTest {
         val recipes = InMemoryRecipeRepository()
         val pantry = InMemoryPantryRepository()
-        val viewModel = RecommendationsViewModel(pantry, recipes)
+        val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.hasFoods)
 
@@ -132,6 +134,49 @@ class RecommendationsViewModelTest {
         pantry.deletePantryItem("tomate")
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.hasFoods)
+    }
+
+    // RF-AFL3/D8: el carrito aporta las cantidades base de la Receta y, tras añadir,
+    // la tarjeta deja de ofrecer «Te falta: …» (sin tocar la Coincidencia).
+    @Test
+    fun addingMissingStoresBaseQuantitiesAndHidesTheMissingLine() = runTest {
+        val recipes = InMemoryRecipeRepository()
+        val pantry = InMemoryPantryRepository()
+        val shoppingList = InMemoryShoppingListRepository()
+        val ingredients = (1..6).map { index ->
+            RecipeIngredient(id = "ingredient-$index", name = "Ingrediente $index")
+        } + RecipeIngredient(
+            id = "oregano",
+            name = "Orégano seco",
+            quantity = 1.0,
+            unit = "bote",
+        )
+        val target = Recipe(
+            id = "pechuga",
+            title = "Pechuga Gratinada",
+            ingredients = ingredients,
+        )
+        recipes.saveRecipe(target)
+        ingredients.take(6).forEach { ingredient ->
+            pantry.savePantryItem(PantryItem(id = ingredient.id, name = ingredient.name))
+        }
+
+        val viewModel = RecommendationsViewModel(pantry, recipes, shoppingList)
+        advanceUntilIdle()
+        assertEquals(
+            listOf("Orégano seco"),
+            viewModel.uiState.value.missingByRecipe["pechuga"].orEmpty().map { it.name },
+        )
+
+        viewModel.addMissingToShoppingList("pechuga")
+        advanceUntilIdle()
+
+        val item = shoppingList.observeItems().first().single()
+        assertEquals("Orégano seco", item.name)
+        assertEquals(1.0, item.quantity!!, 0.0001)
+        assertEquals("bote", item.unit)
+        assertEquals(listOf("pechuga"), item.sources.map { it.sourceKey })
+        assertTrue(viewModel.uiState.value.missingByRecipe["pechuga"].orEmpty().isEmpty())
     }
 
     private fun recipe(

@@ -26,6 +26,7 @@ import com.whatsforlunch.app.data.ai.PincheChatClient
 import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
@@ -134,6 +135,7 @@ class PincheE2ETest {
             pantry,
             recipes,
             FakePincheChatClient(listOf(success("Prueba esta receta.", proposal()))),
+            InMemoryShoppingListRepository(),
         )
         val myRecipesViewModel = MyRecipesViewModel(recipes, pantry)
         val showPinche = mutableStateOf(true)
@@ -334,6 +336,7 @@ class PincheE2ETest {
             pantry,
             recipes,
             FakePincheChatClient(listOf(success("Hola"))),
+            InMemoryShoppingListRepository(),
         )
         val showPinche = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
@@ -458,7 +461,7 @@ class PincheE2ETest {
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         recipes: RecipeRepository = InMemoryRecipeRepository(),
         client: FakePincheChatClient = FakePincheChatClient(emptyList()),
-    ) = PincheViewModel(pantry, recipes, client)
+    ) = PincheViewModel(pantry, recipes, client, InMemoryShoppingListRepository())
 
     private fun launch(
         viewModel: PincheViewModel,

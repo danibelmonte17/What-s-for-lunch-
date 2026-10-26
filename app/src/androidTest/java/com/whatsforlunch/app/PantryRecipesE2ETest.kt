@@ -27,6 +27,7 @@ import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
@@ -282,8 +283,10 @@ class PantryRecipesE2ETest {
         locale: Locale = Locale("es", "ES"),
         detailRecipeId: String? = null,
     ) {
-        val viewModel = RecommendationsViewModel(pantry, recipes)
-        val detailViewModel = detailRecipeId?.let { RecipeDetailViewModel(recipes, pantry, it) }
+        val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())
+        val detailViewModel = detailRecipeId?.let {
+            RecipeDetailViewModel(recipes, pantry, InMemoryShoppingListRepository(), it)
+        }
         val aiSuggestionsViewModel = AiSuggestionsViewModel(
             pantry,
             ScanDraftHolder(),

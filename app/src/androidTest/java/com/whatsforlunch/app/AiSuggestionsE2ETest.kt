@@ -29,6 +29,7 @@ import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
@@ -278,7 +279,11 @@ class AiSuggestionsE2ETest {
             scanImageAnalyzer = AlwaysFailingScanAnalyzer,
             scanDraftHolder = holder,
         )
-        val recommendationsViewModel = RecommendationsViewModel(pantry, InMemoryRecipeRepository())
+        val recommendationsViewModel = RecommendationsViewModel(
+            pantry,
+            InMemoryRecipeRepository(),
+            InMemoryShoppingListRepository(),
+        )
         val suggestionsViewModel = AiSuggestionsViewModel(
             pantry,
             holder,

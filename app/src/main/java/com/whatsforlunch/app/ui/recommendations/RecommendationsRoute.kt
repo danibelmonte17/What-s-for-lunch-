@@ -21,6 +21,7 @@ fun RecommendationsRoute(
         onBack = onBack,
         onOpenRecipe = onOpenRecipe,
         onSuggestWithAi = onSuggestWithAi,
+        onAddMissingToShoppingList = viewModel::addMissingToShoppingList,
         modifier = modifier,
     )
 }
