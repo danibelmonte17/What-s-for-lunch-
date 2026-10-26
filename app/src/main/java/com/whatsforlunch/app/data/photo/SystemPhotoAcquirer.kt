@@ -75,10 +75,10 @@ class SystemPhotoAcquirer(
         }
     }
 
-    override suspend fun generate(prompt: String): PhotoResult = when (val result = imageGenerator.generate(prompt)) {
+    override suspend fun generate(prompt: String): PhotoResult = when (val result: ImageGenerationResult = imageGenerator.generate(prompt)) {
         is ImageGenerationResult.Success -> PhotoResult.Success(result.bytes)
-        ImageGenerationResult.MissingApiKey -> PhotoResult.MissingApiKey
-        ImageGenerationResult.Failed -> PhotoResult.GenerationFailed
+        is ImageGenerationResult.MissingApiKey -> PhotoResult.MissingApiKey
+        is ImageGenerationResult.Failed -> PhotoResult.GenerationFailed(cause = result.cause)
     }
 
     private fun hasCameraPermission(): Boolean =

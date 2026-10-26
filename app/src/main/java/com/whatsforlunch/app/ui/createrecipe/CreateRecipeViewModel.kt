@@ -2,6 +2,7 @@ package com.whatsforlunch.app.ui.createrecipe
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.photo.NoOpPhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
@@ -27,6 +28,9 @@ import kotlinx.coroutines.launch
 enum class CreateRecipeNotice {
     AI_KEY_MISSING,
     AI_GENERATION_FAILED,
+    AI_GENERATION_FAILED_NO_CONNECTION,
+    AI_GENERATION_FAILED_PROVIDER_ERROR,
+    AI_GENERATION_FAILED_INVALID_RESPONSE,
     CAMERA_PERMISSION_DENIED,
 }
 
@@ -244,10 +248,21 @@ class CreateRecipeViewModel(
                     mutate { it.copy(isPhotoLoading = false, notice = CreateRecipeNotice.CAMERA_PERMISSION_DENIED) }
                 PhotoResult.MissingApiKey ->
                     mutate { it.copy(isPhotoLoading = false, notice = CreateRecipeNotice.AI_KEY_MISSING) }
-                PhotoResult.GenerationFailed ->
-                    mutate { it.copy(isPhotoLoading = false, notice = CreateRecipeNotice.AI_GENERATION_FAILED) }
+                is PhotoResult.GenerationFailed ->
+                    mutate {
+                        it.copy(
+                            isPhotoLoading = false,
+                            notice = result.cause.toNotice(),
+                        )
+                    }
             }
         }
+    }
+
+    private fun AiFailureCause.toNotice(): CreateRecipeNotice = when (this) {
+        AiFailureCause.NO_CONNECTION -> CreateRecipeNotice.AI_GENERATION_FAILED_NO_CONNECTION
+        AiFailureCause.PROVIDER_ERROR -> CreateRecipeNotice.AI_GENERATION_FAILED_PROVIDER_ERROR
+        AiFailureCause.INVALID_RESPONSE -> CreateRecipeNotice.AI_GENERATION_FAILED_INVALID_RESPONSE
     }
 
     private fun persist(recipe: Recipe) {

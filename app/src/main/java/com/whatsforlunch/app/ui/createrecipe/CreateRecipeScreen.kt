@@ -1294,6 +1294,9 @@ private fun Difficulty.testTag(): String = when (this) {
 private fun CreateRecipeNotice.messageRes(): Int = when (this) {
     CreateRecipeNotice.AI_KEY_MISSING -> R.string.create_recipe_notice_ai_key_missing
     CreateRecipeNotice.AI_GENERATION_FAILED -> R.string.create_recipe_notice_ai_failed
+    CreateRecipeNotice.AI_GENERATION_FAILED_NO_CONNECTION -> R.string.create_recipe_notice_ai_failed_no_connection
+    CreateRecipeNotice.AI_GENERATION_FAILED_PROVIDER_ERROR -> R.string.create_recipe_notice_ai_failed_provider
+    CreateRecipeNotice.AI_GENERATION_FAILED_INVALID_RESPONSE -> R.string.create_recipe_notice_ai_failed_invalid_response
     CreateRecipeNotice.CAMERA_PERMISSION_DENIED -> R.string.create_recipe_notice_camera_denied
 }
 

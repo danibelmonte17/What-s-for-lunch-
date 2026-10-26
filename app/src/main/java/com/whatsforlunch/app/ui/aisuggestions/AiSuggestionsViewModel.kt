@@ -2,6 +2,8 @@ package com.whatsforlunch.app.ui.aisuggestions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.whatsforlunch.app.data.ai.AiFailure
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
@@ -30,6 +32,9 @@ import kotlinx.coroutines.launch
 enum class AiSuggestionsNotice {
     AI_KEY_MISSING,
     FAILED,
+    FAILED_NO_CONNECTION,
+    FAILED_PROVIDER_ERROR,
+    FAILED_INVALID_RESPONSE,
     SAVED,
 }
 
@@ -180,8 +185,8 @@ class AiSuggestionsViewModel(
                 recipeSuggester.suggest(selectedFoods, language, avoidance)
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (_: Exception) {
-                RecipeSuggestionsResult.Failed
+            } catch (exception: Exception) {
+                RecipeSuggestionsResult.Failed(AiFailure.fromException(exception))
             }
             isRequesting = false
             when (result) {
@@ -208,14 +213,20 @@ class AiSuggestionsViewModel(
                     )
                 }
 
-                RecipeSuggestionsResult.Failed -> {
+                is RecipeSuggestionsResult.Failed -> {
                     _uiState.value = _uiState.value.copy(
                         phase = restoredSelection(restore),
-                        notice = AiSuggestionsNotice.FAILED,
+                        notice = result.cause.toNotice(),
                     )
                 }
             }
         }
+    }
+
+    private fun AiFailureCause.toNotice(): AiSuggestionsNotice = when (this) {
+        AiFailureCause.NO_CONNECTION -> AiSuggestionsNotice.FAILED_NO_CONNECTION
+        AiFailureCause.PROVIDER_ERROR -> AiSuggestionsNotice.FAILED_PROVIDER_ERROR
+        AiFailureCause.INVALID_RESPONSE -> AiSuggestionsNotice.FAILED_INVALID_RESPONSE
     }
 
     private fun restoredSelection(restore: AiSuggestionsPhase.Selection): AiSuggestionsPhase.Selection {

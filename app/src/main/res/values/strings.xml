@@ -152,6 +152,9 @@
     <string name="create_recipe_publish_error_invalid_step">Hay pasos sin texto</string>
     <string name="create_recipe_notice_ai_key_missing">Configura tu API key de IA en Ajustes para generar imágenes.</string>
     <string name="create_recipe_notice_ai_failed">No se pudo generar la imagen. Puedes elegir una foto manualmente.</string>
+    <string name="create_recipe_notice_ai_failed_no_connection">Sin conexión. Comprueba tu red y vuelve a intentarlo; también puedes elegir una foto manualmente.</string>
+    <string name="create_recipe_notice_ai_failed_provider">El proveedor de IA no está disponible ahora mismo. Inténtalo más tarde o elige una foto manualmente.</string>
+    <string name="create_recipe_notice_ai_failed_invalid_response">La IA devolvió una respuesta no válida. Puedes elegir una foto manualmente.</string>
     <string name="create_recipe_notice_camera_denied">Permiso de cámara denegado. Puedes usar la galería o generar con IA.</string>
 
     <!-- Ajustes -->
@@ -184,6 +187,9 @@
     <string name="scanner_camera_denied">Permiso de cámara denegado. Puedes continuar añadiendo alimentos manualmente.</string>
     <string name="scanner_camera_unavailable">No se pudo abrir la cámara. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_analysis_failed">No se pudo analizar la foto. Puedes añadir alimentos manualmente.</string>
+    <string name="scanner_analysis_failed_no_connection">Sin conexión. Comprueba tu red y vuelve a intentarlo; también puedes continuar manualmente.</string>
+    <string name="scanner_analysis_failed_provider">El proveedor de IA no está disponible ahora mismo. Inténtalo más tarde o continúa manualmente.</string>
+    <string name="scanner_analysis_failed_invalid_response">La IA devolvió una respuesta no válida. Puedes continuar manualmente.</string>
     <string name="scanner_ai_key_missing">Configura tu API key en Ajustes para analizar fotos con IA. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_no_detections">No se detectaron alimentos en la foto. Puedes añadir alimentos manualmente.</string>
     <string name="scanner_save_failed">No se pudieron guardar los alimentos. Inténtalo de nuevo.</string>
@@ -216,6 +222,9 @@
     <string name="ai_suggestions_progress">Pidiendo sugerencias a la IA…</string>
     <string name="ai_suggestions_empty">La IA no propuso ninguna receta. Prueba de nuevo.</string>
     <string name="ai_suggestions_failed">No se pudieron obtener sugerencias. Inténtalo de nuevo.</string>
+    <string name="ai_suggestions_failed_no_connection">Sin conexión. Comprueba tu red y vuelve a intentarlo.</string>
+    <string name="ai_suggestions_failed_provider">El proveedor de IA no está disponible ahora mismo. Inténtalo más tarde.</string>
+    <string name="ai_suggestions_failed_invalid_response">La IA devolvió una respuesta no válida. Inténtalo de nuevo.</string>
     <string name="ai_suggestions_retry">Reintentar</string>
     <string name="ai_suggestions_key_missing">Configura tu API key en Ajustes para pedir sugerencias con IA.</string>
     <string name="ai_suggestions_open_settings">Abrir Ajustes</string>

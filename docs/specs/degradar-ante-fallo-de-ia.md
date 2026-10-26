@@ -5,7 +5,7 @@
 - `id`: degradar-ante-fallo-de-ia
 - `area`: tecnica
 - `depends_on`: sugerir-recetas-con-ia (`accepted`)
-- `status`: `not_started`
+- `status`: `accepted`
 - `source`: `feature_list.json`
 
 ## Goal
@@ -111,7 +111,7 @@ Then los avisos de las tres causas se muestran en inglés en las tres superficie
 - `app/src/main/java/com/whatsforlunch/app/ui/scanner/ScannerViewModel.kt`, `ScannerScreen.kt` — `ScannerNotice` con `ANALYSIS_FAILED`/`AI_KEY_MISSING`, `NoticeBanner` descartable y alta manual por chips siempre disponible.
 - `app/src/main/java/com/whatsforlunch/app/ui/aisuggestions/AiSuggestionsViewModel.kt`, `AiSuggestionsScreen.kt`, `AiSuggestionsRoute.kt` — `AiSuggestionsNotice.FAILED` con «Reintentar», `clearNotice()` sin consumidor ni cableado.
 - `app/src/main/java/com/whatsforlunch/app/ui/createrecipe/CreateRecipeViewModel.kt`, `CreateRecipeScreen.kt` — `AI_KEY_MISSING`/`AI_GENERATION_FAILED`, `onDismissNotice`, galería/cámara disponibles.
-- Tests: `ScannerViewModelTest`, `AiSuggestionsViewModelTest`, `ScanAnalysisParserTest`, `RecipeSuggestionParserTest`; E2E `ScanPantryE2ETest` (`analysisFailureShowsNoticeAndTheNextPhotoCanRetry`, `missingApiKeyShowsNoticeAndKeepsManualFlowAvailable`), `AiSuggestionsE2ETest` (`failureShowsNoticeAndRetryListsSuggestions`), `CreateRecipeE2ETest` (`generationFailureShowsNoticeAndKeepsManualOptions`) y `CompatibleRecipesE2ETest` (fakes con `Failed`).
+- Tests: `ScannerViewModelTest`, `AiSuggestionsViewModelTest`, `ScanAnalysisParserTest`, `RecipeSuggestionParserTest`; E2E `ScanPantryE2ETest` (`analysisFailureShowsNoticeAndTheNextPhotoCanRetry`, `missingApiKeyShowsNoticeAndKeepsManualFlowAvailable`), `AiSuggestionsE2ETest` (`failureShowsNoticeAndRetryListsSuggestions`), `CreateRecipeE2ETest` (`generationFailureShowsNoticeAndKeepsManualOptions`) y `PantryRecipesE2ETest` (fakes con `Failed`).
 
 ### Existing Patterns To Follow
 
@@ -156,7 +156,7 @@ Then los avisos de las tres causas se muestran en inglés en las tres superficie
 
    Se conservan `ANALYSIS_FAILED`, `FAILED` y `AI_GENERATION_FAILED` como respaldo para errores fuera del contrato (p. ej. fallo de captura local en el Escáner).
 
-5. **UI** — `ScannerScreen`/`CreateRecipeScreen` solo amplían su `when` de mensajes (el banner ya es descartable). `AiSuggestionsScreen` añade `onClearNotice: () -> Unit` a su firma, lo cablea en `AiSuggestionsRoute` (`viewModel::clearNotice`) y añade un `IconButton` de cierre de 48 dp con `stringResource(R.string.action_dismiss)` en `NoticeBanner`; también hay que actualizar los montajes directos en `AiSuggestionsE2ETest` y `CompatibleRecipesE2ETest`.
+5. **UI** — `ScannerScreen`/`CreateRecipeScreen` solo amplían su `when` de mensajes (el banner ya es descartable). `AiSuggestionsScreen` añade `onClearNotice: () -> Unit` a su firma, lo cablea en `AiSuggestionsRoute` (`viewModel::clearNotice`) y añade un `IconButton` de cierre de 48 dp con `stringResource(R.string.action_dismiss)` en `NoticeBanner`; también hay que actualizar los montajes directos en `AiSuggestionsE2ETest` y `PantryRecipesE2ETest`.
 
 6. **Textos** — claves nuevas en es/en (P19):
    - `scanner_analysis_failed_no_connection`, `scanner_analysis_failed_provider`, `scanner_analysis_failed_invalid_response`.
@@ -164,7 +164,7 @@ Then los avisos de las tres causas se muestran en inglés en las tres superficie
    - `create_recipe_notice_ai_failed_no_connection`, `create_recipe_notice_ai_failed_provider`, `create_recipe_notice_ai_failed_invalid_response`.
    - Copy orientativo (es): «Sin conexión. Comprueba tu red y vuelve a intentarlo; también puedes continuar manualmente.», «El proveedor de IA no está disponible ahora mismo. Inténtalo más tarde o continúa manualmente.», «La IA devolvió una respuesta no válida. Puedes continuar manualmente.». En el formulario, «continuar manualmente» = galería o cámara; en Sugerencias, «Reintentar».
 
-7. **Tests** — `AiFailureTest` (pura: subclases de `IOException` → `NO_CONNECTION`; no-`IOException` → `INVALID_RESPONSE`); actualizar `ScannerViewModelTest` y `AiSuggestionsViewModelTest` a `Failed(causa)` y asertar el mapeo a avisos; actualizar los fakes de `ScanPantryE2ETest`, `AiSuggestionsE2ETest`, `CompatibleRecipesE2ETest` y `CreateRecipeE2ETest`.
+7. **Tests** — `AiFailureTest` (pura: subclases de `IOException` → `NO_CONNECTION`; no-`IOException` → `INVALID_RESPONSE`); actualizar `ScannerViewModelTest` y `AiSuggestionsViewModelTest` a `Failed(causa)` y asertar el mapeo a avisos; actualizar los fakes de `ScanPantryE2ETest`, `AiSuggestionsE2ETest`, `PantryRecipesE2ETest` y `CreateRecipeE2ETest`.
 
 ### Decisiones (confirmadas por el usuario, 2026-10-23)
 
@@ -179,7 +179,7 @@ Then los avisos de las tres causas se muestran en inglés en las tres superficie
 - `app/src/main/java/com/whatsforlunch/app/ui/scanner/*`, `ui/aisuggestions/*`, `ui/createrecipe/*` — modificar; avisos por causa y descarte en Sugerencias.
 - `app/src/main/res/values/strings.xml`, `app/src/main/res/values-en/strings.xml` — modificar; 9 claves nuevas.
 - `app/src/test/.../data/ai/AiFailureTest.kt` — crear; clasificador. `ui/scanner/ScannerViewModelTest.kt` y `ui/aisuggestions/AiSuggestionsViewModelTest.kt` — modificar; causas y avisos.
-- `app/src/androidTest/java/com/whatsforlunch/app/ScanPantryE2ETest.kt`, `AiSuggestionsE2ETest.kt`, `CreateRecipeE2ETest.kt`, `CompatibleRecipesE2ETest.kt` — modificar; fakes con causa, aviso por causa y descarte.
+- `app/src/androidTest/java/com/whatsforlunch/app/ScanPantryE2ETest.kt`, `AiSuggestionsE2ETest.kt`, `CreateRecipeE2ETest.kt`, `PantryRecipesE2ETest.kt` — modificar; fakes con causa, aviso por causa y descarte.
 - `docs/domain-model.md`, `docs/technical-discovery.md`, `docs/risks-and-open-questions.md`, `PROGRESS.md`, `docs/progress-history.md`, `docs/validations/degradar-ante-fallo-de-ia.md` y `docs/evidence/degradar-ante-fallo-de-ia/*.png` — al implementar/validar.
 
 ## Visual Design Impact
@@ -210,12 +210,12 @@ Then los avisos de las tres causas se muestran en inglés en las tres superficie
 
 ## Implementation Tasks
 
-- [ ] T1: `AiFailure.kt` + `AiFailureTest` (D2, D3). (RF-DIA2)
-- [ ] T2: `ScanAnalysisResult`, `RecipeSuggestionsResult`, `ImageGenerationResult` y `PhotoResult` con causa; adaptar los tres clientes y `SystemPhotoAcquirer`. (RF-DIA2, S1-S3, S6)
-- [ ] T3: mapeo causa→aviso en `ScannerViewModel`, `AiSuggestionsViewModel` y `CreateRecipeViewModel`; cadenas es/en. (RF-DIA3, RF-DIA7, S2-S4, S7)
-- [ ] T4: `ScannerScreen`, `AiSuggestionsScreen` + `Route` (cierre de 48 dp) y `CreateRecipeScreen`; actualizar montajes directos en tests. (RF-DIA4, RF-DIA6, S1, S5, S6)
-- [ ] T5: unit (`ScannerViewModelTest`, `AiSuggestionsViewModelTest`) y E2E (`ScanPantryE2ETest`, `AiSuggestionsE2ETest`, `CreateRecipeE2ETest`, `CompatibleRecipesE2ETest`) con causas, descarte y alta manual. (S1-S7)
-- [ ] T6: gates en verde, docs actualizadas y evidencia capturada. (RF-DIA1)
+- [x] T1: `AiFailure.kt` + `AiFailureTest` (D2, D3). (RF-DIA2)
+- [x] T2: `ScanAnalysisResult`, `RecipeSuggestionsResult`, `ImageGenerationResult` y `PhotoResult` con causa; adaptar los tres clientes y `SystemPhotoAcquirer`. (RF-DIA2, S1-S3, S6)
+- [x] T3: mapeo causa→aviso en `ScannerViewModel`, `AiSuggestionsViewModel` y `CreateRecipeViewModel`; cadenas es/en. (RF-DIA3, RF-DIA7, S2-S4, S7)
+- [x] T4: `ScannerScreen`, `AiSuggestionsScreen` + `Route` (cierre de 48 dp) y `CreateRecipeScreen`; actualizar montajes directos en tests. (RF-DIA4, RF-DIA6, S1, S5, S6)
+- [x] T5: unit (`ScannerViewModelTest`, `AiSuggestionsViewModelTest`) y E2E (`ScanPantryE2ETest`, `AiSuggestionsE2ETest`, `CreateRecipeE2ETest`, `PantryRecipesE2ETest`) con causas, descarte y alta manual. (S1-S7)
+- [x] T6: gates en verde, docs actualizadas y evidencia capturada. (RF-DIA1)
 
 ## Verification Plan
 
@@ -250,11 +250,11 @@ Then los avisos de las tres causas se muestran en inglés en las tres superficie
 
 ## Validator Checklist
 
-- [ ] La implementación se queda dentro del alcance: solo clasificación de fallos, avisos y descarte; sin tocar prompts, endpoints, payloads, parseo, RD13, Room ni RD06.
-- [ ] Los escenarios S1-S7 pasan y las decisiones D1-D4 se respetan (en particular D3: sin `ConnectivityManager`; D4: sin «Re-escanear»).
-- [ ] `MissingApiKey` sigue comprobándose antes de la red y sin llamada real.
-- [ ] `AiSuggestionsViewModel.clearNotice()` tiene consumidor y los avisos de las tres superficies son descartables con controles ≥ 48 dp.
-- [ ] Cobertura E2E persistente actualizada (causas, descarte y alta manual) y suite completa en verde.
-- [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente (solo `status` y `evidence` en la lista).
-- [ ] `docs/domain-model.md`, `docs/technical-discovery.md` y `docs/risks-and-open-questions.md` actualizados (`Q-degradar-ante-fallo-de-ia-1..4`).
-- [ ] Sin llamadas reales de pago ni API keys reales en ficheros, logs o evidencia (`⚠ S05`, `RK01`, `RK03` como puerta de release).
+- [x] La implementación se queda dentro del alcance: solo clasificación de fallos, avisos y descarte; sin tocar prompts, endpoints, payloads, parseo, RD13, Room ni RD06.
+- [x] Los escenarios S1-S7 pasan y las decisiones D1-D4 se respetan (en particular D3: sin `ConnectivityManager`; D4: sin «Re-escanear»).
+- [x] `MissingApiKey` sigue comprobándose antes de la red y sin llamada real.
+- [x] `AiSuggestionsViewModel.clearNotice()` tiene consumidor y los avisos de las tres superficies son descartables con controles ≥ 48 dp.
+- [x] Cobertura E2E persistente actualizada (causas, descarte y alta manual) y suite completa en verde.
+- [x] `feature_list.json` y `PROGRESS.md` actualizados correctamente (solo `status` y `evidence` en la lista).
+- [x] `docs/domain-model.md`, `docs/technical-discovery.md` y `docs/risks-and-open-questions.md` actualizados (`Q-degradar-ante-fallo-de-ia-1..4`).
+- [x] Sin llamadas reales de pago ni API keys reales en ficheros, logs o evidencia (`⚠ S05`, `RK01`, `RK03` como puerta de release).

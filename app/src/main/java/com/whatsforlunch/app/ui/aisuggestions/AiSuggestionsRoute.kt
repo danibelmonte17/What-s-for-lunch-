@@ -27,6 +27,7 @@ fun AiSuggestionsRoute(
         onRetry = viewModel::retry,
         onAccept = viewModel::acceptSuggestion,
         onDiscard = viewModel::discardSuggestion,
+        onClearNotice = viewModel::clearNotice,
         modifier = modifier,
     )
 }

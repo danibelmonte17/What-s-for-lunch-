@@ -26,7 +26,7 @@ class OpenAiCompatibleScanImageAnalyzer(
     private val endpoint = AiEndpoints.chatCompletions(baseUrl)
 
     override suspend fun analyze(image: ByteArray, language: String): ScanAnalysisResult {
-        if (image.isEmpty()) return ScanAnalysisResult.Failed
+        if (image.isEmpty()) return ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
         val key = aiKeyProvider.apiKey() ?: return ScanAnalysisResult.MissingApiKey
         return withContext(Dispatchers.IO) {
             val startedAt = System.nanoTime()
@@ -40,12 +40,12 @@ class OpenAiCompatibleScanImageAnalyzer(
                     val elapsed = elapsedMs(startedAt)
                     if (!response.isSuccessful) {
                         Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
-                        return@withContext ScanAnalysisResult.Failed
+                        return@withContext ScanAnalysisResult.Failed(AiFailureCause.PROVIDER_ERROR)
                     }
                     val body = response.body?.string()
                     if (body == null) {
                         Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
-                        return@withContext ScanAnalysisResult.Failed
+                        return@withContext ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     }
                     val content = messageContent(body)
                     if (content == null) {
@@ -54,7 +54,7 @@ class OpenAiCompatibleScanImageAnalyzer(
                             "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
                                 "without message content (body ${body.length} chars)",
                         )
-                        return@withContext ScanAnalysisResult.Failed
+                        return@withContext ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     }
                     val foods = ScanAnalysisParser.parse(content)
                     if (foods == null) {
@@ -63,7 +63,7 @@ class OpenAiCompatibleScanImageAnalyzer(
                             "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
                                 "with unparseable content (${content.length} chars)",
                         )
-                        return@withContext ScanAnalysisResult.Failed
+                        return@withContext ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     }
                     Log.i(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms, ${foods.size} foods")
                     ScanAnalysisResult.Success(foods)
@@ -72,10 +72,10 @@ class OpenAiCompatibleScanImageAnalyzer(
                 throw exception
             } catch (exception: IOException) {
                 Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
-                ScanAnalysisResult.Failed
+                ScanAnalysisResult.Failed(AiFailure.fromException(exception))
             } catch (exception: Exception) {
                 Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
-                ScanAnalysisResult.Failed
+                ScanAnalysisResult.Failed(AiFailure.fromException(exception))
             }
         }
     }

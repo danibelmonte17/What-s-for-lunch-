@@ -33,6 +33,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
@@ -42,6 +43,7 @@ import com.whatsforlunch.app.domain.scanner.AnalyzedFood
 import com.whatsforlunch.app.ui.pantry.PantryScreen
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import com.whatsforlunch.app.ui.pantry.PantryUiState
+import com.whatsforlunch.app.ui.scanner.ScannerNotice
 import com.whatsforlunch.app.ui.scanner.ScannerScreen
 import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
@@ -330,16 +332,16 @@ class ScanPantryE2ETest {
     }
 
     @Test
-    fun analysisFailureShowsNoticeAndTheNextPhotoCanRetry() {
+    fun providerFailureShowsNoticeAndTheNextPhotoCanRetry() {
         launchScanner(
             analyzerResults = listOf(
-                ScanAnalysisResult.Failed,
+                ScanAnalysisResult.Failed(AiFailureCause.PROVIDER_ERROR),
                 ScanAnalysisResult.Success(listOf(AnalyzedFood("Plátano", 2.0))),
             ),
         )
         captureAndWait()
 
-        composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed)).assertIsDisplayed()
+        composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed_provider)).assertIsDisplayed()
         composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).assertCountEquals(0)
         assertFalse(viewModel.uiState.value.isScannerExpanded)
         composeRule.onAllNodesWithTag(ScannerTestTags.CAMERA_SECTION).assertCountEquals(0)
@@ -351,6 +353,66 @@ class ScanPantryE2ETest {
         captureAndWait(calls = 2)
         assertEquals(2, analyzer.calls)
         composeRule.onNodeWithText("Plátano").assertIsDisplayed()
+    }
+
+    // S1 (verify de feature_list.json): fallo de red, aviso descartable y alta manual
+    // que se guarda en la Despensa; un nuevo fallo vuelve a mostrar su causa.
+    @Test
+    fun failureNoticeAllowsManualEntryAndSaving() {
+        launchScanner(
+            analyzerResults = listOf(
+                ScanAnalysisResult.Failed(AiFailureCause.NO_CONNECTION),
+                ScanAnalysisResult.Failed(AiFailureCause.NO_CONNECTION),
+            ),
+        )
+        captureAndWait()
+
+        composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed_no_connection)).assertIsDisplayed()
+        assertTrue(viewModel.uiState.value.manualMode)
+        assertEquals(ScannerNotice.ANALYSIS_NO_CONNECTION, viewModel.uiState.value.notice)
+
+        composeRule.onNodeWithContentDescription(locale(R.string.action_dismiss)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed_no_connection)).assertDoesNotExist()
+        assertNull(viewModel.uiState.value.notice)
+
+        captureAndWait(calls = 2)
+        composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed_no_connection)).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Lentejas")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
+        composeRule.waitUntil(5_000) { showPantry.value }
+        composeRule.onNodeWithText("Lentejas").assertIsDisplayed()
+    }
+
+    @Test
+    fun invalidResponseShowsNoticeAndKeepsManualEntry() {
+        launchScanner(analyzerResults = listOf(ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)))
+        captureAndWait()
+
+        composeRule.onNodeWithText(locale(R.string.scanner_analysis_failed_invalid_response)).assertIsDisplayed()
+        assertEquals(ScannerNotice.ANALYSIS_INVALID_RESPONSE, viewModel.uiState.value.notice)
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Arroz")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+        composeRule.onNodeWithText("Arroz").assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.SAVE).assertIsEnabled()
+    }
+
+    @Test
+    fun failureNoticeIsLocalizedInEnglish() {
+        launchScanner(
+            analyzerResults = listOf(ScanAnalysisResult.Failed(AiFailureCause.NO_CONNECTION)),
+            locale = Locale.ENGLISH,
+        )
+        captureAndWait()
+
+        composeRule.onNodeWithText(
+            "No connection. Check your network and try again; you can also continue manually.",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Rice")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+        composeRule.onNodeWithText("Rice").assertIsDisplayed()
     }
 
     @Test
