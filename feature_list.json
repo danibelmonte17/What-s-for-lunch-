@@ -725,9 +725,13 @@
       "verification": [
         "E2E: añadir un artículo a mano y comprobar que aparece en la Lista de la Compra"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/anadir-item-a-la-lista/ (informe + 2 capturas es 1280x2856)",
+        "PROGRESS.md: RF-AIL1..7 verificados (E2E ShoppingListE2ETest 16/16, unit 216 tests, lint 0 errores); step de voz diferido por D1",
+        "docs/validations/anadir-item-a-la-lista.md (validación independiente: revise — H1 High cantidades >= 1000 al editar, L1 Low; repair brief pendiente)"
+      ],
       "notes": "Alta por voz según ⚠ S04",
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "agrupar-y-completar-la-lista",

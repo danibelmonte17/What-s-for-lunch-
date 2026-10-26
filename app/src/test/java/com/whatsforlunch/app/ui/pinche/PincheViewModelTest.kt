@@ -5,6 +5,7 @@ import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
@@ -375,6 +376,14 @@ class PincheViewModelTest {
         ) {
             throw IllegalStateException("shopping list failed")
         }
+
+        override suspend fun saveManualItem(
+            id: String?,
+            name: String,
+            quantity: Double?,
+            unit: String,
+            aisle: Aisle?,
+        ) = Unit
 
         override suspend fun deleteItem(id: String) = Unit
 

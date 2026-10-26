@@ -1,7 +1,9 @@
 package com.whatsforlunch.app.ui.shoppinglist
 
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -13,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -101,5 +104,55 @@ class ShoppingListViewModelTest {
 
         assertTrue(viewModel.uiState.value.items.isEmpty())
         assertNull(viewModel.uiState.value.pendingUndo)
+    }
+
+    @Test
+    fun addItemOpensTheEditorAndSavingStoresTheManualItem() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+
+        viewModel.addItem()
+        assertTrue(viewModel.uiState.value.editorVisible)
+        assertNull(viewModel.uiState.value.editing)
+
+        viewModel.saveManualItem(name = "Pan", quantity = 2.0, unit = "uds", aisle = Aisle.PANTRY_OILS)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.editorVisible)
+        val item = viewModel.uiState.value.items.single()
+        assertEquals("Pan", item.name)
+        assertEquals(Aisle.PANTRY_OILS, item.aisle)
+    }
+
+    @Test
+    fun editItemPreloadsTheDialogAndInvalidDataIsIgnored() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
+        )
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+
+        viewModel.editItem(ShoppingListRules.itemIdFor("Azafrán"))
+        assertEquals("Azafrán", viewModel.uiState.value.editing?.name)
+
+        viewModel.saveManualItem(name = "   ", quantity = 2.0, unit = "", aisle = null)
+        advanceUntilIdle()
+
+        // Datos inválidos: no se guarda nada y el diálogo sigue abierto (RF-AIL5).
+        assertTrue(viewModel.uiState.value.editorVisible)
+        assertEquals(1.0, viewModel.uiState.value.items.single().quantity!!, 0.0001)
+
+        viewModel.dismissEditor()
+        assertFalse(viewModel.uiState.value.editorVisible)
     }
 }

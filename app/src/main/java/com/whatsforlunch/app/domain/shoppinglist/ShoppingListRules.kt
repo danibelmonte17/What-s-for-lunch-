@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.domain.shoppinglist
 
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.ShoppingItemSource
@@ -8,8 +9,9 @@ import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
 
 /**
- * Reglas puras de la Lista de la Compra (RD18): Faltantes por nombre normalizado y
- * fusión idempotente de aportaciones por fuente.
+ * Reglas puras de la Lista de la Compra (RD18/RD19): Faltantes por nombre
+ * normalizado, fusión idempotente de aportaciones por fuente y alta manual de
+ * ÍtemLista (upsert por nombre normalizado).
  *
  * Cada fuente (una Receta o una Propuesta del Pinche) suma su cantidad una sola vez;
  * repetir la acción no duplica filas ni dobla la suma. Sin dependencias de Android
@@ -104,5 +106,72 @@ object ShoppingListRules {
             else -> this
         }
         return merged.copy(sources = sources + source)
+    }
+
+    // --- Alta manual (RD19) ---------------------------------------------------
+
+    /**
+     * RD19: el nombre del alta manual no puede quedar vacío tras normalizar.
+     */
+    fun isManualNameValid(name: String): Boolean = normalizeName(name).isNotBlank()
+
+    /**
+     * RD19: la cantidad manual es opcional (null) y, si se escribe, debe ser un
+     * decimal finito mayor que 0, sin tope 99 (RD18).
+     */
+    fun isManualQuantityValid(quantity: Double?): Boolean =
+        quantity == null || (quantity.isFinite() && quantity > 0.0)
+
+    /**
+     * RD19: cantidad escrita por el usuario, aceptando coma o punto decimal
+     * (D6). Devuelve null para el texto vacío (sin cantidad) y para lo que no
+     * sea un número.
+     */
+    fun parseManualQuantity(raw: String): Double? {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return null
+        return trimmed.replace(',', '.').toDoubleOrNull()
+    }
+
+    /**
+     * RD19: alta manual de un ÍtemLista sobre los ítems actuales (upsert por
+     * nombre normalizado, D3):
+     * - Con `id` de un ítem existente lo edita (p. ej. desde el icono de edición).
+     * - Sin `id`, un nombre normalizado existente se edita conservando su nombre
+     *   y sus fuentes (D3/D7); si no existe, se crea uno nuevo sin fuentes
+     *   (badge «Despensa baja», D5).
+     * - Solo se reemplazan cantidad, unidad y Pasillo.
+     * Los datos inválidos no cambian la lista (RF-AIL5).
+     */
+    fun saveManualItem(
+        existing: List<ShoppingListItem>,
+        id: String?,
+        name: String,
+        quantity: Double?,
+        unit: String,
+        aisle: Aisle?,
+    ): List<ShoppingListItem> {
+        if (!isManualNameValid(name) || !isManualQuantityValid(quantity)) return existing
+        val normalized = normalizeName(name)
+        val byId = id?.let { wanted -> existing.indexOfFirst { it.id == wanted } } ?: -1
+        val index = if (byId >= 0) {
+            byId
+        } else {
+            existing.indexOfFirst { normalizeName(it.name) == normalized }
+        }
+        if (index < 0) {
+            return existing + ShoppingListItem(
+                id = itemIdFor(name),
+                name = name.trim(),
+                quantity = quantity,
+                unit = unit.trim(),
+                aisle = aisle,
+                completed = false,
+            )
+        }
+        val item = existing[index]
+        return existing.toMutableList().also { result ->
+            result[index] = item.copy(quantity = quantity, unit = unit.trim(), aisle = aisle)
+        }
     }
 }

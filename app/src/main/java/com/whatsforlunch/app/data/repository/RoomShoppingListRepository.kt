@@ -6,6 +6,7 @@ import com.whatsforlunch.app.data.local.ShoppingItemSourceEntity
 import com.whatsforlunch.app.data.local.ShoppingItemWithSources
 import com.whatsforlunch.app.data.local.ShoppingListDao
 import com.whatsforlunch.app.data.local.ShoppingListItemEntity
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.ShoppingItemSource
 import com.whatsforlunch.app.domain.model.ShoppingListItem
@@ -46,6 +47,34 @@ class RoomShoppingListRepository(
         }
     }
 
+    override suspend fun saveManualItem(
+        id: String?,
+        name: String,
+        quantity: Double?,
+        unit: String,
+        aisle: Aisle?,
+    ) {
+        mutex.withLock {
+            database.withTransaction {
+                val current = dao.getAllOnce().map(ShoppingItemWithSources::toDomain)
+                val updated = ShoppingListRules.saveManualItem(
+                    existing = current,
+                    id = id,
+                    name = name,
+                    quantity = quantity,
+                    unit = unit,
+                    aisle = aisle,
+                )
+                // Solo se reescribe lo que cambió: `upsertItemWithSources` reinserta
+                // las fuentes que el REPLACE del padre borra en cascada.
+                val before = current.associateBy(ShoppingListItem::id)
+                updated.forEach { item ->
+                    if (before[item.id] != item) dao.upsertItemWithSources(item)
+                }
+            }
+        }
+    }
+
     override suspend fun deleteItem(id: String) {
         mutex.withLock { dao.deleteById(id) }
     }
@@ -69,7 +98,7 @@ private fun ShoppingItemWithSources.toDomain(): ShoppingListItem = ShoppingListI
     name = item.name,
     quantity = item.quantity,
     unit = item.unit,
-    aisle = item.aisle,
+    aisle = item.aisle.toAisle(),
     completed = item.completed,
     sources = sources
         .sortedWith(compareBy({ normalizeName(it.sourceTitle) }, { it.sourceKey }))
@@ -82,9 +111,15 @@ private fun ShoppingListItem.toEntity(): ShoppingListItemEntity = ShoppingListIt
     normalizedName = normalizeName(name),
     quantity = quantity,
     unit = unit,
-    aisle = aisle,
+    aisle = aisle?.name,
     completed = completed,
 )
+
+// El Pasillo se persiste como el nombre del enum (`PRODUCE`, …) o null
+// («Sin clasificar»); un valor legado desconocido degrada a null sin romper la
+// lectura.
+private fun String?.toAisle(): Aisle? =
+    this?.let { raw -> Aisle.entries.firstOrNull { it.name == raw } }
 
 private fun ShoppingItemSource.toEntity(itemId: String): ShoppingItemSourceEntity =
     ShoppingItemSourceEntity(

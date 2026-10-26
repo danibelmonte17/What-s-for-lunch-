@@ -22,6 +22,10 @@ fun ShoppingListRoute(
         onDeleteItem = viewModel::deleteItem,
         onUndoDelete = viewModel::undoDelete,
         onUndoExpired = viewModel::dismissUndo,
+        onAddItem = viewModel::addItem,
+        onEditItem = viewModel::editItem,
+        onDismissEditor = viewModel::dismissEditor,
+        onSaveItem = viewModel::saveManualItem,
         modifier = modifier,
     )
 }

@@ -7,9 +7,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 
-// ÍtemLista persistido (RD18): una fila por nombre normalizado. `aisle` y
-// `completed` se modelan desde el inicio (D10); en esta feature siempre son
-// null y false.
+// ÍtemLista persistido (RD18): una fila por nombre normalizado. `aisle` guarda el
+// nombre del enum `Aisle` (RD19) o null («Sin clasificar») y `completed` sigue
+// siendo false hasta agrupar-y-completar-la-lista (D10 modeló ambas columnas
+// desde la v3; no hay migración).
 @Entity(
     tableName = "shopping_items",
     indices = [Index(value = ["normalizedName"], unique = true)],
