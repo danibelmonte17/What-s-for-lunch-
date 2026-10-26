@@ -284,14 +284,14 @@ Detalle verificable con `uiautomator` y captura:
 
 ## Implementation Tasks
 
-- [ ] T0: verificar `tools`/`tool_calls` en el alias `chat` con una llamada real autorizada (pago) y documentar el resultado en `docs/risks-and-open-questions.md` (`S08`, `RK07`). **Bloqueante.**
-- [ ] T1: `domain/pinche/PincheConversation.kt` + `PincheProposalRules.kt` + `PincheProposalRulesTest`. (RF-PCH7, RF-PCH8, S3, S4, D7-D9)
-- [ ] T2: `PincheChatProtocol.kt` + `PincheChatProtocolTest` (tools, resultados, topes, `parseReply` con bloque/fallback/JSON inválido). (RF-PCH5, RF-PCH6, S2, S5, D5, D11)
-- [ ] T3: `PincheChatClient.kt` + `OpenAiCompatiblePincheChatClient.kt` + `AppModule` (bucle, 3 llamadas, `MissingApiKey`/`Failed`, logging). (RF-PCH4, RF-PCH9, S2, S7, D6, D10)
-- [ ] T4: `PincheViewModel` + `PincheViewModelTest` (turnos, Ficha con Faltantes, guardado, retry sin duplicar, texto en blanco, recorte a 500). (RF-PCH2, RF-PCH7, RF-PCH8, RF-PCH9, S1-S9)
-- [ ] T5: `PincheScreen`/`PincheRoute` + textos es/en + `PincheTestTags` + acción `action_open_pinche` + ruta `pinche`. (RF-PCH1, RF-PCH2, RF-PCH10, RF-PCH11, S8, S10)
-- [ ] T6: `PincheE2ETest` (verify 1-3, S1-S10) y regresión de Mis Recetas/NavHost sin romper la suite.
-- [ ] T7: gates en verde, docs actualizadas (`Q-16`, `S08`, `RK07`, `RK03`) y evidencia capturada.
+- [x] T0: verificar `tools`/`tool_calls` en el alias `chat` con una llamada real autorizada (pago) y documentar el resultado en `docs/risks-and-open-questions.md` (`S08`, `RK07`). **Bloqueante.**
+- [x] T1: `domain/pinche/PincheConversation.kt` + `PincheProposalRules.kt` + `PincheProposalRulesTest`. (RF-PCH7, RF-PCH8, S3, S4, D7-D9)
+- [x] T2: `PincheChatProtocol.kt` + `PincheChatProtocolTest` (tools, resultados, topes, `parseReply` con bloque/fallback/JSON inválido). (RF-PCH5, RF-PCH6, S2, S5, D5, D11)
+- [x] T3: `PincheChatClient.kt` + `OpenAiCompatiblePincheChatClient.kt` + `AppModule` (bucle, 3 llamadas, `MissingApiKey`/`Failed`, logging). (RF-PCH4, RF-PCH9, S2, S7, D6, D10)
+- [x] T4: `PincheViewModel` + `PincheViewModelTest` (turnos, Ficha con Faltantes, guardado, retry sin duplicar, texto en blanco, recorte a 500). (RF-PCH2, RF-PCH7, RF-PCH8, RF-PCH9, S1-S9)
+- [x] T5: `PincheScreen`/`PincheRoute` + textos es/en + `PincheTestTags` + acción `action_open_pinche` + ruta `pinche`. (RF-PCH1, RF-PCH2, RF-PCH10, RF-PCH11, S8, S10)
+- [x] T6: `PincheE2ETest` (verify 1-3, S1-S10) y regresión de Mis Recetas/NavHost sin romper la suite. (11/11 en la suite de 148)
+- [x] T7: gates en verde, docs actualizadas (`Q-16`, `S08`, `RK07`, `RK03`) y evidencia capturada. (173/173 unit, lint 0 errores, `assembleDebug` OK, E2E 148/0/0/1)
 
 ## Verification Plan
 
