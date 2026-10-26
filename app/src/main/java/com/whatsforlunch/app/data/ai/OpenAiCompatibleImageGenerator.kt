@@ -1,6 +1,7 @@
 package com.whatsforlunch.app.data.ai
 
 import android.util.Base64
+import android.util.Log
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,13 +33,14 @@ class OpenAiCompatibleImageGenerator(
                     .post(buildBody(prompt))
                     .build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@withContext ImageGenerationResult.Failed
-                    val body = response.body?.string() ?: return@withContext ImageGenerationResult.Failed
-                    val bytes = parseImage(body) ?: return@withContext ImageGenerationResult.Failed
+                    if (!response.isSuccessful) return@withContext ImageGenerationResult.Failed(AiFailureCause.PROVIDER_ERROR)
+                    val body = response.body?.string() ?: return@withContext ImageGenerationResult.Failed(AiFailureCause.INVALID_RESPONSE)
+                    val bytes = parseImage(body) ?: return@withContext ImageGenerationResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     ImageGenerationResult.Success(bytes)
                 }
-            } catch (_: IOException) {
-                ImageGenerationResult.Failed
+            } catch (exception: IOException) {
+                Log.w("ImageGenerator", "POST $endpoint failed: ${exception.javaClass.simpleName}: ${exception.message.orEmpty()}")
+                ImageGenerationResult.Failed(AiFailure.fromException(exception))
             }
         }
     }

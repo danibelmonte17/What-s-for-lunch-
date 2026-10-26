@@ -2,6 +2,8 @@ package com.whatsforlunch.app.ui.scanner
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.whatsforlunch.app.data.ai.AiFailure
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
@@ -23,6 +25,9 @@ enum class ScannerNotice {
     CAMERA_PERMISSION_DENIED,
     CAMERA_UNAVAILABLE,
     ANALYSIS_FAILED,
+    ANALYSIS_NO_CONNECTION,
+    ANALYSIS_PROVIDER_ERROR,
+    ANALYSIS_INVALID_RESPONSE,
     AI_KEY_MISSING,
     NO_DETECTIONS,
     DUPLICATE_NAME,
@@ -147,10 +152,10 @@ class ScannerViewModel(
                 scanImageAnalyzer.analyze(image, language)
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (_: Exception) {
-                ScanAnalysisResult.Failed
-            } catch (_: LinkageError) {
-                ScanAnalysisResult.Failed
+            } catch (exception: Exception) {
+                ScanAnalysisResult.Failed(AiFailure.fromException(exception))
+            } catch (exception: LinkageError) {
+                ScanAnalysisResult.Failed(AiFailure.fromException(exception))
             }
             when (result) {
                 is ScanAnalysisResult.Success -> {
@@ -175,17 +180,23 @@ class ScannerViewModel(
                     )
                 }
 
-                ScanAnalysisResult.Failed -> {
+                is ScanAnalysisResult.Failed -> {
                     _uiState.value = _uiState.value.copy(
                         isAnalyzing = false,
                         isScannerExpanded = false,
                         cameraPreviewReady = false,
                         manualMode = true,
-                        notice = ScannerNotice.ANALYSIS_FAILED,
+                        notice = result.cause.toNotice(),
                     )
                 }
             }
         }
+    }
+
+    private fun AiFailureCause.toNotice(): ScannerNotice = when (this) {
+        AiFailureCause.NO_CONNECTION -> ScannerNotice.ANALYSIS_NO_CONNECTION
+        AiFailureCause.PROVIDER_ERROR -> ScannerNotice.ANALYSIS_PROVIDER_ERROR
+        AiFailureCause.INVALID_RESPONSE -> ScannerNotice.ANALYSIS_INVALID_RESPONSE
     }
 
     fun addManualItem(name: String) {

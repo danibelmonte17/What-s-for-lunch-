@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.ui.aisuggestions
 
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
@@ -109,7 +110,7 @@ class AiSuggestionsViewModelTest {
         val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
         val suggester = FakeRecipeSuggester(
             listOf(
-                RecipeSuggestionsResult.Failed,
+                RecipeSuggestionsResult.Failed(AiFailureCause.NO_CONNECTION),
                 RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de manzana"))),
             ),
         )
@@ -118,7 +119,7 @@ class AiSuggestionsViewModelTest {
 
         viewModel.requestSuggestions("es")
         advanceUntilIdle()
-        assertEquals(AiSuggestionsNotice.FAILED, viewModel.uiState.value.notice)
+        assertEquals(AiSuggestionsNotice.FAILED_NO_CONNECTION, viewModel.uiState.value.notice)
         assertTrue(viewModel.uiState.value.phase is AiSuggestionsPhase.Selection)
 
         viewModel.retry()
@@ -128,6 +129,32 @@ class AiSuggestionsViewModelTest {
         assertEquals("Tarta de manzana", phase.items.single().suggestion.title)
         assertEquals(2, suggester.calls)
         assertNull(viewModel.uiState.value.notice)
+    }
+
+    @Test
+    fun eachFailureCauseMapsToItsOwnSuggestionsNoticeAndCanBeCleared() = runTest {
+        val cases = mapOf(
+            AiFailureCause.NO_CONNECTION to AiSuggestionsNotice.FAILED_NO_CONNECTION,
+            AiFailureCause.PROVIDER_ERROR to AiSuggestionsNotice.FAILED_PROVIDER_ERROR,
+            AiFailureCause.INVALID_RESPONSE to AiSuggestionsNotice.FAILED_INVALID_RESPONSE,
+        )
+        cases.forEach { (cause, expectedNotice) ->
+            val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
+            val viewModel = viewModel(
+                holder = holder,
+                suggester = FakeRecipeSuggester(listOf(RecipeSuggestionsResult.Failed(cause))),
+            )
+            advanceUntilIdle()
+
+            viewModel.requestSuggestions("es")
+            advanceUntilIdle()
+
+            assertEquals(expectedNotice, viewModel.uiState.value.notice)
+            assertTrue(viewModel.uiState.value.phase is AiSuggestionsPhase.Selection)
+
+            viewModel.clearNotice()
+            assertNull(viewModel.uiState.value.notice)
+        }
     }
 
     @Test
@@ -368,6 +395,6 @@ class AiSuggestionsViewModelTest {
 
     private object FailingScanAnalyzer : ScanImageAnalyzer {
         override suspend fun analyze(image: ByteArray, language: String): ScanAnalysisResult =
-            ScanAnalysisResult.Failed
+            ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
     }
 }

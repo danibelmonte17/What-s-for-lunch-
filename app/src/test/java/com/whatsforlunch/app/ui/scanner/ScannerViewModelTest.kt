@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.ui.scanner
 
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
@@ -106,7 +107,7 @@ class ScannerViewModelTest {
     fun analysisFailureShowsNoticeAndAllowsManualRetry() = runTest {
         val analyzer = FakeScanImageAnalyzer(
             listOf(
-                ScanAnalysisResult.Failed,
+                ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE),
                 ScanAnalysisResult.Success(listOf(AnalyzedFood("Plátano", 2.0))),
             ),
         )
@@ -115,17 +116,40 @@ class ScannerViewModelTest {
 
         viewModel.captureAndAnalyze(FakeScanImageSource(), "es")
         advanceUntilIdle()
-        assertEquals(ScannerNotice.ANALYSIS_FAILED, viewModel.uiState.value.notice)
+        assertEquals(ScannerNotice.ANALYSIS_INVALID_RESPONSE, viewModel.uiState.value.notice)
         assertTrue(viewModel.uiState.value.items.isEmpty())
         assertFalse(viewModel.uiState.value.isScannerExpanded)
         assertFalse(viewModel.uiState.value.cameraPreviewReady)
 
+        viewModel.addManualItem("Arroz")
+        assertEquals("Arroz", viewModel.uiState.value.items.single().name)
+
         grantCamera(viewModel)
         viewModel.captureAndAnalyze(FakeScanImageSource(), "es")
         advanceUntilIdle()
-        assertEquals(listOf("Plátano"), viewModel.uiState.value.items.map { it.name })
+        assertEquals(listOf("Arroz", "Plátano"), viewModel.uiState.value.items.map { it.name })
         assertEquals(2, analyzer.calls)
         assertNull(viewModel.uiState.value.notice)
+    }
+
+    @Test
+    fun eachFailureCauseMapsToItsOwnScannerNotice() = runTest {
+        val cases = mapOf(
+            AiFailureCause.NO_CONNECTION to ScannerNotice.ANALYSIS_NO_CONNECTION,
+            AiFailureCause.PROVIDER_ERROR to ScannerNotice.ANALYSIS_PROVIDER_ERROR,
+            AiFailureCause.INVALID_RESPONSE to ScannerNotice.ANALYSIS_INVALID_RESPONSE,
+        )
+        cases.forEach { (cause, expectedNotice) ->
+            val viewModel = scannerViewModel(results = listOf(ScanAnalysisResult.Failed(cause)))
+            grantCamera(viewModel)
+
+            viewModel.captureAndAnalyze(FakeScanImageSource(), "es")
+            advanceUntilIdle()
+
+            assertEquals(expectedNotice, viewModel.uiState.value.notice)
+            assertTrue(viewModel.uiState.value.manualMode)
+            assertFalse(viewModel.uiState.value.isAnalyzing)
+        }
     }
 
     @Test
