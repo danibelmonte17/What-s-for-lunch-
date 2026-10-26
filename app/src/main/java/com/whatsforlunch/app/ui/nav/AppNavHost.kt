@@ -14,6 +14,7 @@ import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsRoute
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
+import com.whatsforlunch.app.ui.recommendations.RecommendationsRoute
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailRoute
 import com.whatsforlunch.app.ui.scanner.ScannerRoute
 import com.whatsforlunch.app.ui.settings.SettingsRoute
@@ -26,6 +27,7 @@ object AppRoutes {
     const val MY_RECIPES = "my_recipes"
     const val CREATE_RECIPE = "create_recipe?recipeId={recipeId}"
     const val SCAN_PANTRY = "scan_pantry"
+    const val PANTRY_RECIPES = "pantry_recipes"
     const val PANTRY = "pantry"
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
     const val COOK_MODE_PROVISIONAL = "cook_mode_provisional"
@@ -56,6 +58,7 @@ fun WhatsForLunchApp(
                 onScanPantry = { navController.navigate(AppRoutes.SCAN_PANTRY) },
                 onEditRecipe = { recipeId -> navController.navigate(AppRoutes.editRecipe(recipeId)) },
                 onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
+                onOpenPantryRecipes = { navController.navigate(AppRoutes.PANTRY_RECIPES) },
                 onOpenPantry = { navController.navigate(AppRoutes.PANTRY) },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )
@@ -104,6 +107,13 @@ fun WhatsForLunchApp(
                         popUpTo(AppRoutes.SCAN_PANTRY) { inclusive = true }
                     }
                 },
+            )
+        }
+        // RF-SDR1/RF-SDR6: «Recetas con mi Despensa» sustituye a la sección que vivía
+        // dentro del Escáner (RF-MRC5); Detalle y Sugerencias vuelven aquí (D7).
+        composable(AppRoutes.PANTRY_RECIPES) {
+            RecommendationsRoute(
+                onBack = { navController.popBackStack() },
                 onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
                 onSuggestWithAi = { navController.navigate(AppRoutes.AI_SUGGESTIONS) },
             )

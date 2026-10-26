@@ -456,6 +456,44 @@
       "status": "accepted"
     },
     {
+      "id": "separar-despensa-y-busqueda-de-recetas",
+      "area": "funcional",
+      "title": "Separar la Despensa de la búsqueda de recetas",
+      "user_visible_behavior": "El Escáner solo escanea la Despensa; las Recetas Compatibles y la sugerencia con IA se consultan en una pantalla propia «Recetas con mi Despensa».",
+      "depends_on": [
+        "mostrar-recetas-compatibles",
+        "sugerir-recetas-con-ia",
+        "escanear-despensa-con-ia"
+      ],
+      "steps": [
+        "Extraer la sección «Recetas Compatibles» y el botón «Sugerir receta con IA» del Escáner a una pantalla propia «Recetas con mi Despensa» (ruta pantry_recipes), con cabecera, tarjetas, estado vacío y vuelta atrás",
+        "Reutilizar la regla de dominio compatibleRecipes() (RD02, umbral 85 %, orden Coincidencia desc → título normalizado asc → id asc) y los componentes de tarjeta sin cambiar calculateMatch ni MatchBadge",
+        "Crear RecommendationsViewModel observando PantryRepository y RecipeRepository para exponer las Recetas compatibles de forma reactiva y hasFoods (Despensa persistida) para habilitar la sugerencia con IA",
+        "Añadir la entrada desde Mis Recetas mediante una acción en la top bar; mantener el FAB de cámara y la pantalla Despensa sin cambios",
+        "Eliminar del Escáner la sección de compatibles, sus callbacks y la dependencia de RecipeRepository y compatibleRecipes en ScannerViewModel, conservando alta manual, cámara, chips, cantidades, guardado, duplicados y avisos",
+        "Renombrar los textos scanner_compatible_* a recommendations_* y mantener la paridad de claves es/en",
+        "Actualizar AppNavHost, AppModule, la spec de mostrar-recetas-compatibles y la documentación de diseño; reapuntar los E2E que montan ScannerScreen directamente a la nueva pantalla"
+      ],
+      "verification": [
+        "E2E: abrir «Recetas con mi Despensa» desde Mis Recetas y comprobar que lista las Recetas compatibles ordenadas (100 % y 85 %) con su badge y la línea «X de Y ingredientes en la Despensa»",
+        "E2E: tocar una tarjeta compatible, comprobar que abre el Detalle y que al volver se regresa a la nueva pantalla",
+        "E2E: pulsar «Sugerir receta con IA» y comprobar que abre Sugerencias; con la Despensa vacía el botón aparece deshabilitado",
+        "E2E: comprobar que el Escáner ya no muestra «Recetas Compatibles» ni «Sugerir receta con IA» y que guardar Alimentos sigue navegando a la Despensa",
+        "E2E: comprobar la actualización reactiva de la lista al añadir, editar o eliminar Alimentos y al crear, editar o eliminar Recetas, sin reiniciar la app",
+        "E2E: comprobar los textos en español e inglés de la nueva pantalla y de la acción de entrada",
+        "Unit: RecommendationsViewModel calcula las Recetas compatibles y hasFoods; ScannerViewModel ya no depende de RecipeRepository"
+      ],
+      "evidence": [
+        "Implementación autoverificada (sesión 71, 2026-10-24): nueva pantalla «Recetas con mi Despensa» (ruta pantry_recipes, ui/recommendations/) con RecommendationsViewModel reactivo sobre RecipeRepository + PantryRepository, compatibleRecipes() reutilizado sin tocar calculateMatch/MatchBadge/RD02, tarjetas con badge y «X de Y ingredientes en la Despensa», estado vacío y botón «Sugerir receta con IA» habilitado solo con Despensa persistida (hasFoods); entrada por acción de top bar en Mis Recetas (MenuBook, action_open_pantry_recipes), tarjeta → Detalle, sugerencia → ai_suggestions y vuelta atrás correcta; Escáner limpio de la sección, callbacks, RecipeRepository y tags COMPATIBLE_*, conservando alta manual, cámara, chips, cantidades, guardado RD13, duplicados, avisos y diálogo de salida; textos renombrados a recommendations_* con paridad es/en.",
+        "Gates en verde (2026-10-24, AVD Pixel_10_Pro API 37, emulator-5554): init.ps1 exit 0 · lintDebug 0 errores / 49 warnings (sin warnings nuevos de la feature) · testDebugUnitTest --rerun-tasks 132/132 en 22 suites (RecommendationsViewModelTest 5/5) · assembleDebug BUILD SUCCESSFUL · E2E focalizada PantryRecipesE2ETest + AiSuggestionsE2ETest + ScanPantryE2ETest 38/38 (8+8+22) · suite E2E completa 131 pruebas, 0 fallos, 0 errores y 2 omitidas (SettingsE2ETest por Assume sin key de build).",
+        "Evidencia manual es en docs/evidence/separar-despensa-y-busqueda-de-recetas/: pantry-recipes-lista-es.png (140.075 B, 1280x2856) y pantry-recipes-escaner-sin-seccion-es.png (115.438 B), PNG binarios válidos (89 50 4E 47 0D 0A 1A 0A) con datos ficticios; verificación con adb/uiautomator de S1-S8 (entrada desde Mis Recetas, badges 100%/100%/86% y desglose, Detalle y vuelta, Sugerencias y vuelta, Escáner sin sección con chip, textos en inglés con locale en-US). Sin llamadas reales a DevExpert Inference ni API keys reales.",
+        "Informe de implementación: docs/validations/separar-despensa-y-busqueda-de-recetas.md (no es aceptación; pendiente feature-validator).",
+        "Aceptación independiente (feature-validator, sesión 72, 2026-10-24): accept. Checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554): init.ps1 exit 0; lintDebug 0 errores / 49 warnings (sin warnings nuevos de la feature); testDebugUnitTest --rerun-tasks 132/132 en 22 suites (RecommendationsViewModelTest 5/5); assembleDebug BUILD SUCCESSFUL; paridad es/en 208/208 con 7 claves recommendations_* y ninguna scanner_compatible_*; git grep de scanner_compatible/COMPATIBLE_ en app/src/main = 0 hits; 2 PNG binarios válidos revisados. Evidencia cara inspeccionada: suite E2E 131 pruebas, 0 fallos/errores y 2 omitidas (SettingsE2ETest por Assume), con PantryRecipesE2ETest 8/8, AiSuggestionsE2ETest 8/8 y ScanPantryE2ETest 22/22. Verificación manual independiente S1/S2/S3/S5/S7 en español e inglés (entrada por top bar, orden 100/100/86 con desglose, Detalle y vuelta, Sugerencias y vuelta, Escáner sin sección y guardado a Despensa); S4/S6/S8 cubiertos por E2E y unit. Sin hallazgos Critical/High/Medium; 5 notas Low no bloqueantes (L1-L5). Seguridad sin hallazgos y sin llamadas reales a la IA. Informe: docs/validations/separar-despensa-y-busqueda-de-recetas.md (§8)."
+      ],
+      "notes": "Cambio de producto sobre una feature aceptada: sustituye RF-MRC5 de mostrar-recetas-compatibles (la sección deja de estar dentro del Escáner) y conserva RF-MRC7 a RF-MRC10 en la nueva pantalla. Decisiones del usuario (2026-10-24): pantalla propia, mantener el FAB de cámara en Mis Recetas, Despensa sin cambios, entrada mediante acción de top bar, nueva feature con spec y validación independiente. Fuera de alcance: bottom navigation, mover cámara o alta manual a la Despensa, y tocar calculateMatch, MatchBadge, el umbral 85 %, Room o la IA.",
+      "status": "accepted"
+    },
+    {
       "id": "aceptar-sugerencia-de-receta",
       "area": "funcional",
       "title": "Aceptar sugerencia de receta",
@@ -471,9 +509,14 @@
         "E2E: aceptar una sugerencia y comprobar que la receta aparece en Mis Recetas con origen Sugerencia",
         "E2E: aceptar la misma sugerencia dos veces y comprobar que no se duplica la receta"
       ],
-      "evidence": [],
+      "evidence": [
+        "Implementación autoverificada (feature-implementer, sesión 74, 2026-10-24): passing (no es aceptación). Aceptar guarda la propuesta como Receta Borrador sin foto con origin=SUGGESTION e id estable (UUID.nameUUIDFromBytes sobre el título normalizado, upsert por id); la tarjeta queda Aceptada/Descartada con acciones deshabilitadas, aviso «Guardada en Mis Recetas» y permanencia en la lista; el prompt envía solo Recetas de Mis Recetas con Coincidencia estrictamente > 60 % con los Alimentos seleccionados, con título e ingredientes e instrucción anti-duplicados (es/en).",
+        "Gates en AVD Pixel_10_Pro API 37 (emulator-5554; el dispositivo físico conectado no se tocó): init.ps1 exit 0; lintDebug 0 errores / 49 warnings (ninguno nuevo); testDebugUnitTest --rerun-tasks 146/146 en 24 suites; assembleDebug y assembleDebugAndroidTest BUILD SUCCESSFUL; AiSuggestionsE2ETest 14/14 (S1-S6 nuevas + 8 previas); suite E2E completa OK (137 tests) en 1.202,5 s por am instrument.",
+        "Evidencia: docs/validations/aceptar-sugerencia-de-receta.md (no es aceptación). Capturas es de la tarjeta con acciones/estado y de Mis Recetas con la Receta aceptada pendientes del validador según el Plan de verificación de la spec (UI solo el validador). Sin llamadas reales a DevExpert Inference ni API keys reales.",
+        "Aceptación independiente (feature-validator, sesión 75, 2026-10-24): accept. Checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554): testDebugUnitTest --rerun-tasks 146/146 en 24 suites (SuggestionAcceptanceTest 6/6, SuggestionPromptTest 3/3, AiSuggestionsViewModelTest 12/12); lintDebug 0 errores / 49 warnings (ninguno nuevo); init.ps1 llega a «Entorno listo» con exit 1 del wrapper por el falso fallo conocido de adb shell monkey/pidof (no bloqueante); AiSuggestionsE2ETest 14/14 reejecutada; paridad es/en 213/213; 2 PNG binarios válidos de 1280x2856; sin secretos. S1-S6 verificados y D1-D5 respetadas (Borrador sin foto con origin=SUGGESTION, id estable + upsert sin duplicados, descartar no guarda, permanencia en la lista con aviso, prompt solo con Recetas > 60 %), alcance intacto (sin Room/migraciones, publicar, navegación nueva, badge de origen ni cambios en calculateMatch/MatchBadge/RD13). Suite E2E completa 137 tests inspeccionada y coherente. Sin hallazgos Critical/High/Medium; 4 notas Low no bloqueantes (L1 technical-discovery cita S1-S8, L2 aviso SAVED sin autodescartar, L3 acceptSuggestion sin guarda de estado, L4 T7/cabecera de la spec — L1 y L4 cerrados por el orquestador). Sin llamadas reales a la IA ni API keys reales. Informe: docs/validations/aceptar-sugerencia-de-receta.md (§9); capturas: docs/evidence/aceptar-sugerencia-de-receta/."
+      ],
       "notes": "origen = Sugerencia (RD07); una Sugerencia no se acepta dos veces",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "degradar-ante-fallo-de-ia",

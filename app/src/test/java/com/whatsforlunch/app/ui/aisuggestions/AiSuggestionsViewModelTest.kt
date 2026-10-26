@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.ui.aisuggestions
 
+import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
@@ -10,14 +11,21 @@ import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
+import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.domain.model.RecipeOrigin
+import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
+import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
+import com.whatsforlunch.app.domain.suggestion.SuggestionState
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -165,7 +173,6 @@ class AiSuggestionsViewModelTest {
         val holder = ScanDraftHolder()
         val scanner = ScannerViewModel(
             pantryRepository = InMemoryPantryRepository(),
-            recipeRepository = InMemoryRecipeRepository(),
             scanImageAnalyzer = FailingScanAnalyzer,
             scanDraftHolder = holder,
         )
@@ -175,16 +182,152 @@ class AiSuggestionsViewModelTest {
         assertEquals(listOf("Chicle"), holder.items.value.map { it.name })
     }
 
+    @Test
+    fun acceptingSavesTheSuggestionAsADraftWithSuggestionOrigin() = runTest {
+        val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
+        val suggester = FakeRecipeSuggester(
+            listOf(
+                RecipeSuggestionsResult.Success(
+                    listOf(suggestion(title = "Tarta de manzana", required = listOf("Manzana", "Harina"))),
+                ),
+            ),
+        )
+        val recipes = InMemoryRecipeRepository()
+        val viewModel = viewModel(holder = holder, suggester = suggester, recipes = recipes)
+        advanceUntilIdle()
+
+        viewModel.requestSuggestions("es")
+        advanceUntilIdle()
+        val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
+        viewModel.acceptSuggestion(id)
+        advanceUntilIdle()
+
+        assertEquals(AiSuggestionsNotice.SAVED, viewModel.uiState.value.notice)
+        val phase = viewModel.uiState.value.phase as AiSuggestionsPhase.Results
+        assertEquals(SuggestionState.ACCEPTED, phase.states[id])
+
+        val saved = recipes.observed().single()
+        assertEquals(id, saved.id)
+        assertEquals(RecipeStatus.DRAFT, saved.status)
+        assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
+        assertNull(saved.photoPath)
+        assertFalse(saved.favorite)
+        assertEquals("Tarta de manzana", saved.title)
+        assertEquals(listOf("$id-ingredient-0", "$id-ingredient-1"), saved.ingredients.map { it.id })
+        assertEquals(listOf("$id-step-0"), saved.steps.map { it.id })
+    }
+
+    @Test
+    fun acceptingTheSameSuggestionTwiceKeepsASingleRecipe() = runTest {
+        val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de manzana")))),
+        )
+        val recipes = InMemoryRecipeRepository()
+        val viewModel = viewModel(holder = holder, suggester = suggester, recipes = recipes)
+        advanceUntilIdle()
+
+        viewModel.requestSuggestions("es")
+        advanceUntilIdle()
+        val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
+        viewModel.acceptSuggestion(id)
+        advanceUntilIdle()
+        viewModel.acceptSuggestion(id)
+        advanceUntilIdle()
+
+        assertEquals(1, recipes.observed().size)
+    }
+
+    @Test
+    fun discardingKeepsTheCardVisibleWithoutSavingAnything() = runTest {
+        val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de manzana")))),
+        )
+        val recipes = InMemoryRecipeRepository()
+        val viewModel = viewModel(holder = holder, suggester = suggester, recipes = recipes)
+        advanceUntilIdle()
+
+        viewModel.requestSuggestions("es")
+        advanceUntilIdle()
+        val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
+        viewModel.discardSuggestion(id)
+        advanceUntilIdle()
+
+        val phase = viewModel.uiState.value.phase as AiSuggestionsPhase.Results
+        assertEquals(SuggestionState.DISCARDED, phase.states[id])
+        assertEquals(1, phase.items.size)
+        assertTrue(recipes.observed().isEmpty())
+    }
+
+    @Test
+    fun requestSendsOnlyExistingRecipesAboveSixtyPercentToThePrompt() = runTest {
+        val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de pera")))),
+        )
+        val recipes = InMemoryRecipeRepository()
+        runBlocking {
+            recipes.saveRecipe(storedRecipe(title = "Tarta de manzana", required = listOf("Manzana")))
+            recipes.saveRecipe(storedRecipe(title = "Ensalada", required = listOf("Lechuga", "Harina")))
+        }
+        val viewModel = viewModel(holder = holder, suggester = suggester, recipes = recipes)
+        advanceUntilIdle()
+
+        viewModel.requestSuggestions("es")
+        advanceUntilIdle()
+
+        assertEquals(1, suggester.lastAvoidance.size)
+        assertEquals("Tarta de manzana", suggester.lastAvoidance.single().title)
+        assertEquals(listOf("Manzana"), suggester.lastAvoidance.single().ingredientNames)
+    }
+
+    @Test
+    fun aNewRequestStartsEverySuggestionAsProposed() = runTest {
+        val holder = ScanDraftHolder().apply { update(listOf(ScanDraftItem(name = "Manzana"))) }
+        val suggester = FakeRecipeSuggester(
+            listOf(
+                RecipeSuggestionsResult.Success(
+                    listOf(suggestion(title = "Tarta de manzana"), suggestion(title = "Tarta de pera")),
+                ),
+            ),
+        )
+        val viewModel = viewModel(holder = holder, suggester = suggester)
+        advanceUntilIdle()
+
+        viewModel.requestSuggestions("es")
+        advanceUntilIdle()
+        viewModel.acceptSuggestion(SuggestionAcceptance.suggestionRecipeId("Tarta de manzana"))
+        advanceUntilIdle()
+        viewModel.retry()
+        advanceUntilIdle()
+
+        val phase = viewModel.uiState.value.phase as AiSuggestionsPhase.Results
+        assertEquals(2, phase.states.size)
+        assertTrue(phase.states.values.all { it == SuggestionState.PROPOSED })
+    }
+
     private fun viewModel(
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         holder: ScanDraftHolder = ScanDraftHolder(),
         suggester: FakeRecipeSuggester = FakeRecipeSuggester(emptyList()),
-    ) = AiSuggestionsViewModel(pantry, holder, suggester)
+        recipes: InMemoryRecipeRepository = InMemoryRecipeRepository(),
+    ) = AiSuggestionsViewModel(pantry, holder, suggester, recipes)
 
     private fun pantryWith(vararg items: PantryItem): InMemoryPantryRepository =
         InMemoryPantryRepository().apply {
             kotlinx.coroutines.runBlocking { items.forEach { savePantryItem(it) } }
         }
+
+    private fun InMemoryRecipeRepository.observed(): List<Recipe> =
+        kotlinx.coroutines.runBlocking { observeRecipes().first() }
+
+    private fun storedRecipe(title: String, required: List<String>): Recipe = Recipe(
+        id = title,
+        title = title,
+        ingredients = required.map { RecipeIngredient(name = it, quantity = 1.0) },
+        steps = listOf(RecipeStep(text = "Cocina")),
+    )
 
     private fun suggestion(
         title: String,
@@ -209,12 +352,16 @@ class AiSuggestionsViewModelTest {
             private set
         var lastFoods: List<SuggestableFood> = emptyList()
             private set
+        var lastAvoidance: List<RecipeAvoidance> = emptyList()
+            private set
 
         override suspend fun suggest(
             foods: List<SuggestableFood>,
             language: String,
+            existingRecipes: List<RecipeAvoidance>,
         ): RecipeSuggestionsResult {
             lastFoods = foods
+            lastAvoidance = existingRecipes
             return results[minOf(calls++, results.lastIndex.coerceAtLeast(0))]
         }
     }

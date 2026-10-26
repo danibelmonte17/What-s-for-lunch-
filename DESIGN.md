@@ -154,8 +154,9 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 
 | Vista | Objetivo | Componentes clave | Referencia |
 |---|---|---|---|
-| Mis Recetas (entrada de la app, `P18`) | Encontrar y gestionar recetas | Buscador con debounce, filtro por Momento culinario, tarjetas con badge de Coincidencia, FAB de creación | `chefencasa_mis_recetas_y_crud/` |
-| Escáner de la Despensa | Añadir Alimentos a mano o fotografiar la Despensa | Alta manual primero en el listado, botón «Escanear con la cámara» que despliega el visor con animación y lo pliega tras el análisis, progreso «Analizando la foto…», chips editables sin confianza con borrado terracota, recetas compatibles 100%/85% | `chefencasa_esc_ner_de_nevera_ia/` |
+| Mis Recetas (entrada de la app, `P18`) | Encontrar y gestionar recetas | Buscador con debounce, filtro por Momento culinario, tarjetas con badge de Coincidencia, FAB de creación, acciones de top bar: «Recetas con mi Despensa», Despensa y Ajustes | `chefencasa_mis_recetas_y_crud/` |
+| Escáner de la Despensa | Añadir Alimentos a mano o fotografiar la Despensa | Alta manual primero en el listado, botón «Escanear con la cámara» que despliega el visor con animación y lo pliega tras el análisis, progreso «Analizando la foto…», chips editables sin confianza con borrado terracota y guardado en la Despensa (sin Recetas compatibles, que viven en su propia pantalla) | `chefencasa_esc_ner_de_nevera_ia/` |
+| Recetas con mi Despensa | Decidir qué cocinar con lo que hay | Cabecera con «Volver» y título, sección «Recetas Compatibles» con tarjetas (badge 100 %/86 %, miniatura, título y «X de Y ingredientes en la Despensa»), estado vacío y botón «Sugerir receta con IA» habilitado solo con Despensa no vacía | Sin referencia `uxdocs` (composición de componentes existentes) |
 | Detalle de Receta | Decidir y preparar la cocina | Hero, métricas, escalador de Raciones `[-] N pers [+]`, checklist, CTA Modo Cocina | `chefencasa_detalle_de_receta/` |
 | Modo Cocina | Cocinar manos libres | Barra «Paso X de Y», temporizador circular + alarma + `+1 min`, locución y comandos de voz, drawer de ingredientes | `chefencasa_modo_cocina_paso_a_paso/` |
 | Pinche | Resolver dudas al instante | Chips de sugerencia, burbujas, cards ejecutables, micrófono con dictado | `chefencasa_pinche_asistente_de_cocina/` |
@@ -165,10 +166,11 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 
 ## Estados a cubrir
 
-- **Vacío**: Mis Recetas vacía y Lista de la Compra vacía → CTA de crear Receta o escanear la Despensa (ver casos límite en `docs/domain-model.md`).
+- **Vacío**: Mis Recetas vacía y Lista de la Compra vacía → CTA de crear Receta o escanear la Despensa (ver casos límite en `docs/domain-model.md`). En «Recetas con mi Despensa», sin Recetas compatibles se muestra el estado vacío y, sin Alimentos en la Despensa, el botón «Sugerir receta con IA» aparece deshabilitado.
 - **Carga**: análisis de la foto del Escaneo y respuestas del Pinche/Sugerencias → progreso claro; la app nunca se congela.
 - **Error**: fallo de IA/red → Modo de degradación con entrada manual y aviso (RD05).
 - **Éxito**: confirmación al aceptar una Sugerencia, publicar una Receta o completar la Lista.
+- **Actualización en caliente**: la lista de «Recetas con mi Despensa» se recalcula al cambiar la Despensa o las Recetas, sin reiniciar ni reabrir la pantalla.
 
 ## Base responsive
 

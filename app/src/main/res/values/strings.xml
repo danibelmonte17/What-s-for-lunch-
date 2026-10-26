@@ -203,11 +203,13 @@
     <string name="scanner_exit_message">Tienes alimentos sin guardar. Si sales, se descartan.</string>
     <string name="scanner_exit_confirm">Salir</string>
     <string name="scanner_cancel">Cancelar</string>
-    <string name="scanner_compatible_title">Recetas Compatibles</string>
-    <string name="scanner_compatible_ingredients">%1$d de %2$d ingredientes en la Despensa</string>
-    <string name="scanner_compatible_empty">Aún no hay recetas compatibles con tu Despensa.</string>
-    <string name="scanner_compatible_suggest_ai">Sugerir receta con IA</string>
-    <string name="scanner_compatible_card_accessibility">Receta compatible: %1$s, %2$d%% de coincidencia</string>
+    <string name="recommendations_title">Recetas con mi Despensa</string>
+    <string name="recommendations_section_title">Recetas Compatibles</string>
+    <string name="recommendations_ingredients">%1$d de %2$d ingredientes en la Despensa</string>
+    <string name="recommendations_empty">Aún no hay recetas compatibles con tu Despensa.</string>
+    <string name="recommendations_suggest_ai">Sugerir receta con IA</string>
+    <string name="recommendations_card_accessibility">Receta compatible: %1$s, %2$d%% de coincidencia</string>
+    <string name="recommendations_open_accessibility">Recetas con mi Despensa</string>
     <string name="ai_suggestions_title">Sugerir receta con IA</string>
     <string name="ai_suggestions_selection_title">Elige los alimentos que quieres enviar</string>
     <string name="ai_suggestions_request">Pedir sugerencias</string>
@@ -222,4 +224,9 @@
     <string name="ai_suggestions_selection_item_accessibility">Seleccionar %1$s</string>
     <string name="ai_suggestions_ingredients_header">Ingredientes</string>
     <string name="ai_suggestions_steps_header">Pasos</string>
+    <string name="ai_suggestions_accept">Aceptar</string>
+    <string name="ai_suggestions_discard">Descartar</string>
+    <string name="ai_suggestions_state_accepted">Aceptada</string>
+    <string name="ai_suggestions_state_discarded">Descartada</string>
+    <string name="ai_suggestions_accepted_notice">Guardada en Mis Recetas</string>
 </resources>

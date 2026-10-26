@@ -12,9 +12,21 @@ sealed interface RecipeSuggestionsResult {
     data object Failed : RecipeSuggestionsResult
 }
 
+// Receta que el prompt debe evitar por parecerse demasiado a lo que el usuario ya
+// tiene en Mis Recetas (D2 de aceptar-sugerencia-de-receta): solo título e
+// Ingredientes salen del dispositivo, nunca la Receta completa.
+data class RecipeAvoidance(
+    val title: String,
+    val ingredientNames: List<String>,
+)
+
 // Puerto de sugerencias de recetas. Recibe solo los Alimentos seleccionados por el
-// usuario (D3) y el idioma de la app (D9); nunca se llama dos veces por confirmación
-// (D10).
+// usuario (D3), el idioma de la app (D9) y las Recetas existentes que no debe
+// repetir (D2); nunca se llama dos veces por confirmación (D10).
 interface RecipeSuggester {
-    suspend fun suggest(foods: List<SuggestableFood>, language: String): RecipeSuggestionsResult
+    suspend fun suggest(
+        foods: List<SuggestableFood>,
+        language: String,
+        existingRecipes: List<RecipeAvoidance> = emptyList(),
+    ): RecipeSuggestionsResult
 }
