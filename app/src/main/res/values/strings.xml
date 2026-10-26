@@ -234,7 +234,7 @@
     <string name="pinche_you">Tú</string>
     <string name="pinche_greeting">Hola, soy el Pinche. Pregúntame lo que quieras de cocina.</string>
     <string name="pinche_quick_1">¿Qué ceno con lo que tengo?</string>
-    <string name="pinche_quick_2">¿Cómo evito que el arroz se pegue?</string>
+    <string name="pinche_quick_2">Dame una idea sencilla para el almuerzo</string>
     <string name="pinche_quick_3">Dame una receta con lo que tengo</string>
     <string name="pinche_input_hint">Escribe tu pregunta</string>
     <string name="pinche_send">Enviar</string>

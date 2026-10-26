@@ -233,7 +233,7 @@
     <string name="pinche_you">You</string>
     <string name="pinche_greeting">Hi, I’m the Pinche. Ask me anything about cooking.</string>
     <string name="pinche_quick_1">What can I cook with what I have?</string>
-    <string name="pinche_quick_2">How do I keep rice from sticking?</string>
+    <string name="pinche_quick_2">Give me a simple lunch idea</string>
     <string name="pinche_quick_3">Give me a recipe with what I have</string>
     <string name="pinche_input_hint">Type your question</string>
     <string name="pinche_send">Send</string>
