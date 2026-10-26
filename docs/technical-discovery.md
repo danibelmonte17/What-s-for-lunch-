@@ -107,6 +107,17 @@ Verificación: unit de `ScanAnalysis`/`ScanAnalysisParser`/`ScannerViewModel`/`A
 
 Verificación: unit de `RecipeSuggestionParser`, `SuggestionRules`, `SuggestionAcceptance`, `recipeSuggestionPrompt` y `AiSuggestionsViewModel`; E2E `AiSuggestionsE2ETest` (14 pruebas: S1-S8 del contrato de Sugerencias y S1-S6 de aceptar/descartar) con `FakeRecipeSuggester` y captura simulada, más la regresión del Escáner y de Recetas Compatibles.
 
+### Pinche con function calling (2026-10-26, descubrimiento de `resolver-dudas-con-pinche`)
+
+- **Contrato**: `POST <base>/chat/completions` con el alias `chat`, la conversación como mensajes y `tools` con dos funciones de **solo lectura**: `get_pantry` (nombres y cantidades de la Despensa) y `get_my_recipes` (título, Momento culinario e ingredientes de Mis Recetas; sin pasos ni fotos). `tool_choice: auto`.
+- **Bucle de herramientas**: si la respuesta trae `tool_calls`, la app ejecuta las funciones en el dispositivo y devuelve los resultados como mensajes `role = tool`; se repite hasta obtener respuesta final. La spec fijará el máximo de rondas; cada ronda es una llamada de pago y consume el `callTimeout` de 90 s, así que habrá que medir latencia y coste (`RK07`).
+- **Respuesta final**: texto conversacional + como máximo una Propuesta del Pinche estructurada, reutilizando el contrato compacto de Sugerencias (`t/st/mm/pm/cm/df/bs/kcal/i/p`) y su normalización. El sobre exacto que combina texto y Propuesta queda como `Q-resolver-dudas-con-pinche-16` porque `response_format: json_object` no es fiable junto a `tools`.
+- **Fallos**: sin key → `MissingApiKey` y acceso a Ajustes; proveedor sin soporte de `tools`, HTTP ≠ 2xx, JSON ilegible o sin respuesta final → aviso con «Reintentar», sin inyección alternativa de contexto (RD17). Sin reintentos automáticos.
+- **Estado**: la conversación y las Propuestas viven **solo en memoria** (ViewModel), sin Room, historial ni migración. Al salir se pierden; las Recetas guardadas quedan en Mis Recetas.
+- **Datos que salen del dispositivo**: el hilo de la conversación y, cuando el modelo invoca las funciones, la Despensa y las Recetas descritas (`RK03`).
+- **Diagnóstico**: logcat con código HTTP, duración, número de rondas y clase de error, **nunca** el texto de la conversación, la Despensa, las Recetas ni la API key.
+- **Verificación**: unit del parser, del mapeo de tools, del cálculo de Faltantes y de la normalización de la Propuesta; E2E `PincheE2ETest` con un `FakePincheChatClient` que simula `tool_calls`, respuestas con y sin Propuesta, error del proveedor, falta de key y guardado (incluido guardar dos veces sin duplicar).
+
 ### Acceso a IA y API key en el dispositivo (2026-10-22, `configurar-acceso-a-ia`)
 
 - **Decisión D2**: la API key de DevExpert Inference se guarda con **Android Keystore directo** (clave AES-256 del Keystore, transformación `AES/GCM/NoPadding`, alias `whatsforlunch_ai_key`). Cada guardado usa un IV nuevo y persiste `Base64(IV || ciphertext)` en `SharedPreferences` `ai_key_prefs` (clave `api_key`). No se añade `androidx.security:security-crypto` (deprecado) ni ninguna dependencia nueva.
@@ -127,12 +138,15 @@ Módulo único `app/` con tres capas (estructura confirmada en Q-arrancar-app-en
 
 La UI no contiene reglas de negocio: viven en `domain/` y en `docs/domain-model.md` (IDs `RD##`).
 
-Flujos principales: Escaneo (foto) → IA de visión → chips editables → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja».
+Flujos principales: Escaneo (foto) → IA de visión → chips editables → Despensa → Sugerencias (DevExpert Inference) → aceptar → Receta local → Detalle → Modo Cocina. Lista de la Compra se alimenta de faltantes de Recetas y de «Despensa baja». Pinche (texto) → function calling de solo lectura (Despensa / Mis Recetas) → Propuesta del Pinche → guardar → Borrador en Mis Recetas.
 
 ```mermaid
 flowchart LR
   Camara --> Foto["Foto en memoria"] --> VisionIA["DevExpert Inference /chat/completions"] --> Chips --> Despensa
   Despensa --> DevExpertInference["DevExpert Inference"] --> Sugerencia --> Receta
+  Pinche["Pinche"] --> Tools["get_pantry / get_my_recipes"] --> Despensa
+  Tools --> MisRecetas
+  Pinche --> Propuesta --> Receta
   Receta --> ModoCocina
   Receta --> ListaCompra
   Despensa --> ListaCompra
@@ -141,13 +155,13 @@ flowchart LR
 ## Datos y almacenamiento
 
 - **Duraderos (Room)**: Recetas, Ingredientes, Alimentos de la Despensa, Ítems de la Lista de la Compra.
-- **Temporales/derivados**: resultados de Escaneo (chips en memoria, compartidos con Sugerencias por `ScanDraftHolder`), foto del Escaneo (JPEG en memoria, enviado al proveedor y descartado — RD06; las fotos de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), selección y Sugerencias de recetas **solo en memoria** (sin Room, migración, historial ni caché — D4), caché de respuestas de la IA.
+- **Temporales/derivados**: resultados de Escaneo (chips en memoria, compartidos con Sugerencias por `ScanDraftHolder`), foto del Escaneo (JPEG en memoria, enviado al proveedor y descartado — RD06; las fotos de Receta se copian a `filesDir/recipes/<recipeId>.jpg`), selección y Sugerencias de recetas **solo en memoria** (sin Room, migración, historial ni caché — D4), conversación y Propuestas del Pinche **solo en memoria** (RD17), caché de respuestas de la IA.
 - **Credenciales**: API key de DevExpert Inference en **almacenamiento cifrado del dispositivo** con **Android Keystore directo** (AES-256/GCM, alias `whatsforlunch_ai_key`) y ciphertext `Base64(IV || dato)` en `SharedPreferences` propias (`ai_key_prefs`), sin `androidx.security:security-crypto` (deprecado) ni dependencias nuevas; la introduce el usuario en Ajustes o, en desarrollo, se inyecta en el build desde `local.properties` (`AI_API_KEY`, D7-D11; riesgo aceptado de key incrustada en el APK) (`⚠ S05`, D2 de `configurar-acceso-a-ia`).
 - **Migración o importación**: ninguna (proyecto nuevo).
 
 ## Integraciones externas
 
-- **DevExpert Inference (API compatible con OpenAI)** — Escaneo con IA (visión multimodal), chat del Pinche, Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Endpoints: `POST /v1/chat/completions` con el alias `chat` (foto del Escaneo como `data:image/jpeg;base64`; Sugerencias con solo texto y `response_format: json_object`) y `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`, puerta de release).
+- **DevExpert Inference (API compatible con OpenAI)** — Escaneo con IA (visión multimodal), chat del Pinche (con function calling de solo lectura), Sugerencias de Recetas y generación de imágenes del Formulario. Llamadas desde el dispositivo con la API key de Ajustes (guardada cifrada) o, en el MVP de desarrollo, con la inyectada en el build desde `local.properties` (`AI_API_KEY`, D7-D11); la del build tiene prioridad (`⚠ S05`). Endpoints: `POST /v1/chat/completions` con el alias `chat` (foto del Escaneo como `data:image/jpeg;base64`; Sugerencias con solo texto y `response_format: json_object`; Pinche con `tools` y mensajes `role = tool`), y `POST /v1/images/generations` con el alias `image`; configuración «sin retención de datos» por RGPD (`P27`, `RK03`, puerta de release). Soporte de `tools` en el alias `chat` sin verificar (`⚠ S08`, `RK07`).
 
 ## Autenticación y autorización
 
@@ -161,7 +175,7 @@ No hay cuentas, login ni sesión en red (`P31`): la app es local y su único usu
 ## Pruebas y verificación
 
 - **Unitarias**: JUnit sobre `domain/` y `data/` con cliente de IA simulado (**Candidato**: JUnit5 + coroutines-test).
-- **E2E**: pruebas instrumentadas Compose sobre emulador (`connectedDebugAndroidTest`), cubriendo el flujo Escaneo (foto) → IA simulada → chips → Despensa → Receta → Modo Cocina con fixtures locales y cliente de IA falso.
+- **E2E**: pruebas instrumentadas Compose sobre emulador (`connectedDebugAndroidTest`), cubriendo el flujo Escaneo (foto) → IA simulada → chips → Despensa → Receta → Modo Cocina con fixtures locales y cliente de IA falso; el Pinche usa un cliente falso que simula `tool_calls` y respuestas con o sin Propuesta.
 - **Mediciones puntuales**: `adb` + uiautomator (tamaños, jerarquía, capturas); capturas en español con locale por aplicación.
 - **Comandos** (Gradle Kotlin DSL con el wrapper del repo; los scripts `init`/`lint`/`unit`/`e2e` del harness los envuelven):
   - Arrancar (compilar e instalar en dispositivo/emulador): `./gradlew installDebug`

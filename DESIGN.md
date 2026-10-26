@@ -96,7 +96,7 @@ Dirección visual de **What's for Lunch?** para agentes de codificación: tokens
 | `uxdocs/chefencasa_esc_ner_de_nevera_ia/` | HTML + imagen | Visor de cámara, chips, carrusel de recetas | Inspiración (`P16`) | HUD de detección retirado; obturador y estado «analizando» sin referencia |
 | `uxdocs/chefencasa_detalle_de_receta/` | HTML + imagen | Hero, métricas, escalador de raciones, ingredientes, CTA Modo Cocina | Inspiración (`P16`) | Muestra «coste casero estimado», que la app no tendrá (`P12`, `⚠ S02`) |
 | `uxdocs/chefencasa_modo_cocina_paso_a_paso/` | HTML + imagen | Paso a paso, barra de avance, temporizador, voz | Inspiración (`P16`) | Alarma sonora; permisos de micrófono |
-| `uxdocs/chefencasa_pinche_asistente_de_cocina/` | HTML + imagen | Chat con chips de sugerencia y cards ejecutables | Inspiración (`P16`) | Estado sin conexión; error del proveedor de IA |
+| `uxdocs/chefencasa_pinche_asistente_de_cocina/` | HTML + imagen | Chat con chips de sugerencia y Ficha de receta; el micrófono del prototipo se difiere (`⚠ S04`) | Inspiración (`P16`) | Estado sin conexión; error del proveedor de IA; falta de API key |
 | `uxdocs/chefencasa_registrar_y_editar_receta/` | HTML + imagen | Formulario modal de receta (metadatos, ingredientes, pasos) | Inspiración (`P16`) | Validaciones de campos; guardado Borrador/Publicar |
 | `uxdocs/chefencasa_lista_de_la_compra_sincronizada/` | HTML + imagen | Lista agrupada por Pasillo/Receta, badges de Origen, progreso | Inspiración (`P16`) | Estado vacío; alta por voz |
 
@@ -159,17 +159,18 @@ Procede de `uxdocs/DESIGN.md`; mandan sus **tokens YAML** (`P17`):
 | Recetas con mi Despensa | Decidir qué cocinar con lo que hay | Cabecera con «Volver» y título, sección «Recetas Compatibles» con tarjetas (badge 100 %/86 %, miniatura, título y «X de Y ingredientes en la Despensa»), estado vacío y botón «Sugerir receta con IA» habilitado solo con Despensa no vacía | Sin referencia `uxdocs` (composición de componentes existentes) |
 | Detalle de Receta | Decidir y preparar la cocina | Hero, métricas, escalador de Raciones `[-] N pers [+]`, checklist, CTA Modo Cocina | `chefencasa_detalle_de_receta/` |
 | Modo Cocina | Cocinar manos libres | Barra «Paso X de Y», temporizador circular + alarma + `+1 min`, locución y comandos de voz, drawer de ingredientes | `chefencasa_modo_cocina_paso_a_paso/` |
-| Pinche | Resolver dudas al instante | Chips de sugerencia, burbujas, cards ejecutables, micrófono con dictado | `chefencasa_pinche_asistente_de_cocina/` |
+| Pinche | Resolver dudas al instante | Chips de sugerencia al inicio, burbujas de conversación, Ficha con ingredientes, pasos y Faltantes, acciones «Guardar en Mis Recetas»; **sin micrófono** (dictado diferido, `⚠ S04`) | `chefencasa_pinche_asistente_de_cocina/` |
 | Formulario de Receta | Crear/editar con foto | Metadatos, gestor de ingredientes con unidades y opcionalidad, Pasos con temporizador, Borrador/Publicar | `chefencasa_registrar_y_editar_receta/` |
 | Lista de la Compra | Comprar solo lo que falta | Tabs por Pasillo/Receta, badges de Origen, checkboxes, barra de progreso, alta manual/voz | `chefencasa_lista_de_la_compra_sincronizada/` |
 | Ajustes | Configurar la app | Idioma (es/en), API key de IA, aviso de privacidad | Sin referencia (`RK04`) |
 
 ## Estados a cubrir
 
-- **Vacío**: Mis Recetas vacía y Lista de la Compra vacía → CTA de crear Receta o escanear la Despensa (ver casos límite en `docs/domain-model.md`). En «Recetas con mi Despensa», sin Recetas compatibles se muestra el estado vacío y, sin Alimentos en la Despensa, el botón «Sugerir receta con IA» aparece deshabilitado.
-- **Carga**: análisis de la foto del Escaneo y respuestas del Pinche/Sugerencias → progreso claro; la app nunca se congela.
-- **Error**: fallo de IA/red → Modo de degradación con entrada manual y aviso (RD05).
-- **Éxito**: confirmación al aceptar una Sugerencia, publicar una Receta o completar la Lista.
+- **Vacío**: Mis Recetas vacía y Lista de la Compra vacía → CTA de crear Receta o escanear la Despensa (ver casos límite en `docs/domain-model.md`). En «Recetas con mi Despensa», sin Recetas compatibles se muestra el estado vacío y, sin Alimentos en la Despensa, el botón «Sugerir receta con IA» aparece deshabilitado. En el **Pinche**, el primer estado muestra un saludo breve y chips de ejemplo («¿Qué cocino con lo que tengo?», «Sustituto de nata», «Una receta sin comprar nada»); el micrófono no aparece.
+- **Carga**: análisis de la foto del Escaneo y respuestas del Pinche/Sugerencias → progreso claro; la app nunca se congela. En el Pinche, la entrada se deshabilita mientras se espera la respuesta.
+- **Error**: fallo de IA/red → Modo de degradación con entrada manual y aviso (RD05). En el Pinche no hay entrada manual: aviso claro con «Reintentar» sin perder lo escrito; sin key → acceso a Ajustes. Si el proveedor no admite function calling, el mismo aviso (RD17).
+- **Éxito**: confirmación al aceptar una Sugerencia, publicar una Receta o completar la Lista. Al guardar una Propuesta del Pinche, la Ficha queda marcada como guardada con el aviso «Guardada en Mis Recetas» y el usuario sigue en el chat.
+- **Ficha del Pinche**: se despliega dentro del hilo (no modal), con ingredientes obligatorios/opcionales, pasos y Faltantes destacados; el botón «Añadir faltantes a la Lista de la Compra» **no** aparece hasta que exista la Lista.
 - **Actualización en caliente**: la lista de «Recetas con mi Despensa» se recalcula al cambiar la Despensa o las Recetas, sin reiniciar ni reabrir la pantalla.
 
 ## Base responsive

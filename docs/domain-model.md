@@ -13,6 +13,7 @@ Reglas del negocio. Términos definidos en `CONTEXT.md`. Sin tecnología: las de
 | Alimento | Producto disponible en la Despensa | nombre, cantidad (entero 0..99; 0 = sin cantidad) | detectado en Escaneo |
 | Escaneo | Foto analizada por la IA desde el visor de la cámara | Alimentos propuestos con nombre y cantidad propuesta (entera 0..99; 0 = sin cantidad) | propone Alimentos para la Despensa |
 | Sugerencia | Receta completa propuesta por la IA a partir de los Alimentos que el usuario elige enviar | título, historia, Momento culinario, tiempos, dificultad, calorías, Raciones base, Ingredientes, Pasos, Coincidencia, estado (propuesta/aceptada/descartada) | se materializa en una Receta al aceptarse |
+| Propuesta del Pinche | Receta que devuelve el Pinche en una conversación, sin depender de la Despensa | texto de la respuesta, título, historia, Momento culinario, tiempos, dificultad, calorías, Raciones base, Ingredientes, Pasos, Faltantes | se materializa en una Receta solo al guardarse desde su Ficha |
 | Lista de la Compra | Conjunto de ítems pendientes de comprar | — | N ÍtemLista |
 | ÍtemLista | Artículo a comprar | nombre, cantidad, Pasillo, Origen, completado | Lista de la Compra, Receta (opcional, vía Origen) |
 
@@ -23,6 +24,8 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 - Receta 1—N IngredienteReceta N—1 Ingrediente; Receta 1—N Paso. Borrar una Receta borra en cascada sus IngredienteReceta y Pasos.
 - Escaneo propone N Alimento para la Despensa; los duplicados dentro de la propia respuesta de la IA (mismo nombre normalizado) se fusionan en un solo chip, y una coincidencia con un Alimento ya presente en la Despensa **suma su cantidad a la existente** al guardar (RD13), sin preguntar; en ambos casos queda un solo Alimento por nombre normalizado. Cada foto se analiza por la IA y se **fusiona con los chips actuales** (D1): los alimentos nuevos entran con su cantidad propuesta y los chips existentes conservan el nombre y la cantidad editados por el usuario; una segunda foto nunca pisa esas ediciones. Un Alimento ya añadido solo se elimina cuando el usuario lo quita o descarta el Escaneo. Si el usuario renombra un chip y una foto posterior vuelve a proponer el nombre original, se crea un Alimento nuevo (ya no comparte nombre normalizado) y puede fusionarse a mano.
 - Sugerencia se materializa como máximo en una Receta (al aceptarse).
+- Propuesta del Pinche se materializa como máximo en una Receta (al guardarse); si no se guarda, desaparece con la conversación.
+- La Despensa y la Lista de la Compra son independientes: un Alimento no se convierte en ÍtemLista al agotarse ni al revés. Los Faltantes de una Propuesta solo se muestran; convertirlos en ÍtemLista es de `anadir-faltantes-a-la-lista`.
 - ÍtemLista referencia opcionalmente a una Receta vía su Origen.
 
 ## Estados y ciclos de vida
@@ -43,7 +46,13 @@ Las Recetas aceptadas desde una Sugerencia y las creadas a mano conviven en Mis 
 - `pendiente` → `completado`: el usuario marca el checkbox.
 - `completado` → `pendiente`: se puede desmarcar.
 
-Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); ninguna Sugerencia se acepta dos veces (la segunda aceptación reescribe la misma Receta por id estable y upsert, nunca crea otra).
+### Propuesta del Pinche
+- Vive dentro de la conversación, **solo en memoria**: al salir del Pinche se pierde, igual que la conversación. No se persiste ni pasa a Mis Recetas por sí sola.
+- `mostrada` → `guardada`: el usuario pulsa «Guardar en Mis Recetas» en su Ficha; se crea un Borrador con `origen = Sugerencia` e id estable derivado del título normalizado (RD16). La Ficha queda marcada como guardada y el usuario permanece en el chat.
+- `mostrada` → descartada: el usuario cierra la Ficha o sigue conversando sin guardar; no se conserva nada.
+- No tiene estados `aceptada`/`descartada` ni Coincidencia de Sugerencia (RD14); puede mostrar sus Faltantes (RD15).
+
+Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); ninguna Sugerencia se acepta dos veces (la segunda aceptación reescribe la misma Receta por id estable y upsert, nunca crea otra); ninguna Propuesta del Pinche se guarda sin acción explícita del usuario.
 
 ## Reglas de negocio
 
@@ -59,6 +68,10 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - **RD11**: La Despensa no tiene desglose por ubicaciones físicas.
 - **RD12**: *(Derogada por `escanear-despensa-con-ia`.)* La detección on-device con umbral de confianza ≥ 0.60 se retiró junto con MediaPipe y el HUD. La IA de visión no devuelve confianza: todos los Alimentos propuestos entran como chips editables y RD05 conserva la entrada manual ante degradación. Se mantiene el ID para no renumerar el resto de reglas.
 - **RD13**: Al guardar un Escaneo, la cantidad de cada chip se **suma** a la del Alimento existente con el mismo nombre normalizado, conservando su id y su nombre y sin crear fila nueva. «Sin cantidad» cuenta como 0 (`null + N → N`, `M + 0 → M`, `null + 0 → sin cantidad`) y la suma se recorta al máximo de 99 sin aviso. Los chips sin coincidencia crean Alimentos nuevos como hasta ahora. No hay diálogo ni decisión de «Mantener cantidad»/«Actualizar cantidad».
+- **RD14**: El Pinche puede proponer recetas **con independencia de la Despensa**. La Coincidencia y el umbral de RD02 no se aplican a las Propuestas del Pinche: ninguna Propuesta se descarta por no alcanzar el 85 % ni por tener Faltantes.
+- **RD15**: Un **Faltante** es un Ingrediente **obligatorio** de la Propuesta del Pinche que no está en la Despensa por nombre normalizado; los opcionales no son Faltantes (RD10). Se calcula en el dispositivo al mostrar la Ficha.
+- **RD16**: Guardar una Propuesta del Pinche crea una Receta **Borrador** sin foto, con `origen = Sugerencia` e id estable `UUID.nameUUIDFromBytes("pinche:" + normalizeName(título))`; guardar dos veces la misma Propuesta reescribe la misma Receta (upsert) y nunca duplica.
+- **RD17**: El Pinche solo **lee** datos mediante dos funciones expuestas al modelo (Despensa y Mis Recetas); no escribe Recetas, Alimentos ni ÍtemLista. La conversación y las Propuestas no se persisten. Si el proveedor no admite function calling, se muestra un fallo con «Reintentar» y no se envía contexto por otra vía.
 
 ## Cálculos y fórmulas
 
@@ -80,6 +93,9 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - Selección de Alimentos para Sugerencias: todos preseleccionados, mínimo 1 para pedir; la selección y las propuestas no se persisten (solo memoria, sin Room ni caché).
 - Aceptación de una Sugerencia: la Receta destino es un Borrador con `photoPath = null`, `favorite = false`, `origen = Sugerencia`, los Ingredientes y Pasos de la propuesta (con cantidad, unidad, opcionalidad y temporizador) e ids de hijos `"$id-ingredient-$index"` / `"$id-step-$index"`. El id de la Receta es `UUID.nameUUIDFromBytes("suggestion:" + normalizeName(título))`, de modo que aceptar dos veces la misma propuesta reescribe la misma fila. Descartar no guarda nada.
 - Anti-duplicados del prompt (D2 de `aceptar-sugerencia-de-receta`): solo entran las Recetas de Mis Recetas (Borrador o Publicada, cualquier origen) cuya Coincidencia con los Alimentos seleccionados es **estrictamente mayor que 60 %** (porcentaje redondeado, misma base que RD02). Las Recetas sin ingredientes obligatorios no tienen Coincidencia y quedan fuera; con 60 % exacto tampoco se envían.
+- Consulta del Pinche: un mensaje vacío o solo con espacios no se envía ni llama a la IA. La conversación se envía completa en cada turno mientras dura la pantalla; al salir se descarta.
+- Propuesta del Pinche: se normaliza con las mismas reglas que una Sugerencia (D8 de `sugerir-recetas-con-ia`), salvo que se admite **como máximo una Propuesta por respuesta**. Si el título queda vacío o no le quedan Ingredientes o Pasos, la respuesta se muestra solo como texto y sin Ficha.
+- Ficha del Pinche: muestra ingredientes obligatorios y opcionales, pasos y la lista de Faltantes (solo obligatorios, RD15). Si la Despensa está vacía, todos los obligatorios son Faltantes.
 
 ## Escenarios importantes
 
@@ -87,6 +103,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 2. **Alta manual → cocina**: el usuario crea una Receta en el Formulario, la guarda como Borrador o la Publica (⚠ S07), la abre en el Detalle, ajusta Raciones (RD03) y arranca el Modo Cocina.
 3. **Faltantes → Lista de la Compra**: desde el Detalle o tras un Escaneo, lo que falta acaba como ÍtemLista con su Origen (RD09); la compra se agrupa por Pasillo o por Receta.
 4. **Fallo de IA o red**: Escáner o Pinche degradan a entrada manual con aviso (RD05) y el flujo continúa.
+5. **Duda o receta libre en el Pinche**: el usuario pregunta por una sustitución o pide una receta sin tener los ingredientes; el Pinche pide a la app la Despensa y/o Mis Recetas solo si lo necesita (function calling), responde y puede devolver una Propuesta con su Ficha. El usuario la guarda como Borrador o la deja pasar; los Faltantes se muestran, no se compran todavía.
 
 ## Casos límite
 
@@ -94,6 +111,13 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 |---|---|
 | Escaneo sin alimentos reconocidos | Mensaje claro y alta manual de Alimentos por chips |
 | Fallo de la IA o de la red (escáner o Pinche) | Modo de degradación: entrada manual y aviso (RD05) |
+| El proveedor de IA no admite function calling | Fallo visible con «Reintentar»; no se envía la Despensa ni las Recetas por otra vía (RD17) |
+| Falta la API key al abrir el Pinche | Aviso con acceso a Ajustes; la conversación no se envía |
+| Mensaje del Pinche vacío o solo espacios | No se envía ni se llama a la IA |
+| Propuesta del Pinche con el mismo título que una Receta existente | La Ficha se muestra igualmente; guardarla crea una Receta nueva con id de Pinche (RD16), no fusiona con la existente. El modelo recibe Mis Recetas con `get_my_recipes` para no proponer duplicados |
+| Propuesta del Pinche sin ingredientes o pasos válidos | Se muestra solo el texto, sin Ficha ni acción de guardar |
+| Salir del Pinche | La conversación y las Propuestas se pierden; las Recetas guardadas permanecen en Mis Recetas |
+| Despensa vacía en una Propuesta del Pinche | Todos los ingredientes obligatorios se muestran como Faltantes; la Propuesta no se bloquea (RD14) |
 | Fallo de la IA en Sugerencias | Aviso mínimo con «Reintentar»; la degradación manual completa (RD05) vive en el Escáner (`degradar-ante-fallo-de-ia`) |
 | Ningún Alimento seleccionado en Sugerencias | «Pedir sugerencias» deshabilitado; no se llama a la IA |
 | Ninguna propuesta de Sugerencia válida | Estado vacío con «Reintentar» |

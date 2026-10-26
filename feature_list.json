@@ -657,16 +657,17 @@
         "aceptar-sugerencia-de-receta"
       ],
       "steps": [
-        "Implementar la conversación del Pinche con chips de sugerencias",
-        "Mostrar cards ejecutables de receta con acceso al Modo Cocina",
-        "Permitir el dictado por voz de la consulta según S04"
+        "Implementar la conversación del Pinche con chips de sugerencias y function calling de solo lectura (Despensa y Mis Recetas)",
+        "Mostrar la Propuesta del Pinche en una Ficha con ingredientes, pasos y Faltantes",
+        "Guardar la Propuesta como Borrador en Mis Recetas desde su Ficha"
       ],
       "verification": [
-        "E2E: con el cliente de IA simulado, consultar por texto y comprobar que se muestra la respuesta con su card de receta",
-        "E2E: pulsar una card y comprobar que abre la receta propuesta"
+        "E2E: con el cliente de IA simulado, consultar por texto y comprobar que se muestra la respuesta con su Ficha (ingredientes, pasos y Faltantes)",
+        "E2E: guardar la Ficha y comprobar que aparece como Borrador en Mis Recetas; guardarla dos veces no duplica",
+        "E2E: sin API key o con fallo del proveedor, comprobar el aviso y la acción de reintentar o abrir Ajustes"
       ],
       "evidence": [],
-      "notes": "Dictado por voz según ⚠ S04; degrada con RD05 ante fallo de IA/red",
+      "notes": "Sin voz (diferida con ⚠ S04); conversación y Propuestas solo en memoria; function calling de solo lectura (⚠ S08); Faltantes solo se muestran (la Lista es de anadir-faltantes-a-la-lista)",
       "status": "not_started"
     },
     {
