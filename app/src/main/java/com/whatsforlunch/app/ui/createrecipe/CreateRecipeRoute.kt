@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.whatsforlunch.app.data.ai.ImageGenerator
@@ -24,6 +25,7 @@ fun CreateRecipeRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
+    val language = LocalConfiguration.current.locales[0].language
     val activity = context as? ComponentActivity
     val imageGenerator: ImageGenerator = koinInject()
     val photoAcquirer = remember(activity, imageGenerator) {
@@ -39,13 +41,16 @@ fun CreateRecipeRoute(
         if (uiState.saved || uiState.recipeMissing) onDone()
     }
 
-    CreateRecipeScreen(uiState = uiState, actions = viewModel.toActions(onDone))
+    CreateRecipeScreen(uiState = uiState, actions = viewModel.toActions(onDone, language))
 }
 
 // Convierte los métodos del ViewModel en las acciones de la pantalla. Compartido por
 // la Route y por las pruebas que montan la pantalla directamente.
 // RF-15: cerrar (onBack) no persiste nada: los cambios se descartan al salir.
-fun CreateRecipeViewModel.toActions(onDone: () -> Unit): CreateRecipeActions = CreateRecipeActions(
+fun CreateRecipeViewModel.toActions(
+    onDone: () -> Unit,
+    language: String,
+): CreateRecipeActions = CreateRecipeActions(
     onBack = onDone,
     onTitleChange = this::onTitleChange,
     onStoryChange = this::onStoryChange,
@@ -68,7 +73,7 @@ fun CreateRecipeViewModel.toActions(onDone: () -> Unit): CreateRecipeActions = C
     onRemoveStep = this::onRemoveStep,
     onPickPhotoFromGallery = this::onPickPhotoFromGallery,
     onTakePhoto = this::onTakePhoto,
-    onGeneratePhoto = this::onGeneratePhotoWithAi,
+    onGeneratePhoto = { onGeneratePhotoWithAi(language) },
     onRemovePhoto = this::onRemovePhoto,
     onSaveDraft = this::onSaveDraft,
     onPublish = this::onPublish,

@@ -20,6 +20,7 @@ import org.json.JSONObject
 class OpenAiCompatibleScanImageAnalyzer(
     private val client: OkHttpClient,
     private val aiKeyProvider: AiKeyProvider,
+    private val promptSource: PromptSource,
     baseUrl: String = AiEndpoints.DEFAULT_BASE_URL,
 ) : ScanImageAnalyzer {
 
@@ -87,7 +88,7 @@ class OpenAiCompatibleScanImageAnalyzer(
     private fun buildBody(image: ByteArray, language: String): okhttp3.RequestBody {
         val encoded = Base64.getEncoder().encodeToString(image)
         val content = JSONArray()
-            .put(JSONObject().put("type", "text").put("text", prompt(language)))
+            .put(JSONObject().put("type", "text").put("text", promptSource.pantryScanPrompt(language)))
             .put(
                 JSONObject()
                     .put("type", "image_url")
@@ -115,25 +116,10 @@ class OpenAiCompatibleScanImageAnalyzer(
         }
     }.getOrNull()
 
-    private fun prompt(language: String): String =
-        if (language.lowercase().startsWith("en")) ENGLISH_PROMPT else SPANISH_PROMPT
-
     private companion object {
         const val TAG = "ScanImageAnalyzer"
         // Stable DevExpert Inference alias for /chat/completions.
         const val MODEL = "chat"
         const val JSON_MEDIA_TYPE = "application/json; charset=utf-8"
-
-        const val SPANISH_PROMPT =
-            "Analiza la foto y enumera los alimentos visibles. Responde EXCLUSIVAMENTE con un único " +
-                "objeto JSON, sin markdown ni explicaciones, con la forma {\"nombre del alimento\": cantidad}. " +
-                "Usa nombres de alimento en español, en singular y sin marcas, y cantidades enteras entre 1 y 99. " +
-                "Si no reconoces ningún alimento, responde {}."
-
-        const val ENGLISH_PROMPT =
-            "Analyze the photo and list the visible foods. Reply ONLY with a single JSON object, " +
-                "without markdown or explanations, using the shape {\"food name\": quantity}. " +
-                "Use English food names, singular and without brand names, and integer quantities between 1 and 99. " +
-                "If you recognize no food, reply {}."
     }
 }

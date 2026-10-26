@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.AssetPromptSource
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
 import com.whatsforlunch.app.data.photo.PhotoStore
@@ -131,13 +132,13 @@ class EditRecipeE2ETest {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
         editorContext = baseContext.createConfigurationContext(configuration)
-        val viewModel = CreateRecipeViewModel(repository, EditPhotoStore(), recipeId)
+        val viewModel = CreateRecipeViewModel(repository, EditPhotoStore(), AssetPromptSource(baseContext), recipeId)
         viewModel.setPhotoAcquirer(photoAcquirer)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides editorContext) {
                 WhatsForLunchTheme {
-                    CreateRecipeScreen(uiState = state, actions = viewModel.toActions(onDone))
+                    CreateRecipeScreen(uiState = state, actions = viewModel.toActions(onDone, locale.language))
                 }
             }
         }

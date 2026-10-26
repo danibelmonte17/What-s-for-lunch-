@@ -1,0 +1,1 @@
+Fotografía gastronómica apetitosa del plato "{DISH}".{STORY}

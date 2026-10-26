@@ -1,0 +1,1 @@
+Analiza la foto y enumera los alimentos visibles. Responde EXCLUSIVAMENTE con un único objeto JSON, sin markdown ni explicaciones, con la forma {"nombre del alimento": cantidad}. Usa nombres de alimento en español, en singular y sin marcas, y cantidades enteras entre 1 y 99. Si no reconoces ningún alimento, responde {}.

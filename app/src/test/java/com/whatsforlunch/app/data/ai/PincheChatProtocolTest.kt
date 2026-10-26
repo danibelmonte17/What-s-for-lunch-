@@ -139,14 +139,4 @@ class PincheChatProtocolTest {
         assertNull(reply.proposal)
     }
 
-    @Test
-    fun systemPromptIsLocalizedAndAsksForTheRecipeBlock() {
-        val spanish = PincheChatProtocol.systemPrompt("es")
-        val english = PincheChatProtocol.systemPrompt("en")
-
-        assertTrue(spanish.contains("receta"))
-        assertTrue(spanish.contains("get_pantry"))
-        assertTrue(english.contains("fenced block"))
-        assertTrue(english.contains("get_my_recipes"))
-    }
 }

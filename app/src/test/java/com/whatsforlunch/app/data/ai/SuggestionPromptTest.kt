@@ -9,14 +9,15 @@ import org.junit.Test
 // evitar y lo hace en el idioma de la app, sin cambiar el JSON compacto de D1.
 class SuggestionPromptTest {
 
+    private val source = TestPromptSource()
     private val foods = listOf(SuggestableFood("Manzana", 3))
 
     @Test
     fun promptWithoutExistingRecipesHasNoAntiDuplicatesSection() {
-        val prompt = recipeSuggestionPrompt(foods, "es", emptyList())
+        val prompt = recipeSuggestionPrompt(foods, "es", source, emptyList())
 
         assertTrue(prompt.contains("Manzana (3)"))
-        assertTrue(prompt.contains("\"t\":\"título\""))
+        assertTrue(prompt.contains(RECIPE_CONTRACT))
         assertFalse(prompt.contains("No propongas recetas iguales"))
     }
 
@@ -25,6 +26,7 @@ class SuggestionPromptTest {
         val prompt = recipeSuggestionPrompt(
             foods = foods,
             language = "es",
+            source = source,
             existingRecipes = listOf(
                 RecipeAvoidance(title = "Tarta de manzana", ingredientNames = listOf("Manzana", "Harina")),
             ),
@@ -32,7 +34,7 @@ class SuggestionPromptTest {
 
         assertTrue(prompt.contains("No propongas recetas iguales ni equivalentes a estas que ya tengo"))
         assertTrue(prompt.contains("Tarta de manzana (Manzana, Harina)"))
-        assertTrue(prompt.contains("\"p\":[{\"t\":\"texto del paso\",\"m\":10}]"))
+        assertTrue(prompt.contains(RECIPE_CONTRACT))
     }
 
     @Test
@@ -40,6 +42,7 @@ class SuggestionPromptTest {
         val prompt = recipeSuggestionPrompt(
             foods = foods,
             language = "en-US",
+            source = source,
             existingRecipes = listOf(
                 RecipeAvoidance(title = "Apple tart", ingredientNames = listOf("Apple", "Flour")),
             ),

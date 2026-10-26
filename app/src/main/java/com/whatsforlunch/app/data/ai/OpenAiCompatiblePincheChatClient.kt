@@ -31,6 +31,7 @@ class OpenAiCompatiblePincheChatClient(
     private val aiKeyProvider: AiKeyProvider,
     private val pantryRepository: PantryRepository,
     private val recipeRepository: RecipeRepository,
+    private val promptSource: PromptSource,
     baseUrl: String = AiEndpoints.DEFAULT_BASE_URL,
 ) : PincheChatClient {
 
@@ -56,7 +57,11 @@ class OpenAiCompatiblePincheChatClient(
     ): PincheReplyResult {
         val startedAt = System.nanoTime()
         val messages = JSONArray()
-            .put(JSONObject().put("role", "system").put("content", PincheChatProtocol.systemPrompt(language)))
+            .put(
+                JSONObject()
+                    .put("role", "system")
+                    .put("content", promptSource.pincheSystemPrompt(language)),
+            )
         turns.forEach { turn ->
             messages.put(
                 JSONObject()

@@ -22,6 +22,7 @@ import org.json.JSONObject
 class OpenAiCompatibleRecipeSuggester(
     private val client: OkHttpClient,
     private val aiKeyProvider: AiKeyProvider,
+    private val promptSource: PromptSource,
     baseUrl: String = AiEndpoints.DEFAULT_BASE_URL,
 ) : RecipeSuggester {
 
@@ -97,7 +98,7 @@ class OpenAiCompatibleRecipeSuggester(
     ): okhttp3.RequestBody {
         val message = JSONObject()
             .put("role", "user")
-            .put("content", recipeSuggestionPrompt(foods, language, existingRecipes))
+            .put("content", recipeSuggestionPrompt(foods, language, promptSource, existingRecipes))
         val responseFormat = JSONObject().put("type", "json_object")
         val json = JSONObject().apply {
             put("model", MODEL)
@@ -130,63 +131,27 @@ class OpenAiCompatibleRecipeSuggester(
 }
 
 /**
- * Prompt de Sugerencias (D1 y D2 de `aceptar-sugerencia-de-receta`). Es una función
- * pura para poder verificar sin red que las Recetas existentes > 60 % solo entran
- * cuando corresponde y con qué forma.
+ * Prompt de Sugerencias (D1 y D2 de `aceptar-sugerencia-de-receta`). Es determinista
+ * para una fuente de prompts dada, así que se puede verificar sin red que las Recetas
+ * existentes > 60 % solo entran cuando corresponde y con qué forma.
  */
 internal fun recipeSuggestionPrompt(
     foods: List<SuggestableFood>,
     language: String,
+    source: PromptSource,
     existingRecipes: List<RecipeAvoidance> = emptyList(),
 ): String {
     val foodList = foods.joinToString(", ") { food ->
         if (food.quantity != null) "${food.name} (${food.quantity})" else food.name
     }
-    val isEnglish = language.lowercase().startsWith("en")
-    val base = if (isEnglish) {
-        ENGLISH_PROMPT.replace(FOODS_TOKEN, foodList)
-    } else {
-        SPANISH_PROMPT.replace(FOODS_TOKEN, foodList)
-    }
+    val base = source.suggestionPrompt(language).replace(FOODS_TOKEN, foodList)
     if (existingRecipes.isEmpty()) return base
     val avoidList = existingRecipes.joinToString("; ") { recipe ->
         "${recipe.title} (${recipe.ingredientNames.joinToString(", ")})"
     }
-    val section = if (isEnglish) {
-        AVOID_SECTION_ENGLISH.replace(AVOID_TOKEN, avoidList)
-    } else {
-        AVOID_SECTION_SPANISH.replace(AVOID_TOKEN, avoidList)
-    }
+    val section = source.suggestionAvoidPrompt(language).replace(AVOID_TOKEN, avoidList)
     return "$base $section"
 }
 
 private const val FOODS_TOKEN = "{FOODS}"
 private const val AVOID_TOKEN = "{RECIPES}"
-
-private const val AVOID_SECTION_SPANISH =
-    "No propongas recetas iguales ni equivalentes a estas que ya tengo: {RECIPES}."
-
-private const val AVOID_SECTION_ENGLISH =
-    "Do not propose recipes that are the same as or equivalent to these I already have: {RECIPES}."
-
-private const val SPANISH_PROMPT =
-    "Eres un cocinero experto. Con estos alimentos disponibles: {FOODS}. " +
-        "Propón hasta 3 recetas completas que los aprovechen (prioriza usarlos). " +
-        "Responde EXCLUSIVAMENTE con un único objeto JSON, sin markdown ni explicaciones, " +
-        "con la forma {\"s\":[{\"t\":\"título\",\"st\":\"historia breve\",\"mm\":\"BREAKFAST|LUNCH|DINNER|DESSERT\"," +
-        "\"pm\":10,\"cm\":20,\"df\":\"EASY|MEDIUM|HARD\",\"bs\":4,\"kcal\":320," +
-        "\"i\":[{\"n\":\"nombre\",\"q\":3,\"u\":\"ud\",\"o\":false}]," +
-        "\"p\":[{\"t\":\"texto del paso\",\"m\":10}]}]}. " +
-        "Escribe títulos, historias, ingredientes y pasos en español. " +
-        "Usa las claves cortas indicadas y los tokens de máquina para mm y df."
-
-private const val ENGLISH_PROMPT =
-    "You are an expert cook. With these available foods: {FOODS}. " +
-        "Propose up to 3 complete recipes that use them (prioritize using them). " +
-        "Reply ONLY with a single JSON object, without markdown or explanations, " +
-        "using the shape {\"s\":[{\"t\":\"title\",\"st\":\"short story\",\"mm\":\"BREAKFAST|LUNCH|DINNER|DESSERT\"," +
-        "\"pm\":10,\"cm\":20,\"df\":\"EASY|MEDIUM|HARD\",\"bs\":4,\"kcal\":320," +
-        "\"i\":[{\"n\":\"name\",\"q\":3,\"u\":\"unit\",\"o\":false}]," +
-        "\"p\":[{\"t\":\"step text\",\"m\":10}]}]}. " +
-        "Write titles, stories, ingredients and steps in English. " +
-        "Use the short keys above and machine tokens for mm and df."

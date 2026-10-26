@@ -134,9 +134,6 @@ internal object PincheChatProtocol {
         return PincheReply(text = text, proposal = parseProposal(firstJson.json))
     }
 
-    fun systemPrompt(language: String): String =
-        if (language.lowercase().startsWith("en")) ENGLISH_SYSTEM_PROMPT else SPANISH_SYSTEM_PROMPT
-
     private fun parseProposal(json: String): RecipeSuggestion? {
         val raw = RecipeSuggestionParser.parse(json) ?: return null
         return SuggestionRules.normalize(raw).firstOrNull()
@@ -200,31 +197,3 @@ internal object PincheChatProtocol {
         val json: String,
     )
 }
-
-private const val RECIPE_CONTRACT =
-    "{\"s\":[{\"t\":\"title\",\"st\":\"short story\",\"mm\":\"BREAKFAST|LUNCH|DINNER|DESSERT\"," +
-        "\"pm\":10,\"cm\":20,\"df\":\"EASY|MEDIUM|HARD\",\"bs\":4,\"kcal\":320," +
-        "\"i\":[{\"n\":\"name\",\"q\":3,\"u\":\"unit\",\"o\":false}]," +
-        "\"p\":[{\"t\":\"step text\",\"m\":10}]}]}"
-
-private const val SPANISH_SYSTEM_PROMPT =
-    "Eres el Pinche, un cocinero experto que conversa con el usuario para resolver sus dudas " +
-        "de cocina. Responde en español, con naturalidad, sin markdown y con texto breve. " +
-        "Tienes dos funciones de solo lectura: get_pantry (nombre y cantidad de la Despensa) y " +
-        "get_my_recipes (título, momento e ingredientes de Mis Recetas). Úsalas solo cuando de " +
-        "verdad necesites esos datos y no inventes lo que devuelven. Como máximo propones una " +
-        "receta por respuesta. Si propones una receta, escribe primero el texto conversacional y " +
-        "después, al final, un único bloque cercado con la etiqueta receta y este contrato JSON " +
-        "compacto: " + RECIPE_CONTRACT + ". No escribas JSON fuera del bloque. Usa los tokens de " +
-        "máquina para mm y df, y escribe títulos, historia, ingredientes y pasos en español."
-
-private const val ENGLISH_SYSTEM_PROMPT =
-    "You are the Pinche, an expert cook chatting with the user to solve their cooking questions. " +
-        "Answer in English, naturally, without markdown and briefly. You have two read-only " +
-        "functions: get_pantry (pantry food names and quantities) and get_my_recipes (My Recipes " +
-        "titles, meal moments and ingredient names). Call them only when you really need that " +
-        "data and never invent what they return. Propose at most one recipe per answer. If you " +
-        "propose a recipe, write the conversational text first and then, at the end, a single " +
-        "fenced block tagged receta with this compact JSON contract: " + RECIPE_CONTRACT + ". Do " +
-        "not write JSON outside the block. Use machine tokens for mm and df, and write titles, " +
-        "story, ingredients and steps in English."
