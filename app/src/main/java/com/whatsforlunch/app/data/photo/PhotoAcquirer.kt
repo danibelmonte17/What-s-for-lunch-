@@ -1,5 +1,7 @@
 package com.whatsforlunch.app.data.photo
 
+import com.whatsforlunch.app.data.ai.AiFailureCause
+
 // Resultado de una operación de foto del formulario de alta.
 // Distingue el éxito de los avisos que la UI debe mostrar (RF-21, RF-22, RF-23).
 sealed interface PhotoResult {
@@ -7,7 +9,7 @@ sealed interface PhotoResult {
     data object Cancelled : PhotoResult
     data object CameraPermissionDenied : PhotoResult
     data object MissingApiKey : PhotoResult
-    data object GenerationFailed : PhotoResult
+    data class GenerationFailed(val cause: AiFailureCause) : PhotoResult
 }
 
 // Puerto de foto (Parte B, T6): la galería, la cámara y «Generar con IA».
@@ -28,5 +30,6 @@ class NoOpPhotoAcquirer : PhotoAcquirer {
 
     override suspend fun takePhoto(): PhotoResult = PhotoResult.Cancelled
 
-    override suspend fun generate(prompt: String): PhotoResult = PhotoResult.GenerationFailed
+    override suspend fun generate(prompt: String): PhotoResult =
+        PhotoResult.GenerationFailed(AiFailureCause.INVALID_RESPONSE)
 }

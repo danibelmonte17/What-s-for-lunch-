@@ -151,6 +151,9 @@
     <string name="create_recipe_publish_error_invalid_step">Some steps have no text</string>
     <string name="create_recipe_notice_ai_key_missing">Set your AI API key in Settings to generate images.</string>
     <string name="create_recipe_notice_ai_failed">The image could not be generated. You can pick a photo manually.</string>
+    <string name="create_recipe_notice_ai_failed_no_connection">No connection. Check your network and try again; you can also pick a photo manually.</string>
+    <string name="create_recipe_notice_ai_failed_provider">The AI provider is unavailable right now. Try again later or pick a photo manually.</string>
+    <string name="create_recipe_notice_ai_failed_invalid_response">The AI returned an invalid response. You can pick a photo manually.</string>
     <string name="create_recipe_notice_camera_denied">Camera permission denied. You can use the gallery or generate with AI.</string>
 
     <!-- Settings -->
@@ -183,6 +186,9 @@
     <string name="scanner_camera_denied">Camera permission denied. You can continue by adding foods manually.</string>
     <string name="scanner_camera_unavailable">The camera couldn’t be opened. You can add foods manually.</string>
     <string name="scanner_analysis_failed">The photo couldn’t be analyzed. You can add foods manually.</string>
+    <string name="scanner_analysis_failed_no_connection">No connection. Check your network and try again; you can also continue manually.</string>
+    <string name="scanner_analysis_failed_provider">The AI provider is unavailable right now. Try again later or continue manually.</string>
+    <string name="scanner_analysis_failed_invalid_response">The AI returned an invalid response. You can continue manually.</string>
     <string name="scanner_ai_key_missing">Set your API key in Settings to analyze photos with AI. You can add foods manually.</string>
     <string name="scanner_no_detections">No foods were detected in the photo. You can add foods manually.</string>
     <string name="scanner_save_failed">The foods couldn’t be saved. Please try again.</string>
@@ -215,6 +221,9 @@
     <string name="ai_suggestions_progress">Asking the AI for suggestions…</string>
     <string name="ai_suggestions_empty">The AI didn’t propose any recipes. Please try again.</string>
     <string name="ai_suggestions_failed">Suggestions couldn’t be fetched. Please try again.</string>
+    <string name="ai_suggestions_failed_no_connection">No connection. Check your network and try again.</string>
+    <string name="ai_suggestions_failed_provider">The AI provider is unavailable right now. Try again later.</string>
+    <string name="ai_suggestions_failed_invalid_response">The AI returned an invalid response. Please try again.</string>
     <string name="ai_suggestions_retry">Try again</string>
     <string name="ai_suggestions_key_missing">Set your API key in Settings to ask for AI suggestions.</string>
     <string name="ai_suggestions_open_settings">Open Settings</string>

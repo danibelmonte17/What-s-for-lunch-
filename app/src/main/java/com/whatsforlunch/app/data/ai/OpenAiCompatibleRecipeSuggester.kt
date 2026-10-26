@@ -33,7 +33,7 @@ class OpenAiCompatibleRecipeSuggester(
         language: String,
         existingRecipes: List<RecipeAvoidance>,
     ): RecipeSuggestionsResult {
-        if (foods.isEmpty()) return RecipeSuggestionsResult.Failed
+        if (foods.isEmpty()) return RecipeSuggestionsResult.Failed(AiFailureCause.INVALID_RESPONSE)
         val key = aiKeyProvider.apiKey() ?: return RecipeSuggestionsResult.MissingApiKey
         return withContext(Dispatchers.IO) {
             val startedAt = System.nanoTime()
@@ -47,12 +47,12 @@ class OpenAiCompatibleRecipeSuggester(
                     val elapsed = elapsedMs(startedAt)
                     if (!response.isSuccessful) {
                         Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
-                        return@withContext RecipeSuggestionsResult.Failed
+                        return@withContext RecipeSuggestionsResult.Failed(AiFailureCause.PROVIDER_ERROR)
                     }
                     val body = response.body?.string()
                     if (body == null) {
                         Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
-                        return@withContext RecipeSuggestionsResult.Failed
+                        return@withContext RecipeSuggestionsResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     }
                     val content = messageContent(body)
                     if (content == null) {
@@ -61,7 +61,7 @@ class OpenAiCompatibleRecipeSuggester(
                             "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
                                 "without message content (body ${body.length} chars)",
                         )
-                        return@withContext RecipeSuggestionsResult.Failed
+                        return@withContext RecipeSuggestionsResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     }
                     val raw = RecipeSuggestionParser.parse(content)
                     if (raw == null) {
@@ -70,7 +70,7 @@ class OpenAiCompatibleRecipeSuggester(
                             "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms " +
                                 "with unparseable content (${content.length} chars)",
                         )
-                        return@withContext RecipeSuggestionsResult.Failed
+                        return@withContext RecipeSuggestionsResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     }
                     Log.i(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms, ${raw.size} proposals")
                     RecipeSuggestionsResult.Success(SuggestionRules.normalize(raw))
@@ -79,10 +79,10 @@ class OpenAiCompatibleRecipeSuggester(
                 throw exception
             } catch (exception: IOException) {
                 Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
-                RecipeSuggestionsResult.Failed
+                RecipeSuggestionsResult.Failed(AiFailure.fromException(exception))
             } catch (exception: Exception) {
                 Log.w(TAG, "POST $endpoint failed after ${elapsedMs(startedAt)}ms: ${exception.describe()}")
-                RecipeSuggestionsResult.Failed
+                RecipeSuggestionsResult.Failed(AiFailure.fromException(exception))
             }
         }
     }

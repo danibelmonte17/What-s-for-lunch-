@@ -60,7 +60,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 - **RD02**: Una Receta se sugiere si su Coincidencia es ≥ 85%; el badge «100% Match» se muestra cuando todos los obligatorios están en la Despensa.
 - **RD03**: Las cantidades escalan linealmente con las Raciones: `cantidad = cantidad base × (raciones / raciones base)`, con Raciones entre 1 y 12. La cantidad escalada se muestra redondeada a un máximo de 1 decimal (`Q-escalar-raciones-1`); con Raciones iguales a las base se conserva la precisión original.
 - **RD04**: Eliminar una Receta requiere confirmación y es definitivo (sin papelera ni deshacer).
-- **RD05**: Ante un fallo de la IA o de la red, el flujo continúa en Modo de degradación con entrada manual (chips), sin bloquear al usuario.
+- **RD05**: Ante un fallo de la IA o de la red, el flujo continúa en Modo de degradación sin bloquear al usuario. El fallo se clasifica en **sin conexión** (`NO_CONNECTION`: `IOException`, timeout), **proveedor no disponible** (`PROVIDER_ERROR`: HTTP ≠ 2xx) y **respuesta no válida** (`INVALID_RESPONSE`: cuerpo, JSON o contenido no utilizables), además del caso previo **sin API key** (`MissingApiKey`, sin llamada de red). Cada superficie muestra un aviso claro y descartable con su causa y conserva su salida manual: el **Escáner** mantiene los chips y el alta manual; el **formulario** mantiene galería y cámara; **Sugerencias** restaura la selección y ofrece «Reintentar» (`degradar-ante-fallo-de-ia`).
 - **RD06**: Las fotos del Escaneo no se almacenan en el dispositivo: se capturan en memoria, se envían a DevExpert Inference para su análisis y se descartan al terminar (RGPD; el envío al proveedor se rige por `P27`/`RK03`). No hay ficheros, MediaStore ni tabla de Escaneos.
 - **RD07**: Una Sugerencia aceptada crea una Receta en Mis Recetas con `origen = Sugerencia`.
 - **RD09**: Cada ÍtemLista conserva su Origen («Para: Receta X» o «Despensa baja»).
@@ -103,7 +103,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 1. **Escaneo → Sugerencia → Receta**: el usuario hace una foto de la Despensa, revisa los chips de Alimentos propuestos por la IA, recibe Sugerencias compatibles (RD02), acepta una y queda en Mis Recetas con `origen = Sugerencia` (RD07).
 2. **Alta manual → cocina**: el usuario crea una Receta en el Formulario, la guarda como Borrador o la Publica (⚠ S07), la abre en el Detalle, ajusta Raciones (RD03) y arranca el Modo Cocina.
 3. **Faltantes → Lista de la Compra**: desde el Detalle o tras un Escaneo, lo que falta acaba como ÍtemLista con su Origen (RD09); la compra se agrupa por Pasillo o por Receta.
-4. **Fallo de IA o red**: Escáner o Pinche degradan a entrada manual con aviso (RD05) y el flujo continúa.
+4. **Fallo de IA o red**: Escáner, Sugerencias y formulario degradan con un aviso por causa (sin conexión / proveedor / respuesta no válida) y conservan su salida manual (chips, «Reintentar» o galería/cámara) según RD05; el Pinche muestra el fallo del turno con «Reintentar» y acceso a Ajustes si falta la API key.
 5. **Duda o receta libre en el Pinche**: el usuario pregunta por una sustitución o pide una receta sin tener los ingredientes; el Pinche pide a la app la Despensa y/o Mis Recetas solo si lo necesita (function calling), responde y puede devolver una Propuesta con su Ficha. El usuario la guarda como Borrador o la deja pasar; los Faltantes se muestran, no se compran todavía.
 
 ## Casos límite
@@ -111,7 +111,8 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 | Situación | Comportamiento esperado |
 |---|---|
 | Escaneo sin alimentos reconocidos | Mensaje claro y alta manual de Alimentos por chips |
-| Fallo de la IA o de la red (escáner o Pinche) | Modo de degradación: entrada manual y aviso (RD05) |
+| Fallo de la IA o de la red (escáner, Sugerencias o formulario) | Modo de degradación con aviso por causa y descartable; salida manual propia de cada superficie (RD05) |
+| Fallo de IA o red en el Pinche | Burbuja de fallo con «Reintentar»; la conversación anterior se conserva (RD05) |
 | El proveedor de IA no admite function calling | Fallo visible con «Reintentar»; no se envía la Despensa ni las Recetas por otra vía (RD17) |
 | Falta la API key al abrir el Pinche | Aviso con acceso a Ajustes; la conversación no se envía |
 | Mensaje del Pinche vacío o solo espacios | No se envía ni se llama a la IA |
@@ -119,7 +120,10 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 | Propuesta del Pinche sin ingredientes o pasos válidos | Se muestra solo el texto, sin Ficha ni acción de guardar |
 | Salir del Pinche | La conversación y las Propuestas se pierden; las Recetas guardadas permanecen en Mis Recetas |
 | Despensa vacía en una Propuesta del Pinche | Todos los ingredientes obligatorios se muestran como Faltantes; la Propuesta no se bloquea (RD14) |
-| Fallo de la IA en Sugerencias | Aviso mínimo con «Reintentar»; la degradación manual completa (RD05) vive en el Escáner (`degradar-ante-fallo-de-ia`) |
+| Fallo de la IA en Sugerencias | Aviso mínimo con «Reintentar» y descarte; la selección se restaura y la degradación manual completa (RD05) vive en el Escáner (`degradar-ante-fallo-de-ia`) |
+| Sin red y sin API key a la vez | Gana `MissingApiKey`: el cliente comprueba la key antes de la red y no hace la llamada |
+| Respuesta válida con 0 alimentos (Escáner) | Éxito vacío: aviso `NO_DETECTIONS`, no aviso de fallo |
+| Respuesta válida con 0 propuestas (Sugerencias) | Estado vacío con «Reintentar», no aviso de fallo |
 | Ningún Alimento seleccionado en Sugerencias | «Pedir sugerencias» deshabilitado; no se llama a la IA |
 | Ninguna propuesta de Sugerencia válida | Estado vacío con «Reintentar» |
 | Chips del Escaneo y Despensa con el mismo Alimento | Un solo ítem en la selección por nombre normalizado |

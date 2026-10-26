@@ -10,17 +10,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -65,6 +70,7 @@ object AiSuggestionsTestTags {
     const val SUGGESTION_STEPS = "ai_suggestions_suggestion_steps"
     const val EMPTY = "ai_suggestions_empty"
     const val NOTICE = "ai_suggestions_notice"
+    const val NOTICE_DISMISS = "ai_suggestions_notice_dismiss"
     const val RETRY = "ai_suggestions_retry"
     const val OPEN_SETTINGS = "ai_suggestions_open_settings"
 
@@ -97,6 +103,7 @@ fun AiSuggestionsScreen(
     onRetry: () -> Unit,
     onAccept: (String) -> Unit,
     onDiscard: (String) -> Unit,
+    onClearNotice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val phase = uiState.phase
@@ -138,6 +145,7 @@ fun AiSuggestionsScreen(
                     notice = notice,
                     onOpenSettings = onOpenSettings,
                     onRetry = onRetry,
+                    onDismiss = onClearNotice,
                 )
             }
             when (phase) {
@@ -302,6 +310,7 @@ private fun NoticeBanner(
     notice: AiSuggestionsNotice,
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     Surface(
         modifier = Modifier
@@ -312,19 +321,25 @@ private fun NoticeBanner(
         shape = RoundedCornerShape(WarmRadius.md),
     ) {
         Column(
-            modifier = Modifier.padding(WarmSpacing.md),
+            modifier = Modifier.padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.sm, bottom = WarmSpacing.sm),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
-            Text(
-                text = stringResource(
-                    when (notice) {
-                        AiSuggestionsNotice.AI_KEY_MISSING -> R.string.ai_suggestions_key_missing
-                        AiSuggestionsNotice.FAILED -> R.string.ai_suggestions_failed
-                        AiSuggestionsNotice.SAVED -> R.string.ai_suggestions_accepted_notice
-                    },
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(notice.messageRes()),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(48.dp).testTag(AiSuggestionsTestTags.NOTICE_DISMISS),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.action_dismiss),
+                    )
+                }
+            }
             if (notice == AiSuggestionsNotice.AI_KEY_MISSING) {
                 Button(
                     onClick = onOpenSettings,
@@ -332,11 +347,26 @@ private fun NoticeBanner(
                 ) {
                     Text(stringResource(R.string.ai_suggestions_open_settings))
                 }
-            } else if (notice == AiSuggestionsNotice.FAILED) {
+            } else if (notice.isFailure) {
                 RetryButton(onRetry = onRetry)
             }
         }
     }
+}
+
+private val AiSuggestionsNotice.isFailure: Boolean
+    get() = this == AiSuggestionsNotice.FAILED ||
+        this == AiSuggestionsNotice.FAILED_NO_CONNECTION ||
+        this == AiSuggestionsNotice.FAILED_PROVIDER_ERROR ||
+        this == AiSuggestionsNotice.FAILED_INVALID_RESPONSE
+
+private fun AiSuggestionsNotice.messageRes(): Int = when (this) {
+    AiSuggestionsNotice.AI_KEY_MISSING -> R.string.ai_suggestions_key_missing
+    AiSuggestionsNotice.FAILED -> R.string.ai_suggestions_failed
+    AiSuggestionsNotice.FAILED_NO_CONNECTION -> R.string.ai_suggestions_failed_no_connection
+    AiSuggestionsNotice.FAILED_PROVIDER_ERROR -> R.string.ai_suggestions_failed_provider
+    AiSuggestionsNotice.FAILED_INVALID_RESPONSE -> R.string.ai_suggestions_failed_invalid_response
+    AiSuggestionsNotice.SAVED -> R.string.ai_suggestions_accepted_notice
 }
 
 @Composable

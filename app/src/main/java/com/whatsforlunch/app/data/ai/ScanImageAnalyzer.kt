@@ -7,7 +7,7 @@ import com.whatsforlunch.app.domain.scanner.AnalyzedFood
 sealed interface ScanAnalysisResult {
     data class Success(val foods: List<AnalyzedFood>) : ScanAnalysisResult
     data object MissingApiKey : ScanAnalysisResult
-    data object Failed : ScanAnalysisResult
+    data class Failed(val cause: AiFailureCause) : ScanAnalysisResult
 }
 
 // Port of the AI food-image analysis. The image is only passed in memory (RD06).

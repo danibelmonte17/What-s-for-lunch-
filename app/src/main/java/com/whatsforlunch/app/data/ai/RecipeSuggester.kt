@@ -9,7 +9,7 @@ import com.whatsforlunch.app.domain.suggestion.SuggestableFood
 sealed interface RecipeSuggestionsResult {
     data class Success(val suggestions: List<RecipeSuggestion>) : RecipeSuggestionsResult
     data object MissingApiKey : RecipeSuggestionsResult
-    data object Failed : RecipeSuggestionsResult
+    data class Failed(val cause: AiFailureCause) : RecipeSuggestionsResult
 }
 
 // Receta que el prompt debe evitar por parecerse demasiado a lo que el usuario ya

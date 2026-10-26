@@ -31,6 +31,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.AssetPromptSource
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
 import com.whatsforlunch.app.data.photo.PhotoResult
@@ -312,18 +313,43 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GALLERY).performScrollTo().assertIsDisplayed()
     }
 
-    // RF-22 y RD05: el fallo de generación avisa sin bloquear la foto manual ni el guardado.
+    // RF-22 y RD05: el fallo de generación avisa con su causa, se descarta y no
+    // bloquea la foto manual ni el guardado.
     @Test
     fun generationFailureShowsNoticeAndKeepsManualOptions() {
-        val repository = launchForm(photoAcquirer = FakePhotoAcquirer(generation = PhotoResult.GenerationFailed))
+        val repository = launchForm(
+            photoAcquirer = FakePhotoAcquirer(
+                generation = PhotoResult.GenerationFailed(AiFailureCause.NO_CONNECTION),
+            ),
+        )
         typeTitle("Tortilla sin foto generada")
         composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GENERATE).performScrollTo().performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.NOTICE).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText(formText(R.string.create_recipe_notice_ai_failed)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(formText(R.string.create_recipe_notice_ai_failed_no_connection))
+            .performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GALLERY).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_CAMERA).performScrollTo().assertIsDisplayed()
+
+        composeRule.onNodeWithText(formText(R.string.action_dismiss)).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.NOTICE).assertDoesNotExist()
+
         composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
         assertEquals(RecipeStatus.DRAFT, runBlocking { repository.observeRecipes().first() }.single().status)
+    }
+
+    @Test
+    fun invalidAiResponseShowsItsOwnNoticeAndKeepsManualPhotoOptions() {
+        launchForm(
+            photoAcquirer = FakePhotoAcquirer(
+                generation = PhotoResult.GenerationFailed(AiFailureCause.INVALID_RESPONSE),
+            ),
+        )
+        typeTitle("Tortilla con respuesta inválida")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GENERATE).performScrollTo().performClick()
+        composeRule.onNodeWithText(formText(R.string.create_recipe_notice_ai_failed_invalid_response))
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GALLERY).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_CAMERA).performScrollTo().assertIsDisplayed()
     }
 
     @Test

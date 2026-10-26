@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
@@ -167,7 +168,7 @@ class AiSuggestionsE2ETest {
     fun failureShowsNoticeAndRetryListsSuggestions() {
         val suggester = FakeRecipeSuggester(
             listOf(
-                RecipeSuggestionsResult.Failed,
+                RecipeSuggestionsResult.Failed(AiFailureCause.NO_CONNECTION),
                 RecipeSuggestionsResult.Success(listOf(suggestion(title = "Tarta de manzana"))),
             ),
         )
@@ -178,7 +179,7 @@ class AiSuggestionsE2ETest {
 
         composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
         composeRule.onNodeWithTag(AiSuggestionsTestTags.NOTICE).assertIsDisplayed()
-        composeRule.onNodeWithText("No se pudieron obtener sugerencias. Inténtalo de nuevo.")
+        composeRule.onNodeWithText("Sin conexión. Comprueba tu red y vuelve a intentarlo.")
             .assertIsDisplayed()
 
         composeRule.onNodeWithTag(AiSuggestionsTestTags.RETRY).performClick()
@@ -188,6 +189,43 @@ class AiSuggestionsE2ETest {
         }
         composeRule.onNodeWithText("Tarta de manzana").assertIsDisplayed()
         assertEquals(2, suggester.calls)
+    }
+
+    // S5: el aviso de fallo es descartable con un control de 48 dp.
+    @Test
+    fun failureNoticeCanBeDismissed() {
+        launchSuggestions(
+            pantry = pantryWith(PantryItem("manzana", "Manzana", 3)),
+            suggester = FakeRecipeSuggester(
+                listOf(RecipeSuggestionsResult.Failed(AiFailureCause.PROVIDER_ERROR)),
+            ),
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.NOTICE).assertIsDisplayed()
+        composeRule.onNodeWithText("El proveedor de IA no está disponible ahora mismo. Inténtalo más tarde.")
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.NOTICE_DISMISS).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.NOTICE).assertDoesNotExist()
+    }
+
+    // S7: los avisos de fallo también se localizan en inglés.
+    @Test
+    fun failureNoticeIsLocalizedInEnglish() {
+        launchSuggestions(
+            pantry = pantryWith(PantryItem("apple", "Apple", 3)),
+            suggester = FakeRecipeSuggester(
+                listOf(RecipeSuggestionsResult.Failed(AiFailureCause.NO_CONNECTION)),
+            ),
+            locale = Locale.ENGLISH,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.onNodeWithText("No connection. Check your network and try again.")
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.RETRY).assertIsDisplayed()
     }
 
     // S5: sin propuestas válidas se muestra el estado vacío con «Reintentar».
@@ -272,6 +310,7 @@ class AiSuggestionsE2ETest {
                             onRetry = suggestionsViewModel::retry,
                             onAccept = suggestionsViewModel::acceptSuggestion,
                             onDiscard = suggestionsViewModel::discardSuggestion,
+                            onClearNotice = suggestionsViewModel::clearNotice,
                         )
                     } else {
                         RecommendationsScreen(
@@ -390,6 +429,7 @@ class AiSuggestionsE2ETest {
                             onRetry = viewModel::retry,
                             onAccept = viewModel::acceptSuggestion,
                             onDiscard = viewModel::discardSuggestion,
+                            onClearNotice = viewModel::clearNotice,
                         )
                     }
                 }
@@ -625,6 +665,7 @@ class AiSuggestionsE2ETest {
                         onRetry = viewModel::retry,
                         onAccept = viewModel::acceptSuggestion,
                         onDiscard = viewModel::discardSuggestion,
+                        onClearNotice = viewModel::clearNotice,
                     )
                 }
             }
@@ -695,6 +736,6 @@ class AiSuggestionsE2ETest {
 
     private object AlwaysFailingScanAnalyzer : ScanImageAnalyzer {
         override suspend fun analyze(image: ByteArray, language: String): ScanAnalysisResult =
-            ScanAnalysisResult.Failed
+            ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
     }
 }

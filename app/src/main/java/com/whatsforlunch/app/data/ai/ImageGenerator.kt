@@ -5,7 +5,7 @@ package com.whatsforlunch.app.data.ai
 sealed interface ImageGenerationResult {
     class Success(val bytes: ByteArray) : ImageGenerationResult
     data object MissingApiKey : ImageGenerationResult
-    data object Failed : ImageGenerationResult
+    data class Failed(val cause: AiFailureCause) : ImageGenerationResult
 }
 
 // Puerto de generación de imágenes con IA. El prompt se construye con la información

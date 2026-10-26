@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
@@ -323,6 +324,7 @@ class PantryRecipesE2ETest {
                                 onRetry = aiSuggestionsViewModel::retry,
                                 onAccept = aiSuggestionsViewModel::acceptSuggestion,
                                 onDiscard = aiSuggestionsViewModel::discardSuggestion,
+                                onClearNotice = aiSuggestionsViewModel::clearNotice,
                             )
                         }
                         else -> RecommendationsScreen(
@@ -366,6 +368,6 @@ class PantryRecipesE2ETest {
             foods: List<SuggestableFood>,
             language: String,
             existingRecipes: List<RecipeAvoidance>,
-        ): RecipeSuggestionsResult = RecipeSuggestionsResult.Failed
+        ): RecipeSuggestionsResult = RecipeSuggestionsResult.Failed(AiFailureCause.PROVIDER_ERROR)
     }
 }
