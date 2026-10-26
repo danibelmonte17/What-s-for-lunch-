@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.data.repository
 
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.ShoppingListItem
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
@@ -29,6 +30,25 @@ class InMemoryShoppingListRepository : ShoppingListRepository {
                 sourceKey = sourceKey,
                 sourceTitle = sourceTitle,
                 ingredients = ingredients,
+            )
+        }
+    }
+
+    override suspend fun saveManualItem(
+        id: String?,
+        name: String,
+        quantity: Double?,
+        unit: String,
+        aisle: Aisle?,
+    ) {
+        mutex.withLock {
+            items.value = ShoppingListRules.saveManualItem(
+                existing = items.value,
+                id = id,
+                name = name,
+                quantity = quantity,
+                unit = unit,
+                aisle = aisle,
             )
         }
     }

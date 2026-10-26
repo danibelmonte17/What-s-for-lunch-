@@ -43,6 +43,7 @@ import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.data.repository.RoomShoppingListRepository
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
@@ -470,15 +471,207 @@ class ShoppingListE2ETest {
             assertEquals(listOf("paella"), item.sources.map { it.sourceKey })
             assertEquals(listOf("Paella"), item.sources.map { it.sourceTitle })
 
-            runBlocking { reopened.deleteItem(item.id) }
-            assertTrue(runBlocking { reopened.observeItems().first() }.isEmpty())
+            // anadir-item-a-la-lista (punto 6): editar a mano un ítem con fuentes sobre
+            // una BD v3 previa conserva nombre, fuentes y Origen y sobrevive al reabrir.
+            runBlocking {
+                reopened.saveManualItem(
+                    id = item.id,
+                    name = "Azafrán",
+                    quantity = 2.0,
+                    unit = "g",
+                    aisle = Aisle.DAIRY,
+                )
+            }
+            room.close()
 
-            runBlocking { reopened.restoreItem(item) }
-            assertEquals(item, runBlocking { reopened.observeItems().first().single() })
+            room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
+                .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3)
+                .allowMainThreadQueries()
+                .build()
+            val reopenedAfterEdit = RoomShoppingListRepository(room.shoppingListDao(), room)
+            val edited = runBlocking { reopenedAfterEdit.observeItems().first().single() }
+            assertEquals("Azafrán", edited.name)
+            assertEquals(2.0, edited.quantity!!, 0.0001)
+            assertEquals("g", edited.unit)
+            assertEquals(Aisle.DAIRY, edited.aisle)
+            assertEquals(listOf("paella"), edited.sources.map { it.sourceKey })
+            assertEquals(listOf("Paella"), edited.sources.map { it.sourceTitle })
+
+            runBlocking { reopenedAfterEdit.deleteItem(edited.id) }
+            assertTrue(runBlocking { reopenedAfterEdit.observeItems().first() }.isEmpty())
+
+            runBlocking { reopenedAfterEdit.restoreItem(edited) }
+            assertEquals(edited, runBlocking { reopenedAfterEdit.observeItems().first().single() })
         } finally {
             room.close()
             context.deleteDatabase(name)
         }
+    }
+
+    // --- anadir-item-a-la-lista (S1–S6) -------------------------------------
+
+    // S1 (verify 1): el alta manual con cantidad, unidad y Pasillo deja la fila
+    // con la etiqueta del Pasillo y el badge «Despensa baja».
+    @Test
+    fun manualAddShowsTheItemWithAisleLabelAndManualBadge() {
+        launchFullApp()
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("2")
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("uds")
+        composeRule.onNodeWithTag(ShoppingListTestTags.aisleOption("PANTRY_OILS"))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        val itemId = ShoppingListRules.itemIdFor("Pan")
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Pan (2 uds)").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Pan (2 uds)").assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Despensa & Aceites"),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Despensa baja").assertIsDisplayed()
+    }
+
+    // S2: añadir a mano un nombre que ya existe lo edita en lugar de duplicarlo y
+    // conserva su Origen (D3).
+    @Test
+    fun manualAddOfAnExistingNameEditsItWithoutCreatingANewRow() {
+        seedRecipe(
+            Recipe(
+                id = "tortilla",
+                title = "Tortilla",
+                ingredients = listOf(
+                    RecipeIngredient(id = "flour", name = "Harina", quantity = 200.0, unit = "g"),
+                ),
+            ),
+        )
+        launchFullApp()
+        openRecipeByTitle("Tortilla")
+        addMissingFromDetail()
+        backToMyRecipes()
+        openShoppingList()
+        composeRule.onNodeWithText("Harina (200 g)").assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("harina")
+        composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("500")
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("g")
+        composeRule.onNodeWithTag(ShoppingListTestTags.aisleOption("PANTRY_OILS"))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        val itemId = ShoppingListRules.itemIdFor("Harina")
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Harina (500 g)").fetchSemanticsNodes().isNotEmpty()
+        }
+        assertEquals(1, composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size)
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Despensa & Aceites"),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Para: Tortilla").assertIsDisplayed()
+    }
+
+    // S3: el icono de edición por fila solo cambia cantidad, unidad y Pasillo;
+    // el nombre y el badge quedan intactos (D7).
+    @Test
+    fun editingAnItemOnlyChangesQuantityUnitAndAisle() {
+        seedRecipe(
+            Recipe(
+                id = "paella",
+                title = "Paella",
+                ingredients = listOf(
+                    RecipeIngredient(id = "saffron", name = "Azafrán", quantity = 1.0, unit = "g"),
+                ),
+            ),
+        )
+        launchFullApp()
+        openRecipeByTitle("Paella")
+        addMissingFromDetail()
+        backToMyRecipes()
+        openShoppingList()
+
+        val itemId = ShoppingListRules.itemIdFor("Azafrán")
+        composeRule.onNodeWithTag(ShoppingListTestTags.edit(itemId)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.aisleOption("DAIRY"))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty() &&
+                composeRule.onAllNodes(
+                    hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Lácteos"),
+                ).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Azafrán (1 g)").assertIsDisplayed()
+        composeRule.onNodeWithText("Para: Paella").assertIsDisplayed()
+        assertEquals(1, composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size)
+    }
+
+    // S4/RF-AIL5: nombre vacío o cantidad inválida muestran el error, mantienen
+    // el diálogo abierto y no guardan nada.
+    @Test
+    fun invalidNameOrQuantityShowsAnErrorAndKeepsTheDialogOpen() {
+        launchFullApp()
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+        composeRule.onNodeWithText("Escribe un nombre").assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.EDIT_DIALOG).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Leche")
+        composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("0")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+        composeRule.onNodeWithText("Escribe una cantidad válida").assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.EDIT_DIALOG).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).assertCountEquals(0)
+    }
+
+    // S5: cantidad y Pasillo son opcionales; el ítem queda «Sin clasificar».
+    @Test
+    fun manualAddWithoutQuantityOrAisleUsesTheDefaults() {
+        launchFullApp()
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Leche")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        val itemId = ShoppingListRules.itemIdFor("Leche")
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Leche").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Leche").assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Sin clasificar"),
+        ).assertIsDisplayed()
+    }
+
+    // S6: el estado vacío también abre el diálogo con su «Añadir ítem».
+    @Test
+    fun emptyStateAddCtaOpensTheDialogAndSavesTheItem() {
+        launchFullApp()
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.EMPTY).assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.EMPTY_ADD_CTA).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.EDIT_DIALOG).assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Pan").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Pan").assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.EMPTY).assertCountEquals(0)
     }
 
     // --- Helpers -----------------------------------------------------------------
@@ -572,6 +765,10 @@ class ShoppingListE2ETest {
                         onDeleteItem = viewModel::deleteItem,
                         onUndoDelete = viewModel::undoDelete,
                         onUndoExpired = viewModel::dismissUndo,
+                        onAddItem = viewModel::addItem,
+                        onEditItem = viewModel::editItem,
+                        onDismissEditor = viewModel::dismissEditor,
+                        onSaveItem = viewModel::saveManualItem,
                     )
                 }
             }

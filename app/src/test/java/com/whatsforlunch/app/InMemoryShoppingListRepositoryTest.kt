@@ -1,6 +1,7 @@
 package com.whatsforlunch.app
 
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -61,5 +62,41 @@ class InMemoryShoppingListRepositoryTest {
         repository.restoreItem(item)
         val restored = repository.observeItems().first().single()
         assertEquals(item, restored)
+    }
+
+    @Test
+    fun saveManualItemCreatesItemsAndMergesDuplicateNames() = runTest {
+        val repository = InMemoryShoppingListRepository()
+
+        repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "uds", aisle = Aisle.PANTRY_OILS)
+        repository.saveManualItem(id = null, name = "pan", quantity = 3.0, unit = "uds", aisle = Aisle.DAIRY)
+
+        val item = repository.observeItems().first().single()
+        assertEquals("Pan", item.name)
+        assertEquals(3.0, item.quantity!!, 0.0001)
+        assertEquals(Aisle.DAIRY, item.aisle)
+        assertTrue(item.sources.isEmpty())
+    }
+
+    @Test
+    fun manualEditKeepsTheOriginsOfContributedItems() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            "tortilla",
+            "Tortilla",
+            listOf(RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g")),
+        )
+
+        repository.saveManualItem(
+            id = null,
+            name = "Harina",
+            quantity = 500.0,
+            unit = "g",
+            aisle = Aisle.PANTRY_OILS,
+        )
+
+        val item = repository.observeItems().first().single()
+        assertEquals(500.0, item.quantity!!, 0.0001)
+        assertEquals(listOf("Tortilla"), item.sources.map { it.sourceTitle })
     }
 }

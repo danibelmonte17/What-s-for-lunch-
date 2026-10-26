@@ -9,14 +9,15 @@ data class ShoppingItemSource(
 )
 
 // ÍtemLista de la Lista de la Compra (docs/domain-model.md): un ítem por nombre
-// normalizado, con la cantidad/unidad sin conversiones, sin Pasillo en esta feature
-// (siempre null) y `completed = false` hasta agrupar-y-completar-la-lista.
+// normalizado, con la cantidad/unidad sin conversiones, el Pasillo opcional del
+// alta manual (RD19; null = «Sin clasificar») y `completed = false` hasta
+// agrupar-y-completar-la-lista.
 data class ShoppingListItem(
     val id: String,
     val name: String,
     val quantity: Double? = null,
     val unit: String = "",
-    val aisle: String? = null,
+    val aisle: Aisle? = null,
     val completed: Boolean = false,
     val sources: List<ShoppingItemSource> = emptyList(),
 )
