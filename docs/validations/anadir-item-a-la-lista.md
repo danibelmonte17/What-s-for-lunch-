@@ -5,6 +5,7 @@
 - **Spec**: `docs/specs/anadir-item-a-la-lista.md` (RF-AIL1–RF-AIL7, S1–S6, D1–D7)
 - **Estado declarado al validar**: `passing` (autoverificación del implementador, sesión 87)
 - **Veredicto**: **`revise`** (un hallazgo High de ida-y-vuelta de la cantidad al editar; el resto de la feature es de calidad aceptación)
+- **Veredicto de la revalidación tras el repair (2026-10-27, `feature-validator`)**: **`accept`** — H1 y L1 cerrados; 1 apunte Low no bloqueante (F1). Ver «Revalidación tras el repair» al final de este informe.
 
 ## 1. Objetivo de revisión
 
@@ -142,3 +143,73 @@ Update:
 - Veredicto: **`revise`** → la feature vuelve a `in_progress` para aplicar H1 (y L1); después revalidación independiente.
 - Tras el fix, revalidar: ida-y-vuelta de cantidades ≥ 1000 y >3 decimales, regresión de S1–S6 y cifras de gates baratos.
 - No es aceptación: `feature_list.json` no se toca desde este informe (lo persiste el orquestador).
+
+## Revalidación tras el repair (2026-10-27, `feature-validator`)
+
+Revalidación independiente tras el `revise` de la sesión 88 y el repair de la sesión 89. Misma spec: `docs/specs/anadir-item-a-la-lista.md` (RF-AIL1–RF-AIL7, S1–S6, D1–D7).
+
+- **Árbol revisado**: diff sin commitear sobre `develop` (el PR #27 ya está fusionado): `ShoppingListScreen.kt` (+21/−1), `ShoppingListManualItemTest.kt` (+2 tests), `ShoppingListViewModelTest.kt` (+1), `ShoppingListE2ETest.kt` (+1), `docs/evidence/anadir-item-a-la-lista/informe.md` (+§ repair), `docs/evidence/anadir-item-a-la-lista/e2e-bateria-2026-10-27.xml` (nuevo), `PROGRESS.md`, `docs/progress-history.md` y `feature_list.json` (solo `status`/`evidence`, conforme a AGENTS.md).
+- **Veredicto**: **`accept`** — H1 y L1 cerrados; sin hallazgos Critical/High/Medium ni de seguridad; 1 apunte Low no bloqueante (F1).
+
+### R1. Checks re-ejecutados por el validador (2026-10-27, AVD `Pixel_10_Pro` API 37, `emulator-5554`)
+
+| Check | Resultado |
+|---|---|
+| `gradlew :app:testDebugUnitTest --rerun-tasks :app:lintDebug :app:assembleDebug` | **BUILD SUCCESSFUL** (53 s) |
+| Unit (XML `app/build/test-results/testDebugUnitTest`) | **35 suites / 219 tests / 0 fallos / 0 errores / 0 omitidos** — coincide con lo declarado (+3: `ShoppingListManualItemTest` 7→9, `ShoppingListViewModelTest` 5→6) |
+| Lint (`app/build/reports/lint-results-debug.xml`) | **0 errores / 49 warnings** (línea base intacta) |
+| Paridad es/en de `<string>` | **281/281** claves idénticas, 0 diferencias (sin cadenas nuevas en el repair) |
+| Inventario `@Test` de `app/src/androidTest` | **171** (170 + 1 del repair); `ShoppingListE2ETest` = 17 |
+| `init.ps1` (sin canalizar stdout) | **«Entorno listo»** (app instalada y en ejecución; requiere `$env:JAVA_HOME` corregido a `C:\Users\Daniel\.jdks\corretto-17.0.20`, quirk conocido de la máquina) |
+| E2E focalizado (`connectedDebugAndroidTest`, 2 métodos) | **2/2 verde**: `RecipeDetailE2ETest#servingsSelectionIsNotPersistedWhenReopeningDetail` (4,233 s) y `ShoppingListE2ETest#editingKeepsALargeQuantityUnchangedThroughTheDialog` (3,943 s); XML `tests="2" failures="0"` (ts `2026-10-27T09:18:51`). AVD apagado con `adb emu kill` |
+
+### R2. Evidencia cara inspeccionada (no re-ejecutada)
+
+- `docs/evidence/anadir-item-a-la-lista/e2e-bateria-2026-10-27.xml` (24.564 B; `tests="171" failures="1" errors="0" skipped="2"`, `time="628.231"`, ts `2026-10-27T08:45:22`): **cuadra con el inventario de `@Test` (171)**; `ShoppingListE2ETest` **17/17** sin fallos ni omitidos (S1–S6 + los 10 previos + el test nuevo de H1); único fallo `RecipeDetailE2ETest#servingsSelectionIsNotPersistedWhenReopeningDetail` (fuera del diff); 2 omitidos `SettingsE2ETest` (`Assume`).
+- `app/build/outputs/androidTest-results/connected/` (se regenera en cada carrera) conserva la reejecución aislada `RecipeDetailE2ETest#loweringServingsHalvesIngredientQuantities` **1/1 verde** (ts `2026-10-27T08:55:04`): corrobora el método de clasificación de flakes; la otra aislada no sobrevivió, pero esta revalidación la reprodujo en verde por primera mano (R1).
+- Informe de evidencia §Repair: cifra histórica corregida a **«170 tests (168 ejecutados + 2 omitidos)»** con la explicación del doble conteo del runner (XML `171` vs consola «Finished 173» = 171 + 2 omitidos contados dos veces; la «172» histórica = 170 + 2): reconcilia con XML e inventario.
+
+### R3. Cierre de los findings de la sesión 88
+
+- **H1 (High) — cerrado.** `formatEditableQuantity(quantity, locale)` (`BigDecimal.valueOf(…).stripTrailingZeros().toPlainString()`: sin agrupación de millares ni redondeo; la coma del locale solo como separador decimal) se usa **únicamente** en el prellenado del campo Cantidad de `ShoppingItemDialog` (`ShoppingListScreen.kt:476`). Permanecen intactos `formatQuantity` (fila de la Lista, línea 251, y Detalle de Receta) y `parseManualQuantity` (D6: coma o punto; vacío = sin cantidad) — nota N2 respetada; `git diff -- app/src/main` confirma que el repair solo toca `ShoppingListScreen.kt`. Ida-y-vuelta verificada a tres niveles, dos de ellos re-ejecutados por el validador: (1) unit de round-trip `parseManualQuantity(formatEditableQuantity(q, locale)) == q` para **1200.0 / 1234.5 / 0.1234** en es y en + formato exacto sin millares (verde en la re-ejecución); (2) unit de edición por id con el texto real del diálogo `editingKeepsLargeAndPreciseQuantitiesExactly` (verde); (3) E2E real con «Leche» **1500 ml** → editar sin tocar la cantidad → guardar → diálogo cerrado y fila intacta (`editingKeepsALargeQuantityUnchangedThroughTheDialog`, **reproducido en verde a mano** en el AVD). El punto 2 opcional del brief (tolerancia de millares en `parseManualQuantity`) no se aplica, con justificación escrita y correcta (cambiaría D6: «1.200» = 1.2 hoy; el ida-y-vuelta ya es estable): **desviación aceptada**.
+- **L1 (Low) — cerrado.** Inventario **171** `@Test` = XML `tests="171"`; cifra histórica corregida en informe y `PROGRESS.md` («170 tests (168 ejecutados + 2 omitidos)»); XML de la batería conservado en `docs/evidence/anadir-item-a-la-lista/` y coherente con el desglose (171 = 168 en verde + 1 fallo + 2 omitidos).
+
+### R4. Matriz contra la spec
+
+| Requisito | Estado |
+|---|---|
+| RF-AIL1–RF-AIL7 | ✅ sin regresión (el repair solo cambia el prellenado + tests; ver R3) |
+| S1–S6 | ✅ en verde en la batería conservada (`ShoppingListE2ETest` 17/17 en el XML) |
+| D1–D7 | ✅ respetadas; **D6 explícitamente intacta** (`parseManualQuantity` sin cambios) |
+| Non-goals / líneas rojas | ✅ sin voz ni permisos, sin dependencias, sin migración Room, RD15/RD18 intactas; el repair añade un formateador puro de UI |
+| Repair brief §7 (sesión 88) | ✅ puntos 1, 3 y 4 aplicados; punto 2 (opcional) omitido con justificación: aceptado |
+
+### R5. Hallazgos
+
+#### F1 — El informe describe un modo de fallo E2E que no coincide con el XML conservado
+
+- Severity: **Low** (no bloqueante)
+- Evidence: `docs/evidence/anadir-item-a-la-lista/informe.md` (§ «Inestabilidad del entorno en esta pasada»), `PROGRESS.md` y `docs/progress-history.md` (sesión 89) afirman que ambos fallos E2E fueron «el mismo fallo de teardown («Activity never becomes requested state [DESTROYED]» en `ActivityScenarioRule.after`/`createComposeRule`); el cuerpo del test pasa». El XML conservado muestra que el fallo de la batería fue **del cuerpo del test**, en `RecipeDetailE2ETest.kt:473`: `java.lang.AssertionError: Failed to inject touch input` — el finder no encuentra `recipe_detail_servings_decrease` en el árbol de semantics fusionado («the unmerged tree contains '1' node … Are you missing `useUnmergedNode = true`»).
+- Why it matters: la clasificación de flake es correcta (verificado: `servingsSelectionIsNotPersistedWhenReopeningDetail` reproduce **en verde aislado** — 4,233 s, ts `2026-10-27T09:18:51`, primera mano del validador — y `loweringServingsHalvesIngredientQuantities` quedó en verde aislado — XML en disco, `08:55:04` —; ambos intermitentes y ajenos al diff, que solo toca el prellenado de la Lista), pero la firma documentada es errónea y la frase «el cuerpo del test pasa» contradice el artefacto. Una sesión futura podría mal-triar un fallo real del stepper de Raciones como flake de teardown, y el patrón del repo («aislado en verde ⇒ flake») pierde trazabilidad si la firma no cuadra con el XML.
+- Required change: corregir la descripción del fallo en `docs/evidence/anadir-item-a-la-lista/informe.md`, `PROGRESS.md` y `docs/progress-history.md` para citar la firma real del XML y eliminar «el cuerpo del test pasa», manteniendo la conclusión (intermitente, verde aislado, ajeno al diff).
+- Suggested implementation:
+  1. Sustituir la frase del modo de fallo por la firma real (cita: `Failed to inject touch input … recipe_detail_servings_decrease … useUnmergedNode`).
+  2. (Opcional, fuera de esta feature) endurecer `RecipeDetailE2ETest` esperando el stepper tras navegar (`waitUntil` sobre `SERVINGS_DECREASE` o `useUnmergedNode = true`) y conservar el XML de cada reejecución aislada junto a la evidencia.
+- Verification after fix: el texto del informe cita la misma firma que el `<failure>` del XML conservado. Sin cambios de código obligatorios.
+
+No se incluye *Implementation Repair Brief*: el veredicto es `accept` y F1 es un apunte documental no bloqueante (mismo criterio que la sesión 88, donde una discrepancia de recuento equivalente se clasificó como L1/`Low`).
+
+### R6. Seguridad
+
+Revisión acotada al diff del repair según `references/security-checklist.md`: el nuevo `formatEditableQuantity` es un formateador puro sin entrada de red ni de usuario; los tests nuevos usan datos fijos (1200.0/1234.5/0.1234/1500 ml) sin PII ni credenciales; sin secretos en código, tests ni evidencia; sin dependencias ni permisos nuevos; sin cambios en manifest ni en `local.properties`; sin llamadas a la IA y sin datos de usuario en logs. **Sin hallazgos de seguridad ni notas que requieran acción** (mismo resultado que la sesión 88).
+
+### R7. Documentación y handoff
+
+- Docs durables sin cambios necesarios en el repair: RD19, D6 y `DESIGN.md` siguen coherentes con el comportamiento; `CONTEXT.md`, `AGENTS.md`, `docs/build-brief.md`, `docs/technical-discovery.md` y los scripts del harness intactos; `uxdocs/` y `.opencode/` sin tocar.
+- `PROGRESS.md` y `docs/progress-history.md` al día (sesión 89), salvo la corrección documental de F1.
+- `feature_list.json`: `status: passing` + `evidence` actualizada, solo campos permitidos. **La persistencia de este `accept` (→ `accepted`), la corrección de F1 y la entrada de historial de esta revalidación corresponden al orquestador**; este informe no modifica `feature_list.json` y no hace commits ni push.
+- Handoff listo: sin bloqueos. Pendiente del usuario intacto: mantenimiento del step de voz de `feature_list.json` (D1).
+
+### R8. Veredicto
+
+**`accept`** — la feature cumple la spec (RF-AIL1–RF-AIL7, S1–S6, D1–D7), los findings de la sesión 88 (H1 y L1) quedan cerrados con evidencia verificada de forma independiente, los gates baratos reproducen exactamente las cifras declaradas y la evidencia cara cuadra con los artefactos auditados. Queda un apunte Low no bloqueante (F1) de corrección documental para el orquestador.
