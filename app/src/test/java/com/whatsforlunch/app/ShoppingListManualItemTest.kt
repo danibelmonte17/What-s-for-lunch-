@@ -4,11 +4,13 @@ import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.ShoppingItemSource
 import com.whatsforlunch.app.domain.model.ShoppingListItem
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
+import com.whatsforlunch.app.ui.shoppinglist.formatEditableQuantity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 // RD19: validación y upsert manual de un ÍtemLista (D2-D7): cantidad decimal
 // opcional, Pasillo opcional, sin renombrar al editar y sin duplicar nombres.
@@ -130,5 +132,34 @@ class ShoppingListManualItemTest {
             existing,
             ShoppingListRules.saveManualItem(existing, null, "Pan", -3.0, "", null),
         )
+    }
+
+    // Repair H1 (validación sesión 88): el prellenado del diálogo debe hacer el
+    // ida-y-vuelta con parseManualQuantity sin corromper cantidades ≥ 1000 ni
+    // perder precisión más allá de 3 decimales (1200 → «1.200» → 1.2 y 1234.5
+    // sin parsear con el formato de lectura de las filas).
+    @Test
+    fun editableQuantityRoundTripsThroughParsingInEsAndEn() {
+        val quantities = listOf(1200.0, 1234.5, 0.1234)
+        for (locale in listOf(Locale("es", "ES"), Locale.ENGLISH)) {
+            for (quantity in quantities) {
+                val text = formatEditableQuantity(quantity, locale)
+                assertEquals(
+                    "ida-y-vuelta de $quantity con prellenado \"$text\" en $locale",
+                    quantity,
+                    ShoppingListRules.parseManualQuantity(text)!!,
+                    0.0,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun editableQuantityHasNoThousandsGroupingAndKeepsAllDecimals() {
+        assertEquals("1200", formatEditableQuantity(1200.0, Locale("es", "ES")))
+        assertEquals("1234,5", formatEditableQuantity(1234.5, Locale("es", "ES")))
+        assertEquals("0,1234", formatEditableQuantity(0.1234, Locale("es", "ES")))
+        assertEquals("1234.5", formatEditableQuantity(1234.5, Locale.ENGLISH))
+        assertEquals("0.1234", formatEditableQuantity(0.1234, Locale.ENGLISH))
     }
 }

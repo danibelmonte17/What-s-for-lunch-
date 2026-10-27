@@ -72,6 +72,9 @@ import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
+import java.math.BigDecimal
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 // Identificadores estables para las pruebas instrumentadas (E2E) de la Lista.
 object ShoppingListTestTags {
@@ -440,6 +443,23 @@ private fun EmptyShoppingList(
     }
 }
 
+// Repair H1 (validación sesión 88): el prellenado del campo Cantidad necesita un
+// formato estable, sin agrupación de millares ni redondeo, para que el
+// ida-y-vuelta con parseManualQuantity conserve cantidades ≥ 1000 y de más de 3
+// decimales (formatQuantity agrupa y recorta: 1200 → «1.200» → 1.2 y 1234.5 no
+// parsea). La fila de la lista y el Detalle de Receta siguen con formatQuantity.
+// D6 admite coma o punto: se usa la coma del locale cuando existe para que el
+// prellenado coincida con el formato de lectura; cualquier otro caso cae en
+// punto, siempre parseable.
+internal fun formatEditableQuantity(quantity: Double, locale: Locale): String {
+    val plain = BigDecimal.valueOf(quantity).stripTrailingZeros().toPlainString()
+    return if (DecimalFormatSymbols.getInstance(locale).decimalSeparator == ',') {
+        plain.replace('.', ',')
+    } else {
+        plain
+    }
+}
+
 // Diálogo único de alta/edición (RD19, D2): nombre (de solo lectura al editar,
 // D7), cantidad decimal opcional, unidad opcional y Pasillo opcional (D4). La
 // validación vive en ShoppingListRules (RF-AIL5).
@@ -453,7 +473,7 @@ private fun ShoppingItemDialog(
     val locale = LocalConfiguration.current.locales[0]
     var name by remember(item?.id) { mutableStateOf(item?.name.orEmpty()) }
     var quantityText by remember(item?.id) {
-        mutableStateOf(item?.quantity?.let { formatQuantity(it, locale) }.orEmpty())
+        mutableStateOf(item?.quantity?.let { formatEditableQuantity(it, locale) }.orEmpty())
     }
     var unit by remember(item?.id) { mutableStateOf(item?.unit.orEmpty()) }
     var aisle by remember(item?.id) { mutableStateOf(item?.aisle) }

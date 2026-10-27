@@ -61,6 +61,7 @@ import com.whatsforlunch.app.ui.pinche.PincheScreen
 import com.whatsforlunch.app.ui.pinche.PincheTestTags
 import com.whatsforlunch.app.ui.pinche.PincheViewModel
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailTestTags
+import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.recommendations.RecommendationsTestTags
 import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import com.whatsforlunch.app.ui.shoppinglist.ShoppingListScreen
@@ -672,6 +673,35 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithText("Pan").assertIsDisplayed()
         composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).assertCountEquals(1)
         composeRule.onAllNodesWithTag(ShoppingListTestTags.EMPTY).assertCountEquals(0)
+    }
+
+    // Repair H1 (validación sesión 88): editar sin tocar la cantidad la conserva
+    // intacta aunque sea ≥ 1000 (el prellenado del diálogo hace el ida-y-vuelta
+    // formatEditableQuantity → parseManualQuantity sin millares ni redondeo).
+    @Test
+    fun editingKeepsALargeQuantityUnchangedThroughTheDialog() {
+        launchFullApp()
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Leche")
+        composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("1500")
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("ml")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        val expectedLine = "Leche (${formatQuantity(1500.0, Locale("es", "ES"))} ml)"
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText(expectedLine).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val itemId = ShoppingListRules.itemIdFor("Leche")
+        composeRule.onNodeWithTag(ShoppingListTestTags.edit(itemId)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithText(expectedLine).assertIsDisplayed()
     }
 
     // --- Helpers -----------------------------------------------------------------

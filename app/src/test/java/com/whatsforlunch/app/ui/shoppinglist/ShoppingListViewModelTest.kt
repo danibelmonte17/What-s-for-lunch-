@@ -20,6 +20,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.Locale
 
 // T5/RF-AFL6: la pantalla observa los ítems ordenados y resuelve el borrado con
 // «Deshacer» (D7) sin reglas de negocio propias.
@@ -154,5 +155,37 @@ class ShoppingListViewModelTest {
 
         viewModel.dismissEditor()
         assertFalse(viewModel.uiState.value.editorVisible)
+    }
+
+    // Repair H1 (validación sesión 88): editar con cantidades ≥ 1000 o de más de
+    // 3 decimales conserva el valor exacto cuando el texto del diálogo hace el
+    // ida-y-vuelta formatEditableQuantity → parseManualQuantity.
+    @Test
+    fun editingKeepsLargeAndPreciseQuantitiesExactly() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
+        )
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+
+        for (quantity in listOf(1200.0, 1234.5, 0.1234)) {
+            viewModel.editItem(ShoppingListRules.itemIdFor("Azafrán"))
+            val quantityText = formatEditableQuantity(quantity, Locale("es", "ES"))
+            viewModel.saveManualItem(
+                name = "Azafrán",
+                quantity = ShoppingListRules.parseManualQuantity(quantityText),
+                unit = "g",
+                aisle = null,
+            )
+            advanceUntilIdle()
+
+            assertEquals(quantity, viewModel.uiState.value.items.single().quantity!!, 0.0)
+        }
     }
 }
