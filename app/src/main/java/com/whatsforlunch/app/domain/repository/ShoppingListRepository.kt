@@ -33,4 +33,13 @@ interface ShoppingListRepository {
 
     // Restaura un ítem borrado con su cantidad, unidad y Origen intactos («Deshacer»).
     suspend fun restoreItem(item: ShoppingListItem)
+
+    // RD20: marca/desmarca un ítem como comprado (RF-AGL5). Es un update
+    // dirigido sobre `completed`: no toca nombre, cantidad, unidad, Pasillo ni
+    // Origen.
+    suspend fun setCompleted(id: String, completed: Boolean)
+
+    // Restaura en bloque los ítems borrados por «Limpiar comprados» («Deshacer»
+    // de RF-AGL7) conservando su `completed`, cantidades y fuentes.
+    suspend fun restoreItems(items: List<ShoppingListItem>)
 }

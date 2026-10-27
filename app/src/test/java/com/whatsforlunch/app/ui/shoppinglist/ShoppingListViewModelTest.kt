@@ -3,7 +3,9 @@ package com.whatsforlunch.app.ui.shoppinglist
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroupMode
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -76,7 +78,8 @@ class ShoppingListViewModelTest {
         viewModel.deleteItem(item.id)
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.items.isEmpty())
-        assertEquals(item, viewModel.uiState.value.pendingUndo)
+        assertEquals(listOf(item), viewModel.uiState.value.pendingUndo?.items)
+        assertEquals(false, viewModel.uiState.value.pendingUndo?.bulk)
 
         viewModel.undoDelete()
         advanceUntilIdle()
@@ -187,5 +190,143 @@ class ShoppingListViewModelTest {
 
             assertEquals(quantity, viewModel.uiState.value.items.single().quantity!!, 0.0)
         }
+    }
+
+    // --- agrupar-y-completar-la-lista (RD20) ---------------------------------
+
+    @Test
+    fun groupModeDefaultsToAisleAndSwitchesTheGroups() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
+        )
+        repository.saveManualItem(id = null, name = "Toallitas", quantity = null, unit = "", aisle = null)
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+
+        // D1: arranca en «Pasillo de Super» y todo lo sin Pasillo va al final.
+        assertEquals(ShoppingGroupMode.BY_AISLE, viewModel.uiState.value.mode)
+        assertEquals(listOf(""), viewModel.uiState.value.groups.map { it.key })
+
+        viewModel.setGroupMode(ShoppingGroupMode.BY_RECIPE)
+        advanceUntilIdle()
+
+        assertEquals(ShoppingGroupMode.BY_RECIPE, viewModel.uiState.value.mode)
+        // D2: «Paella» primero y «Sin receta» al final.
+        assertEquals(listOf("paella", ""), viewModel.uiState.value.groups.map { it.key })
+        assertEquals(listOf("Azafrán"), viewModel.uiState.value.groups[0].items.map { it.name })
+    }
+
+    @Test
+    fun toggleCompletedMarksTheItemAndUpdatesTheProgress() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(
+                RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
+                RecipeIngredient(name = "Mariscos", quantity = 300.0, unit = "g"),
+            ),
+        )
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+        val azafran = viewModel.uiState.value.items.first { it.name == "Azafrán" }
+
+        viewModel.toggleCompleted(azafran.id)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.items.first { it.id == azafran.id }.completed)
+        assertEquals(
+            ShoppingProgress(completed = 1, total = 2, percent = 50),
+            viewModel.uiState.value.progress,
+        )
+        // D4: marcar no lanza aviso de «Deshacer».
+        assertNull(viewModel.uiState.value.pendingUndo)
+
+        // Desmarcar revierte el progreso (Scenario 5).
+        viewModel.toggleCompleted(azafran.id)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.items.first { it.id == azafran.id }.completed)
+        assertEquals(
+            ShoppingProgress(completed = 0, total = 2, percent = 0),
+            viewModel.uiState.value.progress,
+        )
+    }
+
+    @Test
+    fun clearCompletedRemovesOnlyCompletedItemsAndUndoRestoresThemAll() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(
+                RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
+                RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g"),
+                RecipeIngredient(name = "Mariscos", quantity = 300.0, unit = "g"),
+                RecipeIngredient(name = "Sal", quantity = 1.0, unit = "g"),
+            ),
+        )
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+        val completedIds = viewModel.uiState.value.items.take(2).map { it.id }
+        completedIds.forEach { viewModel.toggleCompleted(it) }
+        advanceUntilIdle()
+        // Estado real de los completados en el momento de «Limpiar comprados».
+        val completedItems = viewModel.uiState.value.items.filter { it.id in completedIds }
+
+        viewModel.clearCompleted()
+        advanceUntilIdle()
+        assertEquals(
+            listOf("Mariscos", "Sal"),
+            viewModel.uiState.value.items.map { it.name },
+        )
+        assertEquals(completedItems, viewModel.uiState.value.pendingUndo?.items)
+        assertEquals(true, viewModel.uiState.value.pendingUndo?.bulk)
+
+        viewModel.undoDelete()
+        advanceUntilIdle()
+        // D7/D10: los ítems vuelven con su marca, cantidades y fuentes.
+        assertEquals(4, viewModel.uiState.value.items.size)
+        completedItems.forEach { restored ->
+            val item = viewModel.uiState.value.items.first { it.id == restored.id }
+            assertEquals(restored, item)
+            assertTrue(item.completed)
+        }
+    }
+
+    @Test
+    fun editingAnItemKeepsItsCompletedState() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
+        )
+        val viewModel = ShoppingListViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+        val id = ShoppingListRules.itemIdFor("Azafrán")
+        viewModel.toggleCompleted(id)
+        advanceUntilIdle()
+
+        viewModel.editItem(id)
+        viewModel.saveManualItem(name = "Azafrán", quantity = 2.0, unit = "g", aisle = Aisle.DAIRY)
+        advanceUntilIdle()
+
+        val item = viewModel.uiState.value.items.single()
+        assertTrue(item.completed)
+        assertEquals(2.0, item.quantity!!, 0.0001)
     }
 }

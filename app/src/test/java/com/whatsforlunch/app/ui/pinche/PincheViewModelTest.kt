@@ -388,5 +388,9 @@ class PincheViewModelTest {
         override suspend fun deleteItem(id: String) = Unit
 
         override suspend fun restoreItem(item: ShoppingListItem) = Unit
+
+        override suspend fun setCompleted(id: String, completed: Boolean) = Unit
+
+        override suspend fun restoreItems(items: List<ShoppingListItem>) = Unit
     }
 }

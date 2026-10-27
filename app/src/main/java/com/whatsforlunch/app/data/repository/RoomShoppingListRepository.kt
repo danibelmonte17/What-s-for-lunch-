@@ -84,6 +84,19 @@ class RoomShoppingListRepository(
             database.withTransaction { dao.upsertItemWithSources(item) }
         }
     }
+
+    override suspend fun setCompleted(id: String, completed: Boolean) {
+        mutex.withLock { dao.updateCompleted(id, completed) }
+    }
+
+    override suspend fun restoreItems(items: List<ShoppingListItem>) {
+        if (items.isEmpty()) return
+        mutex.withLock {
+            database.withTransaction {
+                items.forEach { dao.upsertItemWithSources(it) }
+            }
+        }
+    }
 }
 
 // `INSERT OR REPLACE` sobre la fila padre dispara el ON DELETE CASCADE de SQLite; se

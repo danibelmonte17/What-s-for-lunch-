@@ -1,8 +1,13 @@
 package com.whatsforlunch.app
 
+import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.domain.model.ShoppingItemSource
+import com.whatsforlunch.app.domain.model.ShoppingListItem
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroupMode
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -189,4 +194,155 @@ class ShoppingListRulesTest {
         assertEquals(3.0, updated.single().quantity!!, 0.0001)
         assertTrue(updated.single().sources.any { it.sourceKey == "fuente-2" })
     }
+
+    // --- Agrupación y progreso (RD20) ----------------------------------------
+
+    @Test
+    fun groupItemsByAislePutsTheAislesInEnumOrderAndUncategorizedLast() {
+        val groups = ShoppingListRules.groupItems(
+            items = listOf(
+                item("Toallitas"),
+                item("Manzana", aisle = Aisle.PRODUCE),
+                item("Pollo", aisle = Aisle.MEAT_FISH),
+            ),
+            mode = ShoppingGroupMode.BY_AISLE,
+        )
+
+        assertEquals(listOf("PRODUCE", "MEAT_FISH", ""), groups.map { it.key })
+        assertEquals(listOf("Manzana"), groups[0].items.map { it.name })
+        assertEquals(listOf("Pollo"), groups[1].items.map { it.name })
+        assertEquals(listOf("Toallitas"), groups[2].items.map { it.name })
+    }
+
+    @Test
+    fun groupItemsByAisleSkipsEmptyAisles() {
+        val groups = ShoppingListRules.groupItems(
+            items = listOf(item("Leche", aisle = Aisle.DAIRY), item("Toallitas")),
+            mode = ShoppingGroupMode.BY_AISLE,
+        )
+
+        assertEquals(listOf("DAIRY", ""), groups.map { it.key })
+    }
+
+    @Test
+    fun groupItemsByRecipeReplicatesMultiSourceItemsAndPutsNoSourceLast() {
+        val harina = item(
+            "Harina",
+            sources = listOf(
+                ShoppingItemSource("gazpacho", "Gazpacho"),
+                ShoppingItemSource("paella", "Paella"),
+            ),
+        )
+        val groups = ShoppingListRules.groupItems(
+            items = listOf(
+                harina,
+                item("Azafrán", sources = listOf(ShoppingItemSource("paella", "Paella"))),
+                item("Toallitas"),
+            ),
+            mode = ShoppingGroupMode.BY_RECIPE,
+        )
+
+        assertEquals(listOf("gazpacho", "paella", ""), groups.map { it.key })
+        assertEquals(listOf("Gazpacho", "Paella", ""), groups.map { it.title })
+        assertEquals(listOf("Harina"), groups[0].items.map { it.name })
+        // Dentro del grupo el orden es el de nombre normalizado: Azafrán antes
+        // que Harina, aunque la aportación llegara después.
+        assertEquals(listOf("Azafrán", "Harina"), groups[1].items.map { it.name })
+        assertEquals(listOf("Toallitas"), groups[2].items.map { it.name })
+        // El multi-fuente se replica, pero sigue siendo una sola fila lógica.
+        assertEquals(harina, groups[0].items.single())
+        assertEquals(harina, groups[1].items.single { it.name == "Harina" })
+    }
+
+    @Test
+    fun groupItemsOrdersRecipeGroupsByNormalizedTitleWithSourceKeyAsTieBreak() {
+        val groups = ShoppingListRules.groupItems(
+            items = listOf(
+                item("Harina", sources = listOf(ShoppingItemSource("b", "  ARROZ "))),
+                item("Sal", sources = listOf(ShoppingItemSource("a", "Arroz"))),
+            ),
+            mode = ShoppingGroupMode.BY_RECIPE,
+        )
+
+        assertEquals(listOf("a", "b"), groups.map { it.key })
+    }
+
+    @Test
+    fun groupItemsKeepsCompletedRowsInTheirSortPosition() {
+        val groups = ShoppingListRules.groupItems(
+            items = listOf(
+                item("Zanahoria", completed = true),
+                item("Manzana", completed = true),
+                item("Azafrán"),
+            ),
+            mode = ShoppingGroupMode.BY_AISLE,
+        )
+
+        assertEquals(listOf("Azafrán", "Manzana", "Zanahoria"), groups.single().items.map { it.name })
+    }
+
+    @Test
+    fun progressCountsUniqueItemsOnceAndRoundsToTheNearestInteger() {
+        val fourItems = listOf(
+            item("Azafrán"),
+            item("Harina", completed = true),
+            item("Leche", completed = true),
+            item("Pan"),
+        )
+        assertEquals(
+            ShoppingProgress(completed = 2, total = 4, percent = 50),
+            ShoppingListRules.progress(fourItems),
+        )
+
+        val fourteenItems = (1..14).map { item("Ingrediente $it", completed = it <= 6) }
+        assertEquals(
+            ShoppingProgress(completed = 6, total = 14, percent = 43),
+            ShoppingListRules.progress(fourteenItems),
+        )
+
+        val threeItems = (1..3).map { item("Ingrediente $it", completed = it <= 2) }
+        assertEquals(
+            ShoppingProgress(completed = 2, total = 3, percent = 67),
+            ShoppingListRules.progress(threeItems),
+        )
+
+        assertEquals(ShoppingProgress(0, 0, 0), ShoppingListRules.progress(emptyList()))
+        assertEquals(
+            ShoppingProgress(completed = 3, total = 3, percent = 100),
+            ShoppingListRules.progress(threeItems.map { it.copy(completed = true) }),
+        )
+    }
+
+    @Test
+    fun contributionsKeepTheCompletedStateOfMergedItems() {
+        val completed = ShoppingListRules.addContributions(
+            existing = emptyList(),
+            sourceKey = "paella",
+            sourceTitle = "Paella",
+            ingredients = listOf(RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g")),
+        ).map { it.copy(completed = true) }
+
+        val merged = ShoppingListRules.addContributions(
+            existing = completed,
+            sourceKey = "gazpacho",
+            sourceTitle = "Gazpacho",
+            ingredients = listOf(RecipeIngredient(name = "Harina", quantity = 500.0, unit = "g")),
+        )
+
+        assertTrue(merged.single().completed)
+        assertEquals(700.0, merged.single().quantity!!, 0.0001)
+    }
+
+    private fun item(
+        name: String,
+        aisle: Aisle? = null,
+        completed: Boolean = false,
+        sources: List<ShoppingItemSource> = emptyList(),
+    ) = ShoppingListItem(
+        id = ShoppingListRules.itemIdFor(name),
+        name = name,
+        aisle = aisle,
+        completed = completed,
+        sources = sources,
+    )
 }

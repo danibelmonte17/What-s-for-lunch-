@@ -26,6 +26,9 @@ fun ShoppingListRoute(
         onEditItem = viewModel::editItem,
         onDismissEditor = viewModel::dismissEditor,
         onSaveItem = viewModel::saveManualItem,
+        onToggleCompleted = viewModel::toggleCompleted,
+        onSetGroupMode = viewModel::setGroupMode,
+        onClearCompleted = viewModel::clearCompleted,
         modifier = modifier,
     )
 }

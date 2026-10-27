@@ -99,4 +99,47 @@ class InMemoryShoppingListRepositoryTest {
         assertEquals(500.0, item.quantity!!, 0.0001)
         assertEquals(listOf("Tortilla"), item.sources.map { it.sourceTitle })
     }
+
+    // --- agrupar-y-completar-la-lista (RD20) ---------------------------------
+
+    @Test
+    fun setCompletedTogglesOnlyTheCompletedFlag() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            "paella",
+            "Paella",
+            listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
+        )
+        val before = repository.observeItems().first().single()
+
+        repository.setCompleted(before.id, true)
+        val after = repository.observeItems().first().single()
+        assertTrue(after.completed)
+        assertEquals(before.copy(completed = true), after)
+
+        repository.setCompleted(before.id, false)
+        assertEquals(before, repository.observeItems().first().single())
+    }
+
+    @Test
+    fun restoreItemsBringsBackABulkWithSourcesAndCompletedState() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.addMissing(
+            "paella",
+            "Paella",
+            listOf(
+                RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
+                RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g"),
+            ),
+        )
+        val deleted = repository.observeItems().first().map { it.copy(completed = true) }
+        deleted.forEach { repository.deleteItem(it.id) }
+        assertTrue(repository.observeItems().first().isEmpty())
+
+        repository.restoreItems(deleted)
+
+        val restored = repository.observeItems().first()
+        assertEquals(deleted.sortedBy { it.id }, restored.sortedBy { it.id })
+        assertTrue(restored.all { it.completed && it.sources.isNotEmpty() })
+    }
 }

@@ -34,4 +34,9 @@ interface ShoppingListDao {
 
     @Query("DELETE FROM shopping_items WHERE id = :id")
     suspend fun deleteById(id: String): Int
+
+    // RD20: update dirigido de `completed` (RF-AGL5); evita el REPLACE del
+    // padre, que cascada a las fuentes.
+    @Query("UPDATE shopping_items SET completed = :completed WHERE id = :id")
+    suspend fun updateCompleted(id: String, completed: Boolean)
 }

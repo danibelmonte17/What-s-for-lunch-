@@ -62,4 +62,20 @@ class InMemoryShoppingListRepository : ShoppingListRepository {
             items.value = items.value.filterNot { it.id == item.id } + item
         }
     }
+
+    override suspend fun setCompleted(id: String, completed: Boolean) {
+        mutex.withLock {
+            items.value = items.value.map { item ->
+                if (item.id == id) item.copy(completed = completed) else item
+            }
+        }
+    }
+
+    override suspend fun restoreItems(restored: List<ShoppingListItem>) {
+        if (restored.isEmpty()) return
+        mutex.withLock {
+            val restoredIds = restored.mapTo(mutableSetOf()) { it.id }
+            items.value = items.value.filterNot { it.id in restoredIds } + restored
+        }
+    }
 }

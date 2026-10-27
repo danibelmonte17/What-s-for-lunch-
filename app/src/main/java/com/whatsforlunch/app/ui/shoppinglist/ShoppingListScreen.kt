@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,15 +19,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
@@ -53,20 +58,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.ShoppingListItem
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroup
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroupMode
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
+import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
+import com.whatsforlunch.app.domain.shoppinglist.aisleKey
 import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.theme.WarmRadius
@@ -98,8 +113,18 @@ object ShoppingListTestTags {
     const val AISLE_FIELD = "shopping_list_aisle_field"
     const val SAVE_ITEM = "shopping_list_save_item"
     const val CANCEL_EDIT = "shopping_list_cancel_edit"
+    const val PROGRESS_CARD = "shopping_list_progress_card"
+    const val PROGRESS_TEXT = "shopping_list_progress_text"
+    const val PROGRESS_PERCENT = "shopping_list_progress_percent"
+    const val PROGRESS_BAR = "shopping_list_progress_bar"
+    const val GROUP_BY_LABEL = "shopping_list_group_by_label"
+    const val GROUP_MODE_AISLE = "shopping_list_group_mode_aisle"
+    const val GROUP_MODE_RECIPE = "shopping_list_group_mode_recipe"
+    const val CLEAR_COMPLETED = "shopping_list_clear_completed"
 
     fun item(id: String) = "${ITEM}_$id"
+
+    fun check(id: String) = "shopping_list_check_$id"
 
     fun delete(id: String) = "shopping_list_delete_$id"
 
@@ -110,10 +135,18 @@ object ShoppingListTestTags {
     fun aisle(id: String) = "shopping_list_aisle_$id"
 
     fun aisleOption(aisle: String?) = "shopping_list_aisle_option_${aisle ?: "none"}"
+
+    fun groupHeader(key: String) = "shopping_list_group_header_${key.ifBlank { "none" }}"
+
+    fun groupCount(key: String) = "shopping_list_group_count_${key.ifBlank { "none" }}"
 }
 
 private val CardShape = RoundedCornerShape(WarmRadius.md)
 private val PillShape = RoundedCornerShape(50)
+
+// D5: la fila completada se atenúa (el prototipo la muestra al 60 %) y su
+// título se tacha, sin sustituir el nombre por «En la cesta».
+private const val COMPLETED_ROW_ALPHA = 0.6f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,17 +161,21 @@ fun ShoppingListScreen(
     onEditItem: (String) -> Unit,
     onDismissEditor: () -> Unit,
     onSaveItem: (String, Double?, String, Aisle?) -> Unit,
+    onToggleCompleted: (String) -> Unit,
+    onSetGroupMode: (ShoppingGroupMode) -> Unit,
+    onClearCompleted: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.shopping_list_item_deleted)
+    val completedRemovedMessage = stringResource(R.string.shopping_list_items_removed)
     val undoLabel = stringResource(R.string.shopping_list_undo)
     val pendingUndo = uiState.pendingUndo
 
-    LaunchedEffect(pendingUndo?.id) {
+    LaunchedEffect(pendingUndo) {
         if (pendingUndo == null) return@LaunchedEffect
         val result = snackbarHostState.showSnackbar(
-            message = deletedMessage,
+            message = if (pendingUndo.bulk) completedRemovedMessage else deletedMessage,
             actionLabel = undoLabel,
         )
         if (result == SnackbarResult.ActionPerformed) {
@@ -167,6 +204,24 @@ fun ShoppingListScreen(
                             .testTag(ShoppingListTestTags.BACK),
                     ) {
                         Text(stringResource(R.string.action_back))
+                    }
+                },
+                actions = {
+                    // RF-AGL7 (D7): «Limpiar comprados» solo aparece cuando hay
+                    // al menos un ítem completado.
+                    if (uiState.items.any { it.completed }) {
+                        IconButton(
+                            onClick = onClearCompleted,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag(ShoppingListTestTags.CLEAR_COMPLETED),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.DeleteSweep,
+                                contentDescription = stringResource(R.string.shopping_list_clear_completed),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -212,21 +267,38 @@ fun ShoppingListScreen(
                     .padding(innerPadding),
             )
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = WarmSpacing.md)
-                    .testTag(ShoppingListTestTags.LIST),
-                contentPadding = PaddingValues(vertical = WarmSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-            ) {
-                items(uiState.items, key = { it.id }) { item ->
-                    ShoppingItemRow(
-                        item = item,
-                        onEdit = { onEditItem(item.id) },
-                        onDelete = { onDeleteItem(item.id) },
-                    )
+            Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                ShoppingProgressCard(
+                    progress = uiState.progress,
+                    mode = uiState.mode,
+                    onModeChange = onSetGroupMode,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = WarmSpacing.md)
+                        .padding(top = WarmSpacing.md),
+                )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = WarmSpacing.md)
+                        .testTag(ShoppingListTestTags.LIST),
+                    contentPadding = PaddingValues(vertical = WarmSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                ) {
+                    uiState.groups.forEach { group ->
+                        item(key = "group:${group.key}") {
+                            ShoppingGroupHeader(group = group, mode = uiState.mode)
+                        }
+                        items(group.items, key = { "item:${group.key}:${it.id}" }) { item ->
+                            ShoppingItemRow(
+                                item = item,
+                                mode = uiState.mode,
+                                onToggleCompleted = { onToggleCompleted(item.id) },
+                                onEdit = { onEditItem(item.id) },
+                                onDelete = { onDeleteItem(item.id) },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -244,6 +316,8 @@ fun ShoppingListScreen(
 @Composable
 private fun ShoppingItemRow(
     item: ShoppingListItem,
+    mode: ShoppingGroupMode,
+    onToggleCompleted: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -259,7 +333,11 @@ private fun ShoppingItemRow(
 
     Surface(
         shape = CardShape,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        color = if (item.completed) {
+            MaterialTheme.colorScheme.surfaceContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLowest
+        },
         modifier = Modifier
             .fillMaxWidth()
             .warmShadow(shape = CardShape)
@@ -267,16 +345,29 @@ private fun ShoppingItemRow(
     ) {
         Row(
             modifier = Modifier.padding(
-                start = WarmSpacing.md,
+                start = WarmSpacing.xs,
                 top = WarmSpacing.sm,
                 bottom = WarmSpacing.sm,
                 end = WarmSpacing.xs,
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // RF-AGL5 (D4/D5): checkbox reversible; al marcar, la fila queda con
+            // el título tachado y atenuada, sin snackbar.
+            Checkbox(
+                checked = item.completed,
+                onCheckedChange = { onToggleCompleted() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.secondary,
+                    checkmarkColor = MaterialTheme.colorScheme.onSecondary,
+                    uncheckedColor = MaterialTheme.colorScheme.outline,
+                ),
+                modifier = Modifier.testTag(ShoppingListTestTags.check(item.id)),
+            )
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .alpha(if (item.completed) COMPLETED_ROW_ALPHA else 1f)
                     .testTag(ShoppingListTestTags.item(item.id)),
                 verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
             ) {
@@ -284,14 +375,24 @@ private fun ShoppingItemRow(
                     text = line,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
+                    textDecoration = if (item.completed) TextDecoration.LineThrough else null,
                 )
-                Text(
-                    text = stringResource(item.aisle.labelRes()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.testTag(ShoppingListTestTags.aisle(item.id)),
-                )
-                OriginBadge(item = item)
+                // RF-AGL6 (D6): la etiqueta de Pasillo solo se muestra en «Por
+                // Receta»; en «Pasillo» la da la cabecera del grupo.
+                if (mode == ShoppingGroupMode.BY_RECIPE) {
+                    Text(
+                        text = stringResource(item.aisle.labelRes()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag(ShoppingListTestTags.aisle(item.id)),
+                    )
+                }
+                // RF-AGL6 (D6): el badge de una sola fuente es redundante en
+                // «Por Receta»; «Para: N recetas» y «Despensa baja» se
+                // conservan en ambos modos.
+                if (mode == ShoppingGroupMode.BY_AISLE || item.sources.size != 1) {
+                    OriginBadge(item = item)
+                }
             }
             Spacer(modifier = Modifier.width(WarmSpacing.xs))
             IconButton(
@@ -318,6 +419,177 @@ private fun ShoppingItemRow(
                     tint = MaterialTheme.colorScheme.primary,
                 )
             }
+        }
+    }
+}
+
+// Tarjeta de progreso y selector «Agrupar por» (RD20, RF-AGL1/RF-AGL2): solo se
+// muestra con ítems en la Lista (D9); el porcentaje es del entero más próximo.
+@Composable
+private fun ShoppingProgressCard(
+    progress: ShoppingProgress,
+    mode: ShoppingGroupMode,
+    onModeChange: (ShoppingGroupMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = CardShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = modifier
+            .warmShadow(shape = CardShape)
+            .testTag(ShoppingListTestTags.PROGRESS_CARD),
+    ) {
+        Column(
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.shopping_list_progress,
+                        progress.total,
+                        progress.completed,
+                        progress.total,
+                    ),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(ShoppingListTestTags.PROGRESS_TEXT),
+                )
+                Text(
+                    text = stringResource(
+                        R.string.shopping_list_progress_percent,
+                        progress.percent,
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.testTag(ShoppingListTestTags.PROGRESS_PERCENT),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(PillShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .semantics {
+                        progressBarRangeInfo = ProgressBarRangeInfo(
+                            current = progress.percent / 100f,
+                            range = 0f..1f,
+                        )
+                    }
+                    .testTag(ShoppingListTestTags.PROGRESS_BAR),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.percent / 100f)
+                        .height(8.dp)
+                        .background(MaterialTheme.colorScheme.secondary, PillShape),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs)) {
+                Text(
+                    text = stringResource(R.string.shopping_list_group_by_label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(ShoppingListTestTags.GROUP_BY_LABEL),
+                )
+                Surface(
+                    shape = PillShape,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                ) {
+                    Row(modifier = Modifier.padding(2.dp)) {
+                        GroupModeButton(
+                            selected = mode == ShoppingGroupMode.BY_AISLE,
+                            label = stringResource(R.string.shopping_list_group_aisle),
+                            testTag = ShoppingListTestTags.GROUP_MODE_AISLE,
+                            onClick = { onModeChange(ShoppingGroupMode.BY_AISLE) },
+                        )
+                        GroupModeButton(
+                            selected = mode == ShoppingGroupMode.BY_RECIPE,
+                            label = stringResource(R.string.shopping_list_group_recipe),
+                            testTag = ShoppingListTestTags.GROUP_MODE_RECIPE,
+                            onClick = { onModeChange(ShoppingGroupMode.BY_RECIPE) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Segmento del selector «Agrupar por» (D1): el elegido queda en superficie
+// clara dentro de la píldora del contenedor.
+@Composable
+private fun GroupModeButton(
+    selected: Boolean,
+    label: String,
+    testTag: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = PillShape,
+        color = if (selected) {
+            MaterialTheme.colorScheme.surfaceContainerLowest
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        },
+        modifier = Modifier
+            .toggleable(value = selected, role = Role.Tab, onValueChange = { onClick() })
+            .testTag(testTag),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.xs),
+        )
+    }
+}
+
+// Cabecera de grupo (RD20, RF-AGL3/RF-AGL4): título del Pasillo o de la fuente
+// con el contador de filas mostradas en el grupo.
+@Composable
+private fun ShoppingGroupHeader(
+    group: ShoppingGroup,
+    mode: ShoppingGroupMode,
+) {
+    val title = when (mode) {
+        ShoppingGroupMode.BY_AISLE -> stringResource(group.aisleKey().labelRes())
+        ShoppingGroupMode.BY_RECIPE -> group.title.ifBlank {
+            stringResource(R.string.shopping_list_group_no_recipe)
+        }
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = WarmSpacing.sm),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.testTag(ShoppingListTestTags.groupHeader(group.key)),
+        )
+        Spacer(modifier = Modifier.width(WarmSpacing.sm))
+        Surface(shape = PillShape, color = MaterialTheme.colorScheme.surfaceContainer) {
+            Text(
+                text = pluralStringResource(
+                    R.plurals.shopping_list_group_count,
+                    group.items.size,
+                    group.items.size,
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(horizontal = WarmSpacing.sm, vertical = 2.dp)
+                    .testTag(ShoppingListTestTags.groupCount(group.key)),
+            )
         }
     }
 }
