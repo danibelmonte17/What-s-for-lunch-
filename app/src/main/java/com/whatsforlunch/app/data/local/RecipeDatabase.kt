@@ -7,7 +7,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 // Base de datos local de las Recetas (Parte B, T2). Room persiste en el dispositivo,
 // de modo que las Recetas siguen ahí tras reiniciar la app (RF-18). La versión 3
-// añade la Lista de la Compra (RD18) sin tocar las tablas anteriores.
+// añade la Lista de la Compra (RD18) sin tocar las tablas anteriores y la versión 4
+// añade los ids estables de Ingrediente (`domainId`) y los vínculos
+// Paso→Ingrediente (`ingredientIds`, RD21) sin tocar los datos existentes.
 @Database(
     entities = [
         RecipeEntity::class,
@@ -17,7 +19,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ShoppingListItemEntity::class,
         ShoppingItemSourceEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class RecipeDatabase : RoomDatabase() {
@@ -67,6 +69,21 @@ abstract class RecipeDatabase : RoomDatabase() {
                     "CREATE INDEX IF NOT EXISTS `index_shopping_item_sources_itemId` " +
                         "ON `shopping_item_sources` (`itemId`)",
                 )
+            }
+        }
+
+        /**
+         * Adds the stable ingredient ids (`domainId`, backfilled with the historical
+         * `{recipeId}-ingredient-{position}` convention) and the step→ingredient links
+         * (`ingredientIds`, CSV) on top of v3 (RD21).
+         */
+        val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `ingredients` ADD COLUMN `domainId` TEXT NOT NULL DEFAULT ''")
+                db.execSQL(
+                    "UPDATE `ingredients` SET `domainId` = `recipeId` || '-ingredient-' || `position`",
+                )
+                db.execSQL("ALTER TABLE `steps` ADD COLUMN `ingredientIds` TEXT NOT NULL DEFAULT ''")
             }
         }
     }

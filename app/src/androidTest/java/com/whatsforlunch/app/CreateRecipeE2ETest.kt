@@ -31,6 +31,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.AssetPromptSource
 import com.whatsforlunch.app.data.photo.PhotoAcquirer
@@ -415,6 +417,164 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.ACTION_DOCK).assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsDisplayed()
+    }
+
+    // RF-VPI2 · S1: «Ingredientes de este paso» abre el diálogo de casillas con los
+    // ingredientes en orden (nombre + cantidad/unidad); «Aceptar» guarda la selección
+    // del Paso y «Cancelar» no toca la Receta (micro-decisión del informe).
+    @Test
+    fun stepIngredientsDialogAssignsIngredientsToStep() {
+        val repository = launchForm()
+        typeTitle("Tortilla de patatas")
+        addValidIngredient(0, name = "Patatas", quantity = "700")
+        addValidIngredient(1, name = "Huevo", quantity = "2")
+        addValidStep(0, text = "Pochar la cebolla")
+        addValidStep(1, text = "Batir el huevo")
+
+        // Sin vínculos: los dos Pasos muestran «Sin ingredientes».
+        stepSummaryShouldBe(0, formText(R.string.create_recipe_step_ingredients_none))
+        stepSummaryShouldBe(1, formText(R.string.create_recipe_step_ingredients_none))
+
+        // «Cancelar» descarta la selección sin tocar la Receta.
+        openStepIngredientsDialog(0)
+        composeRule.onNodeWithText("Patatas (700)").assertIsDisplayed()
+        composeRule.onNodeWithText("Huevo (2)").assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOff()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOn()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL).performClick()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_DIALOG).assertCountEquals(0)
+        stepSummaryShouldBe(0, formText(R.string.create_recipe_step_ingredients_none))
+
+        // «Aceptar» guarda la selección: solo «Patatas» en el Paso 1; el Paso 2 sigue
+        // sin ingredientes (S1).
+        linkStepIngredient(stepIndex = 0, ingredientIndex = 0)
+        stepSummaryShouldBe(0, formQuantity(1))
+        stepSummaryShouldBe(1, formText(R.string.create_recipe_step_ingredients_none))
+
+        // El vínculo se guarda con el id del Ingrediente (RF-VPI3).
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
+        val saved = runBlocking { repository.observeRecipes().first() }.single()
+        assertEquals(listOf(saved.ingredients[0].id), saved.steps[0].ingredientIds)
+        assertTrue(saved.steps[1].ingredientIds.isEmpty())
+    }
+
+    // RF-VPI3 · S3 (verify 2): al quitar la fila de un Ingrediente, sus vínculos
+    // desaparecen de todos los Pasos (D6), los de otros Ingredientes se conservan y
+    // guardar sigue siendo válido con Pasos sin vínculos.
+    @Test
+    fun removingIngredientRowClearsItsStepLinks() {
+        val repository = launchForm()
+        typeTitle("Tortilla de patatas")
+        addValidIngredient(0, name = "Patatas", quantity = "700")
+        addValidIngredient(1, name = "Huevo", quantity = "2")
+        addValidStep(0, text = "Pochar la cebolla")
+        addValidStep(1, text = "Batir el huevo")
+        addValidStep(2, text = "Cuajar la tortilla")
+
+        // «Patatas» en los Pasos 1 y 3; «Huevo» en el Paso 2.
+        linkStepIngredient(stepIndex = 0, ingredientIndex = 0)
+        linkStepIngredient(stepIndex = 1, ingredientIndex = 1)
+        linkStepIngredient(stepIndex = 2, ingredientIndex = 0)
+
+        composeRule.onNodeWithTag(CreateRecipeTestTags.removeIngredient(0)).performScrollTo().performClick()
+
+        stepSummaryShouldBe(0, formText(R.string.create_recipe_step_ingredients_none))
+        stepSummaryShouldBe(1, formQuantity(1))
+        stepSummaryShouldBe(2, formText(R.string.create_recipe_step_ingredients_none))
+
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
+        val saved = runBlocking { repository.observeRecipes().first() }.single()
+        assertEquals(1, saved.ingredients.size)
+        assertEquals("Huevo", saved.ingredients.single().name)
+        assertTrue(saved.steps[0].ingredientIds.isEmpty())
+        assertEquals(listOf(saved.ingredients.single().id), saved.steps[1].ingredientIds)
+        assertTrue(saved.steps[2].ingredientIds.isEmpty())
+    }
+
+    // D3: el control «Ingredientes de este paso» solo se renderiza con ≥1 fila de
+    // Ingrediente; sin filas no hay control que abrir.
+    @Test
+    fun stepIngredientsControlIsHiddenWithoutIngredientRows() {
+        launchForm()
+        addValidStep(0)
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.stepIngredients(0)).assertCountEquals(0)
+        addValidIngredient(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredients(0)).performScrollTo().assertIsDisplayed()
+    }
+
+    // S6 · NFR-1: los textos del control y del diálogo están en inglés con
+    // `Locale.ENGLISH` (paridad es/en). La ventana del `Dialog` resuelve sus strings con
+    // los recursos del contexto de la Activity (no con el `LocalContext` inyectado), así
+    // que la prueba fija también el locale de esos recursos y lo restaura al salir.
+    @Suppress("DEPRECATION")
+    @Test
+    fun stepIngredientsTextsAreLocalizedInEnglish() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val appResources = instrumentation.targetContext.resources
+        val originalAppConfiguration = Configuration(appResources.configuration)
+        val englishConfiguration = Configuration(originalAppConfiguration).apply { setLocale(Locale.ENGLISH) }
+        try {
+            launchForm(locale = Locale.ENGLISH)
+            instrumentation.runOnMainSync {
+                val resumed = ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.RESUMED)
+                    .first()
+                appResources.updateConfiguration(englishConfiguration, appResources.displayMetrics)
+                resumed.resources.updateConfiguration(englishConfiguration, resumed.resources.displayMetrics)
+            }
+            typeTitle("Spanish omelette")
+            addValidIngredient(0, name = "Potatoes", quantity = "700")
+            addValidStep(0, text = "Fry the onion")
+
+            assertEquals("No ingredients", formText(R.string.create_recipe_step_ingredients_none))
+            stepSummaryShouldBe(0, "No ingredients")
+
+            openStepIngredientsDialog(0)
+            assertEquals("Ingredients for this step", formText(R.string.create_recipe_step_ingredients))
+            assertEquals("Accept", formText(R.string.create_recipe_step_ingredients_accept))
+            assertEquals("Cancel", formText(R.string.create_recipe_step_ingredients_cancel))
+            composeRule.onAllNodesWithText("Accept")
+                .filter(hasTestTag(CreateRecipeTestTags.STEP_INGREDIENTS_ACCEPT))
+                .assertCountEquals(1)
+            composeRule.onAllNodesWithText("Cancel")
+                .filter(hasTestTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL))
+                .assertCountEquals(1)
+            composeRule.onNodeWithText("Potatoes (700)").assertIsDisplayed()
+            composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL).performClick()
+
+            linkStepIngredient(stepIndex = 0, ingredientIndex = 0)
+            stepSummaryShouldBe(0, formQuantity(1))
+        } finally {
+            instrumentation.runOnMainSync {
+                appResources.updateConfiguration(originalAppConfiguration, appResources.displayMetrics)
+            }
+        }
+    }
+
+    private fun formQuantity(count: Int): String =
+        formContext.resources.getQuantityString(R.plurals.create_recipe_step_ingredients_count, count, count)
+
+    // El resumen es un `Text` hijo del control clicleable (nodo merged): se localiza el
+    // nodo por su tag y se filtra por el texto del resumen.
+    private fun stepSummaryShouldBe(stepIndex: Int, expected: String) {
+        composeRule.onAllNodesWithText(expected)
+            .filter(hasTestTag(CreateRecipeTestTags.stepIngredients(stepIndex)))
+            .assertCountEquals(1)
+    }
+
+    private fun openStepIngredientsDialog(stepIndex: Int) {
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredients(stepIndex))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_DIALOG).assertIsDisplayed()
+    }
+
+    private fun linkStepIngredient(stepIndex: Int, ingredientIndex: Int) {
+        openStepIngredientsDialog(stepIndex)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(ingredientIndex)).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_ACCEPT).performClick()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_DIALOG).assertCountEquals(0)
     }
 }
 

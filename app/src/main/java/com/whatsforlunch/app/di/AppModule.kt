@@ -47,7 +47,11 @@ import org.koin.dsl.module
 val appModule = module {
     single {
         Room.databaseBuilder(androidContext(), RecipeDatabase::class.java, "whatsforlunch.db")
-            .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+            )
             .build()
     }
     single { get<RecipeDatabase>().recipeDao() }

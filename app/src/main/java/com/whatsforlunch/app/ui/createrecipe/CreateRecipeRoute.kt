@@ -70,6 +70,7 @@ fun CreateRecipeViewModel.toActions(
     onAddStep = this::onAddStep,
     onStepTextChange = this::onStepTextChange,
     onStepTimerChange = this::onStepTimerChange,
+    onStepIngredientToggle = this::onStepIngredientToggle,
     onRemoveStep = this::onRemoveStep,
     onPickPhotoFromGallery = this::onPickPhotoFromGallery,
     onTakePhoto = this::onTakePhoto,

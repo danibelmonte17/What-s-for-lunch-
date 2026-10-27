@@ -136,6 +136,15 @@
     <string name="create_recipe_step_text">Texto del paso</string>
     <string name="create_recipe_step_timer">Temporizador (min, opcional)</string>
     <string name="create_recipe_step_invalid">El paso necesita texto</string>
+    <string name="create_recipe_step_ingredients">Ingredientes de este paso</string>
+    <string name="create_recipe_step_ingredients_none">Sin ingredientes</string>
+    <plurals name="create_recipe_step_ingredients_count">
+        <item quantity="one">%1$d ingrediente</item>
+        <item quantity="other">%1$d ingredientes</item>
+    </plurals>
+    <string name="create_recipe_step_ingredients_empty">Añade ingredientes primero</string>
+    <string name="create_recipe_step_ingredients_accept">Aceptar</string>
+    <string name="create_recipe_step_ingredients_cancel">Cancelar</string>
     <string name="create_recipe_favorite">Marcar en Mis Favoritas</string>
     <string name="create_recipe_favorite_subtitle">Acceso directo en tu biblioteca</string>
     <string name="create_recipe_ingredients_count">%1$d ítems</string>

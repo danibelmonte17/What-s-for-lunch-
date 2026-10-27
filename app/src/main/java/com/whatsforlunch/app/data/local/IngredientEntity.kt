@@ -26,4 +26,8 @@ data class IngredientEntity(
     val unit: String,
     val optional: Boolean,
     val position: Int,
+    // Id estable del Ingrediente en el dominio (RD21); lo referencian los vínculos
+    // de los Pasos (`StepEntity.ingredientIds`). Sin defaultValue declarado para
+    // que Room no compare defaults con la columna de MIGRATION_3_4.
+    val domainId: String,
 )

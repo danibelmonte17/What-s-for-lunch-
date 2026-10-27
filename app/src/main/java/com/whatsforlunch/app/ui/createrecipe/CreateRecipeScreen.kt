@@ -40,6 +40,7 @@ import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.ShoppingBasket
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -60,7 +61,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,6 +74,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -150,6 +155,17 @@ object CreateRecipeTestTags {
     fun removeStep(index: Int) = "create_recipe_remove_step_$index"
 
     fun stepNumber(index: Int) = "create_recipe_step_number_$index"
+
+    // Vínculo Paso↔Ingrediente (RD21): control por fila de Paso, su diálogo de
+    // selección y sus casillas (indexadas por la fila de Ingrediente de la Receta).
+    const val STEP_INGREDIENTS_DIALOG = "create_recipe_step_ingredients_dialog"
+    const val STEP_INGREDIENTS_ACCEPT = "create_recipe_step_ingredients_accept"
+    const val STEP_INGREDIENTS_CANCEL = "create_recipe_step_ingredients_cancel"
+    const val STEP_INGREDIENTS_EMPTY = "create_recipe_step_ingredients_empty"
+
+    fun stepIngredients(index: Int) = "create_recipe_step_ingredients_$index"
+
+    fun stepIngredientOption(index: Int) = "create_recipe_step_ingredient_option_$index"
 }
 
 // Acciones del formulario, agrupadas para no saturar la firma de la pantalla.
@@ -173,6 +189,7 @@ class CreateRecipeActions(
     val onAddStep: () -> Unit = {},
     val onStepTextChange: (Long, String) -> Unit = { _, _ -> },
     val onStepTimerChange: (Long, String) -> Unit = { _, _ -> },
+    val onStepIngredientToggle: (Long, String) -> Unit = { _, _ -> },
     val onRemoveStep: (Long) -> Unit = {},
     val onPickPhotoFromGallery: () -> Unit = {},
     val onTakePhoto: () -> Unit = {},
@@ -932,7 +949,7 @@ private fun StepsSection(uiState: CreateRecipeUiState, actions: CreateRecipeActi
             },
         )
         uiState.steps.forEachIndexed { index, row ->
-            StepRow(row = row, index = index, actions = actions)
+            StepRow(row = row, index = index, ingredients = uiState.ingredients, actions = actions)
         }
         AddRowButton(
             onClick = actions.onAddStep,
@@ -943,8 +960,14 @@ private fun StepsSection(uiState: CreateRecipeUiState, actions: CreateRecipeActi
 }
 
 @Composable
-private fun StepRow(row: StepFieldUiState, index: Int, actions: CreateRecipeActions) {
+private fun StepRow(
+    row: StepFieldUiState,
+    index: Int,
+    ingredients: List<IngredientFieldUiState>,
+    actions: CreateRecipeActions,
+) {
     val stepLabel = stringResource(R.string.create_recipe_step_number, index + 1)
+    var showIngredientsDialog by remember(row.key) { mutableStateOf(false) }
     Surface(
         shape = FieldShape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -1013,6 +1036,15 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CreateRecipeActi
                     )
                 }
             }
+            // RF-VPI2 (RD21): «Ingredientes de este paso», debajo del temporizador.
+            // El control solo se muestra con ≥1 fila de Ingrediente (D3).
+            if (ingredients.isNotEmpty()) {
+                StepIngredientsControl(
+                    row = row,
+                    index = index,
+                    onClick = { showIngredientsDialog = true },
+                )
+            }
             if (!row.isValid) {
                 Text(
                     text = stringResource(R.string.create_recipe_step_invalid),
@@ -1022,6 +1054,157 @@ private fun StepRow(row: StepFieldUiState, index: Int, actions: CreateRecipeActi
             }
         }
     }
+    if (showIngredientsDialog) {
+        StepIngredientsDialog(
+            row = row,
+            ingredients = ingredients,
+            onToggle = { actions.onStepIngredientToggle(row.key, it) },
+            onDismiss = { showIngredientsDialog = false },
+        )
+    }
+}
+
+// Control «Ingredientes de este paso»: resumen de la selección del Paso («Sin
+// ingredientes» o «N ingredientes») que abre el diálogo de casillas (RF-VPI2).
+@Composable
+private fun StepIngredientsControl(
+    row: StepFieldUiState,
+    index: Int,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = FieldShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clickable(onClick = onClick)
+                .padding(horizontal = WarmSpacing.sm)
+                .testTag(CreateRecipeTestTags.stepIngredients(index)),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ShoppingBasket,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = stringResource(R.string.create_recipe_step_ingredients),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stepIngredientsSummary(row.ingredientIds.size),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+// Resumen de los vínculos de un Paso en su control (RF-VPI2).
+@Composable
+private fun stepIngredientsSummary(count: Int): String =
+    if (count == 0) {
+        stringResource(R.string.create_recipe_step_ingredients_none)
+    } else {
+        pluralStringResource(R.plurals.create_recipe_step_ingredients_count, count, count)
+    }
+
+// Etiqueta de una opción del diálogo: «nombre (cantidad unidad)» (RF-VPI2).
+private fun ingredientOptionLabel(ingredient: IngredientFieldUiState): String {
+    val details = listOf(ingredient.quantity, ingredient.unit)
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+    return if (details.isEmpty()) ingredient.name else "${ingredient.name} ($details)"
+}
+
+// Diálogo de selección de los Ingredientes de un Paso (N:M, D2): lista las filas de
+// Ingrediente de la Receta en orden con una casilla por fila (D7). La selección se
+// confirma con «Aceptar»; «Cancelar» no toca la Receta. El estado vacío es defensivo:
+// el control no se renderiza sin ingredientes (D3).
+@Composable
+private fun StepIngredientsDialog(
+    row: StepFieldUiState,
+    ingredients: List<IngredientFieldUiState>,
+    onToggle: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val initial = remember(row.key) { row.ingredientIds.toSet() }
+    var selection by remember(row.key) { mutableStateOf(row.ingredientIds.toSet()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(CreateRecipeTestTags.STEP_INGREDIENTS_DIALOG),
+        title = { Text(stringResource(R.string.create_recipe_step_ingredients)) },
+        text = {
+            if (ingredients.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.create_recipe_step_ingredients_empty),
+                    modifier = Modifier.testTag(CreateRecipeTestTags.STEP_INGREDIENTS_EMPTY),
+                )
+            } else {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+                ) {
+                    ingredients.forEachIndexed { ingredientIndex, ingredient ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = ingredient.id in selection,
+                                onCheckedChange = {
+                                    selection = if (ingredient.id in selection) {
+                                        selection - ingredient.id
+                                    } else {
+                                        selection + ingredient.id
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.primary,
+                                ),
+                                modifier = Modifier.testTag(
+                                    CreateRecipeTestTags.stepIngredientOption(ingredientIndex),
+                                ),
+                            )
+                            Text(
+                                text = ingredientOptionLabel(ingredient),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    // Se aplica solo el diff sobre la instantánea de apertura: un toggle
+                    // por id cambiado; el ViewModel guarda la selección en orden (D7).
+                    (initial + selection).forEach { id ->
+                        if ((id in initial) != (id in selection)) onToggle(id)
+                    }
+                    onDismiss()
+                },
+                modifier = Modifier.heightIn(min = 48.dp).testTag(CreateRecipeTestTags.STEP_INGREDIENTS_ACCEPT),
+            ) {
+                Text(stringResource(R.string.create_recipe_step_ingredients_accept))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 48.dp).testTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL),
+            ) {
+                Text(stringResource(R.string.create_recipe_step_ingredients_cancel))
+            }
+        },
+    )
 }
 
 // Bloque de favorito con su control de marcado (RF-1; control según el prototipo).

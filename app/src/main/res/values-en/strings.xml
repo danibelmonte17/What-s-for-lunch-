@@ -135,6 +135,15 @@
     <string name="create_recipe_step_text">Step text</string>
     <string name="create_recipe_step_timer">Timer (min, optional)</string>
     <string name="create_recipe_step_invalid">The step needs text</string>
+    <string name="create_recipe_step_ingredients">Ingredients for this step</string>
+    <string name="create_recipe_step_ingredients_none">No ingredients</string>
+    <plurals name="create_recipe_step_ingredients_count">
+        <item quantity="one">%1$d ingredient</item>
+        <item quantity="other">%1$d ingredients</item>
+    </plurals>
+    <string name="create_recipe_step_ingredients_empty">Add ingredients first</string>
+    <string name="create_recipe_step_ingredients_accept">Accept</string>
+    <string name="create_recipe_step_ingredients_cancel">Cancel</string>
     <string name="create_recipe_favorite">Mark as Favorite</string>
     <string name="create_recipe_favorite_subtitle">Quick access in your library</string>
     <string name="create_recipe_ingredients_count">%1$d items</string>
