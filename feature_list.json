@@ -751,9 +751,13 @@
         "E2E: con ítems de dos recetas, agrupar por Receta y comprobar que cada ítem queda bajo su receta",
         "E2E: completar la mitad de los ítems y comprobar que la barra de progreso refleja la mitad"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/agrupar-y-completar-la-lista/ (informe + lista-pasillo-es.png + lista-receta-es.png, 1280×2856)",
+        "PROGRESS.md: RF-AGL1–8 verificados; ShoppingListE2ETest 27/27 (S1–S10) + unit 232/232 + batería 181/0 fallos",
+        "docs/validations/agrupar-y-completar-la-lista.md (validación independiente sesión 92, feature-validator: accept; 1 hallazgo Low no bloqueante)"
+      ],
       "notes": "",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "cambiar-idioma-de-la-interfaz",

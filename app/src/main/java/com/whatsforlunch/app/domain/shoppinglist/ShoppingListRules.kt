@@ -7,11 +7,12 @@ import com.whatsforlunch.app.domain.model.ShoppingItemSource
 import com.whatsforlunch.app.domain.model.ShoppingListItem
 import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
+import kotlin.math.roundToInt
 
 /**
- * Reglas puras de la Lista de la Compra (RD18/RD19): Faltantes por nombre
- * normalizado, fusión idempotente de aportaciones por fuente y alta manual de
- * ÍtemLista (upsert por nombre normalizado).
+ * Reglas puras de la Lista de la Compra (RD18/RD19/RD20): Faltantes por nombre
+ * normalizado, fusión idempotente de aportaciones por fuente, alta manual de
+ * ÍtemLista (upsert por nombre normalizado) y agrupación/progreso de la Lista.
  *
  * Cada fuente (una Receta o una Propuesta del Pinche) suma su cantidad una sola vez;
  * repetir la acción no duplica filas ni dobla la suma. Sin dependencias de Android
@@ -173,5 +174,73 @@ object ShoppingListRules {
         return existing.toMutableList().also { result ->
             result[index] = item.copy(quantity = quantity, unit = unit.trim(), aisle = aisle)
         }
+    }
+
+    // --- Agrupación y progreso (RD20) ----------------------------------------
+
+    /**
+     * RD20: agrupa los ítems según el modo (D8):
+     * - BY_AISLE: un grupo por `Aisle` en orden del enum y «Sin clasificar»
+     *   (aisle null) al final.
+     * - BY_RECIPE: un grupo por fuente ordenado por título normalizado
+     *   (desempate por `sourceKey`) y «Sin receta» (sin fuentes) al final; un
+     *   ítem multi-fuente se replica en cada grupo de sus fuentes (D2) y todas
+     *   sus apariciones comparten el mismo `completed`.
+     * Solo grupos no vacíos; dentro de cada grupo el orden es el de
+     * `sortedItems` (nombre normalizado, id) con los completados en su sitio.
+     */
+    fun groupItems(
+        items: List<ShoppingListItem>,
+        mode: ShoppingGroupMode,
+    ): List<ShoppingGroup> {
+        val sorted = items.sortedWith(compareBy({ normalizeName(it.name) }, { it.id }))
+        return when (mode) {
+            ShoppingGroupMode.BY_AISLE -> {
+                val byAisle = sorted.groupBy { it.aisle }
+                Aisle.entries.mapNotNull { aisle ->
+                    byAisle[aisle]?.let { ShoppingGroup(key = aisle.name, title = "", items = it) }
+                } + listOfNotNull(
+                    byAisle[null]?.let { ShoppingGroup(key = "", title = "", items = it) },
+                )
+            }
+
+            ShoppingGroupMode.BY_RECIPE -> {
+                val bySource = linkedMapOf<String, Pair<String, MutableList<ShoppingListItem>>>()
+                val withoutSource = mutableListOf<ShoppingListItem>()
+                sorted.forEach { item ->
+                    if (item.sources.isEmpty()) {
+                        withoutSource += item
+                    } else {
+                        item.sources.forEach { source ->
+                            val group = bySource.getOrPut(source.sourceKey) {
+                                source.sourceTitle to mutableListOf()
+                            }
+                            group.second += item
+                        }
+                    }
+                }
+                bySource.entries
+                    .sortedWith(compareBy({ normalizeName(it.value.first) }, { it.key }))
+                    .map { (key, titleAndItems) ->
+                        ShoppingGroup(key = key, title = titleAndItems.first, items = titleAndItems.second)
+                    } + listOfNotNull(
+                    withoutSource.takeIf { it.isNotEmpty() }?.let {
+                        ShoppingGroup(key = "", title = "", items = it)
+                    },
+                )
+            }
+        }
+    }
+
+    /**
+     * RD20: progreso de la Lista sobre ítems únicos (D9): los multi-fuente
+     * cuentan una vez y `percent` es el porcentaje redondeado al entero más
+     * próximo (0 con la lista vacía).
+     */
+    fun progress(items: List<ShoppingListItem>): ShoppingProgress {
+        val total = items.size
+        val completed = items.count { it.completed }
+        val percent = if (total == 0) 0 else (completed * 100.0 / total).roundToInt()
+        return ShoppingProgress(completed = completed, total = total, percent = percent)
     }
 }

@@ -11,9 +11,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -24,6 +30,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.Dp
 import androidx.room.Room
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
@@ -87,7 +94,9 @@ private object ShoppingNoOpPhotoStore : PhotoStore {
 
 // S1–S8 de anadir-faltantes-a-la-lista: las tres superficies de alta, la Lista con
 // sus badges y «Deshacer», el estado vacío, la idempotencia por fuente y la
-// migración 2→3 de Room.
+// migración 2→3 de Room. S1–S10 de agrupar-y-completar-la-lista: agrupación por
+// Pasillo/Receta, checkbox y progreso, «Limpiar comprados» con «Deshacer» y el
+// contenido de fila según el modo.
 @RunWith(AndroidJUnit4::class)
 class ShoppingListE2ETest {
 
@@ -532,6 +541,9 @@ class ShoppingListE2ETest {
             composeRule.onAllNodesWithText("Pan (2 uds)").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Pan (2 uds)").assertIsDisplayed()
+        // D6: la etiqueta de Pasillo de la fila se muestra en «Por Receta»; allí
+        // el badge «Despensa baja» (sin fuentes) se conserva.
+        selectRecipeGrouping()
         composeRule.onNode(
             hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Despensa & Aceites"),
         ).assertIsDisplayed()
@@ -572,8 +584,10 @@ class ShoppingListE2ETest {
             composeRule.onAllNodesWithText("Harina (500 g)").fetchSemanticsNodes().isNotEmpty()
         }
         assertEquals(1, composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size)
+        composeRule.onNodeWithTag(ShoppingListTestTags.item(itemId)).assertIsDisplayed()
+        // D6: en «Pasillo» la etiqueta de Pasillo la lleva la cabecera del grupo.
         composeRule.onNode(
-            hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Despensa & Aceites"),
+            hasTestTag(ShoppingListTestTags.groupHeader("PANTRY_OILS")) and hasText("Despensa & Aceites"),
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Para: Tortilla").assertIsDisplayed()
     }
@@ -606,8 +620,9 @@ class ShoppingListE2ETest {
 
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty() &&
+                // D6: en «Pasillo» el cambio de Pasillo se ve en la cabecera del grupo.
                 composeRule.onAllNodes(
-                    hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Lácteos"),
+                    hasTestTag(ShoppingListTestTags.groupHeader("DAIRY")) and hasText("Lácteos"),
                 ).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Azafrán (1 g)").assertIsDisplayed()
@@ -650,6 +665,8 @@ class ShoppingListE2ETest {
             composeRule.onAllNodesWithText("Leche").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Leche").assertIsDisplayed()
+        // D6: la etiqueta de Pasillo de la fila se muestra en «Por Receta».
+        selectRecipeGrouping()
         composeRule.onNode(
             hasTestTag(ShoppingListTestTags.aisle(itemId)) and hasText("Sin clasificar"),
         ).assertIsDisplayed()
@@ -702,6 +719,401 @@ class ShoppingListE2ETest {
             composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty()
         }
         composeRule.onNodeWithText(expectedLine).assertIsDisplayed()
+    }
+
+    // --- agrupar-y-completar-la-lista (S1–S10) -------------------------------
+
+    // S1: agrupación por defecto por Pasillo con cabecera y contador,
+    // «Sin clasificar» al final y el selector en «Pasillo de Super».
+    @Test
+    fun itemsAreGroupedByAisleByDefaultWithUncategorizedLast() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.saveManualItem(id = null, name = "Manzana", quantity = 1.0, unit = "kg", aisle = Aisle.PRODUCE)
+            repository.saveManualItem(id = null, name = "Leche", quantity = 1.0, unit = "l", aisle = Aisle.DAIRY)
+            repository.saveManualItem(id = null, name = "Toallitas", quantity = null, unit = "", aisle = null)
+            repository.addMissing(
+                sourceKey = "paella",
+                sourceTitle = "Paella",
+                ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
+            )
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        // D1: el modo por defecto es «Pasillo de Super».
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertIsOn()
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).assertIsOff()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupHeader("PRODUCE")) and hasText("Verduras & Frescos"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupCount("PRODUCE")) and hasText("1 ítem"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupHeader("DAIRY")) and hasText("Lácteos"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupHeader("")) and hasText("Sin clasificar"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupCount("")) and hasText("2 ítems"),
+        ).assertIsDisplayed()
+        // D8: orden del catálogo de Pasillos y «Sin clasificar» al final.
+        assertTrue(
+            topOf(ShoppingListTestTags.groupHeader("PRODUCE")) <
+                topOf(ShoppingListTestTags.groupHeader("DAIRY")),
+        )
+        assertTrue(
+            topOf(ShoppingListTestTags.groupHeader("DAIRY")) <
+                topOf(ShoppingListTestTags.groupHeader("")),
+        )
+    }
+
+    // S2 (verify 1): con ítems de dos recetas, «Por Receta» deja cada ítem bajo
+    // su cabecera y los contadores cuadran.
+    @Test
+    fun itemsFromTwoRecipesAreGroupedUnderTheirRecipe() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.addMissing(
+                sourceKey = "paella",
+                sourceTitle = "Paella",
+                ingredients = listOf(
+                    RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
+                    RecipeIngredient(name = "Arroz", quantity = 200.0, unit = "g"),
+                ),
+            )
+            repository.addMissing(
+                sourceKey = "gazpacho",
+                sourceTitle = "Gazpacho",
+                ingredients = listOf(
+                    RecipeIngredient(name = "Tomate", quantity = 2.0, unit = "ud"),
+                    RecipeIngredient(name = "Pan", quantity = 1.0, unit = "ud"),
+                ),
+            )
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+        selectRecipeGrouping()
+
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupHeader("gazpacho")) and hasText("Gazpacho"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupCount("gazpacho")) and hasText("2 ítems"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupHeader("paella")) and hasText("Paella"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupCount("paella")) and hasText("2 ítems"),
+        ).assertIsDisplayed()
+        // Cada fila queda tras la cabecera de su Receta y antes de la siguiente.
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        val tomate = ShoppingListRules.itemIdFor("Tomate")
+        val arroz = ShoppingListRules.itemIdFor("Arroz")
+        val azafran = ShoppingListRules.itemIdFor("Azafrán")
+        assertTrue(
+            topOf(ShoppingListTestTags.groupHeader("gazpacho")) <
+                topOf(ShoppingListTestTags.item(pan)),
+        )
+        assertTrue(topOf(ShoppingListTestTags.item(pan)) < topOf(ShoppingListTestTags.item(tomate)))
+        assertTrue(
+            topOf(ShoppingListTestTags.item(tomate)) <
+                topOf(ShoppingListTestTags.groupHeader("paella")),
+        )
+        assertTrue(
+            topOf(ShoppingListTestTags.groupHeader("paella")) <
+                topOf(ShoppingListTestTags.item(arroz)),
+        )
+        assertTrue(topOf(ShoppingListTestTags.item(arroz)) < topOf(ShoppingListTestTags.item(azafran)))
+    }
+
+    // S3 (verify 2): al marcar 2 de 4, la tarjeta dice «2 de 4 artículos en la
+    // cesta» y la barra muestra el 50 %.
+    @Test
+    fun theProgressBarReflectsHalfOfTheItemsCompleted() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            listOf("Leche", "Pan", "Queso", "Tomate").forEach { name ->
+                repository.saveManualItem(id = null, name = name, quantity = 1.0, unit = "ud", aisle = null)
+            }
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.PROGRESS_TEXT)
+            .assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("0 de 4 artículos en la cesta"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_PERCENT) and hasText("0%"),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.PROGRESS_BAR)
+            .assert(hasProgressBarRangeInfo(ProgressBarRangeInfo(0f, 0f..1f)))
+
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        val leche = ShoppingListRules.itemIdFor("Leche")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(leche)).performClick()
+
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("2 de 4 artículos en la cesta"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_PERCENT) and hasText("50%"),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.PROGRESS_BAR)
+            .assert(hasProgressBarRangeInfo(ProgressBarRangeInfo(0.5f, 0f..1f)))
+    }
+
+    // S4: el ítem multi-fuente aparece en todos sus grupos; marcar una copia
+    // marca todas y el progreso lo cuenta una sola vez.
+    @Test
+    fun multiSourceItemsAppearInEveryGroupAndCountOnce() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.addMissing(
+                sourceKey = "paella",
+                sourceTitle = "Paella",
+                ingredients = listOf(RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g")),
+            )
+            repository.addMissing(
+                sourceKey = "gazpacho",
+                sourceTitle = "Gazpacho",
+                ingredients = listOf(RecipeIngredient(name = "Harina", quantity = 500.0, unit = "g")),
+            )
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+        selectRecipeGrouping()
+
+        val harina = ShoppingListRules.itemIdFor("Harina")
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.item(harina)).assertCountEquals(2)
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupCount("gazpacho")) and hasText("1 ítem"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupCount("paella")) and hasText("1 ítem"),
+        ).assertIsDisplayed()
+
+        // Marcar la copia del grupo «Paella» marca también la de «Gazpacho».
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.check(harina))[1].performClick()
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.check(harina))[0].assertIsOn()
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.check(harina))[1].assertIsOn()
+        // Una sola fila lógica: el progreso la cuenta una vez.
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("1 de 1 artículo en la cesta"),
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_PERCENT) and hasText("100%"),
+        ).assertIsDisplayed()
+    }
+
+    // S5: desmarcar devuelve la fila a su estado normal y baja el progreso.
+    @Test
+    fun uncheckingAnItemRevertsTheProgress() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.saveManualItem(id = null, name = "Pan", quantity = 1.0, unit = "ud", aisle = null)
+            repository.saveManualItem(id = null, name = "Leche", quantity = 1.0, unit = "l", aisle = null)
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).assertIsOn()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("1 de 2 artículos en la cesta"),
+        ).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).assertIsOff()
+        composeRule.onNodeWithText("Pan (1 ud)").assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("0 de 2 artículos en la cesta"),
+        ).assertIsDisplayed()
+    }
+
+    // S6: la fila completada conserva su nombre (tachado y atenuado) con el
+    // checkbox relleno y «Limpiar comprados» aparece solo con ≥1 completado.
+    @Test
+    fun completedRowsKeepTheirContentAndShowTheClearAction() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "uds", aisle = null)
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.CLEAR_COMPLETED).assertCountEquals(0)
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).assertIsOn()
+        // D5: el nombre se conserva; no se sustituye por «En la cesta».
+        composeRule.onNodeWithText("Pan (2 uds)").assertIsDisplayed()
+        composeRule.onAllNodesWithText("En la cesta").assertCountEquals(0)
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.CLEAR_COMPLETED).assertCountEquals(1)
+    }
+
+    // S7: «Limpiar comprados» borra los marcados y «Deshacer» los restaura a
+    // todos con su estado, cantidades y fuentes.
+    @Test
+    fun clearCompletedRemovesThemAndUndoRestoresThemAll() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.addMissing(
+                sourceKey = "paella",
+                sourceTitle = "Paella",
+                ingredients = listOf(
+                    RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
+                    RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g"),
+                    RecipeIngredient(name = "Mariscos", quantity = 300.0, unit = "g"),
+                    RecipeIngredient(name = "Sal", quantity = 1.0, unit = "g"),
+                ),
+            )
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        val azafran = ShoppingListRules.itemIdFor("Azafrán")
+        val harina = ShoppingListRules.itemIdFor("Harina")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(azafran)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(harina)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.CLEAR_COMPLETED).performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size == 2 &&
+                composeRule.onAllNodesWithTag(ShoppingListTestTags.UNDO)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Ítems comprados eliminados").assertIsDisplayed()
+        composeRule.onNodeWithText("Mariscos (300 g)").assertIsDisplayed()
+        composeRule.onNodeWithText("Sal (1 g)").assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNDO).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size == 4
+        }
+        composeRule.onNodeWithText("Azafrán (1 g)").assertIsDisplayed()
+        composeRule.onNodeWithText("Harina (200 g)").assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(azafran)).assertIsOn()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(harina)).assertIsOn()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("2 de 4 artículos en la cesta"),
+        ).assertIsDisplayed()
+        // Las fuentes vuelven con los ítems restaurados.
+        composeRule.onAllNodesWithText("Para: Paella").assertCountEquals(4)
+    }
+
+    // S8: el contenido de la fila cambia con el modo (D6): «Pasillo» lleva
+    // badge y «Por Receta» lleva etiqueta de Pasillo; el multi-fuente conserva
+    // «Para: N recetas» en los dos modos.
+    @Test
+    fun rowContentChangesWithTheGroupingMode() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.addMissing(
+                sourceKey = "paella",
+                sourceTitle = "Paella",
+                ingredients = listOf(
+                    RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
+                    RecipeIngredient(name = "Harina", quantity = 200.0, unit = "g"),
+                ),
+            )
+            repository.addMissing(
+                sourceKey = "gazpacho",
+                sourceTitle = "Gazpacho",
+                ingredients = listOf(RecipeIngredient(name = "Harina", quantity = 500.0, unit = "g")),
+            )
+            repository.saveManualItem(
+                id = null,
+                name = "Azafrán",
+                quantity = 1.0,
+                unit = "g",
+                aisle = Aisle.DAIRY,
+            )
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        val azafran = ShoppingListRules.itemIdFor("Azafrán")
+        // «Pasillo»: sin etiqueta de Pasillo, con badge de una fuente y multi.
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.aisle(azafran)).assertCountEquals(0)
+        composeRule.onNodeWithText("Para: Paella").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Para: 2 recetas").assertCountEquals(1)
+
+        // «Por Receta»: etiqueta de Pasillo y sin badge de una fuente; el
+        // multi-fuente se replica con su badge en cada grupo.
+        selectRecipeGrouping()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.aisle(azafran)) and hasText("Lácteos"),
+        ).assertIsDisplayed()
+        composeRule.onAllNodesWithText("Para: Paella").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Para: 2 recetas").assertCountEquals(2)
+    }
+
+    // S9: los completados persisten al salir y volver a entrar (Room) y el
+    // selector vuelve a «Pasillo de Super» (D1).
+    @Test
+    fun completedItemsSurviveTheRoundTripAndTheModeResets() {
+        launchFullApp()
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("2")
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("uds")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Pan (2 uds)").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).assertIsOn()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.BACK).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.SCREEN).fetchSemanticsNodes().isNotEmpty()
+        }
+        openShoppingList()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).assertIsOn()
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertIsOn()
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).assertIsOff()
+    }
+
+    // S10: editar conserva la marca del ítem y la lista vacía no muestra la
+    // tarjeta de progreso ni el selector.
+    @Test
+    fun editingKeepsTheCompletedStateAndTheEmptyListHasNoProgressCard() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "uds", aisle = null)
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.edit(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("3")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty()
+        }
+
+        // D10: la edición no cambia el estado de completado.
+        composeRule.onNodeWithText("Pan (3 uds)").assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).assertIsOn()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.PROGRESS_TEXT) and hasText("1 de 1 artículo en la cesta"),
+        ).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.delete(pan)).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.EMPTY).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.PROGRESS_CARD).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.GROUP_BY_LABEL).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertCountEquals(0)
     }
 
     // --- Helpers -----------------------------------------------------------------
@@ -774,6 +1186,15 @@ class ShoppingListE2ETest {
         }
     }
 
+    // Pasa el selector «Agrupar por» a «Por Receta» (RF-AGL2).
+    private fun selectRecipeGrouping() {
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).assertIsOn()
+    }
+
+    // Posición vertical de un nodo, para comprobar el orden de grupos y filas.
+    private fun topOf(tag: String): Dp = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot().top
+
     private fun launchShoppingList(viewModel: ShoppingListViewModel) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
@@ -799,6 +1220,9 @@ class ShoppingListE2ETest {
                         onEditItem = viewModel::editItem,
                         onDismissEditor = viewModel::dismissEditor,
                         onSaveItem = viewModel::saveManualItem,
+                        onToggleCompleted = viewModel::toggleCompleted,
+                        onSetGroupMode = viewModel::setGroupMode,
+                        onClearCompleted = viewModel::clearCompleted,
                     )
                 }
             }

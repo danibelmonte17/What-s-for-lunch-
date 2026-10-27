@@ -294,6 +294,21 @@
     <string name="shopping_list_manual_origin">Despensa baja</string>
     <string name="shopping_list_save">Guardar</string>
     <string name="shopping_list_cancel">Cancelar</string>
+    <plurals name="shopping_list_progress">
+        <item quantity="one">%1$d de %2$d artículo en la cesta</item>
+        <item quantity="other">%1$d de %2$d artículos en la cesta</item>
+    </plurals>
+    <string name="shopping_list_progress_percent">%1$d%%</string>
+    <string name="shopping_list_group_by_label">Agrupar por:</string>
+    <string name="shopping_list_group_aisle">Pasillo de Super</string>
+    <string name="shopping_list_group_recipe">Por Receta</string>
+    <string name="shopping_list_group_no_recipe">Sin receta</string>
+    <plurals name="shopping_list_group_count">
+        <item quantity="one">%1$d ítem</item>
+        <item quantity="other">%1$d ítems</item>
+    </plurals>
+    <string name="shopping_list_clear_completed">Limpiar comprados</string>
+    <string name="shopping_list_items_removed">Ítems comprados eliminados</string>
     <string name="recipe_detail_match_banner">¡Tienes el %1$d%% de ingredientes en casa!</string>
     <string name="recipe_detail_add_to_list">Añadir a la lista</string>
     <string name="recipe_detail_added_to_list">Añadido a la Lista de la Compra</string>
