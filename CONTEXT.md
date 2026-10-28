@@ -16,7 +16,7 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 **Mis Recetas**: Recetas del usuario (creadas a mano, aceptadas desde una Sugerencia o guardadas desde el Pinche) y pantalla de entrada de la app.
 **Modo Cocina**: guía de una Receta paso a paso, manos libres, con temporizadores y voz.
 **Momento culinario**: clasificación de una Receta en desayuno, almuerzo, cena o postre.
-**Paso**: instrucción secuencial de una Receta, con temporizador opcional.
+**Paso**: instrucción secuencial de una Receta, con temporizador opcional y con los Ingredientes que usa (vínculo opcional; un Ingrediente puede usarse en varios Pasos).
 **Pinche**: asistente conversacional de cocina con IA. Responde dudas de cocina y puede proponer recetas con independencia de lo que haya en la Despensa; no sustituye a las Sugerencias de la Despensa.
 **Propuesta del Pinche**: receta que devuelve el Pinche dentro de una conversación, con texto, ingredientes y pasos. No es una Receta ni una Sugerencia: solo pasa a ser Receta (Borrador) si el usuario la guarda desde su Ficha.
 **Ficha**: vista dentro del Pinche con el texto, los ingredientes, los pasos y los Faltantes de una Propuesta del Pinche. Desde ella se guarda la Propuesta en Mis Recetas.

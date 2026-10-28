@@ -31,6 +31,14 @@
     <string name="recipe_detail_start_cooking">Empezar Modo Cocina</string>
     <string name="recipe_detail_not_found">Receta no encontrada</string>
     <string name="cook_mode_title">Modo Cocina</string>
+    <string name="cook_mode_step_progress">Paso %1$d de %2$d</string>
+    <string name="cook_mode_step_label">PASO %1$d</string>
+    <string name="cook_mode_step_timer_hint">⏱ %1$d min</string>
+    <string name="cook_mode_ingredients_title">Ingredientes para este paso</string>
+    <string name="cook_mode_ingredients_empty">Sin ingredientes</string>
+    <string name="cook_mode_previous_step">Paso Anterior</string>
+    <string name="cook_mode_next_step">Siguiente</string>
+    <string name="cook_mode_finish">Terminar</string>
 
     <!-- Despensa -->
     <string name="pantry_title">Despensa</string>
@@ -136,6 +144,15 @@
     <string name="create_recipe_step_text">Texto del paso</string>
     <string name="create_recipe_step_timer">Temporizador (min, opcional)</string>
     <string name="create_recipe_step_invalid">El paso necesita texto</string>
+    <string name="create_recipe_step_ingredients">Ingredientes de este paso</string>
+    <string name="create_recipe_step_ingredients_none">Sin ingredientes</string>
+    <plurals name="create_recipe_step_ingredients_count">
+        <item quantity="one">%1$d ingrediente</item>
+        <item quantity="other">%1$d ingredientes</item>
+    </plurals>
+    <string name="create_recipe_step_ingredients_empty">Añade ingredientes primero</string>
+    <string name="create_recipe_step_ingredients_accept">Aceptar</string>
+    <string name="create_recipe_step_ingredients_cancel">Cancelar</string>
     <string name="create_recipe_favorite">Marcar en Mis Favoritas</string>
     <string name="create_recipe_favorite_subtitle">Acceso directo en tu biblioteca</string>
     <string name="create_recipe_ingredients_count">%1$d ítems</string>

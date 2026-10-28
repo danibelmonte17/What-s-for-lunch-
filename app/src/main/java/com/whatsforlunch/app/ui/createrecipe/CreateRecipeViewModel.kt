@@ -36,9 +36,12 @@ enum class CreateRecipeNotice {
     CAMERA_PERMISSION_DENIED,
 }
 
-// Fila editable de Ingrediente en el formulario (RF-5, RF-6, RF-8).
+// Fila editable de Ingrediente en el formulario (RF-5, RF-6, RF-8). `id` es el id
+// estable del Ingrediente (RD21): el de la Receta editada o uno nuevo al añadir la
+// fila, y lo referencian los vínculos de los Pasos.
 data class IngredientFieldUiState(
     val key: Long,
+    val id: String = "",
     val name: String = "",
     val quantity: String = "",
     val unit: String = "",
@@ -48,11 +51,15 @@ data class IngredientFieldUiState(
         get() = name.isNotBlank() && (quantity.toDoubleOrNull() ?: 0.0) > 0.0
 }
 
-// Fila editable de Paso en el formulario (RF-9, RF-10, RF-12).
+// Fila editable de Paso en el formulario (RF-9, RF-10, RF-12). `ingredientIds`
+// (RD21) son los ids de los Ingredientes de la Receta que usa el Paso (N:M y
+// opcional), en el orden de ingredientes de la Receta (D7).
 data class StepFieldUiState(
     val key: Long,
+    val id: String = "",
     val text: String = "",
     val timerMinutes: String = "",
+    val ingredientIds: List<String> = emptyList(),
 ) {
     val isValid: Boolean
         get() = text.isNotBlank()
@@ -163,7 +170,12 @@ class CreateRecipeViewModel(
     fun onFavoriteToggle() = mutate { it.copy(favorite = !it.favorite) }
 
     fun onAddIngredient() = mutate {
-        it.copy(ingredients = it.ingredients + IngredientFieldUiState(key = nextKey()))
+        it.copy(
+            ingredients = it.ingredients + IngredientFieldUiState(
+                key = nextKey(),
+                id = UUID.randomUUID().toString(),
+            ),
+        )
     }
 
     fun onIngredientNameChange(key: Long, value: String) = updateIngredient(key) { it.copy(name = value) }
@@ -174,18 +186,50 @@ class CreateRecipeViewModel(
 
     fun onIngredientOptionalChange(key: Long, value: Boolean) = updateIngredient(key) { it.copy(optional = value) }
 
+    // D6: quitar un Ingrediente elimina también sus vínculos de todos los Pasos.
     fun onRemoveIngredient(key: Long) = mutate { state ->
-        state.copy(ingredients = state.ingredients.filterNot { it.key == key })
+        val removed = state.ingredients.firstOrNull { it.key == key }
+        state.copy(
+            ingredients = state.ingredients.filterNot { it.key == key },
+            steps = if (removed == null) {
+                state.steps
+            } else {
+                state.steps.map { step ->
+                    step.copy(ingredientIds = step.ingredientIds.filterNot { it == removed.id })
+                }
+            },
+        )
     }
 
     fun onAddStep() = mutate {
-        it.copy(steps = it.steps + StepFieldUiState(key = nextKey()))
+        it.copy(
+            steps = it.steps + StepFieldUiState(
+                key = nextKey(),
+                id = UUID.randomUUID().toString(),
+            ),
+        )
     }
 
     fun onStepTextChange(key: Long, value: String) = updateStep(key) { it.copy(text = value) }
 
     fun onStepTimerChange(key: Long, value: String) = updateStep(key) { it.copy(timerMinutes = value) }
 
+    // RF-VPI2: añade o quita un Ingrediente de los vínculos de un Paso (N:M).
+    fun onStepIngredientToggle(stepKey: Long, ingredientId: String) = mutate { state ->
+        val selected = state.steps.firstOrNull { it.key == stepKey }?.ingredientIds.orEmpty()
+        val updated = if (ingredientId in selected) selected - ingredientId else selected + ingredientId
+        state.copy(
+            steps = state.steps.map { step ->
+                if (step.key == stepKey) {
+                    step.copy(ingredientIds = orderStepLinks(updated, state.ingredients))
+                } else {
+                    step
+                }
+            },
+        )
+    }
+
+    // D6: quitar un Paso solo borra ese Paso (y con él, sus vínculos).
     fun onRemoveStep(key: Long) = mutate { state ->
         state.copy(steps = state.steps.filterNot { it.key == key })
     }
@@ -306,7 +350,7 @@ class CreateRecipeViewModel(
             origin = originalOrigin,
             ingredients = state.ingredients.mapIndexed { index, row ->
                 RecipeIngredient(
-                    id = "$id-ingredient-$index",
+                    id = row.id.ifBlank { "$id-ingredient-$index" },
                     name = row.name.trim(),
                     quantity = row.quantity.toDoubleOrNull() ?: 0.0,
                     unit = row.unit.trim(),
@@ -315,9 +359,10 @@ class CreateRecipeViewModel(
             },
             steps = state.steps.mapIndexed { index, row ->
                 RecipeStep(
-                    id = "$id-step-$index",
+                    id = row.id.ifBlank { "$id-step-$index" },
                     text = row.text.trim(),
                     timerMinutes = row.timerMinutes.toIntOrNull()?.takeIf { it >= 0 },
+                    ingredientIds = orderStepLinks(row.ingredientIds, state.ingredients),
                 )
             },
         )
@@ -328,40 +373,48 @@ class CreateRecipeViewModel(
     private fun currentRecipeId(): String = _uiState.value.recipeId ?: newRecipeId
 
     // RF-2: precarga el formulario con todos los datos de la Receta editada,
-    // incluidas sus filas de Ingrediente y Paso y su foto y favorito.
-    private fun preloadedState(recipe: Recipe): CreateRecipeUiState = CreateRecipeUiState(
-        title = recipe.title,
-        story = recipe.story,
-        mealMoment = recipe.mealMoment,
-        prepMinutes = recipe.prepMinutes.toString(),
-        cookMinutes = recipe.cookMinutes.toString(),
-        difficulty = recipe.difficulty,
-        baseServings = recipe.baseServings.coerceIn(
-            RecipeValidation.MIN_BASE_SERVINGS,
-            RecipeValidation.MAX_BASE_SERVINGS,
-        ),
-        caloriesPerServing = recipe.caloriesPerServing?.toString() ?: "",
-        photoPath = recipe.photoPath,
-        favorite = recipe.favorite,
-        ingredients = recipe.ingredients.map { ingredient ->
+    // incluidas sus filas de Ingrediente y Paso y su foto y favorito. Los ids de las
+    // filas conservan los ids estables de la Receta (RD21) para que los vínculos de
+    // los Pasos sobrevivan a los guardados.
+    private fun preloadedState(recipe: Recipe): CreateRecipeUiState {
+        val ingredientRows = recipe.ingredients.mapIndexed { index, ingredient ->
             IngredientFieldUiState(
                 key = nextKey(),
+                id = ingredient.id.ifBlank { "${recipe.id}-ingredient-$index" },
                 name = ingredient.name,
                 quantity = formatQuantity(ingredient.quantity),
                 unit = ingredient.unit,
                 optional = ingredient.optional,
             )
-        },
-        steps = recipe.steps.map { step ->
-            StepFieldUiState(
-                key = nextKey(),
-                text = step.text,
-                timerMinutes = step.timerMinutes?.toString() ?: "",
-            )
-        },
-        recipeId = recipe.id,
-        editingStatus = recipe.status,
-    )
+        }
+        return CreateRecipeUiState(
+            title = recipe.title,
+            story = recipe.story,
+            mealMoment = recipe.mealMoment,
+            prepMinutes = recipe.prepMinutes.toString(),
+            cookMinutes = recipe.cookMinutes.toString(),
+            difficulty = recipe.difficulty,
+            baseServings = recipe.baseServings.coerceIn(
+                RecipeValidation.MIN_BASE_SERVINGS,
+                RecipeValidation.MAX_BASE_SERVINGS,
+            ),
+            caloriesPerServing = recipe.caloriesPerServing?.toString() ?: "",
+            photoPath = recipe.photoPath,
+            favorite = recipe.favorite,
+            ingredients = ingredientRows,
+            steps = recipe.steps.mapIndexed { index, step ->
+                StepFieldUiState(
+                    key = nextKey(),
+                    id = step.id.ifBlank { "${recipe.id}-step-$index" },
+                    text = step.text,
+                    timerMinutes = step.timerMinutes?.toString() ?: "",
+                    ingredientIds = orderStepLinks(step.ingredientIds, ingredientRows),
+                )
+            },
+            recipeId = recipe.id,
+            editingStatus = recipe.status,
+        )
+    }
 
     // Cualquier cambio recalcula los requisitos incumplidos de Publicar y si el
     // formulario puede publicar (RF-14 a RF-16); fuente única de verdad: validateForPublish.
@@ -391,6 +444,18 @@ class CreateRecipeViewModel(
     private fun nextKey(): Long = keyCounter++
 
     private var keyCounter = 1L
+}
+
+// D7: los vínculos de un Paso se guardan en el orden de ingredientes de la Receta;
+// D5: los ids que no corresponden a ninguna fila de Ingrediente se descartan.
+private fun orderStepLinks(
+    links: List<String>,
+    ingredients: List<IngredientFieldUiState>,
+): List<String> {
+    val selected = links.toSet()
+    return ingredients.mapNotNull { row ->
+        row.id.takeIf { it.isNotBlank() && it in selected }
+    }
 }
 
 // Cantidad de una fila de Ingrediente sin decimales innecesarios (700.0 -> "700"),

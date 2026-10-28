@@ -11,9 +11,12 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -402,6 +405,95 @@ class EditRecipeE2ETest {
         assertEquals("Edit recipe", editorText(R.string.my_recipes_action_edit))
         composeRule.onNodeWithContentDescription("Edit recipe").assertIsDisplayed()
         composeRule.onNodeWithText("Edit").assertIsDisplayed()
+    }
+
+    // RF-VPI3 · S2 (verify 1): los vínculos cargan al editar («Patata» marcada en el
+    // Paso 1, el Paso 2 sin ingredientes) y sobreviven a «Guardar cambios» con ids
+    // estables de Ingredientes y Pasos (RF-VPI4).
+    @Test
+    fun editingKeepsStepIngredientLinks() {
+        val linked = seededRecipe(photoPath = editPhotoFile("editar-vinculos.png")).copy(
+            ingredients = listOf(
+                RecipeIngredient(id = "$SEEDED_ID-i0", name = "Patata", quantity = 700.0, unit = "g"),
+                RecipeIngredient(id = "$SEEDED_ID-i1", name = "Huevo", quantity = 2.0, unit = "ud"),
+            ),
+            steps = listOf(
+                RecipeStep(
+                    id = "$SEEDED_ID-s0",
+                    text = "Pochar la cebolla",
+                    timerMinutes = 5,
+                    ingredientIds = listOf("$SEEDED_ID-i0"),
+                ),
+                RecipeStep(id = "$SEEDED_ID-s1", text = "Batir el huevo", ingredientIds = emptyList()),
+            ),
+        )
+        val repository = repositoryWith(linked)
+        launchEditor(repository, SEEDED_ID)
+
+        // Precarga: cada Paso conserva su selección en el resumen.
+        stepSummaryShouldBe(0, editorQuantity(1))
+        stepSummaryShouldBe(1, editorText(R.string.create_recipe_step_ingredients_none))
+
+        // El diálogo refleja la selección guardada; «Aceptar» sin cambios no altera nada.
+        openStepIngredientsDialog(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOn()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(1)).assertIsOff()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_ACCEPT).performClick()
+
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
+        val saved = storedRecipes(repository).single()
+        assertEquals(listOf("$SEEDED_ID-i0"), saved.steps[0].ingredientIds)
+        assertTrue(saved.steps[1].ingredientIds.isEmpty())
+        assertEquals(listOf("$SEEDED_ID-i0", "$SEEDED_ID-i1"), saved.ingredients.map { it.id })
+    }
+
+    // RF-VPI5 · S5: una Receta con Pasos sin vínculos (creada por la IA o anterior a la
+    // feature) sigue válida para Publicar y se puede vincular editando, sin requisitos
+    // nuevos (D3/D4).
+    @Test
+    fun recipeWithoutLinksCanBeLinkedWithoutNewRequirements() {
+        val repository = repositoryWith(
+            seededRecipe(status = RecipeStatus.DRAFT, photoPath = editPhotoFile("editar-sin-vinculos.png")),
+        )
+        launchEditor(repository, SEEDED_ID)
+
+        stepSummaryShouldBe(0, editorText(R.string.create_recipe_step_ingredients_none))
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsEnabled()
+
+        linkStepIngredient(stepIndex = 0, ingredientIndex = 0)
+        stepSummaryShouldBe(0, editorQuantity(1))
+
+        // Vincular no añade requisitos: Publicar sigue habilitado (D3) y el vínculo se
+        // guarda al confirmar.
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
+        val saved = storedRecipes(repository).single()
+        assertEquals(listOf(saved.ingredients.single().id), saved.steps.single().ingredientIds)
+    }
+
+    private fun editorQuantity(count: Int): String =
+        editorContext.resources.getQuantityString(R.plurals.create_recipe_step_ingredients_count, count, count)
+
+    // El resumen es un `Text` hijo del control clicleable (nodo merged): se localiza el
+    // nodo por su tag y se filtra por el texto del resumen.
+    private fun stepSummaryShouldBe(stepIndex: Int, expected: String) {
+        composeRule.onAllNodesWithText(expected)
+            .filter(hasTestTag(CreateRecipeTestTags.stepIngredients(stepIndex)))
+            .assertCountEquals(1)
+    }
+
+    private fun openStepIngredientsDialog(stepIndex: Int) {
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredients(stepIndex))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_DIALOG).assertIsDisplayed()
+    }
+
+    private fun linkStepIngredient(stepIndex: Int, ingredientIndex: Int) {
+        openStepIngredientsDialog(stepIndex)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(ingredientIndex)).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_ACCEPT).performClick()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_DIALOG).assertCountEquals(0)
     }
 
     private fun showCards(

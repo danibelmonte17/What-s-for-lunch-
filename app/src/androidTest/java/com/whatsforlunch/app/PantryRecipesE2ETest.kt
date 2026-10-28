@@ -313,7 +313,7 @@ class PantryRecipesE2ETest {
                             RecipeDetailScreen(
                                 uiState = detailState,
                                 onBack = { showDetail.value = false },
-                                onStartCooking = {},
+                                onStartCooking = { _, _ -> },
                             )
                         }
                         showAiSuggestions.value -> {
