@@ -638,9 +638,13 @@
         "E2E: iniciar el Modo Cocina y comprobar que se muestra el paso 1 con sus ingredientes",
         "E2E: avanzar de paso y comprobar que la barra de avance se actualiza"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/cocinar-paso-a-paso/ (informe + 4 capturas es 1280×2856: Paso 1 con drawer y cantidades escaladas, último Paso con «Terminar», Detalle con raciones conservadas y CTA deshabilitada sin Pasos)",
+        "PROGRESS.md: gates lint 0 errores/49 warnings, unit 38 suites/251 tests, paridad es/en 305 claves, E2E focalizada 19/19 (S1-S7) y batería 195 tests (2 omitidos por Assume) sin regresión (4 flakes del AVD re-ejecutados 10/10 verde)",
+        "docs/validations/cocinar-paso-a-paso.md (2026-10-28, feature-validator con agente): revise (F1-F3, Low, documental) → repair → revalidación accept → accepted; código, tests y comportamiento cumplen la spec (RF-CPP1..6, S1-S7, D1-D9); tier barato reproducido, batería parcial 125/195 con el AVD acreditado como causa de los fallos, focalizada 17/17, CookModeE2ETest 7/7 y RecipeDetailE2ETest 12/12; reconciliaciones 195 = 188 + 7 y 305 = 297 + 8 confirmadas en la revalidación"
+      ],
       "notes": "",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "gestionar-temporizador-de-paso",

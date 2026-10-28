@@ -2,15 +2,14 @@ package com.whatsforlunch.app.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.whatsforlunch.app.R
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsRoute
+import com.whatsforlunch.app.ui.cookmode.CookModeRoute
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
@@ -23,8 +22,8 @@ import com.whatsforlunch.app.ui.shoppinglist.ShoppingListRoute
 
 // Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18). El formulario
 // de Receta acepta un id opcional: null = alta, con id = edición (RF-1). El Detalle
-// de Receta abre por id desde la tarjeta (RF-DR1) y su CTA llega al destino
-// provisional de Modo Cocina hasta que exista cocinar-paso-a-paso (RF-DR7, D4).
+// de Receta abre por id desde la tarjeta (RF-DR1) y su CTA abre el Modo Cocina real
+// con el id de la Receta y las Raciones elegidas (RF-CPP5, RD22).
 object AppRoutes {
     const val MY_RECIPES = "my_recipes"
     const val CREATE_RECIPE = "create_recipe?recipeId={recipeId}"
@@ -32,18 +31,23 @@ object AppRoutes {
     const val PANTRY_RECIPES = "pantry_recipes"
     const val PANTRY = "pantry"
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
-    const val COOK_MODE_PROVISIONAL = "cook_mode_provisional"
+    const val COOK_MODE = "cook_mode/{recipeId}?servings={servings}"
     const val SETTINGS = "settings"
     const val AI_SUGGESTIONS = "ai_suggestions"
     const val PINCHE = "pinche"
     const val SHOPPING_LIST = "shopping_list"
     const val RECIPE_ID_ARG = "recipeId"
+    const val SERVINGS_ARG = "servings"
 
     fun createRecipe(): String = "create_recipe"
 
     fun editRecipe(recipeId: String): String = "create_recipe?$RECIPE_ID_ARG=$recipeId"
 
     fun recipeDetail(recipeId: String): String = "recipe_detail/$recipeId"
+
+    // RF-CPP4: las Raciones viajan como texto opcional (patrón de `recipeId` en el
+    // formulario); sin argumento el Modo Cocina usa las Raciones base.
+    fun cookMode(recipeId: String, servings: Int): String = "cook_mode/$recipeId?$SERVINGS_ARG=$servings"
 }
 
 @Composable
@@ -93,16 +97,29 @@ fun WhatsForLunchApp(
             RecipeDetailRoute(
                 recipeId = entry.arguments?.getString(AppRoutes.RECIPE_ID_ARG).orEmpty(),
                 onBack = { navController.popBackStack() },
-                onStartCooking = { navController.navigate(AppRoutes.COOK_MODE_PROVISIONAL) },
+                onStartCooking = { recipeId, servings ->
+                    navController.navigate(AppRoutes.cookMode(recipeId, servings))
+                },
             )
         }
-        // RF-DR7 (D4): destino provisional de Modo Cocina con vuelta atrás
-        // (Q-arrancar-app-en-mis-recetas-3); cocinar-paso-a-paso lo sustituirá.
-        composable(AppRoutes.COOK_MODE_PROVISIONAL) {
-            ProvisionalScreen(
-                title = stringResource(R.string.cook_mode_title),
-                testTag = ProvisionalTestTags.COOK_MODE_SCREEN,
+        // RF-CPP1 (RD22): pantalla real «Modo Cocina» que sustituye al destino
+        // provisional; «Volver» y «Terminar» regresan al Detalle (D2/D7).
+        composable(
+            route = AppRoutes.COOK_MODE,
+            arguments = listOf(
+                navArgument(AppRoutes.RECIPE_ID_ARG) { type = NavType.StringType },
+                navArgument(AppRoutes.SERVINGS_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            CookModeRoute(
+                recipeId = entry.arguments?.getString(AppRoutes.RECIPE_ID_ARG).orEmpty(),
+                servings = entry.arguments?.getString(AppRoutes.SERVINGS_ARG)?.toIntOrNull(),
                 onBack = { navController.popBackStack() },
+                onFinish = { navController.popBackStack() },
             )
         }
         composable(AppRoutes.SCAN_PANTRY) {

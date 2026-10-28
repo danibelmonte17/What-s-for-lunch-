@@ -35,6 +35,7 @@ import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
+import com.whatsforlunch.app.ui.cookmode.CookModeTestTags
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailScreen
@@ -61,8 +62,9 @@ private object NoOpPhotoStore : PhotoStore {
 }
 
 // verify 1 y S2 a S7 de ver-detalle-de-receta: ficha completa, apertura desde la
-// tarjeta con vuelta conservando la búsqueda, badge reactivo, borrador incompleto,
-// CTA hacia Modo Cocina, no encontrado y checklist de marcado local.
+// tarjeta con vuelta conservando la búsqueda, badge reactivo, borrador incompleto
+// (con la CTA de Modo Cocina deshabilitada, RF-CPP5), CTA hacia el Modo Cocina
+// real, no encontrado y checklist de marcado local.
 @RunWith(AndroidJUnit4::class)
 class RecipeDetailE2ETest {
 
@@ -196,6 +198,8 @@ class RecipeDetailE2ETest {
         composeRule.onNodeWithText("—").assertIsDisplayed()
         composeRule.onNodeWithText("Sin ingredientes").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Sin pasos").performScrollTo().assertIsDisplayed()
+        // RF-CPP5 (D3): con 0 Pasos la CTA «Empezar Modo Cocina» está deshabilitada.
+        composeRule.onNodeWithTag(RecipeDetailTestTags.START_COOKING).assertIsNotEnabled()
         // RF-ER6: el bloque de raciones se muestra también sin ingredientes.
         composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_SCALER)
             .performScrollTo()
@@ -305,15 +309,27 @@ class RecipeDetailE2ETest {
         composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).assertCountEquals(1)
     }
 
-    // S5 (RF-DR7, D4): la CTA abre el destino provisional de Modo Cocina y la
-    // vuelta regresa al Detalle.
+    // S5 (RF-DR7, RF-CPP5): la CTA abre el Modo Cocina real (la Receta tiene al
+    // menos 1 Paso) y la vuelta regresa al Detalle.
     @Test
-    fun startCookingCtaOpensProvisionalCookModeAndBack() {
+    fun startCookingCtaOpensCookModeAndBack() {
         seedRoomRecipe(
             Recipe(
                 id = "tortilla",
                 title = "Tortilla de patatas",
-                ingredients = listOf(RecipeIngredient(id = "egg", name = "Huevos")),
+                ingredients = listOf(
+                    RecipeIngredient(id = "egg", name = "Huevos", quantity = 4.0, unit = "uds"),
+                    RecipeIngredient(id = "potato", name = "Patatas", quantity = 700.0, unit = "g"),
+                ),
+                steps = listOf(
+                    RecipeStep(
+                        id = "s1",
+                        text = "Corta las patatas",
+                        timerMinutes = 10,
+                        ingredientIds = listOf("potato"),
+                    ),
+                    RecipeStep(id = "s2", text = "Cuece la tortilla", ingredientIds = listOf("egg")),
+                ),
             ),
         )
         launchFullApp()
@@ -326,9 +342,9 @@ class RecipeDetailE2ETest {
 
         composeRule.onNodeWithTag(RecipeDetailTestTags.START_COOKING).performClick()
 
-        composeRule.onNodeWithTag(com.whatsforlunch.app.ui.nav.ProvisionalTestTags.COOK_MODE_SCREEN)
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag(CookModeTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Modo Cocina").assertIsDisplayed()
+        composeRule.onNodeWithText("Paso 1 de 2").assertIsDisplayed()
 
         composeRule.onNodeWithText("Volver").performClick()
         composeRule.onNodeWithTag(RecipeDetailTestTags.SCREEN).assertIsDisplayed()
@@ -516,7 +532,7 @@ class RecipeDetailE2ETest {
                     RecipeDetailScreen(
                         uiState = state,
                         onBack = onBack,
-                        onStartCooking = {},
+                        onStartCooking = { _, _ -> },
                         onServingsChange = viewModel::setServings,
                     )
                 }

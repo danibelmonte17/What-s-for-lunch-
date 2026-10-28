@@ -123,13 +123,14 @@ internal fun formatQuantity(quantity: Double, locale: Locale): String =
 
 // Pantalla del Detalle de Receta (ver-detalle-de-receta): hero con foto y badges,
 // métricas 2×2, checklist de marcado local y pasos resumidos, con la CTA fija
-// «Empezar Modo Cocina» (RF-DR3 a RF-DR7). Sin reglas de negocio (D3).
+// «Empezar Modo Cocina» (RF-DR3 a RF-DR7), deshabilitada con 0 Pasos (RF-CPP5).
+// Sin reglas de negocio (D3).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailScreen(
     uiState: RecipeDetailUiState,
     onBack: () -> Unit,
-    onStartCooking: () -> Unit,
+    onStartCooking: (String, Int) -> Unit,
     modifier: Modifier = Modifier,
     onServingsChange: (Int) -> Unit = {},
     onAddMissingToShoppingList: () -> Unit = {},
@@ -173,7 +174,11 @@ fun RecipeDetailScreen(
         },
         bottomBar = {
             if (uiState is RecipeDetailUiState.Detail) {
-                StartCookingBar(onStartCooking = onStartCooking)
+                // RF-CPP5 (D3): con 0 Pasos la CTA está deshabilitada.
+                StartCookingBar(
+                    enabled = uiState.recipe.steps.isNotEmpty(),
+                    onStartCooking = { onStartCooking(uiState.recipe.id, uiState.servings) },
+                )
             }
         },
     ) { innerPadding ->
@@ -792,7 +797,8 @@ private fun IngredientRow(
 }
 
 // «cantidad unidad nombre» (D7: formato del idioma activo sin ceros sobrantes).
-private fun ingredientLine(ingredient: RecipeIngredient, locale: Locale): String {
+// Compartido con el Modo Cocina (RF-CPP2, mismo formato que el Detalle).
+internal fun ingredientLine(ingredient: RecipeIngredient, locale: Locale): String {
     val quantity = if (ingredient.quantity > 0.0) {
         formatQuantity(ingredient.quantity, locale)
     } else {
@@ -912,17 +918,24 @@ private fun StepsSummary(recipe: Recipe) {
     }
 }
 
-// RF-DR7 y D4: CTA destacada fija sobre la superficie, siempre habilitada, que
-// navega al destino provisional de Modo Cocina.
+// RF-DR7, RF-CPP5 y D3: CTA destacada fija sobre la superficie que abre el Modo
+// Cocina real con el id de la Receta y las Raciones actuales; queda deshabilitada
+// con 0 Pasos (el Modo Cocina no existe para esa Receta).
 @Composable
-private fun StartCookingBar(onStartCooking: () -> Unit) {
+private fun StartCookingBar(
+    enabled: Boolean,
+    onStartCooking: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
         shadowElevation = 8.dp,
+        modifier = modifier,
     ) {
         Box(modifier = Modifier.navigationBarsPadding()) {
             Button(
                 onClick = onStartCooking,
+                enabled = enabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm)

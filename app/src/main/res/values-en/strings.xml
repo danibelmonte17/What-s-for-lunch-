@@ -30,6 +30,14 @@
     <string name="recipe_detail_start_cooking">Start Cooking Mode</string>
     <string name="recipe_detail_not_found">Recipe not found</string>
     <string name="cook_mode_title">Cooking Mode</string>
+    <string name="cook_mode_step_progress">Step %1$d of %2$d</string>
+    <string name="cook_mode_step_label">STEP %1$d</string>
+    <string name="cook_mode_step_timer_hint">⏱ %1$d min</string>
+    <string name="cook_mode_ingredients_title">Ingredients for this step</string>
+    <string name="cook_mode_ingredients_empty">No ingredients</string>
+    <string name="cook_mode_previous_step">Previous step</string>
+    <string name="cook_mode_next_step">Next</string>
+    <string name="cook_mode_finish">Finish</string>
 
     <!-- Pantry -->
     <string name="pantry_title">Pantry</string>

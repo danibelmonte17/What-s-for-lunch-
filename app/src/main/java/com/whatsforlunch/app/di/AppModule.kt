@@ -27,6 +27,7 @@ import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
+import com.whatsforlunch.app.ui.cookmode.CookModeViewModel
 import com.whatsforlunch.app.ui.pantry.PantryViewModel
 import com.whatsforlunch.app.ui.recommendations.RecommendationsViewModel
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
@@ -110,6 +111,15 @@ val appModule = module {
             pantryRepository = get(),
             shoppingListRepository = get(),
             recipeId = parameters.get(),
+        )
+    }
+    // Modo Cocina (RD22): el id y las Raciones heredadas llegan por ruta
+    // (cook_mode/{recipeId}?servings={servings}, RF-CPP4); null = Raciones base.
+    viewModel { parameters ->
+        CookModeViewModel(
+            recipeRepository = get(),
+            recipeId = parameters.get(),
+            servings = parameters.getOrNull(),
         )
     }
 }
