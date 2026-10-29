@@ -27,6 +27,12 @@ fun CookModeRoute(
         onNext = viewModel::next,
         onPrevious = viewModel::previous,
         onFinish = onFinish,
+        onTimerStart = viewModel::onTimerStart,
+        onTimerPause = viewModel::onTimerPause,
+        onTimerResume = viewModel::onTimerResume,
+        onTimerReset = viewModel::onTimerReset,
+        onTimerAddMinute = viewModel::onTimerAddMinute,
+        onTimerStop = viewModel::onTimerStop,
         modifier = modifier,
     )
 }

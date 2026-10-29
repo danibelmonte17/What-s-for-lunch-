@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,11 +42,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.domain.cookmode.StepTimerPhase
+import com.whatsforlunch.app.domain.cookmode.StepTimerState
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.ui.recipedetail.ingredientLine
 import com.whatsforlunch.app.ui.theme.WarmRadius
@@ -57,7 +63,16 @@ object CookModeTestTags {
     const val PROGRESS_BAR = "cook_mode_progress_bar"
     const val STEP_LABEL = "cook_mode_step_label"
     const val STEP_TEXT = "cook_mode_step_text"
-    const val STEP_TIMER = "cook_mode_step_timer"
+    const val TIMER = "cook_mode_timer"
+    const val TIMER_CLOCK = "cook_mode_timer_clock"
+    const val TIMER_META = "cook_mode_timer_meta"
+    const val TIMER_STATUS = "cook_mode_timer_status"
+    const val TIMER_START = "cook_mode_timer_start"
+    const val TIMER_PAUSE = "cook_mode_timer_pause"
+    const val TIMER_RESUME = "cook_mode_timer_resume"
+    const val TIMER_RESET = "cook_mode_timer_reset"
+    const val TIMER_ADD_MINUTE = "cook_mode_timer_add_minute"
+    const val TIMER_STOP = "cook_mode_timer_stop"
     const val INGREDIENTS = "cook_mode_ingredients"
     const val INGREDIENTS_TOGGLE = "cook_mode_ingredients_toggle"
     const val INGREDIENTS_EMPTY = "cook_mode_ingredients_empty"
@@ -72,11 +87,12 @@ private val CardShape = RoundedCornerShape(WarmRadius.md)
 
 // Pantalla «Modo Cocina» (RF-CPP1 a RF-CPP4, RD22): guía paso a paso con alto
 // contraste y tipografía grande (cuerpo ≥ 18 px, legible a 1,5 m), barra de avance
-// «Paso X de Y», tarjeta del Paso activo con el hint pasivo «⏱ N min» (D6) y el
-// drawer colapsable «Ingredientes para este paso» de solo lectura (D5). El dock
-// inferior navega con «Paso Anterior»/«Siguiente» y, en el último Paso, «Terminar»
-// vuelve al Detalle (D2). Sin reglas de negocio (D9): las filas del drawer las
-// calcula `CookModeRules`.
+// «Paso X de Y», tarjeta del Paso activo, widget del temporizador del Paso
+// (RF-GTP1, RD23) y el drawer colapsable «Ingredientes para este paso» de solo
+// lectura (D5). El dock inferior navega con «Paso Anterior»/«Siguiente» y, en el
+// último Paso, «Terminar» vuelve al Detalle (D2). La pantalla se mantiene
+// encendida mientras el Modo Cocina está visible (D9). Sin reglas de negocio (D9):
+// las filas del drawer las calcula `CookModeRules` y el temporizador `StepTimerRules`.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CookModeScreen(
@@ -85,8 +101,21 @@ fun CookModeScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     onFinish: () -> Unit,
+    onTimerStart: () -> Unit,
+    onTimerPause: () -> Unit,
+    onTimerResume: () -> Unit,
+    onTimerReset: () -> Unit,
+    onTimerAddMinute: () -> Unit,
+    onTimerStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // D9: con el Modo Cocina visible la pantalla no se apaga (la cuenta debe ser
+    // legible a distancia); al salir se restaura el comportamiento del sistema.
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
     Scaffold(
         modifier = modifier.testTag(CookModeTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
@@ -138,6 +167,12 @@ fun CookModeScreen(
 
             is CookModeUiState.Cooking -> CookingContent(
                 state = uiState,
+                onTimerStart = onTimerStart,
+                onTimerPause = onTimerPause,
+                onTimerResume = onTimerResume,
+                onTimerReset = onTimerReset,
+                onTimerAddMinute = onTimerAddMinute,
+                onTimerStop = onTimerStop,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -177,6 +212,12 @@ private fun NotFoundContent(onBack: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun CookingContent(
     state: CookModeUiState.Cooking,
+    onTimerStart: () -> Unit,
+    onTimerPause: () -> Unit,
+    onTimerResume: () -> Unit,
+    onTimerReset: () -> Unit,
+    onTimerAddMinute: () -> Unit,
+    onTimerStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val step = state.recipe.steps[state.stepIndex]
@@ -195,8 +236,18 @@ private fun CookingContent(
         StepCard(
             stepNumber = state.stepIndex + 1,
             text = step.text,
-            timerMinutes = step.timerMinutes,
         )
+        state.timer?.let { timer ->
+            StepTimerCard(
+                timer = timer,
+                onStart = onTimerStart,
+                onPause = onTimerPause,
+                onResume = onTimerResume,
+                onReset = onTimerReset,
+                onAddMinute = onTimerAddMinute,
+                onStop = onTimerStop,
+            )
+        }
         StepIngredientsDrawer(rows = state.ingredientRows)
         Spacer(modifier = Modifier.height(WarmSpacing.md))
     }
@@ -224,14 +275,13 @@ private fun StepProgress(stepIndex: Int, totalSteps: Int, modifier: Modifier = M
     }
 }
 
-// RF-CPP1 y RF-CPP6: tarjeta del Paso activo con rótulo «PASO X», texto en
-// tipografía grande (≥ 18 px) y el hint pasivo «⏱ N min» si el Paso tiene
-// temporizador (D6): sin cuenta atrás, alarma ni controles de tiempo.
+// RF-CPP1: tarjeta del Paso activo con rótulo «PASO X» y su texto en tipografía
+// grande (≥ 18 px). El temporizador del Paso ya no es un hint pasivo (D5): vive en
+// su propio widget `StepTimerCard` (RF-GTP1).
 @Composable
 private fun StepCard(
     stepNumber: Int,
     text: String,
-    timerMinutes: Int?,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -258,18 +308,236 @@ private fun StepCard(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.testTag(CookModeTestTags.STEP_TEXT),
             )
-            timerMinutes?.let { minutes ->
+        }
+    }
+}
+
+// RF-GTP1 a RF-GTP4 (RD23): widget del temporizador del Paso activo con anillo de
+// progreso (restante / meta vigente), reloj digital mm:ss, línea «Meta: N min»,
+// píldora de estado y sus controles por fase (D2). La composición sigue al
+// prototipo `chefencasa_modo_cocina_paso_a_paso` (P16) y mandan los tokens (P17):
+// los temporizadores usan el tertiary ámbar (DESIGN.md) y targets ≥ 48 dp. Sin
+// reglas de negocio (P25): las transiciones viven en `StepTimerRules`.
+@Composable
+private fun StepTimerCard(
+    timer: StepTimerState,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onReset: () -> Unit,
+    onAddMinute: () -> Unit,
+    onStop: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = CardShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        modifier = modifier
+            .fillMaxWidth()
+            .warmShadow(shape = CardShape)
+            .testTag(CookModeTestTags.TIMER),
+    ) {
+        Column(
+            modifier = Modifier.padding(WarmSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = stringResource(R.string.cook_mode_step_timer_hint, minutes),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.testTag(CookModeTestTags.STEP_TIMER),
+                    text = stringResource(R.string.cook_mode_timer_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.tertiary,
                 )
+                TimerStatusPill(phase = timer.phase)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = WarmSpacing.sm),
+                contentAlignment = Alignment.Center,
+            ) {
+                val progress = if (timer.totalSeconds == 0) {
+                    0f
+                } else {
+                    timer.remainingSeconds.toFloat() / timer.totalSeconds
+                }
+                CircularProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.size(112.dp),
+                    color = MaterialTheme.colorScheme.tertiary,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    strokeWidth = 8.dp,
+                )
+                Text(
+                    text = timerClock(timer.remainingSeconds),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.testTag(CookModeTestTags.TIMER_CLOCK),
+                )
+            }
+            Text(
+                text = stringResource(R.string.cook_mode_timer_meta, timer.totalSeconds / SECONDS_PER_MINUTE),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.testTag(CookModeTestTags.TIMER_META),
+            )
+            TimerControls(
+                phase = timer.phase,
+                onStart = onStart,
+                onPause = onPause,
+                onResume = onResume,
+                onReset = onReset,
+                onAddMinute = onAddMinute,
+                onStop = onStop,
+            )
+        }
+    }
+}
+
+// Píldora de estado del temporizador (como el prototipo: texto en cápsula).
+@Composable
+private fun TimerStatusPill(phase: StepTimerPhase, modifier: Modifier = Modifier) {
+    val label = when (phase) {
+        StepTimerPhase.READY -> R.string.cook_mode_timer_status_ready
+        StepTimerPhase.RUNNING -> R.string.cook_mode_timer_status_running
+        StepTimerPhase.PAUSED -> R.string.cook_mode_timer_status_paused
+        StepTimerPhase.FINISHED -> R.string.cook_mode_timer_status_finished
+    }
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(label),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier
+                .padding(horizontal = WarmSpacing.sm, vertical = WarmSpacing.xs)
+                .testTag(CookModeTestTags.TIMER_STATUS),
+        )
+    }
+}
+
+// Relleno horizontal reducido (los targets siguen en ≥ 48 dp): con tres botones
+// por fila en pantallas de ~426 dp, «Reanudar» (la etiqueta más larga) cabe en
+// una sola línea y ningún control parte su texto.
+private val TimerButtonPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+
+// Controles por fase (D2): «Iniciar»/«Pausar»/«Reanudar» como primario según el
+// estado, «Reiniciar» y «+1 min» siempre visibles (targets ≥ 48 dp) y, en
+// «Tiempo cumplido», «+1 min» (primario) y «Detener» (RF-GTP3/RF-GTP4).
+@Composable
+private fun TimerControls(
+    phase: StepTimerPhase,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onReset: () -> Unit,
+    onAddMinute: () -> Unit,
+    onStop: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+    ) {
+        when (phase) {
+            StepTimerPhase.READY -> Button(
+                onClick = onStart,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_START),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_start))
+            }
+
+            StepTimerPhase.RUNNING -> Button(
+                onClick = onPause,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_PAUSE),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_pause))
+            }
+
+            StepTimerPhase.PAUSED -> Button(
+                onClick = onResume,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_RESUME),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_resume))
+            }
+
+            StepTimerPhase.FINISHED -> Button(
+                onClick = onAddMinute,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_ADD_MINUTE),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_add_minute))
+            }
+        }
+        if (phase == StepTimerPhase.FINISHED) {
+            OutlinedButton(
+                onClick = onStop,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_STOP),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_stop))
+            }
+        } else {
+            OutlinedButton(
+                onClick = onReset,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_RESET),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_reset))
+            }
+            OutlinedButton(
+                onClick = onAddMinute,
+                contentPadding = TimerButtonPadding,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .weight(1f)
+                    .testTag(CookModeTestTags.TIMER_ADD_MINUTE),
+            ) {
+                Text(text = stringResource(R.string.cook_mode_timer_add_minute))
             }
         }
     }
 }
+
+// Reloj digital del temporizador en mm:ss (mm sin tope: «120:00» con meta ≥ 60 min).
+private fun timerClock(totalSeconds: Int): String {
+    val minutes = totalSeconds / SECONDS_PER_MINUTE
+    val seconds = totalSeconds % SECONDS_PER_MINUTE
+    return "%02d:%02d".format(minutes, seconds)
+}
+
+private const val SECONDS_PER_MINUTE = 60
 
 // RF-CPP2: drawer colapsable «Ingredientes para este paso» con los Ingredientes
 // vinculados del Paso activo (RD21) y su cantidad escalada (RD03), en formato del
