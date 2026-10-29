@@ -16,6 +16,8 @@ import com.whatsforlunch.app.data.ai.PriorityAiKeyProvider
 import com.whatsforlunch.app.data.ai.PromptSource
 import com.whatsforlunch.app.data.ai.RecipeSuggester
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
+import com.whatsforlunch.app.data.audio.SystemRingtoneTimerAlarm
+import com.whatsforlunch.app.data.audio.TimerAlarm
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.repository.RoomPantryRepository
@@ -94,6 +96,8 @@ val appModule = module {
     }
     // Chips del Escaneo sin guardar compartidos entre el Escáner y Sugerencias (D3).
     single { ScanDraftHolder() }
+    // Alarma del temporizador del Paso: tono de alarma del sistema en bucle (D4/D8).
+    single<TimerAlarm> { SystemRingtoneTimerAlarm(androidContext()) }
 
     viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get(), get()) }
@@ -115,9 +119,11 @@ val appModule = module {
     }
     // Modo Cocina (RD22): el id y las Raciones heredadas llegan por ruta
     // (cook_mode/{recipeId}?servings={servings}, RF-CPP4); null = Raciones base.
+    // timerAlarm suena al llegar el temporizador del Paso a cero (RF-GTP4, RD23).
     viewModel { parameters ->
         CookModeViewModel(
             recipeRepository = get(),
+            timerAlarm = get(),
             recipeId = parameters.get(),
             servings = parameters.getOrNull(),
         )

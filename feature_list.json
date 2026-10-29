@@ -662,9 +662,14 @@
         "E2E: lanzar el temporizador de un paso corto y comprobar que la alarma suena al llegar a cero",
         "E2E: ampliar un minuto y comprobar que la cuenta atrás se extiende"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/gestionar-temporizador-de-paso/ (informe + 2 capturas es 1280×2856: widget «En marcha» con 04:59 y «¡Tiempo cumplido!» con 00:00 y «+1 min»/«Detener»; alarma verificada en tres niveles: unit con doble, UI en la E2E y tono real del sistema con usage=USAGE_ALARM en dumpsys audio, recapturado sobre el build final en audio-s1-2026-10-29.txt)",
+        "PROGRESS.md: gates lint 0 errores/49 warnings, unit 39 suites/270 tests/0 fallos, paridad es/en 316 claves, E2E focalizada 8/8 (S1-S8; verify 1 = S1, verify 2 = S2), CookModeE2ETest 7/7 y batería 203 tests (201 ejecutados + 2 omitidos por Assume) con 3 flakes del AVD de PantryManagementE2ETest re-ejecutados 5/5 verde",
+        "docs/validations/gestionar-temporizador-de-paso.md (2026-10-29, feature-validator con agente, sesión independiente): accept; tier barato re-ejecutado y reproducido (lint 0 errores/49 warnings sin incidencias en cookmode/audio, unit 39/270/0 fallos, assembleDebug y compileDebugAndroidTest OK, paridad 316/316; init.ps1 exit 1 solo por abortar en monkey/stderr con la app en primer plano), tier caro inspeccionado y coherente (E2E 8/8 y 7/7, batería 203 = 201 + 2, re-run de Pantry 5/5 corroborado, PNG 1280×2856 y audio USAGE_ALARM); sin hallazgos Critical/High/Medium ni de seguridad, 5 Low documentales L1-L5 corregidos; incluye el arreglo de «Reanudar» partido en dos líneas",
+        "Revalidación acotada (2026-10-29, feature-validator con agente): accept se mantiene (accepted); L1-L5 cerrados (timerAlarm segundo tras recipeRepository, StepTimerTest→stopAlarm, XML de batería sobrescrito declarado con 203 = 201 + 2, audio del build final en audio-s1-2026-10-29.txt + e2e-s1-audio-2026-10-29.xml 1/1 con USAGE_ALARM/event:started coherente con el pase, exit 1 de init.ps1 atribuido al aborto en monkey/stderr); unit re-ejecutado 39 suites/270 tests/0 fallos, lint 49/0 y paridad 316/316 sin drift, sin cambios de código (app/src ≤ 10:53); 3 notas Low O1-O3 pulidas sin impacto"
+      ],
       "notes": "",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "controlar-cocina-con-voz",

@@ -16,7 +16,7 @@ La CTA del Detalle «Empezar Modo Cocina» pasa a exigir **≥ 1 Paso** (deshabi
 
 ## Non-Goals
 
-- **Temporizador** (cuenta atrás, alarma, `+1 min`, temporizador circular): es `gestionar-temporizador-de-paso`. Aquí solo el dato pasivo «⏱ N min» (D6).
+- **Temporizador** (cuenta atrás, alarma, `+1 min`, temporizador circular): es `gestionar-temporizador-de-paso`. Aquí solo el dato pasivo «⏱ N min» (D6), **ya sustituido por el widget del temporizador de esa feature** (D5 de `gestionar-temporizador-de-paso`; cambio de comportamiento aceptado).
 - **Voz** (locución de pasos, «Escuchar», comandos, micrófono): es `controlar-cocina-con-voz` (`⚠ S04`). Sin `SpeechRecognizer`/`TextToSpeech` ni permisos nuevos.
 - **Editar Recetas ni vínculos** (RD21): el Modo Cocina solo lee; las asignaciones se hacen en el formulario.
 - **Cambios de Room, validaciones (`RecipeValidation`) o prompts de IA**: ninguno; Room sigue en **v4**.
@@ -41,7 +41,7 @@ so I can seguir la receta a distancia sin perderme ni tener que leer el móvil d
 - **RF-CPP3**: navegación por Pasos con «Paso Anterior» (deshabilitado en el Paso 1) y botón primario «Siguiente»; en el **último Paso** el botón pasa a **«Terminar»** y vuelve al Detalle (D2). El Paso activo vive en memoria: sobrevive a la rotación y se reinicia al reabrir el Modo Cocina (D7).
 - **RF-CPP4**: **herencia de Raciones**: el Modo Cocina recibe las Raciones elegidas en el Detalle y muestra las cantidades escaladas igual que su checklist (RD03, mismo redondeo); sin stepper (D8). Sin argumento de Raciones, se usan las base.
 - **RF-CPP5**: la CTA «Empezar Modo Cocina» del Detalle queda **deshabilitada con 0 Pasos** (D3; cambia RF-DR7 de `ver-detalle-de-receta`, que era siempre habilitada) y con ≥ 1 Paso abre el Modo Cocina real con el id de la Receta y las Raciones actuales.
-- **RF-CPP6**: si el Paso tiene `timerMinutes`, muestra el hint pasivo **«⏱ N min»** (D6); sin cuenta atrás, alarma ni controles de tiempo.
+- **RF-CPP6**: si el Paso tiene `timerMinutes`, muestra el hint pasivo **«⏱ N min»** (D6); sin cuenta atrás, alarma ni controles de tiempo. **Cambiada por `gestionar-temporizador-de-paso`** (D5 de esa spec): el hint quedó sustituido por su widget de temporizador con cuenta atrás y alarma.
 
 ## Acceptance Scenarios
 
@@ -171,7 +171,7 @@ Then los textos del Modo Cocina, el drawer y los botones cambian con el idioma (
 - **D3** (usuario 2026-10-27): la CTA «Empezar Modo Cocina» se **deshabilita con 0 Pasos**; cambia el comportamiento aceptado de `ver-detalle-de-receta` (RF-DR7, D4) y se adaptan sus E2E.
 - **D4** (usuario 2026-10-27; matizado 2026-10-28): el Modo Cocina **hereda las Raciones** elegidas en el Detalle (cantidades escaladas, RD03); un Paso sin vínculos muestra **«Sin ingredientes»** (sin fallback a todos los ingredientes).
 - **D5** (usuario 2026-10-28): el drawer es **lista de solo lectura** (nombre + cantidad escalada), sin casillas ni contador «N de M».
-- **D6** (usuario 2026-10-28): el Paso muestra su temporizador solo como **dato pasivo «⏱ N min»**; cuenta atrás, alarma y `+1 min` son de `gestionar-temporizador-de-paso`.
+- **D6** (usuario 2026-10-28): el Paso muestra su temporizador solo como **dato pasivo «⏱ N min»**; cuenta atrás, alarma y `+1 min` son de `gestionar-temporizador-de-paso`. *(Sustituido después por el widget de `gestionar-temporizador-de-paso`, D5 de esa spec.)*
 - **D7** (derivada): el Paso activo vive **solo en memoria** (sobrevive a la rotación, se reinicia al reabrir); salir con «Volver»/atrás no pide confirmación.
 - **D8** (derivada): sin stepper de Raciones en el Modo Cocina; para cambiar Raciones se vuelve al Detalle.
 - **D9** (derivada/técnica): la regla de filas del Paso es pura en `domain/` (`CookModeRules`); la UI no contiene reglas de negocio (P25).

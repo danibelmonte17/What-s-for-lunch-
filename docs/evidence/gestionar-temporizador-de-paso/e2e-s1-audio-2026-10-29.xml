@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.CookModeTimerE2ETest" tests="1" failures="0" errors="0" skipped="0" time="13.855" timestamp="2026-10-29T10:35:02" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="alarmRingsWhenTheCountdownReachesZero" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="9.44" />
+</testsuite>

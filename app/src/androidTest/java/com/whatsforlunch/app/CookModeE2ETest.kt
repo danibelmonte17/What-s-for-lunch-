@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.audio.SystemRingtoneTimerAlarm
 import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
@@ -100,7 +101,8 @@ class CookModeE2ETest {
 
     // S2 (verify 2): dado el Modo Cocina en el Paso 1 de 2, «Siguiente» actualiza la
     // barra de avance a «Paso 2 de 2» y el botón primario pasa a «Terminar» (D2).
-    // También cubre el hint pasivo del temporizador (D6) y el drawer colapsable.
+    // También cubre el widget del temporizador del Paso (RF-GTP1, D5) y el drawer
+    // colapsable.
     @Test
     fun advancingStepUpdatesProgressAndShowsFinishButton() {
         val recipes = InMemoryRecipeRepository()
@@ -123,9 +125,11 @@ class CookModeE2ETest {
 
         composeRule.onNodeWithText("Paso 2 de 2").assertIsDisplayed()
         composeRule.onNodeWithTag(CookModeTestTags.PREVIOUS_STEP).assertIsEnabled()
-        // RF-CPP6 (D6): el temporizador del Paso es solo un dato pasivo «⏱ N min».
-        composeRule.onNodeWithTag(CookModeTestTags.STEP_TIMER).assertIsDisplayed()
-        composeRule.onNodeWithText("⏱ 5 min").assertIsDisplayed()
+        // RF-GTP1 (D5): el hint pasivo «⏱ N min» es ahora el widget del temporizador,
+        // «Listo» con su meta y arranque manual (D3).
+        composeRule.onNodeWithTag(CookModeTestTags.TIMER).assertIsDisplayed()
+        composeRule.onNodeWithTag(CookModeTestTags.TIMER_CLOCK).assertTextEquals("05:00")
+        composeRule.onNodeWithText("Meta: 5 min").assertIsDisplayed()
         composeRule.onNodeWithText("Terminar").assertIsDisplayed()
         composeRule.onAllNodesWithText("Siguiente").assertCountEquals(0)
     }
@@ -300,8 +304,9 @@ class CookModeE2ETest {
     ) {
         val context = contextFor(locale)
         // Fuera del lambda de composición: lint prohíbe construir ViewModels dentro
-        // de un composable (patrón de RecipeDetailE2ETest).
-        val viewModel = CookModeViewModel(recipes, recipeId, servings)
+        // de un composable (patrón de RecipeDetailE2ETest). La alarma real (tono del
+        // sistema) solo suena si el temporizador llega a cero (RF-GTP4).
+        val viewModel = CookModeViewModel(recipes, SystemRingtoneTimerAlarm(context), recipeId, servings)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(
@@ -316,6 +321,12 @@ class CookModeE2ETest {
                         onNext = viewModel::next,
                         onPrevious = viewModel::previous,
                         onFinish = onFinish,
+                        onTimerStart = viewModel::onTimerStart,
+                        onTimerPause = viewModel::onTimerPause,
+                        onTimerResume = viewModel::onTimerResume,
+                        onTimerReset = viewModel::onTimerReset,
+                        onTimerAddMinute = viewModel::onTimerAddMinute,
+                        onTimerStop = viewModel::onTimerStop,
                     )
                 }
             }
