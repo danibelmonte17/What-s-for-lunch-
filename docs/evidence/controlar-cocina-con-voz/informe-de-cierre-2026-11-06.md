@@ -6,7 +6,7 @@ Cierra los hallazgos F6–F9 (+ F4) de `docs/validations/controlar-cocina-con-vo
 
 | Hallazgo | Estado | Resultado |
 |---|---|---|
-| F6 (High) batería E2E sin ejecutar + cifras infladas | cerrado | Batería completa **213 tests ejecutados** en el V2124 + focalizada 25/25 + reejecución aislada del flaky; XML/HTML conservados en `docs/evidence/controlar-cocina-con-voz/` |
+| F6 (High) batería E2E sin ejecutar + cifras infladas | cerrado | Batería completa **213 tests ejecutados** (208 verdes + 3 fallos + 2 omitidos) en el V2124 + focalizada 25/25 + reejecución aislada del flaky; XML/HTML conservados en `docs/evidence/controlar-cocina-con-voz/` |
 | F7 (Medium) evidencia de cierre incompleta | cerrado | Este informe + checklist manual con resultados (abajo) + 2 capturas es + salidas lint/unit/assemble en `gates-2026-11-06/` |
 | F8 (Medium) spec desincronizada con el contrato F2 | cerrado | Spec sincronizada (`VoiceSourceEvent.LanguageUnavailable`, `VoiceNotice.LANGUAGE_NOT_DOWNLOADED`, ERROR 13 vs 3 fallos, strings, Casos límite). Nota: el sub-item «voz en pausa» no corresponde al texto actual (ver §5) |
 | F9 (Low) iconos deprecados | cerrado parcialmente + documentado | `VolumeUp` → `Icons.AutoMirrored.Outlined.VolumeUp` (deprecado, verificado con `javap`). `Mic` **no** está deprecado y `AutoMirrored.Outlined.Mic` **no existe** en esta versión de material-icons (ver §4) |
@@ -17,11 +17,11 @@ Cierra los hallazgos F6–F9 (+ F4) de `docs/validations/controlar-cocina-con-vo
 Ejecutadas sobre el V2124 el 2026-11-06 tras aplicar F8/F9/F4 (change set actual):
 
 - **Focalizada voz 25/25** (1 m 14 s): `CookModeVoiceE2ETest` 10/10 + `CookModeE2ETest` 7/7 + `CookModeTimerE2ETest` 8/8. Informes XML/HTML con nombres de test en `e2e-focused-2026-11-06/`.
-- **Batería completa 213 tests**: 210 en verde, **3 fallos todos en `PantryManagementE2ETest`** (2 × «Failed to inject touch input» + 1 × `ComposeTimeoutException`) y **2 omitidos** de `SettingsE2ETest` (`Assume`, conocidos). Informes en `e2e-full-2026-11-06/`.
+- **Batería completa 213 tests**: **208 verdes**, **3 fallos todos en `PantryManagementE2ETest`** (2 × «Failed to inject touch input» + 1 × `ComposeTimeoutException`) y **2 omitidos** de `SettingsE2ETest` (`Assume`, conocidos). Informes en `e2e-full-2026-11-06/`.
 - **Reejecución aislada de `PantryManagementE2ETest`: 5/5 verde (48 s)** — informes en `e2e-pantry-rerun-2026-11-06/`. Clasificación: **flaky del entorno, no regresión** (mismas firmas que en sesiones previas, ver `docs/progress-history.md`; la clase pasa en solitario y sus 3 fallos no tocan código de voz).
 - Artefactos del dispositivo (logcats, `test-result.pb`, `profiling/*.pb` con el número de serie en el nombre) **podados**; se conservan HTML por clase, `index.html`, css/js y `xml/TEST-*.xml` (verificado que no contiene identificadores del dispositivo).
 
-Cifras cuadradas (F4): 213 `@Test` es el **inventario** (24 clases); las ejecuciones previas de la voz eran focalizada 25/25 (= 10+7+8) y batería Modo Cocina 27/27 (= 7+8+12, con `RecipeDetailE2ETest` 12/12). Con esta reparación, además, la **batería completa 213 ya está ejecutada** sobre el change set.
+Cifras cuadradas (F4): 213 `@Test` es el **inventario** (26 clases de test; 24 ficheros en `androidTest`); las ejecuciones previas de la voz eran focalizada 25/25 (= 10+7+8) y batería Modo Cocina 27/27 (= 7+8+12, con `RecipeDetailE2ETest` 12/12). Con esta reparación, además, la **batería completa 213 ya está ejecutada** sobre el change set.
 
 ## 3. Checklist manual (F7) — instrumentado por adb en el V2124
 

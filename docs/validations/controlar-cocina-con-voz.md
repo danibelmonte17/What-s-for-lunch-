@@ -223,3 +223,49 @@ No tocar: semántica de comandos ni de alarma, alcance (sin parciales/fuzzy/pers
 
 - `feature_list.json`: `status` → `in_progress` con la referencia a esta validación en `evidence`.
 - Tras el repair + revalidación acotada → `accept` → `accepted`.
+
+## 10. Revalidación tras el repair brief (sesión 102d, 2026-11-06, `feature-validator` con agente): `accept`
+
+**Contexto**: revalidación acotada tras el `revise` de §9. El repair brief (F6–F9+F4) se aplicó en la sesión 102c sobre el V2124 físico (commits `1ea78b9` fix + `a651db8` docs; `353d390..HEAD`), con informe en `docs/evidence/controlar-cocina-con-voz/informe-de-cierre-2026-11-06.md`. El validador corrió en sesión independiente, sin editar ficheros.
+
+**Veredicto: `accept`** (sin Critical/High/Medium; 2 Low nuevos de wording de cifras, corregidos al persistir). Estado recomendado: `accepted`.
+
+### Checks ejecutados por el validador
+
+| Check | Método | Resultado |
+|-------|--------|-----------|
+| `lintDebug --rerun-tasks` | re-ejecutado | exit 0; 0 errores / 49 warnings (baseline; sin warnings de iconos) |
+| `testDebugUnitTest --rerun-tasks` | re-ejecutado | exit 0; 40 suites / 291 tests / 0 fallos / 0 omitidos (reproduce `unit-test-names.txt`) |
+| `assembleDebug` | re-ejecutado | BUILD SUCCESSFUL |
+| E2E focalizada 25/25 | inspeccionado (XML/HTML conservados) | `e2e-focused-2026-11-06`: `tests=25 failures=0 skipped=0`, `19:34:21`, device `V2124 - 13`; 10 `CookModeVoiceE2ETest` + 7 `CookModeE2ETest` + 8 `CookModeTimerE2ETest` |
+| E2E batería completa 213 | inspeccionado | `e2e-full-2026-11-06`: `tests=213 failures=3 errors=0 skipped=2` (19:41:14); 3 fallos solo en `PantryManagementE2ETest` (2 × «Failed to inject touch input» + 1 × `ComposeTimeoutException`), 2 omitidos `SettingsE2ETest`/`Assume` |
+| Re-ejecución del flaky | inspeccionado | `e2e-pantry-rerun-2026-11-06`: 5/5 verde (19:42:17) |
+| Checklist manual + 2 capturas | inspeccionado | informe §3 con resultados por ítem (adb); PNG con cabecera `89 50 4E 47` válida |
+| Comprobación `verification` | inspeccionado | `nextTranscriptAdvancesTheStepAndAnnouncesIt` verde en focalizada y batería + manual M5-a 3/3 |
+
+Seguridad: **sin hallazgos** (sin secretos/PII/identificadores del dispositivo en repo ni evidencia; sin audio/transcripciones persistidos; diff acotado a evidencia/docs + una línea de icono; semántica de comandos/alarma y alcance intactos: sin parciales/fuzzy/persistencia).
+
+### Cierre del repair brief (§9)
+
+- **F6 (High) — cerrado**: batería completa 213 ejecutada sobre el change set en el V2124 (2026-11-06) con XML/HTML con nombres de test conservados en `e2e-focused-`/`e2e-full-`/`e2e-pantry-rerun-2026-11-06/`; flaky `PantryManagementE2ETest` documentado y re-ejecutado aislado 5/5; «213 @Test» ya presentado como inventario, no como ejecución.
+- **F7 (Medium) — cerrado**: `informe-de-cierre-2026-11-06.md` (T0+E2E+manual) + checklist manual instrumentado por adb con resultado por ítem (M5-a 3/3, M5-b 3/3, M5-c 4/5 con fallo aislado anotado, M4 alarma `USAGE_ALARM` con TTS parado, M2 rotación/segundo plano, M1 revocación→aviso→reintento, M3 micrófono apagado al desactivar y al salir) + 2 capturas es (`voz-activa-comandos-es.png`, `voz-permiso-denegado-es.png`) + salidas de gates en `gates-2026-11-06/`.
+- **F8 (Medium) — cerrado**: spec sincronizada con el contrato F2 (`VoiceSourceEvent.LanguageUnavailable`, `VoiceNotice.LANGUAGE_NOT_DOWNLOADED`, string `cook_mode_voice_language_not_downloaded`, ERROR 13 → `LanguageUnavailable` vs 3 fallos → `Unavailable`, fila en «Casos límite», Technical Approach/strings) y verificada contra código y paridad es/en. El sub-item «voz en pausa» se confirmó **no correspondiente** al texto de la spec (ni actual ni en `353d390`); la nota del informe §4.4 es correcta.
+- **F9 (Low) — cerrado**: `VolumeUp` → `Icons.AutoMirrored.Outlined.VolumeUp` (deprecado, ground truth con `javap`); `Mic` se queda en `Icons.Outlined.Mic` (no deprecado; `AutoMirrored.Outlined.Mic` no existe entre los 138 iconos espejados) — documentado y sin warnings de lint.
+- **F4 — cerrado**: 25/25 = 10+7+8 y 27/27 = 7+8+12 con `RecipeDetailE2ETest` 12/12 etiquetado (coherentes en informe/PROGRESS/historial/`feature_list.json` y contra los XML); 213 = inventario. Residuales menores → F10/F11.
+
+### Hallazgos nuevos
+
+- **F10 (Low)** — el desglose de la batería no reconcilia: se declara «210 verdes, 3 fallos, 2 omitidos» (= 215) pero el XML conservado declara `tests=213 failures=3 skipped=2` → **208 verdes + 3 fallos + 2 omitidos = 213**. Corregido al persistir en `informe-de-cierre-2026-11-06.md` §1/§2, cabecera de `PROGRESS.md`, §102c del historial y `evidence` de `feature_list.json`.
+- **F11 (Low)** — «24 clases» es el número de ficheros `.kt` de `androidTest`, no de clases de test (el run ejecutó **26 clases**; 22 ficheros con `@Test` + fakes/soporte = 24 ficheros). Corregido al persistir a «213 `@Test` (26 clases de test; 24 ficheros en `androidTest`)» en los mismos cuatro artefactos.
+
+### Notas
+
+- **N6**: capturas 1080×2408 (nativa del V2124) frente a los «1280×2856» de la spec (figura del AVD); cabecera válida y estados correctos. La resolución de la spec es entorno-dependiente; candidata a suavizarse en un mantenimiento futuro, sin rehacer evidencia.
+- **N7**: «1 m 14 s»/«48 s» del informe son wall-clock de comando (con instalación); los `time` del XML son 45,85 s/28,83 s de ejecución. Relojes distintos, no contradicción.
+- **N8**: los logs de `gates-2026-11-06/` están en UTF-16 (git los trata como binarios); legibles y correctos.
+- **N9**: los XML/HTML conservados no contienen el número de serie ni identificadores del dispositivo (solo `device = "V2124 - 13"`); artefactos con serie ya podados por el implementador.
+
+### Estado
+
+- `feature_list.json`: `status` → `accepted`, con F10/F11 corregidos en el wording de `evidence` al persistir (igual que PROGRESS/historial/informe de cierre).
+- Feature cerrada: el contrato de voz (comandos exactos, avisos, permiso diferido, sin persistencia, prioridad de alarma) queda validado con T0 físico + E2E conservada + manual instrumentado.
