@@ -22,7 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.VolumeUp
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -348,7 +348,7 @@ private fun VoiceControls(
                     .testTag(CookModeTestTags.VOICE_LISTEN),
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.VolumeUp,
+                    imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
                     contentDescription = null,
                 )
                 Spacer(modifier = Modifier.width(WarmSpacing.xs))
