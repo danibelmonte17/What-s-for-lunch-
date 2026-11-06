@@ -138,6 +138,11 @@ Then la petición al cliente de IA lleva `language = "en"` y el locale de voz de
 
 - Ninguno bloqueante. La traducción literal de los textos nuevos al inglés la fija el implementer siguiendo el glosario de `CONTEXT.md` y la revisa el validador (`RK04`, mismo criterio que features previas).
 
+### Hallazgos de implementación (2026-11-06)
+
+- **El proveedor de contexto localizado vive en `MainActivity`, no dentro de `WhatsForLunchApp`**: los E2E de localización montan `WhatsForLunchApp()` con su propio `CompositionLocalProvider` (sin el host), de modo que el mecanismo de producción se implementa como `ui/locale/AppLocaleHost.kt`, composable público que envuelve `WhatsForLunchApp()` en `MainActivity` (decisión menor del implementer prevista más abajo). `AppLocaleHost` reprovee `LocalConfiguration` y `LocalResources` (no `LocalContext`, que sigue siendo el Activity real por `PhotoAcquirer`).
+- **RF-IDI4 exigía tocar un consumidor**: `AndroidStepSpeaker` resolvía los textos de la locución («Paso N. {texto}», «Temporizador de N minutos») con el contexto inyectado, que sigue el idioma del sistema. Ahora los resuelve con un contexto localizado con el locale de voz preparado, sin tocar `StepSpeaker` ni `VoiceCommandParser`.
+
 ## Expected File Changes
 
 **Nuevos**
@@ -145,18 +150,20 @@ Then la petición al cliente de IA lleva `language = "en"` y el locale de voz de
 - `app/src/main/java/com/whatsforlunch/app/data/settings/LanguagePreferenceStore.kt` (puerto)
 - `app/src/main/java/com/whatsforlunch/app/data/settings/SharedPrefsLanguagePreferenceStore.kt`
 - `app/src/main/java/com/whatsforlunch/app/data/settings/AppLocaleController.kt`
+- `app/src/main/java/com/whatsforlunch/app/ui/locale/AppLocaleHost.kt` (proveedor de contexto localizado en la raíz de Compose)
 - `app/src/test/java/com/whatsforlunch/app/domain/model/AppLanguageTest.kt`, `app/src/test/java/com/whatsforlunch/app/data/settings/AppLocaleControllerTest.kt`
 - `app/src/androidTest/java/com/whatsforlunch/app/LanguageSwitchE2ETest.kt` (S1-S5)
 
 **Modificados**
-- `app/src/main/java/com/whatsforlunch/app/ui/nav/AppNavHost.kt` (proveedor de contexto localizado en `WhatsForLunchApp`)
+- `app/src/main/java/com/whatsforlunch/app/MainActivity.kt` (envuelve `WhatsForLunchApp()` con `AppLocaleHost`; en lugar de `ui/nav/AppNavHost.kt`, por el hallazgo de los E2E de localización)
 - `app/src/main/java/com/whatsforlunch/app/ui/settings/SettingsScreen.kt`, `SettingsViewModel.kt`, `SettingsRoute.kt` (sección «Idioma»)
+- `app/src/main/java/com/whatsforlunch/app/data/voice/AndroidStepSpeaker.kt` (hallazgo RF-IDI4: textos de la locución con el locale de voz)
 - `app/src/main/java/com/whatsforlunch/app/di/AppModule.kt` (`single` del store y del controller)
 - `app/src/main/res/values/strings.xml` y `app/src/main/res/values-en/strings.xml` (claves `settings_language_*`, paridad es/en)
 - `app/src/test/java/com/whatsforlunch/app/ui/settings/SettingsViewModelTest.kt` (estado del idioma + `onLanguageSelected`)
-- `app/src/androidTest/java/com/whatsforlunch/app/SettingsE2ETest.kt` solo si la nueva tarjeta obliga a ajustar aserciones existentes (no debería)
+- `app/src/androidTest/java/com/whatsforlunch/app/SettingsE2ETest.kt` sin cambios (la tarjeta nueva no obliga a ajustar aserciones)
 
-`data/local/` y Room **sin cambios** (sin migración); `MainActivity.kt` sin cambios salvo que el provider quede mejor en `onCreate` (decisión menor del implementer); prompts en `assets/` **sin cambios**.
+`data/local/` y Room **sin cambios** (sin migración); prompts en `assets/` **sin cambios**.
 
 ## Visual Design Impact
 
@@ -190,7 +197,7 @@ Cada fase deja `lint` y `unit` en verde antes de pasar a la siguiente.
 
 - **T1**: `AppLanguage.kt` (enum, `locale`, `fromSystem`) + `AppLanguageTest`.
 - **T2**: `LanguagePreferenceStore` + `SharedPrefsLanguagePreferenceStore` + `AppLocaleController` + `AppLocaleControllerTest` (con store InMemory: inicial por defecto del sistema, `select` persiste y emite).
-- **T3**: `WhatsForLunchApp` envuelve el `NavHost` con `LocalContext`/`LocalConfiguration` localizados según el estado del controller (registro Koin en `AppModule`).
+- **T3**: el idioma activo se aplica en la raíz de Compose con `AppLocaleHost` (`LocalConfiguration`/`LocalResources` localizados según el estado del controller; registro Koin en `AppModule` y cableado en `MainActivity`, por el hallazgo de los E2E de localización).
 - **T4**: `SettingsViewModel` (`language` en el `UiState`, `onLanguageSelected`) + `SettingsScreen` (tarjeta «Idioma», dos opciones ≥ 48 dp, selección marcada, testTags nuevos) + `SettingsViewModelTest`.
 - **T5**: textos `settings_language_*` en `values/` y `values-en/` con paridad (título de sección; las opciones son endónimos con la misma clave en ambos).
 - **T6**: `LanguageSwitchE2ETest` S1–S5 (S1 = verify 1; S5 con clientes simulados que capturan `language` y locale de voz) sin IA ni llamadas de pago.
