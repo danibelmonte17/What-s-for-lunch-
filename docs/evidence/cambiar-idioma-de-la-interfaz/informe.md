@@ -11,7 +11,7 @@
 |---|---|---|
 | Arranque | `init.ps1` (con `ANDROID_SERIAL=emulator-5554`) | App instalada y en ejecución (`pidof` 30355, `topResumedActivity` = `MainActivity`). El script **sale 1** por el falso fallo conocido de `adb shell monkey`/stderr en PowerShell (documentado en `PROGRESS.md`); verificado aparte, no bloqueante. |
 | Lint | `lint.ps1` / `lintDebug` | **0 errores / 49 warnings** = línea base histórica. Los 2 warnings nuevos que trajo la feature (`UseKtx` en el store, `AppBundleLocaleChanges` por el cambio de locale dinámico) se **corrigieron**: `androidx.core.content.edit { }` y `bundle { language { enableSplit = false } }` en `app/build.gradle.kts`. |
-| Unit | `unit.ps1` + `testDebugUnitTest --rerun-tasks` | **42 suites / 299 tests / 0 fallos** (antes: 40/291; +2 suites `AppLanguageTest` (3) y `AppLocaleControllerTest` (3), +5 tests en `SettingsViewModelTest`). Recuento reconciliado desde los XML de `app/build/test-results/`. |
+| Unit | `unit.ps1` + `testDebugUnitTest --rerun-tasks` | **42 suites / 299 tests / 0 fallos** (antes: 40/291; +2 suites `AppLanguageTest` (3) y `AppLocaleControllerTest` (3) y +2 tests en `SettingsViewModelTest` (8→10): 291+3+3+2 = 299). Recuento reconciliado desde los XML de `app/build/test-results/`. |
 | Ensamblado | `assembleDebug` | **BUILD SUCCESSFUL** (y `assembleDebugAndroidTest` OK). |
 | Paridad es/en | recuento de claves `<string>`/`<plurals>` | **330/330** (3 claves nuevas `settings_language_title/spanish/english`; endónimos idénticos en ambos locales). |
 

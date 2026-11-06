@@ -818,10 +818,11 @@
         "E2E: cambiar a inglés y comprobar que las pantallas cambian sus textos sin reiniciar"
       ],
       "evidence": [
-        "docs/evidence/cambiar-idioma-de-la-interfaz/informe.md (implementación autoverificada sesión 103, feature-implementer: passing; lint 0 errores/49 warnings, unit 42 suites/299 tests, E2E LanguageSwitchE2ETest 8/8 + batería 218 verdes/1 flaky re-ejecutado 1/1/2 omitidos, paridad 330/330, comprobaciones manuales adb con 2 capturas 1280×2856)"
+        "docs/evidence/cambiar-idioma-de-la-interfaz/informe.md (implementación autoverificada sesión 103, feature-implementer: passing; lint 0 errores/49 warnings, unit 42 suites/299 tests, E2E LanguageSwitchE2ETest 8/8 + batería 218 verdes/1 flaky re-ejecutado 1/1/2 omitidos, paridad 330/330, comprobaciones manuales adb con 2 capturas 1280×2856)",
+        "docs/validations/cambiar-idioma-de-la-interfaz.md (aceptación independiente feature-validator, sesión 104, 2026-11-07: accept — tier barato re-ejecutado lint 0/49, unit 42/299, assembleDebug OK, paridad 330/330; tier caro inspeccionado LanguageSwitchE2ETest 8/8, batería 221=218+1 flaky rerun 1/1+2 omitidos históricos, manuales adb S3/S4/verify 1 con 2 PNG 1280×2856; seguridad sin hallazgos; 2 hallazgos Low documentales corregidos al persistir)"
       ],
       "notes": "",
-      "status": "passing"
+      "status": "accepted"
     }
   ]
 }

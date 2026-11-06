@@ -142,6 +142,7 @@ Then la petición al cliente de IA lleva `language = "en"` y el locale de voz de
 
 - **El proveedor de contexto localizado vive en `MainActivity`, no dentro de `WhatsForLunchApp`**: los E2E de localización montan `WhatsForLunchApp()` con su propio `CompositionLocalProvider` (sin el host), de modo que el mecanismo de producción se implementa como `ui/locale/AppLocaleHost.kt`, composable público que envuelve `WhatsForLunchApp()` en `MainActivity` (decisión menor del implementer prevista más abajo). `AppLocaleHost` reprovee `LocalConfiguration` y `LocalResources` (no `LocalContext`, que sigue siendo el Activity real por `PhotoAcquirer`).
 - **RF-IDI4 exigía tocar un consumidor**: `AndroidStepSpeaker` resolvía los textos de la locución («Paso N. {texto}», «Temporizador de N minutos») con el contexto inyectado, que sigue el idioma del sistema. Ahora los resuelve con un contexto localizado con el locale de voz preparado, sin tocar `StepSpeaker` ni `VoiceCommandParser`.
+- **El cambio de locale en runtime exige desactivar los splits por idioma del AAB**: `app/build.gradle.kts` añade `bundle { language { enableSplit = false } }` — resuelve el warning de lint `AppBundleLocaleChanges` (para sostener la línea base de 49 warnings) y es además lo correcto para una app que cambia de idioma sin reinicio bajo AAB, donde los recursos de un locale con split no instalado no estarían disponibles.
 
 ## Expected File Changes
 
@@ -159,6 +160,7 @@ Then la petición al cliente de IA lleva `language = "en"` y el locale de voz de
 - `app/src/main/java/com/whatsforlunch/app/ui/settings/SettingsScreen.kt`, `SettingsViewModel.kt`, `SettingsRoute.kt` (sección «Idioma»)
 - `app/src/main/java/com/whatsforlunch/app/data/voice/AndroidStepSpeaker.kt` (hallazgo RF-IDI4: textos de la locución con el locale de voz)
 - `app/src/main/java/com/whatsforlunch/app/di/AppModule.kt` (`single` del store y del controller)
+- `app/build.gradle.kts` (`bundle { language { enableSplit = false } }`: desactiva los splits por idioma del AAB, por el hallazgo de `AppBundleLocaleChanges`)
 - `app/src/main/res/values/strings.xml` y `app/src/main/res/values-en/strings.xml` (claves `settings_language_*`, paridad es/en)
 - `app/src/test/java/com/whatsforlunch/app/ui/settings/SettingsViewModelTest.kt` (estado del idioma + `onLanguageSelected`)
 - `app/src/androidTest/java/com/whatsforlunch/app/SettingsE2ETest.kt` sin cambios (la tarjeta nueva no obliga a ajustar aserciones)
