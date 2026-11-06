@@ -19,5 +19,6 @@ fun SettingsRoute(
         onSave = viewModel::onSave,
         onDelete = viewModel::onDelete,
         onSavedConsumed = viewModel::consumeSaved,
+        onLanguageSelected = viewModel::onLanguageSelected,
     )
 }

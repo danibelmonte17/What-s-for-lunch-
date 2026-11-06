@@ -29,6 +29,9 @@ import com.whatsforlunch.app.data.photo.FilePhotoStore
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.data.repository.RoomShoppingListRepository
+import com.whatsforlunch.app.data.settings.AppLocaleController
+import com.whatsforlunch.app.data.settings.LanguagePreferenceStore
+import com.whatsforlunch.app.data.settings.SharedPrefsLanguagePreferenceStore
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
@@ -85,6 +88,10 @@ val appModule = module {
     // comportamiento (RF-21, Q-crear-receta-6).
     single<AiKeyStore> { KeystoreAiKeyStore(androidContext()) }
     single<AiKeyProvider> { PriorityAiKeyProvider(BuildConfig.AI_API_KEY, get<AiKeyStore>()) }
+    // Idioma de la interfaz (cambiar-idioma-de-la-interfaz): elección del usuario en
+    // SharedPreferences + estado único aplicado en la raíz de Compose (D1/D4).
+    single<LanguagePreferenceStore> { SharedPrefsLanguagePreferenceStore(androidContext()) }
+    single { AppLocaleController(get()) }
     single<PromptSource> { AssetPromptSource(androidContext()) }
     single<ImageGenerator> {
         OpenAiCompatibleImageGenerator(get(), get(), BuildConfig.AI_BASE_URL)
@@ -115,7 +122,7 @@ val appModule = module {
     viewModel { AiSuggestionsViewModel(get(), get(), get(), get()) }
     viewModel { PincheViewModel(get(), get(), get(), get()) }
     viewModel { ShoppingListViewModel(get()) }
-    viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank()) }
+    viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank(), get()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->
         RecipeDetailViewModel(

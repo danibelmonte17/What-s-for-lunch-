@@ -51,6 +51,15 @@ android {
         }
     }
 
+    bundle {
+        // El idioma de la interfaz cambia en caliente sin Play Core (cambiar-idioma-
+        // de-la-interfaz): sin split por idioma, los recursos es/en viajan siempre
+        // completos (recomendación de lint AppBundleLocaleChanges).
+        language {
+            enableSplit = false
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
