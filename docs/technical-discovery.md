@@ -165,6 +165,15 @@ Verificación: unit de `RecipeSuggestionParser`, `SuggestionRules`, `SuggestionA
 - **Prioridad de alarma (D12)**: `CookModeViewModel.commitTimer` llama a `stepSpeaker.stop()` antes de `timerAlarm.start()` al entrar en «¡Tiempo cumplido!».
 - **Verificación**: `VoiceCommandParserTest` (7) y `CookModeViewModelTest` (+14, con `FakeStepSpeaker`/`FakeVoiceCommandSource`); E2E `CookModeVoiceE2ETest` (10 tests, S1-S9 con fakes D15) y `CookModeE2ETest`/`CookModeTimerE2ETest`/`RecipeDetailE2ETest` adaptados (fakes + `LocalActivityResultRegistryOwner`, patrón de `MyRecipesLocalizationE2ETest`). El `CookModeViewModel` exige ahora los dos puertos en el constructor (antes de `recipeId`).
 
+### Idioma de la interfaz (2026-11-06, `cambiar-idioma-de-la-interfaz`)
+
+- **Dominio**: `domain/model/AppLanguage.kt` (`SPANISH`/`ENGLISH` con `locale`/`languageTag`, identificadores en inglés como `MealMoment`) y la función pura `fromSystem(locale)`: `en` → inglés, cualquier otro idioma → español (D2).
+- **Persistencia**: puerto `data/settings/LanguagePreferenceStore` (`selected()`, `select()`) con `SharedPrefsLanguagePreferenceStore` sobre SharedPreferences (`language_prefs`/`app_language`, valor = nombre del enum; sin cifrado: el idioma no es sensible), mismo patrón que `KeystoreAiKeyStore`.
+- **Estado y aplicación**: `AppLocaleController` (singleton Koin, `StateFlow<AppLanguage>` inicializado con `store.selected() ?: AppLanguage.fromSystem(...)`) y `ui/locale/AppLocaleHost`: en la raíz de Compose (`MainActivity`, sobre `WhatsForLunchApp`) reprovee `LocalConfiguration`/`LocalResources` con un contexto localizado (`createConfigurationContext`). Sin AppCompat, sin `Activity.recreate()`, sin `android:localeConfig` (D4): el cambio de idioma es inmediato en todas las pantallas sin reiniciar y sin perder el back stack.
+- **Consumidores sin cambios**: prompts de IA, locale de voz y `formatQuantity` derivan el idioma de `LocalConfiguration.current.locales[0]` en las Routes (D5); `VoiceCommandParser`, prompts en `assets/prompts/*_{es,en}.txt` y contenido del usuario quedan intactos (D6). **Hallazgo**: `AndroidStepSpeaker` resolvía los textos de la locución con el contexto inyectado (idioma del sistema) y ahora los localiza con el locale de voz preparado (RF-IDI4).
+- **Ajustes**: tarjeta «Idioma» entre la de API key y la de Privacidad, con las dos opciones como filas seleccionables (`Role.RadioButton`, ≥ 48 dp) y endónimos («Español»/«English» en ambos idiomas); testTags `LANGUAGE_SECTION`/`LANGUAGE_OPTION_ES`/`LANGUAGE_OPTION_EN`.
+- **Verificación**: `AppLanguageTest`, `AppLocaleControllerTest` y `SettingsViewModelTest` ampliado; E2E `LanguageSwitchE2ETest` (8 tests, S1-S5: cambio sin reinicio, reversión, persistencia con SharedPreferences reales, preselección por sistema e idioma de prompts/voz con clientes simulados; el permiso `RECORD_AUDIO` se concede con `pm grant` desde el propio test para recorrer la `CookModeRoute` real). Paridad de claves es/en como gate de recuento (330/330).
+
 ## Arquitectura y flujos
 
 Módulo único `app/` con tres capas (estructura confirmada en Q-arrancar-app-en-mis-recetas-1, `⚠ S06`):

@@ -213,6 +213,10 @@
     <string name="settings_api_key_state_missing">Not configured</string>
     <string name="settings_api_key_build_source">The AI key comes from the build (local.properties) and takes precedence over the one saved here.</string>
     <string name="settings_api_key_saved">API key saved.</string>
+    <string name="settings_language_title">Language</string>
+    <!-- Endónimos (D3): los idiomas se nombran a sí mismos en ambos locales. -->
+    <string name="settings_language_spanish">Español</string>
+    <string name="settings_language_english">English</string>
     <string name="settings_privacy_title">Privacy and data</string>
     <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos are sent to DevExpert Inference only for analysis, are not stored on the device and are not retained by the provider. You can control spending in your DevExpert Inference dashboard. With “Voice” on in Cooking Mode, the microphone captures your voice commands and the device speech service processes them to recognize them (it may use the network depending on the device provider); the app stores no audio or transcripts and voice does not work in the background.</string>
 

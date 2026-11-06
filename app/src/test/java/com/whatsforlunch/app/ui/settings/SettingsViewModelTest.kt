@@ -2,6 +2,10 @@ package com.whatsforlunch.app.ui.settings
 
 import com.whatsforlunch.app.data.ai.AiKeyStore
 import com.whatsforlunch.app.data.ai.PriorityAiKeyProvider
+import com.whatsforlunch.app.data.settings.AppLocaleController
+import com.whatsforlunch.app.data.settings.LanguagePreferenceStore
+import com.whatsforlunch.app.domain.model.AppLanguage
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -91,6 +95,7 @@ class SettingsViewModelTest {
             PriorityAiKeyProvider("sk-build", store),
             store,
             buildKeyActive = true,
+            appLocaleController = appLocaleController(),
         )
 
         val state = viewModel.uiState.value
@@ -106,6 +111,7 @@ class SettingsViewModelTest {
             PriorityAiKeyProvider("sk-build", store),
             store,
             buildKeyActive = true,
+            appLocaleController = appLocaleController(),
         )
 
         val state = viewModel.uiState.value
@@ -121,6 +127,7 @@ class SettingsViewModelTest {
             PriorityAiKeyProvider("sk-build", store),
             store,
             buildKeyActive = true,
+            appLocaleController = appLocaleController(),
         )
 
         viewModel.onDelete()
@@ -130,12 +137,47 @@ class SettingsViewModelTest {
         assertTrue(viewModel.uiState.value.cleared)
     }
 
-    private fun viewModel(store: FakeAiKeyStore): SettingsViewModel =
+    // RF-IDI2/RF-IDI3 de la spec de cambiar-idioma-de-la-interfaz: el idioma activo
+    // refleja la elección y cambiarlo aplica y persiste en el controller.
+    @Test
+    fun languageStateReflectsActiveSelection() {
+        val controller = appLocaleController(selected = AppLanguage.ENGLISH)
+        val viewModel = viewModel(FakeAiKeyStore(), controller)
+
+        assertEquals(AppLanguage.ENGLISH, viewModel.uiState.value.language)
+    }
+
+    @Test
+    fun selectingLanguageAppliesAndPersistsIt() {
+        val store = FakeLanguagePreferenceStore()
+        val controller = appLocaleController(store = store)
+        val viewModel = viewModel(FakeAiKeyStore(), controller)
+
+        viewModel.onLanguageSelected(AppLanguage.ENGLISH)
+
+        assertEquals(AppLanguage.ENGLISH, viewModel.uiState.value.language)
+        assertEquals(AppLanguage.ENGLISH, controller.language.value)
+        assertEquals(AppLanguage.ENGLISH, store.selected())
+    }
+
+    private fun viewModel(
+        store: FakeAiKeyStore,
+        controller: AppLocaleController = appLocaleController(),
+    ): SettingsViewModel =
         SettingsViewModel(
             effectiveKeyProvider = PriorityAiKeyProvider("", store),
             aiKeyStore = store,
             buildKeyActive = false,
+            appLocaleController = controller,
         )
+
+    private fun appLocaleController(
+        store: FakeLanguagePreferenceStore = FakeLanguagePreferenceStore(),
+        selected: AppLanguage? = null,
+    ): AppLocaleController {
+        selected?.let { store.select(it) }
+        return AppLocaleController(store, systemLocale = Locale("es", "ES"))
+    }
 
     private class FakeAiKeyStore(var storedKey: String? = null) : AiKeyStore {
         override fun apiKey(): String? = storedKey
@@ -146,6 +188,16 @@ class SettingsViewModelTest {
 
         override fun clear() {
             storedKey = null
+        }
+    }
+
+    private class FakeLanguagePreferenceStore : LanguagePreferenceStore {
+        private var selected: AppLanguage? = null
+
+        override fun selected(): AppLanguage? = selected
+
+        override fun select(language: AppLanguage) {
+            selected = language
         }
     }
 }

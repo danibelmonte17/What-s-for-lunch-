@@ -2,11 +2,13 @@ package com.whatsforlunch.app.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -16,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,13 +33,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.domain.model.AppLanguage
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 
@@ -51,6 +57,9 @@ object SettingsTestTags {
     const val DELETE_DIALOG = "settings_api_key_delete_dialog"
     const val DELETE_CONFIRM = "settings_api_key_delete_confirm"
     const val DELETE_CANCEL = "settings_api_key_delete_cancel"
+    const val LANGUAGE_SECTION = "settings_language_section"
+    const val LANGUAGE_OPTION_ES = "settings_language_option_es"
+    const val LANGUAGE_OPTION_EN = "settings_language_option_en"
     const val PRIVACY_TITLE = "settings_privacy_title"
     const val PRIVACY_NOTICE = "settings_privacy_notice"
 }
@@ -64,6 +73,7 @@ fun SettingsScreen(
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onSavedConsumed: () -> Unit,
+    onLanguageSelected: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -181,6 +191,37 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Column(
+                    modifier = Modifier
+                        .padding(WarmSpacing.md)
+                        .testTag(SettingsTestTags.LANGUAGE_SECTION),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_language_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    LanguageOptionRow(
+                        label = stringResource(R.string.settings_language_spanish),
+                        selected = uiState.language == AppLanguage.SPANISH,
+                        onClick = { onLanguageSelected(AppLanguage.SPANISH) },
+                        tag = SettingsTestTags.LANGUAGE_OPTION_ES,
+                    )
+                    LanguageOptionRow(
+                        label = stringResource(R.string.settings_language_english),
+                        selected = uiState.language == AppLanguage.ENGLISH,
+                        onClick = { onLanguageSelected(AppLanguage.ENGLISH) },
+                        tag = SettingsTestTags.LANGUAGE_OPTION_EN,
+                    )
+                }
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(WarmRadius.lg),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+            ) {
+                Column(
                     modifier = Modifier.padding(WarmSpacing.md),
                     verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
                 ) {
@@ -229,6 +270,37 @@ fun SettingsScreen(
                     Text(stringResource(R.string.settings_api_key_delete_cancel))
                 }
             },
+        )
+    }
+}
+
+// Opción del selector de idioma (RF-IDI1): fila seleccionable de al menos 48 dp con
+// radio de Material; las opciones son endónimos (D3) y el cambio es inmediato.
+@Composable
+private fun LanguageOptionRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    tag: String,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = onClick,
+            )
+            .testTag(tag),
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = WarmSpacing.sm),
         )
     }
 }

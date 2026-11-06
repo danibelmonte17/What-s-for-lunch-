@@ -1,6 +1,7 @@
 package com.whatsforlunch.app.data.voice
 
 import android.content.Context
+import android.content.res.Configuration
 import android.speech.tts.TextToSpeech
 import com.whatsforlunch.app.R
 import java.util.Locale
@@ -43,7 +44,10 @@ class AndroidStepSpeaker(private val context: Context) : StepSpeaker {
         val engine = textToSpeech ?: return
         if (!initialized) return
         val stepText = announcement.text.trim().trimEnd('.', '!', '?', ';', ':')
-        val stepLine = context.getString(
+        // Los textos de la locución se resuelven con el idioma de la app (RD24), no
+        // con el del contexto inyectado, que sigue el idioma del sistema (RF-IDI4).
+        val utteranceContext = localizedContext()
+        val stepLine = utteranceContext.getString(
             R.string.cook_mode_voice_announce_step,
             announcement.stepNumber,
             stepText,
@@ -51,7 +55,7 @@ class AndroidStepSpeaker(private val context: Context) : StepSpeaker {
         val timerLine = announcement.timerMinutes
             ?.takeIf { it > 0 }
             ?.let { minutes ->
-                context.resources.getQuantityString(
+                utteranceContext.resources.getQuantityString(
                     R.plurals.cook_mode_voice_announce_timer,
                     minutes,
                     minutes,
@@ -90,6 +94,15 @@ class AndroidStepSpeaker(private val context: Context) : StepSpeaker {
         textToSpeech?.stop()
         textToSpeech?.shutdown()
         textToSpeech = null
+    }
+
+    // Contexto localizado con el idioma de voz activo; sin idioma preparado se
+    // conserva el contexto inyectado.
+    private fun localizedContext(): Context {
+        val locale = language ?: return context
+        return context.createConfigurationContext(
+            Configuration(context.resources.configuration).apply { setLocale(locale) },
+        )
     }
 
     private companion object {
