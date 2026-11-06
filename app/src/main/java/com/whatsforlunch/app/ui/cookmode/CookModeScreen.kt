@@ -14,15 +14,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +49,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
@@ -79,6 +86,10 @@ object CookModeTestTags {
     const val INGREDIENT_ROW = "cook_mode_ingredient_row"
     const val PREVIOUS_STEP = "cook_mode_previous_step"
     const val NEXT_STEP = "cook_mode_next_step"
+    const val VOICE_TOGGLE = "cook_mode_voice_toggle"
+    const val VOICE_LISTEN = "cook_mode_voice_listen"
+    const val VOICE_CUE = "cook_mode_voice_cue"
+    const val VOICE_NOTICE = "cook_mode_voice_notice"
     const val NOT_FOUND = "cook_mode_not_found"
     const val NOT_FOUND_BACK = "cook_mode_not_found_back"
 }
@@ -107,6 +118,8 @@ fun CookModeScreen(
     onTimerReset: () -> Unit,
     onTimerAddMinute: () -> Unit,
     onTimerStop: () -> Unit,
+    onVoiceToggle: () -> Unit,
+    onSpeakStep: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // D9: con el Modo Cocina visible la pantalla no se apaga (la cuenta debe ser
@@ -173,6 +186,8 @@ fun CookModeScreen(
                 onTimerReset = onTimerReset,
                 onTimerAddMinute = onTimerAddMinute,
                 onTimerStop = onTimerStop,
+                onVoiceToggle = onVoiceToggle,
+                onSpeakStep = onSpeakStep,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -218,6 +233,8 @@ private fun CookingContent(
     onTimerReset: () -> Unit,
     onTimerAddMinute: () -> Unit,
     onTimerStop: () -> Unit,
+    onVoiceToggle: () -> Unit,
+    onSpeakStep: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val step = state.recipe.steps[state.stepIndex]
@@ -233,6 +250,11 @@ private fun CookingContent(
             color = MaterialTheme.colorScheme.onSurface,
         )
         StepProgress(stepIndex = state.stepIndex, totalSteps = state.totalSteps)
+        VoiceControls(
+            voice = state.voice,
+            onToggle = onVoiceToggle,
+            onListen = onSpeakStep,
+        )
         StepCard(
             stepNumber = state.stepIndex + 1,
             text = step.text,
@@ -274,6 +296,120 @@ private fun StepProgress(stepIndex: Int, totalSteps: Int, modifier: Modifier = M
         )
     }
 }
+
+// RD24 (D1/D4): controles de voz del Modo Cocina. «Voz» es un interruptor manual
+// apagado por defecto; «Escuchar» locuta el Paso activo aunque la voz esté apagada.
+// Debajo se muestra el aviso de degradación y, con la voz activa, la barra de
+// comandos disponibles.
+@Composable
+private fun VoiceControls(
+    voice: VoiceUiState,
+    onToggle: () -> Unit,
+    onListen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FilterChip(
+                selected = voice.enabled,
+                onClick = onToggle,
+                label = {
+                    Text(
+                        text = stringResource(
+                            if (voice.enabled) {
+                                R.string.cook_mode_voice_toggle_active
+                            } else {
+                                R.string.cook_mode_voice_toggle
+                            },
+                        ),
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Mic,
+                        contentDescription = null,
+                    )
+                },
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag(CookModeTestTags.VOICE_TOGGLE),
+            )
+            OutlinedButton(
+                onClick = onListen,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag(CookModeTestTags.VOICE_LISTEN),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
+                    contentDescription = null,
+                )
+                Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                Text(text = stringResource(R.string.cook_mode_voice_listen))
+            }
+        }
+        voice.notice?.let { notice ->
+            Surface(
+                shape = CardShape,
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CookModeTestTags.VOICE_NOTICE)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+            ) {
+                Text(
+                    text = voiceNoticeText(notice),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(WarmSpacing.md),
+                )
+            }
+        }
+        if (voice.enabled) {
+            Surface(
+                shape = CardShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CookModeTestTags.VOICE_CUE),
+            ) {
+                Column(
+                    modifier = Modifier.padding(WarmSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
+                ) {
+                    Text(
+                        text = stringResource(R.string.cook_mode_voice_commands_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                    Text(
+                        text = stringResource(R.string.cook_mode_voice_commands_hint),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun voiceNoticeText(notice: VoiceNotice): String = stringResource(
+    when (notice) {
+        VoiceNotice.PERMISSION_DENIED -> R.string.cook_mode_voice_permission_denied
+        VoiceNotice.VOICE_UNAVAILABLE -> R.string.cook_mode_voice_unavailable
+        VoiceNotice.COMMANDS_UNAVAILABLE -> R.string.cook_mode_voice_commands_unavailable
+        VoiceNotice.LANGUAGE_NOT_DOWNLOADED -> R.string.cook_mode_voice_language_not_downloaded
+    },
+)
 
 // RF-CPP1: tarjeta del Paso activo con rótulo «PASO X» y su texto en tipografía
 // grande (≥ 18 px). El temporizador del Paso ya no es un hint pasivo (D5): vive en

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.PantryManagementE2ETest" tests="5" failures="0" errors="0" skipped="0" time="28.833" timestamp="2026-11-06T19:42:17" hostname="localhost">
+  <properties>
+    <property name="device" value="V2124 - 13" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="addEditAndPersistPantryItemAcrossActivityRecreation" classname="com.whatsforlunch.app.PantryManagementE2ETest" time="5.809" />
+  <testcase name="deleteCanBeCancelledOrConfirmed" classname="com.whatsforlunch.app.PantryManagementE2ETest" time="3.467" />
+  <testcase name="opensPantryFromMyRecipesAndShowsEmptyState" classname="com.whatsforlunch.app.PantryManagementE2ETest" time="1.054" />
+  <testcase name="stepperEnforcesIntegerBoundsAndZeroSavesWithoutQuantity" classname="com.whatsforlunch.app.PantryManagementE2ETest" time="14.183" />
+  <testcase name="normalizedDuplicateShowsInlineWarningWithoutAddingRow" classname="com.whatsforlunch.app.PantryManagementE2ETest" time="3.119" />
+</testsuite>

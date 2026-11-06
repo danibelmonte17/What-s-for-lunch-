@@ -20,6 +20,10 @@ import com.whatsforlunch.app.data.audio.SystemRingtoneTimerAlarm
 import com.whatsforlunch.app.data.audio.TimerAlarm
 import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.data.local.RecipeDatabase
+import com.whatsforlunch.app.data.voice.AndroidStepSpeaker
+import com.whatsforlunch.app.data.voice.AndroidVoiceCommandSource
+import com.whatsforlunch.app.data.voice.StepSpeaker
+import com.whatsforlunch.app.data.voice.VoiceCommandSource
 import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.photo.FilePhotoStore
 import com.whatsforlunch.app.data.photo.PhotoStore
@@ -98,6 +102,10 @@ val appModule = module {
     single { ScanDraftHolder() }
     // Alarma del temporizador del Paso: tono de alarma del sistema en bucle (D4/D8).
     single<TimerAlarm> { SystemRingtoneTimerAlarm(androidContext()) }
+    // Voz del Modo Cocina (RD24): `factory` para que cada sesión reciba sus propios
+    // motores y `onCleared` pueda hacer `release()` sin afectar a la siguiente (D9).
+    factory<StepSpeaker> { AndroidStepSpeaker(androidContext()) }
+    factory<VoiceCommandSource> { AndroidVoiceCommandSource(androidContext()) }
 
     viewModel { MyRecipesViewModel(get(), get()) }
     viewModel { CreateRecipeViewModel(get(), get(), get()) }
@@ -124,6 +132,8 @@ val appModule = module {
         CookModeViewModel(
             recipeRepository = get(),
             timerAlarm = get(),
+            stepSpeaker = get(),
+            voiceCommandSource = get(),
             recipeId = parameters.get(),
             servings = parameters.getOrNull(),
         )

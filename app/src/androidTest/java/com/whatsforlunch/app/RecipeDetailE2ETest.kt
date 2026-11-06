@@ -2,6 +2,10 @@ package com.whatsforlunch.app
 
 import android.content.res.Configuration
 import android.graphics.Bitmap
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
@@ -21,6 +25,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -554,6 +559,10 @@ class RecipeDetailE2ETest {
                 LocalContext provides context,
                 LocalConfiguration provides Configuration(context.resources.configuration),
                 LocalResources provides context.resources,
+                // El Context de configuración no es ActivityResultRegistryOwner; la
+                // Route del Modo Cocina registra su launcher de permiso al componer
+                // (RD24). Este test nunca toca «Voz», así que el lanzamiento falla.
+                LocalActivityResultRegistryOwner provides RecipeDetailTestRegistryOwner,
             ) {
                 WhatsForLunchTheme {
                     WhatsForLunchApp()
@@ -580,5 +589,21 @@ class RecipeDetailE2ETest {
         )
         photoFile.writeBytes(output.toByteArray())
         return photoFile
+    }
+}
+
+// Doble del registry de resultados (patrón de MyRecipesLocalizationE2ETest): el
+// test entra al Modo Cocina pero nunca toca «Voz», así que lanzar el permiso
+// micrófono sería un error.
+private object RecipeDetailTestRegistryOwner : ActivityResultRegistryOwner {
+    override val activityResultRegistry: ActivityResultRegistry = object : ActivityResultRegistry() {
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: ActivityOptionsCompat?,
+        ) {
+            error("The recipe-detail tests never open the microphone permission dialog")
+        }
     }
 }

@@ -18,7 +18,7 @@ El temporizador vive **solo en el Modo Cocina** (memoria): al cambiar de Paso o 
 
 - **Alarma en segundo plano**: sin notificaciones, servicios, `AlarmManager` ni permisos exactos (D1). La cuenta atrás solo corre con el Modo Cocina visible.
 - **Vibración**: la alarma es sonora y visual; sin permiso `VIBRATE` (D4).
-- **Voz** (locución, «Pausar tiempo» por voz): es `controlar-cocina-con-voz` (`⚠ S04`).
+- **Voz** (locución, «Pausar tiempo» por voz): es `controlar-cocina-con-voz` (`⚠ S04`), **ya implementada** (RD24: «Pausar tiempo» pausa la cuenta en marcha y nunca la reanuda; reanudar sigue siendo táctil).
 - **Editar `timerMinutes` desde el Modo Cocina**: la meta viene del formulario («Temporizador (min, opcional)»); el Modo Cocina solo la usa.
 - **Persistencia del temporizador** entre Pasos, salidas o sesiones (coherente con RD22: progreso en memoria).
 - **Cambios en Room (v4), `RecipeValidation`, prompts de IA ni en el formulario de Receta**.

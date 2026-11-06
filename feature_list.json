@@ -686,9 +686,15 @@
       "verification": [
         "E2E: emitir el comando Siguiente y comprobar que el Modo Cocina avanza de paso"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/controlar-cocina-con-voz/t0-voice-spike.md — T0 SUPERADO en dispositivo físico V2124 (2026-11-06): precisión es offline 10/10, 10/10, 9/10 y en online 10/10, 10/10, 9/10 (umbral ≥8/10), autoactivación 0/10 en ambos idiomas, TTS audible es/en con energía capturada por micrófono, diálogo de permiso con concesión/denegación/reintento (3 capturas). Limitación: motor offline en-US no descargado (ERROR 13 = caso F2), medición en online",
+        "docs/validations/controlar-cocina-con-voz.md — validación independiente 2026-11-04: revise (F1 High T0, F2 Medium decisión offline, F3 Medium spike tests, F4 Medium evidencia, F5 Low notes)",
+        "docs/validations/controlar-cocina-con-voz.md §9 — revalidación independiente 2026-11-06 tras T0 SUPERADO: revise (F6 High: batería E2E completa no ejecutada y cifras 213 @Test sobredimensionadas; F7 Medium: evidencia de cierre incompleta; F8 Medium: spec desincronizada con el contrato F2; F9 Low: iconos deprecados). Repair brief en el informe",
+        "docs/evidence/controlar-cocina-con-voz/informe-de-cierre-2026-11-06.md — repair brief F6-F9+F4 aplicado en V2124 físico (2026-11-06): E2E completa 213 ejecutada (208 verdes, 3 fallos solo en el flaky PantryManagementE2ETest reejecutado 5/5 en solitario, 2 omitidos SettingsE2ETest) + focalizada 25/25 (10+7+8), XML/HTML con nombres de test en e2e-focused-/e2e-full-/e2e-pantry-rerun-2026-11-06/ (artefactos con serie podados); checklist manual con resultados (Siguiente 3/3, Repetir 3/3, Pausar tiempo 4/5, alarma USAGE_ALARM sobre TTS parado, rotación+segundo plano, revocación/denegación/reintento, micrófono apagado al desactivar y salir) + 2 capturas es + salidas lint/unit/assemble en gates-2026-11-06/; spec sincronizada con F2 (sub-item «voz en pausa» no correspondía al texto actual); VolumeUp migrado a AutoMirrored (deprecado verificado con javap) y Mic sin migrar (no deprecado, AutoMirrored.Outlined.Mic no existe); gates --rerun-tasks: lint 0 errores/49 warnings, unit 40 suites/291 tests/0 fallos, assembleDebug OK",
+        "docs/validations/controlar-cocina-con-voz.md §10 — revalidación acotada (feature-validator con agente, 2026-11-06): accept → accepted. Gates baratos re-ejecutados por el validador (lint 0 errores/49 warnings, unit 40/291/0, assembleDebug OK) y tier caro inspeccionado contra los XML/HTML conservados (focalizada 25/25, batería 213 = 208+3+2, rerun del flaky 5/5); verification cubierta en V2124 real (nextTranscriptAdvancesTheStepAndAnnouncesIt + manual M5-a 3/3); seguridad sin hallazgos. 2 Low de wording corregidos al persistir (F10 desglose 208+3+2=213, F11 26 clases de test / 24 ficheros) y notas N6-N9 anotadas"
+      ],
       "notes": "Voz con SpeechRecognizer/TextToSpeech nativos (⚠ S04)",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "resolver-dudas-con-pinche",
