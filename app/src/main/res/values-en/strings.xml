@@ -49,6 +49,20 @@
     <string name="cook_mode_previous_step">Previous step</string>
     <string name="cook_mode_next_step">Next</string>
     <string name="cook_mode_finish">Finish</string>
+    <string name="cook_mode_voice_toggle">Voice</string>
+    <string name="cook_mode_voice_toggle_active">Voice on</string>
+    <string name="cook_mode_voice_listen">Listen</string>
+    <string name="cook_mode_voice_commands_title">Voice commands active</string>
+    <string name="cook_mode_voice_commands_hint">Say “Next”, “Repeat” or “Pause timer”</string>
+    <string name="cook_mode_voice_permission_denied">No microphone permission. Tap “Voice” to try again.</string>
+    <string name="cook_mode_voice_unavailable">Voice is not available on this device.</string>
+    <string name="cook_mode_voice_commands_unavailable">Voice recognition could not start. You can keep using "Listen" and the buttons.</string>
+    <string name="cook_mode_voice_language_not_downloaded">The offline language is not downloaded. Download it in the device voice settings to use commands.</string>
+    <string name="cook_mode_voice_announce_step">Step %1$d. %2$s</string>
+    <plurals name="cook_mode_voice_announce_timer">
+        <item quantity="one">Timer: %1$d minute</item>
+        <item quantity="other">Timer: %1$d minutes</item>
+    </plurals>
 
     <!-- Pantry -->
     <string name="pantry_title">Pantry</string>
@@ -200,7 +214,7 @@
     <string name="settings_api_key_build_source">The AI key comes from the build (local.properties) and takes precedence over the one saved here.</string>
     <string name="settings_api_key_saved">API key saved.</string>
     <string name="settings_privacy_title">Privacy and data</string>
-    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos are sent to DevExpert Inference only for analysis, are not stored on the device and are not retained by the provider. You can control spending in your DevExpert Inference dashboard.</string>
+    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos are sent to DevExpert Inference only for analysis, are not stored on the device and are not retained by the provider. You can control spending in your DevExpert Inference dashboard. With “Voice” on in Cooking Mode, the microphone captures your voice commands and the device speech service processes them to recognize them (it may use the network depending on the device provider); the app stores no audio or transcripts and voice does not work in the background.</string>
 
     <!-- Pantry scanner -->
     <string name="scanner_title">Pantry Scanner</string>

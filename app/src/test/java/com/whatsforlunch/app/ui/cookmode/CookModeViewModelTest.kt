@@ -3,12 +3,19 @@ package com.whatsforlunch.app.ui.cookmode
 import androidx.lifecycle.ViewModelStore
 import com.whatsforlunch.app.data.audio.TimerAlarm
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
+import com.whatsforlunch.app.data.voice.StepAnnouncement
+import com.whatsforlunch.app.data.voice.StepSpeaker
+import com.whatsforlunch.app.data.voice.VoiceCommandSource
+import com.whatsforlunch.app.data.voice.VoiceSourceEvent
 import com.whatsforlunch.app.domain.cookmode.StepTimerPhase
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStep
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -40,7 +47,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(twoStepRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = 2)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = 2,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -66,7 +80,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(twoStepRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -91,7 +112,14 @@ class CookModeViewModelTest {
             recipes.saveRecipe(twoStepRecipe())
 
             // 13 se recorta a 12: 700 × (12 / 4) = 2100.
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = 13)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = 13,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -115,7 +143,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(twoStepRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = 2)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = 2,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -149,7 +184,14 @@ class CookModeViewModelTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val viewModelStore = ViewModelStore()
         try {
-            val viewModel = CookModeViewModel(InMemoryRecipeRepository(), FakeTimerAlarm(), "missing", servings = null)
+            val viewModel = CookModeViewModel(
+                InMemoryRecipeRepository(),
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "missing",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -174,7 +216,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(Recipe(id = "draft", title = "Borrador vacío"))
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "draft", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "draft",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -199,7 +248,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(timerRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -232,7 +288,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(timerRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -264,7 +327,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(timerRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -308,7 +378,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(timerRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -341,7 +418,14 @@ class CookModeViewModelTest {
             val recipes = InMemoryRecipeRepository()
             recipes.saveRecipe(timerRecipe())
 
-            val viewModel = CookModeViewModel(recipes, FakeTimerAlarm(), "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -378,7 +462,14 @@ class CookModeViewModelTest {
             recipes.saveRecipe(timerRecipe())
             val alarm = FakeTimerAlarm()
 
-            val viewModel = CookModeViewModel(recipes, alarm, "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                alarm,
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -420,7 +511,14 @@ class CookModeViewModelTest {
             recipes.saveRecipe(timerRecipe())
             val alarm = FakeTimerAlarm()
 
-            val viewModel = CookModeViewModel(recipes, alarm, "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                alarm,
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -454,7 +552,14 @@ class CookModeViewModelTest {
             recipes.saveRecipe(timerRecipe())
             val alarm = FakeTimerAlarm()
 
-            val viewModel = CookModeViewModel(recipes, alarm, "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                alarm,
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -507,7 +612,14 @@ class CookModeViewModelTest {
             recipes.saveRecipe(timerRecipe())
             val alarm = FakeTimerAlarm()
 
-            val viewModel = CookModeViewModel(recipes, alarm, "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                alarm,
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -540,7 +652,14 @@ class CookModeViewModelTest {
             recipes.saveRecipe(twoStepRecipe())
             val alarm = FakeTimerAlarm()
 
-            val viewModel = CookModeViewModel(recipes, alarm, "tortilla", servings = null)
+            val viewModel = CookModeViewModel(
+                recipes,
+                alarm,
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
             viewModelStore.put("cook", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }
@@ -555,6 +674,610 @@ class CookModeViewModelTest {
             advanceUntilIdle()
             assertNull((viewModel.uiState.value as CookModeUiState.Cooking).timer)
             assertEquals(0, alarm.startCount)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    // --- Voz del Modo Cocina (RD24, S1 a S9) ---
+
+    @Test
+    fun voiceIsOffByDefaultWithNoNotice() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            // D1: el interruptor nace apagado y sin aviso; nada arranca solo.
+            val voice = (viewModel.uiState.value as CookModeUiState.Cooking).voice
+            assertFalse(voice.enabled)
+            assertNull(voice.notice)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun enablingVoicePreparesTtsStartsRecognitionAndAnnouncesTheStep() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            // D1/D8: activar prepara el TTS con el idioma de la app, arranca la
+            // escucha y locuta el Paso activo.
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            val voice = (viewModel.uiState.value as CookModeUiState.Cooking).voice
+            assertTrue(voice.enabled)
+            assertNull(voice.notice)
+            assertEquals(listOf(Locale.forLanguageTag("es-ES")), speaker.preparedFor)
+            assertEquals(1, source.startCount)
+            assertEquals(1, speaker.announced.size)
+            assertEquals(1, speaker.announced[0].stepNumber)
+            assertEquals("Corta las patatas", speaker.announced[0].text)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun voiceUnavailableWhenTtsCannotPrepareShowsNoticeAndStaysOff() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker(prepared = false)
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            // D4: sin motor TTS la voz queda apagada con aviso y no se escucha.
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            val voice = (viewModel.uiState.value as CookModeUiState.Cooking).voice
+            assertFalse(voice.enabled)
+            assertEquals(VoiceNotice.VOICE_UNAVAILABLE, voice.notice)
+            assertEquals(0, source.startCount)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun commandsUnavailableWhenRecognitionCannotStartShowsNotice() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val source = FakeVoiceCommandSource(available = false)
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            // D4: sin servicio de reconocimiento la voz queda apagada con aviso.
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            val voice = (viewModel.uiState.value as CookModeUiState.Cooking).voice
+            assertFalse(voice.enabled)
+            assertEquals(VoiceNotice.COMMANDS_UNAVAILABLE, voice.notice)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun permissionDeniedShowsNoticeAndVoiceStaysOff() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            // D4: el permiso denegado deja aviso visible y la voz apagada; el
+            // Modo Cocina sigue usable con botones.
+            viewModel.onVoicePermissionDenied()
+            runCurrent()
+
+            val cooking = viewModel.uiState.value as CookModeUiState.Cooking
+            assertFalse(cooking.voice.enabled)
+            assertEquals(VoiceNotice.PERMISSION_DENIED, cooking.voice.notice)
+            viewModel.next()
+            runCurrent()
+            assertEquals(1, (viewModel.uiState.value as CookModeUiState.Cooking).stepIndex)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun nextCommandAdvancesTheStepAndAnnouncesIt() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            // D7: «Siguiente» exacto avanza y locuta el nuevo Paso.
+            source.emit(VoiceSourceEvent.Heard("Siguiente"))
+            runCurrent()
+
+            val cooking = viewModel.uiState.value as CookModeUiState.Cooking
+            assertEquals(1, cooking.stepIndex)
+            assertTrue(cooking.voice.enabled)
+            assertEquals(2, speaker.announced.size)
+            assertEquals(2, speaker.announced[1].stepNumber)
+            assertEquals("Cuece la tortilla", speaker.announced[1].text)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun unknownTranscriptIsIgnoredAndKeepsListening() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            // D7: frase que no es comando ni en el idioma activo: nada cambia.
+            source.emit(VoiceSourceEvent.Heard("Dale a siguiente"))
+            runCurrent()
+            source.emit(VoiceSourceEvent.Heard("Next"))
+            runCurrent()
+
+            val cooking = viewModel.uiState.value as CookModeUiState.Cooking
+            assertEquals(0, cooking.stepIndex)
+            assertTrue(cooking.voice.enabled)
+            // Solo la locución inicial del Paso 1.
+            assertEquals(1, speaker.announced.size)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun repeatCommandAnnouncesTheCurrentStepAgain() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            // D6: «Repetir» relocuta el mismo Paso sin avanzar.
+            source.emit(VoiceSourceEvent.Heard("Repetir"))
+            runCurrent()
+
+            val cooking = viewModel.uiState.value as CookModeUiState.Cooking
+            assertEquals(0, cooking.stepIndex)
+            assertEquals(2, speaker.announced.size)
+            assertEquals(1, speaker.announced[1].stepNumber)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun pauseTimerCommandPausesTheCountdownAndNeverResumes() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(timerRecipe())
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+            viewModel.onTimerStart()
+            runCurrent()
+            advanceTimeBy(2_500)
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            // S3: «Pausar tiempo» pausa la cuenta en marcha.
+            source.emit(VoiceSourceEvent.Heard("Pausar tiempo"))
+            runCurrent()
+            val paused = (viewModel.uiState.value as CookModeUiState.Cooking).timer!!
+            assertEquals(StepTimerPhase.PAUSED, paused.phase)
+            assertEquals(298, paused.remainingSeconds)
+
+            // S3: repetir el comando no reanuda; la cuenta no vuelve a correr.
+            source.emit(VoiceSourceEvent.Heard("Pausar tiempo"))
+            runCurrent()
+            advanceTimeBy(10_000)
+            runCurrent()
+            assertEquals(
+                StepTimerPhase.PAUSED,
+                (viewModel.uiState.value as CookModeUiState.Cooking).timer!!.phase,
+            )
+            assertEquals(
+                298,
+                (viewModel.uiState.value as CookModeUiState.Cooking).timer!!.remainingSeconds,
+            )
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun nextCommandOnTheLastStepFinishesAndTurnsVoiceOff() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+            val finished = mutableListOf<CookModeEvent>()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.events.collect { finished += it }
+            }
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+            goToStep(viewModel, targetStepIndex = 1)
+
+            // D3/D11: «Siguiente» en el último Paso termina como «Terminar».
+            source.emit(VoiceSourceEvent.Heard("Siguiente"))
+            runCurrent()
+
+            assertEquals(listOf<CookModeEvent>(CookModeEvent.Finish), finished)
+            val cooking = viewModel.uiState.value as CookModeUiState.Cooking
+            assertFalse(cooking.voice.enabled)
+            assertNull(cooking.voice.notice)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun hostStopCutsVoiceAndHostStartResumesListeningWithoutReannouncing() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+
+            // D9: segundo plano corta TTS y micrófono.
+            viewModel.onHostStopped()
+            runCurrent()
+            assertTrue(speaker.stopCount > 0)
+            assertTrue(source.stopCount > 0)
+
+            // D1/D9: al volver se reanuda la escucha sin relocutar el Paso.
+            val announcedWhenStopped = speaker.announced.size
+            viewModel.onHostStarted()
+            runCurrent()
+
+            val voice = (viewModel.uiState.value as CookModeUiState.Cooking).voice
+            assertTrue(voice.enabled)
+            assertEquals(2, source.startCount)
+            assertEquals(announcedWhenStopped, speaker.announced.size)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun clearingTheViewModelReleasesBothVoiceEngines() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(timerRecipe())
+            val speaker = FakeStepSpeaker()
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+
+            // D9: al salir se liberan los dos motores de voz.
+            viewModelStore.clear()
+            runCurrent()
+            assertEquals(1, speaker.releaseCount)
+            assertEquals(1, source.releaseCount)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun theAlarmCutsTheSpeechBeforeRinging() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(timerRecipe())
+            val speaker = FakeStepSpeaker()
+            val alarm = FakeTimerAlarm(speaker)
+            val source = FakeVoiceCommandSource()
+
+            val viewModel = CookModeViewModel(
+                recipes,
+                alarm,
+                speaker,
+                source,
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", viewModel)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiState.collect { }
+            }
+            runCurrent()
+            viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+            goToStep(viewModel, targetStepIndex = 2)
+            viewModel.onTimerStart()
+            runCurrent()
+            advanceUntilIdle()
+
+            // D12: la alarma tiene prioridad: el TTS se corta antes de sonar.
+            assertTrue(alarm.isRinging)
+            assertEquals(1, alarm.startCount)
+            assertTrue(alarm.speechStopsWhenRinging >= 1)
+            assertTrue(speaker.stopCount >= 1)
+        } finally {
+            viewModelStore.clear()
+            runCurrent()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun voiceIsOffByDefaultWhenTheModeIsReopened() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val viewModelStore = ViewModelStore()
+        try {
+            val recipes = InMemoryRecipeRepository()
+            recipes.saveRecipe(twoStepRecipe())
+
+            val first = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", first)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                first.uiState.collect { }
+            }
+            runCurrent()
+            first.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
+            runCurrent()
+            assertTrue((first.uiState.value as CookModeUiState.Cooking).voice.enabled)
+            viewModelStore.clear()
+            runCurrent()
+
+            // D9: la voz vive solo en memoria: una sesión nueva nace apagada.
+            val second = CookModeViewModel(
+                recipes,
+                FakeTimerAlarm(),
+                FakeStepSpeaker(),
+                FakeVoiceCommandSource(),
+                "tortilla",
+                servings = null,
+            )
+            viewModelStore.put("cook", second)
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                second.uiState.collect { }
+            }
+            runCurrent()
+
+            val voice = (second.uiState.value as CookModeUiState.Cooking).voice
+            assertFalse(voice.enabled)
+            assertNull(voice.notice)
         } finally {
             viewModelStore.clear()
             runCurrent()
@@ -604,19 +1327,89 @@ class CookModeViewModelTest {
 }
 
 // Doble de la alarma del temporizador (patrón de tests de data/): cuenta las
-// llamadas y mantiene si está sonando, sin tocar el audio del dispositivo.
-private class FakeTimerAlarm : TimerAlarm {
+// llamadas y mantiene si está sonando, sin tocar el audio del dispositivo. Con el
+// hablante enlazado, guarda cuántos cortes de voz había cuando empezó a sonar
+// para probar la prioridad de la alarma (D12).
+private class FakeTimerAlarm(
+    private val speech: FakeStepSpeaker? = null,
+) : TimerAlarm {
     var startCount = 0
         private set
     var isRinging = false
+        private set
+    var speechStopsWhenRinging = 0
         private set
 
     override fun start() {
         startCount += 1
         isRinging = true
+        speechStopsWhenRinging = speech?.stopCount ?: 0
     }
 
     override fun stop() {
         isRinging = false
+    }
+}
+
+// Doble del TTS (RD24, D8): registra el locale preparado y las locuciones emitidas;
+// `prepared = false` simula un motor inexistente.
+private class FakeStepSpeaker(
+    var prepared: Boolean = true,
+) : StepSpeaker {
+    val announced = mutableListOf<StepAnnouncement>()
+    val preparedFor = mutableListOf<Locale>()
+    var stopCount = 0
+        private set
+    var releaseCount = 0
+        private set
+
+    override suspend fun prepare(locale: Locale): Boolean {
+        preparedFor += locale
+        return prepared
+    }
+
+    override fun speak(announcement: StepAnnouncement) {
+        announced += announcement
+    }
+
+    override fun stop() {
+        stopCount += 1
+    }
+
+    override fun release() {
+        releaseCount += 1
+    }
+}
+
+// Doble del reconocimiento (RD24, D8): registra arranques/paradas y deja emitir
+// transcripciones o fallos al ViewModel; `available = false` simula sin servicio.
+private class FakeVoiceCommandSource(
+    var available: Boolean = true,
+) : VoiceCommandSource {
+    private val mutableEvents = MutableSharedFlow<VoiceSourceEvent>()
+    override val events: Flow<VoiceSourceEvent> = mutableEvents
+
+    var startCount = 0
+        private set
+    var stopCount = 0
+        private set
+    var releaseCount = 0
+        private set
+
+    override fun start(locale: Locale): Boolean {
+        startCount += 1
+        return available
+    }
+
+    override fun stop() {
+        stopCount += 1
+    }
+
+    override fun release() {
+        releaseCount += 1
+    }
+
+    suspend fun emit(event: VoiceSourceEvent) {
+        mutableEvents.emit(event)
     }
 }

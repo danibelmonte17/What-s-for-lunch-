@@ -1,6 +1,10 @@
 package com.whatsforlunch.app
 
 import android.content.res.Configuration
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
@@ -18,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -305,8 +310,16 @@ class CookModeE2ETest {
         val context = contextFor(locale)
         // Fuera del lambda de composición: lint prohíbe construir ViewModels dentro
         // de un composable (patrón de RecipeDetailE2ETest). La alarma real (tono del
-        // sistema) solo suena si el temporizador llega a cero (RF-GTP4).
-        val viewModel = CookModeViewModel(recipes, SystemRingtoneTimerAlarm(context), recipeId, servings)
+        // sistema) solo suena si el temporizador llega a cero (RF-GTP4). Los motores
+        // de voz son fakes (RD24, D15): este test no toca micrófono ni TTS.
+        val viewModel = CookModeViewModel(
+            recipes,
+            SystemRingtoneTimerAlarm(context),
+            FakeStepSpeaker(),
+            FakeVoiceCommandSource(),
+            recipeId,
+            servings,
+        )
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             CompositionLocalProvider(
@@ -327,6 +340,8 @@ class CookModeE2ETest {
                         onTimerReset = viewModel::onTimerReset,
                         onTimerAddMinute = viewModel::onTimerAddMinute,
                         onTimerStop = viewModel::onTimerStop,
+                        onVoiceToggle = {},
+                        onSpeakStep = {},
                     )
                 }
             }
@@ -343,6 +358,10 @@ class CookModeE2ETest {
                 LocalContext provides context,
                 LocalConfiguration provides Configuration(context.resources.configuration),
                 LocalResources provides context.resources,
+                // El Context de configuración no es ActivityResultRegistryOwner; la
+                // Route del Modo Cocina registra su launcher de permiso al componer
+                // (RD24). Este test nunca toca «Voz», así que el lanzamiento falla.
+                LocalActivityResultRegistryOwner provides CookModeTestRegistryOwner,
             ) {
                 WhatsForLunchTheme {
                     WhatsForLunchApp()
@@ -356,5 +375,20 @@ class CookModeE2ETest {
         val database = GlobalContext.get().get<RecipeDatabase>()
         val repository = RoomRecipeRepository(database.recipeDao(), CookModeNoOpPhotoStore)
         runBlocking { repository.saveRecipe(recipe) }
+    }
+}
+
+// Doble del registry de resultados (patrón de MyRecipesLocalizationE2ETest): los
+// tests de cocina no abren el diálogo de permiso, así que lanzarlo es un error.
+private object CookModeTestRegistryOwner : ActivityResultRegistryOwner {
+    override val activityResultRegistry: ActivityResultRegistry = object : ActivityResultRegistry() {
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: ActivityOptionsCompat?,
+        ) {
+            error("The cook-mode tests never open the microphone permission dialog")
+        }
     }
 }

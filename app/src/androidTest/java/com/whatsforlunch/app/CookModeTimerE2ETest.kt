@@ -301,8 +301,16 @@ class CookModeTimerE2ETest {
         val alarm = SystemRingtoneTimerAlarm(context)
         timerAlarm = alarm
         // Fuera del lambda de composición: lint prohíbe construir ViewModels dentro
-        // de un composable (patrón de CookModeE2ETest).
-        val viewModel = CookModeViewModel(recipes, alarm, recipeId, servings = null)
+        // de un composable (patrón de CookModeE2ETest). Los motores de voz son fakes
+        // (RD24, D15): este test no toca micrófono ni TTS.
+        val viewModel = CookModeViewModel(
+            recipes,
+            alarm,
+            FakeStepSpeaker(),
+            FakeVoiceCommandSource(),
+            recipeId,
+            servings = null,
+        )
         viewModelStore.put("cook", viewModel)
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -324,6 +332,8 @@ class CookModeTimerE2ETest {
                         onTimerReset = viewModel::onTimerReset,
                         onTimerAddMinute = viewModel::onTimerAddMinute,
                         onTimerStop = viewModel::onTimerStop,
+                        onVoiceToggle = {},
+                        onSpeakStep = {},
                     )
                 }
             }

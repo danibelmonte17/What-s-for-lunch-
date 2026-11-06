@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Español: idioma por defecto. Si el dispositivo no es es ni en, se muestra este. -->
     <string name="app_name">What\'s for Lunch?</string>
     <string name="my_recipes_title">Mis Recetas</string>
@@ -50,6 +50,20 @@
     <string name="cook_mode_previous_step">Paso Anterior</string>
     <string name="cook_mode_next_step">Siguiente</string>
     <string name="cook_mode_finish">Terminar</string>
+    <string name="cook_mode_voice_toggle">Voz</string>
+    <string name="cook_mode_voice_toggle_active">Voz activa</string>
+    <string name="cook_mode_voice_listen">Escuchar</string>
+    <string name="cook_mode_voice_commands_title" tools:ignore="Typos">Comandos de voz activos</string>
+    <string name="cook_mode_voice_commands_hint">Di «Siguiente», «Repetir» o «Pausar tiempo»</string>
+    <string name="cook_mode_voice_permission_denied">Sin permiso de micrófono. Toca «Voz» para volver a intentarlo.</string>
+    <string name="cook_mode_voice_unavailable">La voz no está disponible en este dispositivo.</string>
+    <string name="cook_mode_voice_commands_unavailable">No se pudo iniciar el reconocimiento de voz. Puedes seguir con «Escuchar» y los botones.</string>
+    <string name="cook_mode_voice_language_not_downloaded" tools:ignore="Typos">El idioma sin conexión no está descargado. Descárgalo en los ajustes de voz del dispositivo para usar comandos.</string>
+    <string name="cook_mode_voice_announce_step">Paso %1$d. %2$s</string>
+    <plurals name="cook_mode_voice_announce_timer">
+        <item quantity="one">Temporizador de %1$d minuto</item>
+        <item quantity="other">Temporizador de %1$d minutos</item>
+    </plurals>
 
     <!-- Despensa -->
     <string name="pantry_title">Despensa</string>
@@ -201,7 +215,7 @@
     <string name="settings_api_key_build_source">La clave de IA proviene de la compilación (local.properties) y tiene prioridad sobre la guardada aquí.</string>
     <string name="settings_api_key_saved">API key guardada.</string>
     <string name="settings_privacy_title">Privacidad y datos</string>
-    <string name="settings_privacy_notice">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner se envían a DevExpert Inference únicamente para analizarlas, no se almacenan en el dispositivo y el proveedor no las retiene. Puedes controlar el gasto en tu panel de DevExpert Inference.</string>
+    <string name="settings_privacy_notice" tools:ignore="Typos">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner se envían a DevExpert Inference únicamente para analizarlas, no se almacenan en el dispositivo y el proveedor no las retiene. Puedes controlar el gasto en tu panel de DevExpert Inference. Con «Voz» activa en el Modo Cocina, el micrófono capta tus comandos de voz y el servicio de voz del sistema los procesa para reconocerlos (puede usar la red según el proveedor del dispositivo); la app no guarda audio ni transcripciones y la voz no funciona en segundo plano.</string>
 
     <!-- Escáner de la Despensa -->
     <string name="scanner_title">Escáner de la Despensa</string>
