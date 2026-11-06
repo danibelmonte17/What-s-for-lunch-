@@ -11,6 +11,7 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 ### Producto
 
 **Borrador**: Receta guardada que aún no está lista para cocinar; al publicarla queda disponible en Mis Recetas.
+**Comando de voz**: frase exacta que el Modo Cocina reconoce para actuar: «Siguiente», «Repetir» o «Pausar tiempo» (y «Next», «Repeat», «Pause timer» en inglés).
 **Ingrediente**: componente de una Receta, con cantidad, unidad y si es obligatorio u opcional.
 **Lista de la Compra**: ítems que faltan por comprar, agrupables por Pasillo o por Receta.
 **Mis Recetas**: Recetas del usuario (creadas a mano, aceptadas desde una Sugerencia o guardadas desde el Pinche) y pantalla de entrada de la app.
@@ -22,6 +23,7 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 **Ficha**: vista dentro del Pinche con el texto, los ingredientes, los pasos y los Faltantes de una Propuesta del Pinche. Desde ella se guarda la Propuesta en Mis Recetas.
 **Raciones**: número de comensales de una Receta; ajusta las cantidades (entre 1 y 12).
 **Receta**: plato con ingredientes, pasos y metadatos; se crea a mano, se acepta desde una Sugerencia o se guarda desde el Pinche.
+**Voz**: función opcional del Modo Cocina que locuta los Pasos y escucha Comandos de voz con los servicios del sistema (`TextToSpeech` y `SpeechRecognizer`); apagada por defecto, solo en memoria y sin escucha en segundo plano (RD24).
 **What's for Lunch?**: la app.
 
 ### Despensa y compra

@@ -17,7 +17,7 @@ La CTA del Detalle «Empezar Modo Cocina» pasa a exigir **≥ 1 Paso** (deshabi
 ## Non-Goals
 
 - **Temporizador** (cuenta atrás, alarma, `+1 min`, temporizador circular): es `gestionar-temporizador-de-paso`. Aquí solo el dato pasivo «⏱ N min» (D6), **ya sustituido por el widget del temporizador de esa feature** (D5 de `gestionar-temporizador-de-paso`; cambio de comportamiento aceptado).
-- **Voz** (locución de pasos, «Escuchar», comandos, micrófono): es `controlar-cocina-con-voz` (`⚠ S04`). Sin `SpeechRecognizer`/`TextToSpeech` ni permisos nuevos.
+- **Voz** (locución de pasos, «Escuchar», comandos, micrófono): es `controlar-cocina-con-voz` (`⚠ S04`), **ya implementada en el Modo Cocina** (RD24: chip «Voz», «Escuchar» y comandos exactos). Esta feature no añadió `SpeechRecognizer`/`TextToSpeech` ni permisos nuevos.
 - **Editar Recetas ni vínculos** (RD21): el Modo Cocina solo lee; las asignaciones se hacen en el formulario.
 - **Cambios de Room, validaciones (`RecipeValidation`) o prompts de IA**: ninguno; Room sigue en **v4**.
 - **Persistencia del progreso de cocción**: el paso activo vive solo en memoria.

@@ -686,9 +686,12 @@
       "verification": [
         "E2E: emitir el comando Siguiente y comprobar que el Modo Cocina avanza de paso"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/controlar-cocina-con-voz/t0-voice-spike.md — T0 SUPERADO en dispositivo físico V2124 (2026-11-06): precisión es offline 10/10, 10/10, 9/10 y en online 10/10, 10/10, 9/10 (umbral ≥8/10), autoactivación 0/10 en ambos idiomas, TTS audible es/en con energía capturada por micrófono, diálogo de permiso con concesión/denegación/reintento (3 capturas). Limitación: motor offline en-US no descargado (ERROR 13 = caso F2), medición en online",
+        "docs/validations/controlar-cocina-con-voz.md — validación independiente 2026-11-04: revise (F1 High T0, F2 Medium decisión offline, F3 Medium spike tests, F4 Medium evidencia, F5 Low notes)"
+      ],
       "notes": "Voz con SpeechRecognizer/TextToSpeech nativos (⚠ S04)",
-      "status": "not_started"
+      "status": "passing"
     },
     {
       "id": "resolver-dudas-con-pinche",
