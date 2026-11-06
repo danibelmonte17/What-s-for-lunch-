@@ -688,10 +688,11 @@
       ],
       "evidence": [
         "docs/evidence/controlar-cocina-con-voz/t0-voice-spike.md — T0 SUPERADO en dispositivo físico V2124 (2026-11-06): precisión es offline 10/10, 10/10, 9/10 y en online 10/10, 10/10, 9/10 (umbral ≥8/10), autoactivación 0/10 en ambos idiomas, TTS audible es/en con energía capturada por micrófono, diálogo de permiso con concesión/denegación/reintento (3 capturas). Limitación: motor offline en-US no descargado (ERROR 13 = caso F2), medición en online",
-        "docs/validations/controlar-cocina-con-voz.md — validación independiente 2026-11-04: revise (F1 High T0, F2 Medium decisión offline, F3 Medium spike tests, F4 Medium evidencia, F5 Low notes)"
+        "docs/validations/controlar-cocina-con-voz.md — validación independiente 2026-11-04: revise (F1 High T0, F2 Medium decisión offline, F3 Medium spike tests, F4 Medium evidencia, F5 Low notes)",
+        "docs/validations/controlar-cocina-con-voz.md §9 — revalidación independiente 2026-11-06 tras T0 SUPERADO: revise (F6 High: batería E2E completa no ejecutada y cifras 213 @Test sobredimensionadas; F7 Medium: evidencia de cierre incompleta; F8 Medium: spec desincronizada con el contrato F2; F9 Low: iconos deprecados). Repair brief en el informe"
       ],
       "notes": "Voz con SpeechRecognizer/TextToSpeech nativos (⚠ S04)",
-      "status": "passing"
+      "status": "in_progress"
     },
     {
       "id": "resolver-dudas-con-pinche",

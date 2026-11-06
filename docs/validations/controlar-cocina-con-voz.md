@@ -169,3 +169,57 @@ Update:
 - `feature_list.json`: mantener `status: in_progress`. `notes` restaurado (F5 aplicado por orquestador).
 - Tras repair brief + T0 completo ≥8/10 sin autoactivación → revalidación → `accept` → `accepted`.
 - Sin dispositivo físico o T0 fallido → `blocked` + `⚠ S04`.
+
+---
+
+## 9. Revalidación tras completar T0 (2026-11-06, `feature-validator` con agente): `revise`
+
+**Contexto**: el repair brief de §7 se aplicó — T0 completado y **SUPERADO** el 2026-11-06 en el dispositivo físico V2124 (evidencia: `docs/evidence/controlar-cocina-con-voz/t0-voice-spike.md` + 3 PNG), decisión F2 implementada, spike temporal retirado sin commitear y `⚠ S04` resuelto. El validador corrió en una sesión independiente, **sin editar ficheros**.
+
+**Veredicto: `revise`** (sin Critical; 1 High, 2 Medium, 1 Low). La feature vuelve a `in_progress`.
+
+### Checks ejecutados por el validador
+
+| Check | Método | Resultado |
+|-------|--------|-----------|
+| `lintDebug` | re-ejecutado (`--rerun-tasks`) | 0 errores / 49 warnings (baseline; sin novedades de voz) |
+| `testDebugUnitTest` | re-ejecutado (`--rerun-tasks`) | 40 suites / 291 tests / 0 fallos / 0 omitidos |
+| `assembleDebug` | re-ejecutado | OK |
+| Paridad es/en | inventario de claves | 322 strings + 5 plurals = 327 por idioma ✅ |
+| Inventario E2E | contado en `androidTest` | 213 `@Test` (24 clases); focalizada voz = 25 |
+| Spike T0 físico | inspeccionado (evidencia + 3 PNG) | es 10/10-10/10-9/10; en 10/10-10/10-9/10 ≥ umbral; autoactivación 0/10; TTS audible; permisos ✅ |
+| E2E focalizada 25/25 y batería Modo Cocina 27/27 | inspeccionado (logs de sesión; sin XML conservado) | creíble pero incompleto → F6/F7 |
+| Batería E2E completa | no ejecutada para este change set | → F6 |
+| Manual de uso | sin evidencia | → F7 |
+
+Seguridad: **sin hallazgos** (sin audio/transcripciones persistidas, sin secretos/PII en el diff, `RECORD_AUDIO` mínimo y diferido, micrófono `required="false"`, privacidad actualizada, `<queries>` acotado).
+
+### Hallazgos
+
+- **F6 (High)** — La batería E2E completa requerida por la spec no se ejecutó sobre este change set y la evidencia lo sobredimensiona: `feature_list.json.evidence` y `PROGRESS.md` afirman «E2E 213 `@Test` (sin regresiones)», pero **213 es el inventario de tests, no una ejecución**. Lo realmente ejecutado: focalizada 25/25 (10 `CookModeVoiceE2ETest` + 7 `CookModeE2ETest` + 8 `CookModeTimerE2ETest`) y batería Modo Cocina 27/27 (7+8+12 = `RecipeDetailE2ETest`); ninguna conserva XML/HTML en `docs/evidence/`.
+- **F7 (Medium)** — Evidencia de cierre incompleta (residual de F4 y del «Evidence To Capture» de la spec): faltan (a) captura es de la UI con voz activa + barra de comandos; (b) captura es de un aviso (permiso denegado o motor no descargado) — `t0-perm-denied-state.png` muestra los ajustes TTS del sistema, no el estado denegado de la app; (c) checklist del manual con resultados (revocación en Ajustes, rotación/segundo plano, micrófono apagado al salir, alarma vs TTS, comandos a ~30 cm); (d) salidas de lint/unit/E2E con nombres de tests; (e) informe de cierre que referencie T0 + E2E + manual.
+- **F8 (Medium)** — Spec desincronizada tras el cambio F2 (el repair brief exigía actualizarla si cambia el contrato; cambió): la spec no refleja `VoiceSourceEvent.LanguageUnavailable` ni `VoiceNotice.LANGUAGE_NOT_DOWNLOADED` (ERROR 13 → aviso accionable, string `cook_mode_voice_language_not_downloaded`; 3 fallos → `COMMANDS_UNAVAILABLE`). Línea 131 enumera solo `{ PERMISSION_DENIED, VOICE_UNAVAILABLE, COMMANDS_UNAVAILABLE }`; la lista de strings (línea 155) omite la clave nueva; Technical Approach y D2 dicen «idioma no soportado o 3 fallos → `Unavailable`»; la línea 52 (Scenario 6) dice «voz en pausa»; «Casos límite» sin fila de motor de idioma.
+- **F9 (Low)** — Icono deprecado heredado (N1 del informe previo): `CookModeScreen.kt` usa `Icons.Outlined.Mic`/`Icons.Outlined.VolumeUp` en lugar de `Icons.AutoMirrored.Outlined.*`; warnings de lint. Sin impacto funcional.
+
+### Notas
+
+- **N1**: la medición T0 de precisión en-US es **online** (decisión del usuario registrada) pese a `EXTRA_PREFER_OFFLINE=true`; motor en-US no descargado (ERROR 13 = caso F2). Acotado y documentado.
+- **N2**: cifras reconciliadas por inventario: 213 `@Test` = cifra de PROGRESS; «27/27» = 7+8+12 (falta etiquetar el 12/12 como `RecipeDetailE2ETest` en PROGRESS/historial); «25/25» = 10+7+8 (focalizada voz). Todo coherente.
+- **N3**: `t0-perm-dialog-request.png` capta el diálogo sobre los ajustes TTS del sistema (fondo inesperado); cosmético.
+- **N4**: `AndroidStepSpeaker.prepare` con init fallido retiene el motor fallido hasta la segunda llamada (sin `releaseEngine()` en ese path); sin impacto funcional conocido.
+- **N5**: los checkboxes T0–T10 del «Validator Checklist» de la spec quedan cubiertos por esta validación (la spec no se edita en validación).
+
+### Implementation Repair Brief
+
+1. **Ejecutar y conservar la verificación E2E completa** sobre el árbol final (213 `@Test`): focalizada `CookModeVoiceE2ETest`+`CookModeE2ETest`+`CookModeTimerE2ETest` + batería completa (`./e2e.ps1`/`./e2e.sh`) sin regresiones; copiar las salidas XML/HTML con nombres de tests a `docs/evidence/controlar-cocina-con-voz/`. Si algo preexistente falla (p. ej. `PantryManagementE2ETest`, flaky conocido), repetirlo y documentar la causa.
+2. **Completar la evidencia de cierre** (F7): informe en `docs/evidence/controlar-cocina-con-voz/` que referencie T0 + E2E + manual; 2 capturas es (voz activa con barra de comandos; aviso de permiso denegado/motor no descargado); checklist del manual con resultados.
+3. **Sincronizar la spec con el contrato F2** (F8): `VoiceSourceEvent.LanguageUnavailable`, `VoiceNotice.LANGUAGE_NOT_DOWNLOADED`, string `cook_mode_voice_language_not_downloaded`, ERROR 13 → `LANGUAGE_NOT_DOWNLOADED` vs 3 fallos → `COMMANDS_UNAVAILABLE`, fila en «Casos límite», y ajustar D2, Technical Approach, línea 52 y la lista de strings.
+4. **Cuadrar el wording de cifras**: distinguir inventario (213 `@Test`) de ejecuciones (25/25 = 10+7+8; 27/27 = 7+8+12 con `RecipeDetailE2ETest` etiquetado) en `feature_list.json.evidence`, `PROGRESS.md` e historial.
+5. **(Opcional, F9)** `Icons.AutoMirrored.Outlined.Mic/VolumeUp` en `CookModeScreen`.
+
+No tocar: semántica de comandos ni de alarma, alcance (sin parciales/fuzzy/persistencia) ni los contratos ya verificados.
+
+### Estado
+
+- `feature_list.json`: `status` → `in_progress` con la referencia a esta validación en `evidence`.
+- Tras el repair + revalidación acotada → `accept` → `accepted`.
