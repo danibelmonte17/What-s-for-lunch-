@@ -908,7 +908,7 @@
       "id": "eliminar-estado-de-borrador-y-filtrar-favoritos",
       "area": "funcional",
       "title": "Eliminar el estado de Borrador y añadir filtro de favoritos",
-      "user_visible_behavior": "Las Recetas ya no tienen estado borrador: el formulario de alta y de edición solo permite guardar con todos los datos obligatorios (título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida) mediante un único botón de guardado, y los distintivos «Borrador»/«Publicada» desaparecen de las tarjetas de Mis Recetas y del formulario. Aceptar una Sugerencia o guardar una Propuesta del Pinche sigue creando la Receta directamente aunque le falte la foto. Mis Recetas añade el chip «Favoritas» en su fila de filtros, combinable con la búsqueda y los demás filtros.",
+      "user_visible_behavior": "Las Recetas ya no tienen estado borrador: el formulario de alta y de edición solo permite guardar con todos los datos obligatorios (título, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida) mediante un único botón de guardado, la foto es siempre opcional (D11) y los distintivos «Borrador»/«Publicada» desaparecen de las tarjetas de Mis Recetas y del formulario. Aceptar una Sugerencia o guardar una Propuesta del Pinche sigue creando la Receta directamente aunque le falte la foto. Mis Recetas añade el chip «Favoritas» en su fila de filtros, combinable con la búsqueda y los demás filtros.",
       "depends_on": [
         "crear-receta",
         "editar-receta",
@@ -918,23 +918,30 @@
       ],
       "steps": [
         "Eliminar el estado Borrador/Publicada del modelo de Receta y de su persistencia, de modo que toda Receta se guarda sin estado de borrador",
-        "Cambiar el guardado del formulario (alta y edición) para exigir todos los obligatorios —título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (revisa ⚠ S07)— con un único botón («Guardar» en el alta, «Guardar cambios» en edición), retirando «Guardar Borrador» y «Publicar Receta»",
+        "Cambiar el guardado del formulario (alta y edición) para exigir todos los obligatorios —título, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (revisa ⚠ S07; la foto es siempre opcional, D11)— con un único botón («Guardar» en el alta, «Guardar cambios» en edición), retirando «Guardar Borrador» y «Publicar Receta»",
         "Quitar de la interfaz los distintivos «Borrador»/«Publicada» de las tarjetas de Mis Recetas y de la cabecera del formulario, junto con sus textos es/en",
         "Mantener que aceptar una Sugerencia o guardar una Propuesta del Pinche cree la Receta directamente aunque le falte la foto, ahora sin estado borrador",
         "Añadir el chip «Favoritas» en la fila de filtros de Mis Recetas, combinable con la búsqueda y los filtros de momento de comida, con su estado «sin resultados» y el restablecer",
         "Actualizar los textos es/en, los tests unitarios y E2E afectados (CreateRecipeE2ETest, EditRecipeE2ETest, MyRecipesCardsE2ETest, AiSuggestionsE2ETest, PincheE2ETest y los de búsqueda/filtros) y la documentación de dominio (docs/domain-model.md y ⚠ S07), manteniendo la paridad de claves entre locales"
       ],
       "verification": [
-        "E2E: en el alta, comprobar que no se puede guardar sin foto ni sin al menos 1 Ingrediente y 1 Paso válidos, y que con todos los obligatorios la Receta se guarda con el único botón y aparece en Mis Recetas sin distintivo de estado",
+        "E2E: en el alta, comprobar que no se puede guardar sin al menos 1 Ingrediente y 1 Paso válidos ni con filas inválidas, que la foto es siempre opcional (se guarda sin foto, D11) y que con todos los obligatorios la Receta se guarda con el único botón y aparece en Mis Recetas sin distintivo de estado",
         "E2E: editar una Receta y comprobar que «Guardar cambios» exige los mismos obligatorios y que, al guardarse, la Receta sigue sin distintivo de estado",
         "E2E: aceptar una Sugerencia y guardar una Propuesta del Pinche y comprobar que la Receta aparece en Mis Recetas sin foto y sin distintivo de estado",
         "E2E: marcar una Receta como favorita, activar el chip «Favoritas» y comprobar que solo aparecen las favoritas, su combinación con la búsqueda y los filtros, el «sin resultados» y el restablecer",
         "E2E: comprobar que no aparece ningún texto «Borrador» ni «Publicada» y que los textos nuevos existen en español e inglés",
-        "Unit: la validación de guardado exige título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida, tanto en el alta como al editar"
+        "Unit: la validación de guardado exige título, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (la foto es siempre opcional, D11), tanto en el alta como al editar"
       ],
-      "evidence": [],
-      "notes": "Decisiones del usuario (2026-11-07): (D1) aceptar una Sugerencia o guardar una Propuesta del Pinche sigue guardando la Receta directamente aunque le falte la foto —excepción a los obligatorios, que solo se exigen en el formulario—; (D2) los distintivos «Borrador»/«Publicada» desaparecen por completo, sin sustituirlos por un «Publicada» fijo; (D3) el filtro de favoritos es un chip «Favoritas» en la fila de filtros de Mis Recetas, combinable con la búsqueda y los demás filtros. Este cambio revisa ⚠ S07 (los obligatorios pasan a exigirse en todo guardado manual, alta y edición) y modifica el comportamiento de las features aceptadas crear-receta, editar-receta, buscar-y-filtrar-recetas, aceptar-sugerencia-de-receta y resolver-dudas-con-pinche (anotado en sus notes; sus specs y evidencias históricas no se reescriben). Quedan para la spec: qué ocurre al editar una Receta sin foto creada desde Sugerencia/Pinche (si guardar exige foto, hay que añadirla), el destino de la columna status de Room (migración vs columna residual con valor único y fallback), el nombre exacto del botón único del alta y el tratamiento del Detalle ante Recetas sin foto o incompletas de esos flujos.",
-      "status": "not_started"
+      "evidence": [
+        "Validación independiente (feature-validator, 2026-11-07): veredicto accept; informe en docs/validations/eliminar-estado-de-borrador-y-filtrar-favoritos.md (tier barato re-ejecutado: init.ps1, lint 0 errores/49 warnings, unit 42 suites/305 tests/0 fallos, assembleDebug, paridad; tier caro inspeccionado contra el XML y las capturas; 2 hallazgos Low documentales F1/F2 corregidos al persistir)",
+        "E2E completa (2026-11-07, emulador Pixel_10_Pro es-ES): 220 tests / 0 fallos / 0 errores / 2 omitidos (SettingsE2ETest/Assume), BUILD SUCCESSFUL en 15m 18s; recuento por clase y XML en docs/evidence/eliminar-estado-de-borrador-y-filtrar-favoritos/ (informe.md)",
+        "Migración Room v4→v5 (MIGRATION_4_5, elimina la columna status) verificada por RecipeMigrationTest en la batería",
+        "Paridad de cadenas es/en: 322/322 claves + 5/5 plurales (línea base tras D11)",
+        "Gates tras D11: lintDebug 0 errores/49 warnings (línea base), testDebugUnitTest 305 tests/0 fallos, assembleDebug OK",
+        "3 capturas 1280×2856 es-ES (chip Favoritas activo, tarjetas sin distintivos de estado, formulario con guardado único y «Sin foto (opcional)») tomadas con test instrumentado temporal sobre BD real de Room y UI real (test retirado tras extraerlas)"
+      ],
+      "notes": "Decisiones del usuario (2026-11-07): (D1) aceptar una Sugerencia o guardar una Propuesta del Pinche sigue guardando la Receta directamente aunque le falte la foto —excepción a los obligatorios, que solo se exigen en el formulario—; (D2) los distintivos «Borrador»/«Publicada» desaparecen por completo, sin sustituirlos por un «Publicada» fijo; (D3) el filtro de favoritos es un chip «Favoritas» en la fila de filtros de Mis Recetas, combinable con la búsqueda y los demás filtros. Este cambio revisa ⚠ S07 (los obligatorios pasan a exigirse en todo guardado manual, alta y edición) y modifica el comportamiento de las features aceptadas crear-receta, editar-receta, buscar-y-filtrar-recetas, aceptar-sugerencia-de-receta y resolver-dudas-con-pinche (anotado en sus notes; sus specs y evidencias históricas no se reescriben). Quedan para la spec: qué ocurre al editar una Receta sin foto creada desde Sugerencia/Pinche (si guardar exige foto, hay que añadirla), el destino de la columna status de Room (migración vs columna residual con valor único y fallback), el nombre exacto del botón único del alta y el tratamiento del Detalle ante Recetas sin foto o incompletas de esos flujos. Decisión posterior del usuario (2026-11-07, D11, supera a D4 y resuelve Q-eliminar-estado-de-borrador-y-filtrar-favoritos-5): la foto es siempre opcional, en alta y en edición; los textos de esta entrada se han alineado con D11 (mantenimiento de la lista autorizado por el usuario el 2026-11-07).",
+      "status": "accepted"
     }
   ]
 }
