@@ -7,17 +7,16 @@ import com.whatsforlunch.app.domain.model.RecipeStep
 // Requisito incumplido por una Receta en el formulario de alta.
 enum class RecipeRequirement {
     TITLE,
-    PHOTO,
     INGREDIENT,
     STEP,
     INVALID_INGREDIENT,
     INVALID_STEP,
 }
 
-// Validaciones puras del formulario de alta (Parte B, T1): sin dependencias de UI.
-// El Borrador solo exige título (Q-crear-receta-2); Publicar exige título, foto,
-// al menos un Ingrediente y un Paso válidos y ninguna fila/Paso inválido
-// (RF-8, RF-12, RF-15, RF-16, RF-17; revisa ⚠ S07).
+// Validaciones puras del guardado manual del formulario (alta y edición): sin
+// dependencias de UI. Guardar exige título, al menos un Ingrediente y un Paso
+// válidos y ninguna fila/Paso inválido (revisa ⚠ S07). La foto es siempre
+// opcional (D11): también en el alta y en la edición de Recetas con foto.
 object RecipeValidation {
 
     const val MIN_BASE_SERVINGS = 1
@@ -38,16 +37,11 @@ object RecipeValidation {
 
     fun isStepInvalid(step: RecipeStep): Boolean = step.text.isBlank()
 
-    // Requisitos incumplidos para guardar como Borrador: solo el título.
-    fun validateForDraft(recipe: Recipe): Set<RecipeRequirement> = buildSet {
+    // Requisitos incumplidos para guardar con el botón único del formulario:
+    // título, un ingrediente y un paso presentes y válidos, y ninguna fila de
+    // Ingrediente ni Paso inválidos. La foto nunca bloquea el guardado (D11).
+    fun validateForSave(recipe: Recipe): Set<RecipeRequirement> = buildSet {
         if (recipe.title.isBlank()) add(RecipeRequirement.TITLE)
-    }
-
-    // Requisitos incumplidos para Publicar: título, foto, un ingrediente y un paso
-    // presentes y válidos, y ninguna fila de Ingrediente ni Paso inválidos.
-    fun validateForPublish(recipe: Recipe): Set<RecipeRequirement> = buildSet {
-        if (recipe.title.isBlank()) add(RecipeRequirement.TITLE)
-        if (recipe.photoPath.isNullOrBlank()) add(RecipeRequirement.PHOTO)
         if (recipe.ingredients.isEmpty()) add(RecipeRequirement.INGREDIENT)
         if (recipe.steps.isEmpty()) add(RecipeRequirement.STEP)
         if (recipe.ingredients.any { isIngredientInvalid(it) }) add(RecipeRequirement.INVALID_INGREDIENT)

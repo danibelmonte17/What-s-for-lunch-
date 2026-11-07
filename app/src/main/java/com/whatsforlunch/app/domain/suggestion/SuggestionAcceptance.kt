@@ -4,7 +4,6 @@ import com.whatsforlunch.app.domain.match.calculateMatch
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
 
@@ -21,7 +20,7 @@ enum class SuggestionState {
  * Materialización de una Sugerencia en Receta (RD07) y selección de las Recetas que
  * el prompt debe evitar (D2).
  *
- * Aceptar guarda un **Borrador** con `origen = SUGGESTION` y sin foto (D1). El id se
+ * Aceptar guarda una Receta con `origen = SUGGESTION` y sin foto (D1). El id se
  * deriva del título normalizado, de modo que aceptar dos veces la misma propuesta
  * reescribe la misma fila mediante el upsert del repositorio (D3) y nunca duplica la
  * Receta. Sin dependencias de Android ni de la UI.
@@ -39,7 +38,7 @@ object SuggestionAcceptance {
         UUID.nameUUIDFromBytes("suggestion:${normalizeName(title)}".toByteArray(Charsets.UTF_8)).toString()
 
     /**
-     * Convierte la propuesta en la Receta destino (RF-ASR2): Borrador, sin foto, no
+     * Convierte la propuesta en la Receta destino (RF-ASR2): sin foto, no
      * favorita, `origen = SUGGESTION`, con los Ingredientes y Pasos de la propuesta y
      * sus ids derivados del id estable.
      */
@@ -57,7 +56,6 @@ object SuggestionAcceptance {
             caloriesPerServing = suggestion.caloriesPerServing,
             photoPath = null,
             favorite = false,
-            status = RecipeStatus.DRAFT,
             origin = RecipeOrigin.SUGGESTION,
             ingredients = suggestion.ingredients.mapIndexed { index, ingredient ->
                 ingredient.copy(id = "$id-ingredient-$index")

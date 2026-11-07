@@ -33,6 +33,7 @@ fun MyRecipesRoute(
         onOpenShoppingList = onOpenShoppingList,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onMealMomentSelected = viewModel::onMealMomentSelected,
+        onFavoriteFilterToggle = viewModel::onFavoriteFilterToggle,
         onResetFilters = viewModel::onResetFilters,
         onDeleteRecipe = viewModel::deleteRecipe,
         onDeleteErrorConsumed = viewModel::consumeDeleteError,

@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.BakeryDining
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Delete
@@ -89,7 +90,6 @@ import com.whatsforlunch.app.domain.match.RecipeMatch
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.MomentBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
@@ -108,7 +108,6 @@ object MyRecipesTestTags {
     const val RECIPE_LIST = "my_recipes_list"
     const val RECIPE_CARD = "my_recipes_card"
     const val RECIPE_BODY = "my_recipes_card_body"
-    const val RECIPE_STATUS = "my_recipes_card_status"
     const val RECIPE_MOMENT = "my_recipes_card_moment"
     const val RECIPE_MATCH = "my_recipes_card_match"
     const val RECIPE_PHOTO = "my_recipes_card_photo"
@@ -125,6 +124,8 @@ object MyRecipesTestTags {
     const val FILTER_CHIP_ALL_ICON = "my_recipes_filter_all_icon"
     const val FILTER_CHIP = "my_recipes_filter"
     const val FILTER_CHIP_ICON = "my_recipes_filter_icon"
+    const val FILTER_CHIP_FAVORITES = "my_recipes_filter_favorites"
+    const val FILTER_CHIP_FAVORITES_ICON = "my_recipes_filter_favorites_icon"
     const val NO_RESULTS = "my_recipes_no_results"
     const val NO_RESULTS_CARD = "my_recipes_no_results_card"
     const val NO_RESULTS_ICON = "my_recipes_no_results_icon"
@@ -158,6 +159,7 @@ fun MyRecipesScreen(
     onOpenShoppingList: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
+    onFavoriteFilterToggle: () -> Unit = {},
     onResetFilters: () -> Unit = {},
     onDeleteRecipe: (String) -> Unit = {},
     onDeleteErrorConsumed: () -> Unit = {},
@@ -270,8 +272,10 @@ fun MyRecipesScreen(
                 onOpenRecipe = onOpenRecipe,
                 searchQuery = uiState.searchQuery,
                 selectedMoment = uiState.mealMomentFilter,
+                favoritesOnly = uiState.favoritesOnly,
                 onSearchQueryChanged = onSearchQueryChanged,
                 onMealMomentSelected = onMealMomentSelected,
+                onFavoriteFilterToggle = onFavoriteFilterToggle,
                 onDeleteRecipe = { recipeToDelete = it },
                 modifier = Modifier
                     .fillMaxSize()
@@ -280,8 +284,10 @@ fun MyRecipesScreen(
             MyRecipesState.NoResults -> NoResults(
                 searchQuery = uiState.searchQuery,
                 selectedMoment = uiState.mealMomentFilter,
+                favoritesOnly = uiState.favoritesOnly,
                 onSearchQueryChanged = onSearchQueryChanged,
                 onMealMomentSelected = onMealMomentSelected,
+                onFavoriteFilterToggle = onFavoriteFilterToggle,
                 onResetFilters = onResetFilters,
                 modifier = Modifier
                     .fillMaxSize()
@@ -381,8 +387,10 @@ private fun RecipeList(
     onOpenRecipe: (String) -> Unit,
     searchQuery: String,
     selectedMoment: MealMoment?,
+    favoritesOnly: Boolean,
     onSearchQueryChanged: (String) -> Unit,
     onMealMomentSelected: (MealMoment?) -> Unit,
+    onFavoriteFilterToggle: () -> Unit,
     onDeleteRecipe: (Recipe) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -390,8 +398,10 @@ private fun RecipeList(
         SearchAndFilterControls(
             searchQuery = searchQuery,
             selectedMoment = selectedMoment,
+            favoritesOnly = favoritesOnly,
             onSearchQueryChanged = onSearchQueryChanged,
             onMealMomentSelected = onMealMomentSelected,
+            onFavoriteFilterToggle = onFavoriteFilterToggle,
         )
         LazyColumn(
             modifier = Modifier
@@ -429,8 +439,10 @@ private fun RecipeList(
 private fun SearchAndFilterControls(
     searchQuery: String,
     selectedMoment: MealMoment?,
+    favoritesOnly: Boolean,
     onSearchQueryChanged: (String) -> Unit,
     onMealMomentSelected: (MealMoment?) -> Unit,
+    onFavoriteFilterToggle: () -> Unit,
 ) {
     Surface(
         modifier = Modifier
@@ -519,6 +531,18 @@ private fun SearchAndFilterControls(
                 onClick = { onMealMomentSelected(moment) },
             )
         }
+        // D8/RF-EBF7: chip «Favoritas» al final de la fila, con selección tipo toggle
+        // combinable con la búsqueda y el filtro de momento.
+        MomentFilterChip(
+            label = stringResource(R.string.my_recipes_filter_favorites),
+            icon = Icons.Filled.Favorite,
+            selected = favoritesOnly,
+            iconTint = MaterialTheme.colorScheme.primary,
+            testTag = MyRecipesTestTags.FILTER_CHIP_FAVORITES,
+            iconTestTag = MyRecipesTestTags.FILTER_CHIP_FAVORITES_ICON,
+            role = Role.Checkbox,
+            onClick = onFavoriteFilterToggle,
+        )
     }
 }
 
@@ -530,13 +554,14 @@ private fun MomentFilterChip(
     iconTint: androidx.compose.ui.graphics.Color,
     testTag: String,
     iconTestTag: String,
+    role: Role = Role.RadioButton,
     onClick: () -> Unit,
 ) {
     val shape = CircleShape
     Box(
         modifier = Modifier
             .minimumInteractiveComponentSize()
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .selectable(selected = selected, role = role, onClick = onClick)
             .testTag(testTag),
         contentAlignment = Alignment.Center,
     ) {
@@ -590,8 +615,10 @@ private fun MealMoment.inactiveTint() = when (this) {
 private fun NoResults(
     searchQuery: String,
     selectedMoment: MealMoment?,
+    favoritesOnly: Boolean,
     onSearchQueryChanged: (String) -> Unit,
     onMealMomentSelected: (MealMoment?) -> Unit,
+    onFavoriteFilterToggle: () -> Unit,
     onResetFilters: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -606,8 +633,10 @@ private fun NoResults(
         SearchAndFilterControls(
             searchQuery = searchQuery,
             selectedMoment = selectedMoment,
+            favoritesOnly = favoritesOnly,
             onSearchQueryChanged = onSearchQueryChanged,
             onMealMomentSelected = onMealMomentSelected,
+            onFavoriteFilterToggle = onFavoriteFilterToggle,
         )
         Box(
             modifier = Modifier
@@ -787,8 +816,6 @@ private fun RecipeCard(
                                 MatchBadge(match = it, testTag = MyRecipesTestTags.RECIPE_MATCH)
                             }
                         }
-                        if (match != null) Spacer(modifier = Modifier.width(WarmSpacing.sm))
-                        StatusPill(status = recipe.status)
                     }
                     if (recipe.story.isNotBlank()) {
                         Text(
@@ -950,24 +977,6 @@ private fun MetadataItem(
 // Badge de momento culinario en píldora (superpuesto a la portada o junto al título):
 // se muestra con el componente compartido MomentBadge de ui/components.
 
-// RF-19: distintivo de estado (Borrador/Publicada) como píldora.
-@Composable
-private fun StatusPill(status: RecipeStatus) {
-    Surface(
-        shape = PillShape,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-        contentColor = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.testTag(MyRecipesTestTags.RECIPE_STATUS),
-    ) {
-        Text(
-            text = stringResource(status.labelRes()),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-        )
-    }
-}
-
 @Composable
 private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {
     path?.let { file ->
@@ -986,9 +995,4 @@ private fun Difficulty.labelRes(): Int = when (this) {
     Difficulty.EASY -> R.string.difficulty_easy
     Difficulty.MEDIUM -> R.string.difficulty_medium
     Difficulty.HARD -> R.string.difficulty_hard
-}
-
-private fun RecipeStatus.labelRes(): Int = when (this) {
-    RecipeStatus.DRAFT -> R.string.my_recipes_status_draft
-    RecipeStatus.PUBLISHED -> R.string.my_recipes_status_published
 }

@@ -12,7 +12,6 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.model.ShoppingListItem
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
@@ -176,7 +175,6 @@ class PincheViewModelTest {
         assertEquals(PincheProposalState.SAVED, viewModel.uiState.value.messages.last().proposalState)
         val saved = runBlocking { recipes.observeRecipes().first() }.single()
         assertEquals(PincheProposalRules.proposalRecipeId("Arroz con tomate"), saved.id)
-        assertEquals(RecipeStatus.DRAFT, saved.status)
         assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
         assertNull(saved.photoPath)
 

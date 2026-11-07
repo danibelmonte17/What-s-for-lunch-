@@ -3,7 +3,6 @@ package com.whatsforlunch.app.domain.pinche
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.text.normalizeName
@@ -14,7 +13,7 @@ import java.util.UUID
  *
  * Los Faltantes son solo los ingredientes obligatorios cuyo nombre normalizado no
  * está en la Despensa, sin duplicados y en el orden de la receta (RD15). Guardar la
- * Propuesta crea un Borrador sin foto con `origen = SUGGESTION` y un id estable
+ * Propuesta crea una Receta sin foto con `origen = SUGGESTION` y un id estable
  * derivado del título, de modo que dos guardados reescriben la misma Receta (RD16).
  * Sin dependencias de Android ni de la UI.
  */
@@ -39,7 +38,7 @@ object PincheProposalRules {
         UUID.nameUUIDFromBytes("pinche:${normalizeName(title)}".toByteArray(Charsets.UTF_8)).toString()
 
     /**
-     * RF-PCH8/D9: Borrador sin foto, no favorito, `origen = SUGGESTION`, con los
+     * RF-PCH8/D9: sin foto, no favorito, `origen = SUGGESTION`, con los
      * Ingredientes y Pasos de la Propuesta y sus ids derivados del id estable.
      */
     fun proposalToRecipe(proposal: RecipeSuggestion): Recipe {
@@ -56,7 +55,6 @@ object PincheProposalRules {
             caloriesPerServing = proposal.caloriesPerServing,
             photoPath = null,
             favorite = false,
-            status = RecipeStatus.DRAFT,
             origin = RecipeOrigin.SUGGESTION,
             ingredients = proposal.ingredients.mapIndexed { index, ingredient ->
                 ingredient.copy(id = "$id-ingredient-$index")

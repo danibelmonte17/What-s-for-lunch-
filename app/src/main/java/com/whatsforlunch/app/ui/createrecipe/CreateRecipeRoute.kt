@@ -76,8 +76,6 @@ fun CreateRecipeViewModel.toActions(
     onTakePhoto = this::onTakePhoto,
     onGeneratePhoto = { onGeneratePhotoWithAi(language) },
     onRemovePhoto = this::onRemovePhoto,
-    onSaveDraft = this::onSaveDraft,
-    onPublish = this::onPublish,
-    onSaveChanges = this::onSaveChanges,
+    onSave = this::onSave,
     onDismissNotice = this::onDismissNotice,
 )

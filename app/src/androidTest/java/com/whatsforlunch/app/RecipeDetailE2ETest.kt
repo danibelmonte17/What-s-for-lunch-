@@ -186,18 +186,18 @@ class RecipeDetailE2ETest {
         }
     }
 
-    // S4: borrador incompleto → placeholder sin foto, sin historia, «—» en
-    // calorías, «Sin ingredientes» y «Sin pasos».
+    // S4: Receta incompleta (creada por IA, D1) → placeholder sin foto, sin historia,
+    // «—» en calorías, «Sin ingredientes» y «Sin pasos».
     @Test
-    fun incompleteDraftShowsEmptyStates() {
+    fun incompleteRecipeShowsEmptyStates() {
         val recipes = InMemoryRecipeRepository()
         runBlocking {
-            recipes.saveRecipe(Recipe(id = "draft", title = "Borrador vacío"))
+            recipes.saveRecipe(Recipe(id = "incompleta", title = "Receta incompleta"))
         }
 
-        launchDetail(recipes, InMemoryPantryRepository(), recipeId = "draft")
+        launchDetail(recipes, InMemoryPantryRepository(), recipeId = "incompleta")
 
-        composeRule.onNodeWithText("Borrador vacío").assertIsDisplayed()
+        composeRule.onNodeWithText("Receta incompleta").assertIsDisplayed()
         composeRule.onAllNodesWithText("La receta de la abuela.").assertCountEquals(0)
         composeRule.onNodeWithTag(RecipeDetailTestTags.CALORIES).assertIsDisplayed()
         composeRule.onNodeWithText("—").assertIsDisplayed()

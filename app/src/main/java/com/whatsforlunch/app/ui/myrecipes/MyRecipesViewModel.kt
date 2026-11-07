@@ -23,12 +23,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // Estado visible de Mis Recetas: el estado de la colección, las Recetas guardadas,
-// la búsqueda/filtro activos y el aviso de error de borrado.
+// la búsqueda/filtro activos (momento y Favoritas) y el aviso de error de borrado.
 data class MyRecipesUiState(
     val state: MyRecipesState = MyRecipesState.Empty,
     val recipes: List<Recipe> = emptyList(),
     val searchQuery: String = "",
     val mealMomentFilter: MealMoment? = null,
+    val favoritesOnly: Boolean = false,
     val visibleRecipes: List<Recipe> = recipes,
     val deleteError: Boolean = false,
     val matches: Map<String, RecipeMatch> = emptyMap(),
@@ -44,6 +45,7 @@ class MyRecipesViewModel(
     private val searchQuery = MutableStateFlow("")
     private val appliedSearchQuery = MutableStateFlow("")
     private val mealMomentFilter = MutableStateFlow<MealMoment?>(null)
+    private val favoritesOnly = MutableStateFlow(false)
     private val deleteError = MutableStateFlow(false)
 
     init {
@@ -59,19 +61,33 @@ class MyRecipesViewModel(
         pantryRepository.observePantryItems(),
     ) { recipes, pantryItems -> recipes to pantryItems }
 
-    val uiState: StateFlow<MyRecipesUiState> = combine(
-        recipesAndPantry,
+    // D3/RF-EBF7: el chip «Favoritas» se combina por AND con la búsqueda y el momento.
+    private val activeFilters = combine(
         searchQuery,
         appliedSearchQuery,
         mealMomentFilter,
+        favoritesOnly,
+    ) { currentQuery, appliedQuery, moment, favorites ->
+        FilterState(currentQuery, appliedQuery, moment, favorites)
+    }
+
+    val uiState: StateFlow<MyRecipesUiState> = combine(
+        recipesAndPantry,
+        activeFilters,
         deleteError,
-    ) { (recipes, pantryItems), currentQuery, appliedQuery, moment, hasDeleteError ->
-        val visibleRecipes = filterRecipes(recipes, appliedQuery, moment)
+    ) { (recipes, pantryItems), filters, hasDeleteError ->
+        val visibleRecipes = filterRecipes(
+            recipes,
+            filters.appliedQuery,
+            filters.moment,
+            filters.favorites,
+        )
         MyRecipesUiState(
             state = myRecipesStateOf(recipes, visibleRecipes),
             recipes = recipes,
-            searchQuery = currentQuery,
-            mealMomentFilter = moment,
+            searchQuery = filters.currentQuery,
+            mealMomentFilter = filters.moment,
+            favoritesOnly = filters.favorites,
             visibleRecipes = visibleRecipes,
             deleteError = hasDeleteError,
             matches = recipes.mapNotNull { recipe ->
@@ -93,10 +109,15 @@ class MyRecipesViewModel(
         mealMomentFilter.value = moment
     }
 
+    fun onFavoriteFilterToggle() {
+        favoritesOnly.value = !favoritesOnly.value
+    }
+
     fun onResetFilters() {
         searchQuery.value = ""
         appliedSearchQuery.value = ""
         mealMomentFilter.value = null
+        favoritesOnly.value = false
     }
 
     fun deleteRecipe(id: String) {
@@ -119,3 +140,11 @@ class MyRecipesViewModel(
         const val SEARCH_DEBOUNCE_MILLIS = 300L
     }
 }
+
+// Filtros activos de Mis Recetas agrupados para combinarlos en un solo flujo.
+private data class FilterState(
+    val currentQuery: String,
+    val appliedQuery: String,
+    val moment: MealMoment?,
+    val favorites: Boolean,
+)

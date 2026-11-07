@@ -15,7 +15,6 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
@@ -235,7 +234,6 @@ class AiSuggestionsViewModelTest {
 
         val saved = recipes.observed().single()
         assertEquals(id, saved.id)
-        assertEquals(RecipeStatus.DRAFT, saved.status)
         assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
         assertNull(saved.photoPath)
         assertFalse(saved.favorite)

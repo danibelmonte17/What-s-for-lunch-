@@ -3,7 +3,7 @@ package com.whatsforlunch.app.domain.match
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
-import com.whatsforlunch.app.domain.model.RecipeStatus
+import com.whatsforlunch.app.domain.model.RecipeOrigin
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -71,13 +71,18 @@ class CompatibleRecipesTest {
     }
 
     @Test
-    fun draftsAndPublishedRecipesEnterEqually() {
-        val draft = recipe(id = "draft", title = "Borrador", required = 2, status = RecipeStatus.DRAFT)
-        val published = recipe(id = "published", title = "Publicada", required = 2, status = RecipeStatus.PUBLISHED)
+    fun userAndSuggestionRecipesEnterEqually() {
+        val userRecipe = recipe(id = "user", title = "Receta propia", required = 2)
+        val suggestion = recipe(id = "suggestion", title = "De sugerencia", required = 2, origin = RecipeOrigin.SUGGESTION)
 
-        val result = compatibleRecipes(listOf(draft, published), pantryFor(draft to 2, published to 2))
+        val result = compatibleRecipes(
+            listOf(userRecipe, suggestion),
+            pantryFor(userRecipe to 2, suggestion to 2),
+        )
 
-        assertEquals(listOf("draft", "published"), result.map { it.recipe.id })
+        // Empate de Coincidencia: el desempate es por título normalizado («de sugerencia»
+        // antes que «receta propia»), con igualdad de trato para ambos orígenes.
+        assertEquals(listOf("suggestion", "user"), result.map { it.recipe.id })
     }
 
     @Test
@@ -96,11 +101,11 @@ class CompatibleRecipesTest {
         id: String,
         title: String,
         required: Int,
-        status: RecipeStatus = RecipeStatus.PUBLISHED,
+        origin: RecipeOrigin = RecipeOrigin.USER,
     ): Recipe = Recipe(
         id = id,
         title = title,
-        status = status,
+        origin = origin,
         ingredients = (1..required).map { index ->
             RecipeIngredient(id = "$id-$index", name = "$id ingredient $index")
         },

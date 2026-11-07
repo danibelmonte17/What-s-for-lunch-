@@ -388,7 +388,12 @@ class ShoppingListE2ETest {
         createLegacyV2Database(context, name)
 
         val room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
-            .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3, RecipeDatabase.MIGRATION_3_4)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+            )
             .allowMainThreadQueries()
             .build()
         try {
@@ -453,7 +458,12 @@ class ShoppingListE2ETest {
         val name = "shopping-repository.db"
         context.deleteDatabase(name)
         var room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
-            .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3, RecipeDatabase.MIGRATION_3_4)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+            )
             .allowMainThreadQueries()
             .build()
         try {
@@ -470,7 +480,12 @@ class ShoppingListE2ETest {
             room.close()
 
             room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
-                .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3, RecipeDatabase.MIGRATION_3_4)
+                .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+            )
                 .allowMainThreadQueries()
                 .build()
             val reopened = RoomShoppingListRepository(room.shoppingListDao(), room)
@@ -495,7 +510,12 @@ class ShoppingListE2ETest {
             room.close()
 
             room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
-                .addMigrations(RecipeDatabase.MIGRATION_1_2, RecipeDatabase.MIGRATION_2_3, RecipeDatabase.MIGRATION_3_4)
+                .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+            )
                 .allowMainThreadQueries()
                 .build()
             val reopenedAfterEdit = RoomShoppingListRepository(room.shoppingListDao(), room)

@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -70,6 +71,7 @@ class SearchAndFilterRecipesE2ETest {
                         onEditRecipe = {},
                         onSearchQueryChanged = viewModel::onSearchQueryChanged,
                         onMealMomentSelected = viewModel::onMealMomentSelected,
+                        onFavoriteFilterToggle = viewModel::onFavoriteFilterToggle,
                         onResetFilters = viewModel::onResetFilters,
                     )
                 }
@@ -115,6 +117,25 @@ class SearchAndFilterRecipesE2ETest {
                 MyRecipesTestTags.filterChipIcon(moment),
                 useUnmergedTree = true,
             ).assertCountEquals(1)
+        }
+        // D8: el chip «Favoritas» va al final de la fila de filtros, con su icono. La
+        // fila se desplaza en horizontal: se trae «Favoritas» a la vista antes de
+        // comparar posiciones.
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(
+            MyRecipesTestTags.FILTER_CHIP_FAVORITES_ICON,
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).performScrollTo()
+        val favoritesLeft = composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES)
+            .fetchSemanticsNode().boundsInRoot.left
+        MealMoment.entries.forEach { moment ->
+            val momentLeft = composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(moment))
+                .fetchSemanticsNode().boundsInRoot.left
+            assertTrue(
+                "$moment ($momentLeft) must be left of favorites ($favoritesLeft)",
+                momentLeft < favoritesLeft,
+            )
         }
 
         composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
@@ -205,6 +226,8 @@ class SearchAndFilterRecipesE2ETest {
         waitForRecipeCount(3)
         composeRule.onNodeWithText(text(R.string.my_recipes_search_hint)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.my_recipes_filter_all)).assertIsDisplayed()
+        // NFR-1: el chip «Favoritas» también está en inglés.
+        composeRule.onNodeWithText(text(R.string.my_recipes_filter_favorites)).performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -229,6 +252,7 @@ class SearchAndFilterRecipesE2ETest {
                             onScanPantry = {},
                             onSearchQueryChanged = viewModel::onSearchQueryChanged,
                             onMealMomentSelected = viewModel::onMealMomentSelected,
+                            onFavoriteFilterToggle = viewModel::onFavoriteFilterToggle,
                             onResetFilters = viewModel::onResetFilters,
                         )
                     } else {
@@ -256,6 +280,73 @@ class SearchAndFilterRecipesE2ETest {
         waitForRecipeCount(1)
     }
 
+    // S6/RF-EBF7: el chip «Favoritas» solo muestra las Recetas favoritas y se combina
+    // en AND con la búsqueda y el filtro de momento.
+    @Test
+    fun favoritesChipShowsOnlyFavoritesAndCombinesWithOtherFilters() {
+        launchScreen()
+        waitForRecipeCount(3)
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).performScrollTo().performClick()
+        waitForRecipeCount(2)
+        composeRule.onNodeWithText("Pollo asado").assertIsDisplayed()
+        composeRule.onNodeWithText("Tostada").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Arroz con pollo").assertCountEquals(0)
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).assertIsSelected()
+
+        // Búsqueda + Favoritas (AND): «Cebolla» coincide con dos Recetas, pero solo
+        // «Pollo asado» es favorita.
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
+            .performTextReplacement("Cebolla")
+        waitForRecipeCount(1)
+        composeRule.onNodeWithText("Pollo asado").assertIsDisplayed()
+
+        // Momento + búsqueda + Favoritas (AND): LUNCH coincide con «Arroz con pollo»,
+        // pero no es favorita → sin resultados.
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.LUNCH)).performScrollTo().performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.NO_RESULTS).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(text(R.string.my_recipes_no_results_title)).assertIsDisplayed()
+    }
+
+    // S6/RF-EBF7: «Ver todas las recetas» restablece búsqueda, momento y Favoritas.
+    @Test
+    fun resetClearsSearchMomentAndFavoritesFilter() {
+        launchScreen()
+        waitForRecipeCount(3)
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
+            .performTextReplacement("Cebolla")
+        composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.LUNCH)).performScrollTo().performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).performScrollTo().performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.NO_RESULTS).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.RESET_FILTERS).performClick()
+        waitForRecipeCount(3)
+        assertEquals("", composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD)
+            .fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text)
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_ALL).assertIsSelected()
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).assertIsNotSelected()
+    }
+
+    // S6/RF-EBF7: el chip es un toggle combinable: desactivarlo devuelve la lista
+    // completa sin tocar los demás criterios.
+    @Test
+    fun togglingFavoritesOffShowsAllRecipesAgain() {
+        launchScreen()
+        waitForRecipeCount(3)
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).performScrollTo().performClick()
+        waitForRecipeCount(2)
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).performScrollTo().performClick()
+        waitForRecipeCount(3)
+        composeRule.onNodeWithTag(MyRecipesTestTags.FILTER_CHIP_FAVORITES).assertIsNotSelected()
+        composeRule.onNodeWithText("Arroz con pollo").assertIsDisplayed()
+    }
+
     private fun waitForRecipeCount(count: Int) {
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().size == count
@@ -265,17 +356,24 @@ class SearchAndFilterRecipesE2ETest {
     private fun repositoryWithRecipes(): InMemoryRecipeRepository {
         val repository = InMemoryRecipeRepository()
         runBlocking {
-            repository.saveRecipe(recipe("1", "Pollo asado", MealMoment.DINNER, "Cebolla"))
+            repository.saveRecipe(recipe("1", "Pollo asado", MealMoment.DINNER, "Cebolla", favorite = true))
             repository.saveRecipe(recipe("2", "Arroz con pollo", MealMoment.LUNCH, "Cebolla"))
-            repository.saveRecipe(recipe("3", "Tostada", MealMoment.BREAKFAST, "Pan"))
+            repository.saveRecipe(recipe("3", "Tostada", MealMoment.BREAKFAST, "Pan", favorite = true))
         }
         return repository
     }
 
-    private fun recipe(id: String, title: String, moment: MealMoment, ingredient: String) = Recipe(
+    private fun recipe(
+        id: String,
+        title: String,
+        moment: MealMoment,
+        ingredient: String,
+        favorite: Boolean = false,
+    ) = Recipe(
         id = id,
         title = title,
         mealMoment = moment,
+        favorite = favorite,
         ingredients = listOf(RecipeIngredient(id = "ingredient-$id", name = ingredient)),
     )
 }

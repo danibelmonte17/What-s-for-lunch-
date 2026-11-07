@@ -10,7 +10,6 @@ import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import kotlinx.coroutines.flow.Flow
@@ -77,7 +76,6 @@ private fun com.whatsforlunch.app.data.local.RecipeWithDetails.toDomain(): Recip
         caloriesPerServing = recipe.caloriesPerServing,
         photoPath = recipe.photoPath,
         favorite = recipe.favorite,
-        status = enumOrDefault(recipe.status, RecipeStatus.DRAFT),
         origin = enumOrDefault(recipe.origin, RecipeOrigin.USER),
         ingredients = domainIngredients,
         steps = steps.sortedBy { it.position }.map {
@@ -103,7 +101,6 @@ private fun Recipe.toEntity(): RecipeEntity = RecipeEntity(
     caloriesPerServing = caloriesPerServing,
     photoPath = photoPath,
     favorite = favorite,
-    status = status.name,
     origin = origin.name,
 )
 

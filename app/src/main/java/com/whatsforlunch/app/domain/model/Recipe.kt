@@ -14,7 +14,6 @@ data class Recipe(
     val caloriesPerServing: Int? = null,
     val photoPath: String? = null,
     val favorite: Boolean = false,
-    val status: RecipeStatus = RecipeStatus.DRAFT,
     val origin: RecipeOrigin = RecipeOrigin.USER,
     val ingredients: List<RecipeIngredient> = emptyList(),
     val steps: List<RecipeStep> = emptyList(),

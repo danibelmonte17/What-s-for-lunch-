@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -33,7 +34,6 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheReply
@@ -61,7 +61,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 // S1-S10 del Pinche: texto conversacional, Ficha con Faltantes, guardado como
-// Borrador en Mis Recetas, fallos visibles, inglés y entrada desde Mis Recetas.
+// Receta en Mis Recetas (sin foto y sin distintivo de estado), fallos visibles,
+// inglés y entrada desde Mis Recetas.
 // Todo usa un cliente simulado; nunca se llama a la IA real.
 @RunWith(AndroidJUnit4::class)
 class PincheE2ETest {
@@ -125,10 +126,10 @@ class PincheE2ETest {
         )
     }
 
-    // S3 (verify 2): guardar crea un Borrador visible en Mis Recetas y un segundo
+    // S3 (verify 2): guardar crea una Receta visible en Mis Recetas y un segundo
     // guardado no duplica la Receta.
     @Test
-    fun savingTheProposalCreatesADraftInMyRecipesWithoutDuplicates() {
+    fun savingTheProposalCreatesARecipeInMyRecipesWithoutDuplicates() {
         val recipes = InMemoryRecipeRepository()
         val pantry = pantryWith(PantryItem("tomate", "Tomate", 3))
         val pincheViewModel = PincheViewModel(
@@ -194,7 +195,6 @@ class PincheE2ETest {
         val id = PincheProposalRules.proposalRecipeId("Arroz con tomate")
         composeRule.waitUntil(5_000) { runBlocking { recipes.getRecipe(id) } != null }
         val saved = runBlocking { recipes.getRecipe(id) }!!
-        assertEquals(RecipeStatus.DRAFT, saved.status)
         assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
         assertNull(saved.photoPath)
 
@@ -207,7 +207,10 @@ class PincheE2ETest {
             composeRule.onAllNodesWithText("Arroz con tomate").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Arroz con tomate").assertIsDisplayed()
-        composeRule.onNodeWithText("Borrador").assertIsDisplayed()
+        // S5/RF-EBF6: sin ningún distintivo de estado.
+        composeRule.onAllNodesWithText("Borrador").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Publicada").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("my_recipes_card_status").assertCountEquals(0)
     }
 
     // S4: con la Despensa vacía todos los obligatorios son Faltantes y guardar sigue habilitado.

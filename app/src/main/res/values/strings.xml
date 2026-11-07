@@ -90,8 +90,6 @@
     <string name="pantry_empty_message">Añade los alimentos que tienes en casa.</string>
 
     <!-- Mis Recetas: tarjetas -->
-    <string name="my_recipes_status_draft">Borrador</string>
-    <string name="my_recipes_status_published">Publicada</string>
     <string name="my_recipes_card_time">%1$d min</string>
     <string name="my_recipes_card_servings">%1$d porciones</string>
     <string name="my_recipes_card_match">%1$d%%</string>
@@ -101,6 +99,7 @@
     <string name="my_recipes_action_edit_short">Editar</string>
     <string name="my_recipes_search_hint">Buscar por receta o ingrediente</string>
     <string name="my_recipes_filter_all">Todas</string>
+    <string name="my_recipes_filter_favorites">Favoritas</string>
     <string name="my_recipes_filter_label">Filtrar por momento culinario</string>
     <string name="my_recipes_no_results_title">No hay recetas que coincidan</string>
     <string name="my_recipes_no_results_message">Prueba con otro texto o momento culinario.</string>
@@ -182,16 +181,14 @@
     <string name="create_recipe_favorite_subtitle">Acceso directo en tu biblioteca</string>
     <string name="create_recipe_ingredients_count">%1$d ítems</string>
     <string name="create_recipe_steps_count">%1$d Pasos definidos</string>
-    <string name="create_recipe_save_draft">Borrador</string>
-    <string name="create_recipe_publish">Publicar Receta</string>
+    <string name="create_recipe_save">Guardar</string>
     <string name="create_recipe_save_changes">Guardar cambios</string>
-    <string name="create_recipe_publish_blocked">No se puede publicar todavía:</string>
-    <string name="create_recipe_publish_error_title">Falta el título</string>
-    <string name="create_recipe_publish_error_photo">Falta la foto</string>
-    <string name="create_recipe_publish_error_ingredient">Añade al menos un ingrediente</string>
-    <string name="create_recipe_publish_error_step">Añade al menos un paso</string>
-    <string name="create_recipe_publish_error_invalid_ingredient">Hay ingredientes sin nombre o con cantidad inválida</string>
-    <string name="create_recipe_publish_error_invalid_step">Hay pasos sin texto</string>
+    <string name="create_recipe_save_blocked">No se puede guardar todavía:</string>
+    <string name="create_recipe_save_error_title">Falta el título</string>
+    <string name="create_recipe_save_error_ingredient">Añade al menos un ingrediente</string>
+    <string name="create_recipe_save_error_step">Añade al menos un paso</string>
+    <string name="create_recipe_save_error_invalid_ingredient">Hay ingredientes sin nombre o con cantidad inválida</string>
+    <string name="create_recipe_save_error_invalid_step">Hay pasos sin texto</string>
     <string name="create_recipe_notice_ai_key_missing">Configura tu API key de IA en Ajustes para generar imágenes.</string>
     <string name="create_recipe_notice_ai_failed">No se pudo generar la imagen. Puedes elegir una foto manualmente.</string>
     <string name="create_recipe_notice_ai_failed_no_connection">Sin conexión. Comprueba tu red y vuelve a intentarlo; también puedes elegir una foto manualmente.</string>

@@ -24,6 +24,8 @@ private class MigrationPhotoStore : PhotoStore {
 // Migración v3→v4 (RF-VPI4, verify 3 = Scenario 4): una base v3 con Recetas migra a v4
 // sin perder datos, cada Ingrediente recibe su `domainId` backfilled con la convención
 // histórica `{recipeId}-ingredient-{position}` y los Pasos quedan sin vínculos.
+// Migración v4→v5 (RF-EBF1, D5): la columna `status` desaparece de `recipes`
+// recreando la tabla y conservando el resto de datos (incluido `favorite`).
 @RunWith(AndroidJUnit4::class)
 class RecipeMigrationTest {
 
@@ -39,6 +41,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_1_2,
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
             )
             .allowMainThreadQueries()
             .build()
@@ -98,6 +101,139 @@ class RecipeMigrationTest {
             room.close()
             context.deleteDatabase(name)
         }
+    }
+
+    // RF-EBF1/D5: una base v4 con valores legados de `status` migra a v5 sin la
+    // columna: no queda columna residual ni fallback y los datos (incluido `favorite`)
+    // se conservan.
+    @Test
+    fun migrationFromV4RemovesStatusColumnAndKeepsRecipeData() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "recipe-migration-4-5.db"
+        context.deleteDatabase(name)
+        createLegacyV4Database(context, name)
+
+        val room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+            )
+            .allowMainThreadQueries()
+            .build()
+        try {
+            // Sin columna `status` residual y con `favorite` conservado.
+            val columns = buildList {
+                val cursor = room.query("PRAGMA table_info(`recipes`)", null)
+                while (cursor.moveToNext()) add(cursor.getString(1))
+                cursor.close()
+            }
+            assertTrue("status" !in columns)
+            assertTrue("favorite" in columns)
+
+            val repository = RoomRecipeRepository(room.recipeDao(), MigrationPhotoStore())
+            runBlocking {
+                val migrated = repository.getRecipe("mig4-1")!!
+                assertEquals("Tortilla", migrated.title)
+                assertTrue(migrated.favorite)
+                assertEquals("mig4-1-ingredient-0", migrated.ingredients.single().id)
+                assertEquals(listOf("mig4-1-ingredient-0"), migrated.steps.single().ingredientIds)
+
+                // Lectura y escritura tras la migración sobre la tabla recreada.
+                repository.saveRecipe(migrated.copy(title = "Tortilla mejorada"))
+                assertEquals("Tortilla mejorada", repository.getRecipe("mig4-1")!!.title)
+            }
+        } finally {
+            room.close()
+            context.deleteDatabase(name)
+        }
+    }
+
+    // Esquema exacto de Room v4: como v3 pero con `domainId` en Ingredientes y
+    // `ingredientIds` en Pasos (MIGRATION_3_4); `recipes` aún tiene `status`.
+    private fun createLegacyV4Database(context: android.content.Context, name: String) {
+        val helper = FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(name)
+                .callback(object : SupportSQLiteOpenHelper.Callback(4) {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        createV4Schema(db)
+                        db.execSQL("PRAGMA user_version = 4")
+                    }
+
+                    override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+                })
+                .build(),
+        )
+        val db = helper.writableDatabase
+        db.execSQL(
+            "INSERT INTO recipes VALUES " +
+                "('mig4-1', 'Tortilla', '', 'LUNCH', 10, 15, 'EASY', 4, NULL, NULL, 1, 'DRAFT', 'USER')",
+        )
+        db.execSQL("INSERT INTO ingredients VALUES (1, 'mig4-1', 'Patata', 700.0, 'g', 0, 0, 'mig4-1-ingredient-0')")
+        db.execSQL("INSERT INTO steps VALUES (1, 'mig4-1', 'Pochar', 5, 0, 'mig4-1-ingredient-0')")
+        db.close()
+        helper.close()
+    }
+
+    private fun createV4Schema(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recipes` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, " +
+                "`story` TEXT NOT NULL, `mealMoment` TEXT NOT NULL, `prepMinutes` INTEGER NOT NULL, " +
+                "`cookMinutes` INTEGER NOT NULL, `difficulty` TEXT NOT NULL, " +
+                "`baseServings` INTEGER NOT NULL, `caloriesPerServing` INTEGER, `photoPath` TEXT, " +
+                "`favorite` INTEGER NOT NULL, `status` TEXT NOT NULL, `origin` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ingredients` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` TEXT NOT NULL, `name` TEXT NOT NULL, `quantity` REAL NOT NULL, " +
+                "`unit` TEXT NOT NULL, `optional` INTEGER NOT NULL, `position` INTEGER NOT NULL, " +
+                "`domainId` TEXT NOT NULL, " +
+                "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_ingredients_recipeId` ON `ingredients` (`recipeId`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `steps` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` TEXT NOT NULL, `text` TEXT NOT NULL, `timerMinutes` INTEGER, " +
+                "`position` INTEGER NOT NULL, `ingredientIds` TEXT NOT NULL, " +
+                "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_steps_recipeId` ON `steps` (`recipeId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `pantry_items` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                "`normalizedName` TEXT NOT NULL, `quantity` REAL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_pantry_items_normalizedName` " +
+                "ON `pantry_items` (`normalizedName`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_items` " +
+                "(`id` TEXT NOT NULL, `name` TEXT NOT NULL, `normalizedName` TEXT NOT NULL, " +
+                "`quantity` REAL, `unit` TEXT NOT NULL, `aisle` TEXT, " +
+                "`completed` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_shopping_items_normalizedName` " +
+                "ON `shopping_items` (`normalizedName`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_item_sources` " +
+                "(`itemId` TEXT NOT NULL, `sourceKey` TEXT NOT NULL, " +
+                "`sourceTitle` TEXT NOT NULL, PRIMARY KEY(`itemId`, `sourceKey`), " +
+                "FOREIGN KEY(`itemId`) REFERENCES `shopping_items`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_shopping_item_sources_itemId` " +
+                "ON `shopping_item_sources` (`itemId`)",
+        )
     }
 
     private fun createLegacyV3Database(context: android.content.Context, name: String) {
