@@ -823,6 +823,60 @@
       ],
       "notes": "",
       "status": "accepted"
+    },
+    {
+      "id": "mover-opciones-a-bottom-bar",
+      "area": "funcional",
+      "title": "Mover las opciones de la TopBar a una BottomBar",
+      "user_visible_behavior": "Mis Recetas muestra una barra inferior con las pestañas Mis Recetas, Despensa, Lista de la Compra y Pinche en ese orden; Ajustes se queda como única acción de la top bar y «Recetas con mi Despensa» pasa a un segundo botón flotante junto al de cámara.",
+      "depends_on": [
+        "gestionar-alimentos-de-la-despensa",
+        "anadir-faltantes-a-la-lista",
+        "resolver-dudas-con-pinche",
+        "separar-despensa-y-busqueda-de-recetas"
+      ],
+      "steps": [
+        "Añadir la barra inferior de navegación en Mis Recetas con las pestañas Mis Recetas, Despensa, Lista de la Compra y Pinche, en ese orden, con icono y texto localizado",
+        "Quitar de la top bar las acciones Lista de la Compra, Pinche, Recetas con mi Despensa y Despensa, dejando Ajustes como única acción",
+        "Mover «Recetas con mi Despensa» a un segundo botón flotante en Mis Recetas, conservando su icono actual y su destino",
+        "Mantener los destinos y su comportamiento sin cambios, con textos es/en y objetivos táctiles de 48 dp"
+      ],
+      "verification": [
+        "E2E: comprobar que Mis Recetas muestra la barra inferior con Mis Recetas, Despensa, Lista de la Compra y Pinche en ese orden y que cada pestaña abre su destino",
+        "E2E: comprobar que la top bar solo muestra Ajustes y que «Recetas con mi Despensa» se abre desde el nuevo botón flotante conservando su icono",
+        "E2E: comprobar los textos de la barra y de los botones en español e inglés"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-07): BottomBar de 4 pestañas en el orden Mis Recetas, Despensa, Lista de la Compra y Pinche («Recetas con mi Despensa» no es pestaña); Ajustes se queda en la top bar; «Recetas con mi Despensa» se mueve con el mismo icono a un segundo botón flotante dentro de Mis Recetas. Cambia el non-goal «bottom navigation» de separar-despensa-y-busqueda-de-recetas (decisión posterior del usuario). Quedan para la spec la permanencia de la bottom bar en los demás destinos y el comportamiento de la pestaña activa. Ampliada a 5 pestañas con «Mi perfil» al final por crear-mi-perfil (sesión 106, decisión posterior del usuario).",
+      "status": "not_started"
+    },
+    {
+      "id": "crear-mi-perfil",
+      "area": "funcional",
+      "title": "Crear Mi perfil con restricciones dietéticas",
+      "user_visible_behavior": "El usuario mantiene en «Mi perfil» sus alergias y sus intolerancias o enfermedades que limitan la dieta como listas de chips, su tipo de alimentación (omnívora, pescetariana, vegetariana, vegana o cetogénica) como selección única, y la opción «No tengo ninguna» en cada sección de restricciones; el Pinche propone recetas que respetan ese perfil y lo pide antes de responder mientras esté vacío.",
+      "depends_on": [
+        "mover-opciones-a-bottom-bar",
+        "resolver-dudas-con-pinche"
+      ],
+      "steps": [
+        "Añadir «Mi perfil» como nueva pestaña de la BottomBar, al final tras Pinche, con su pantalla",
+        "Implementar las secciones «Alergias» e «Intolerancias o enfermedades» con un campo de texto que añade cada alimento o restricción como chip",
+        "Añadir la sección «Tipo de alimentación» con selección única entre Omnívora, Pescetariana, Vegetariana, Vegana y Cetogénica",
+        "Añadir un botón de editar por sección que habilita el borrado de las chips, y la opción «No tengo ninguna» en cada sección de restricciones",
+        "Persistir las restricciones y el tipo de alimentación del perfil en el dispositivo",
+        "Enviar las restricciones y el tipo de alimentación al Pinche para que sus propuestas los respeten y, si el perfil está vacío, pedirlos antes de responder al primer mensaje, sin responder hasta completarlos o marcar «No tengo ninguna»"
+      ],
+      "verification": [
+        "E2E: añadir «Frutos secos» en Alergias y «Diabetes» en Intolerancias o enfermedades y comprobar que aparecen como chips; habilitar el botón de editar, borrar una chip y comprobar que desaparece",
+        "E2E: elegir «Vegana» como tipo de alimentación y comprobar que el Pinche propone recetas veganas; cambiar a «Omnívora» y comprobar que la propuesta usa el nuevo tipo",
+        "E2E: marcar «No tengo ninguna» en una sección de restricciones y comprobar que el Pinche no vuelve a pedir esa sección",
+        "E2E: con el perfil vacío, enviar un mensaje al Pinche y comprobar que primero pide las restricciones y el tipo de alimentación y no responde hasta completarlos; tras hacerlo, su respuesta respeta el perfil",
+        "Unit: el prompt del Pinche incorpora las restricciones y el tipo de alimentación del perfil y el flujo bloqueante solo se activa con el perfil vacío"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-07): «Mi perfil» como nueva pestaña de la BottomBar (amplía a 5 las 4 pestañas de mover-opciones-a-bottom-bar); tres secciones —«Alergias» e «Intolerancias o enfermedades que limitan la dieta» (p. ej. diabetes) con alta por texto en chips y borrado solo tras habilitar un botón de editar, y «Tipo de alimentación» con selección única entre Omnívora, Pescetariana, Vegetariana, Vegana y Cetogénica—; opción «No tengo ninguna» en cualquiera de las secciones de restricciones; el Pinche pide restricciones y tipo de alimentación antes de responder si el perfil está vacío (flujo bloqueante). Quedan para la spec: el almacenamiento (Room vs preferencias), el valor inicial del tipo de alimentación (sin preselección u Omnívora por defecto), la exclusividad entre «No tengo ninguna» y las chips, y la posición final de la pestaña. El perfil son datos de salud que viajan al proveedor de IA al chatear con el Pinche (RK03): actualizar el aviso de privacidad y usar solo datos ficticios en la evidencia. Fuera de alcance: aplicar el perfil a Sugerencias, Recetas con mi Despensa o búsquedas (solo el Pinche), salvo decisión posterior.",
+      "status": "not_started"
     }
   ]
 }
