@@ -48,7 +48,7 @@
         "docs/evidence/crear-receta/informe-validacion.md + 2 capturas es",
         "PROGRESS.md: 26 RF verificados en el ciclo 2 (sesión 12): 22 E2E + 10 unit + adb/uiautomator"
       ],
-      "notes": "Publicar exige título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (⚠ S07, Q-crear-receta-1)",
+      "notes": "Publicar exige título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (⚠ S07, Q-crear-receta-1). Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): desaparecen el estado Borrador/Publicada y los botones «Guardar Borrador»/«Publicar Receta» —el guardado único exige los mismos obligatorios— y el distintivo de estado de las tarjetas.",
       "status": "accepted"
     },
     {
@@ -118,7 +118,7 @@
         "docs/evidence/editar-receta/ (informe con ciclos 2, 3 y 4 + 2 capturas es)",
         "PROGRESS.md: 18 RF + 4 NFR verificados; revalidada en las sesiones 23, 24 y 38"
       ],
-      "notes": "",
+      "notes": "Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): desaparece el estado Borrador/Publicada; el único guardado exige los obligatorios y ya no hay dock por estado.",
       "status": "accepted"
     },
     {
@@ -191,7 +191,7 @@
         "BuscarYFiltrarRecetasE2ETest: searchAndMomentControlsExposeTheirVisualStructure y escenarios S1-S11 en verde; muestreo de píxeles/uiautomator S12 queda para feature-validator",
         "Aceptación independiente (feature-validator): accept — lint exit 0 (0 errores), unit 19/19, e2e 61/61 y S12 en emulador (capturas renovadas, muestreo de píxeles y uiautomator) en verde; informe en docs/validations/buscar-y-filtrar-recetas.md"
       ],
-      "notes": "",
+      "notes": "Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): se añade el chip «Favoritas» a la fila de filtros, combinable con la búsqueda y los filtros actuales.",
       "status": "accepted"
     },
     {
@@ -515,7 +515,7 @@
         "Evidencia: docs/validations/aceptar-sugerencia-de-receta.md (no es aceptación). Capturas es de la tarjeta con acciones/estado y de Mis Recetas con la Receta aceptada pendientes del validador según el Plan de verificación de la spec (UI solo el validador). Sin llamadas reales a DevExpert Inference ni API keys reales.",
         "Aceptación independiente (feature-validator, sesión 75, 2026-10-24): accept. Checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554): testDebugUnitTest --rerun-tasks 146/146 en 24 suites (SuggestionAcceptanceTest 6/6, SuggestionPromptTest 3/3, AiSuggestionsViewModelTest 12/12); lintDebug 0 errores / 49 warnings (ninguno nuevo); init.ps1 llega a «Entorno listo» con exit 1 del wrapper por el falso fallo conocido de adb shell monkey/pidof (no bloqueante); AiSuggestionsE2ETest 14/14 reejecutada; paridad es/en 213/213; 2 PNG binarios válidos de 1280x2856; sin secretos. S1-S6 verificados y D1-D5 respetadas (Borrador sin foto con origin=SUGGESTION, id estable + upsert sin duplicados, descartar no guarda, permanencia en la lista con aviso, prompt solo con Recetas > 60 %), alcance intacto (sin Room/migraciones, publicar, navegación nueva, badge de origen ni cambios en calculateMatch/MatchBadge/RD13). Suite E2E completa 137 tests inspeccionada y coherente. Sin hallazgos Critical/High/Medium; 4 notas Low no bloqueantes (L1 technical-discovery cita S1-S8, L2 aviso SAVED sin autodescartar, L3 acceptSuggestion sin guarda de estado, L4 T7/cabecera de la spec — L1 y L4 cerrados por el orquestador). Sin llamadas reales a la IA ni API keys reales. Informe: docs/validations/aceptar-sugerencia-de-receta.md (§9); capturas: docs/evidence/aceptar-sugerencia-de-receta/."
       ],
-      "notes": "origen = Sugerencia (RD07); una Sugerencia no se acepta dos veces",
+      "notes": "origen = Sugerencia (RD07); una Sugerencia no se acepta dos veces. Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): la Receta aceptada se sigue guardando sin foto, pero ya no queda como Borrador (el estado desaparece).",
       "status": "accepted"
     },
     {
@@ -721,7 +721,7 @@
         "T0 (llamada real autorizada, previa): HTTP 200 con el alias chat, finish_reason tool_calls y get_pantry con arguments {}; no se repitió ninguna llamada real. Verificación automática solo con FakePincheChatClient. Informe: docs/validations/resolver-dudas-con-pinche.md; 2 PNG es válidos en docs/evidence/resolver-dudas-con-pinche/.",
         "Aceptación independiente (feature-validator, sesión 79, 2026-10-26): accept — checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554, arrancado y apagado por el validador): lintDebug 0 errores / 49 warnings; testDebugUnitTest --rerun-tasks 173/173 en 27 suites; assembleDebug BUILD SUCCESSFUL; PincheE2ETest 11/11 y suite E2E completa 148 ejecutados / 0 fallos / 0 errores / 1 omitido (SettingsE2ETest por Assume); paridad es/en 238/238; T0 documentado sin repetir la llamada real y toda la verificación con FakePincheChatClient; 2 PNG válidos revisados; comprobación manual de entrada/vuelta con adb/uiautomator. Sin hallazgos Critical/High/Medium ni de seguridad; 3 notas Low no bloqueantes (cobertura del bucle de tools por inspección, init.ps1 no reproducible exit 0 por el falso fallo de monkey y detalles documentales). Informe: docs/validations/resolver-dudas-con-pinche.md §7."
       ],
-      "notes": "Sin voz (diferida con ⚠ S04); conversación y Propuestas solo en memoria; function calling de solo lectura (⚠ S08); Faltantes solo se muestran (la Lista es de anadir-faltantes-a-la-lista)",
+      "notes": "Sin voz (diferida con ⚠ S04); conversación y Propuestas solo en memoria; function calling de solo lectura (⚠ S08); Faltantes solo se muestran (la Lista es de anadir-faltantes-a-la-lista). Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): la Propuesta guardada ya no queda como Borrador (el estado desaparece) y sigue sin foto.",
       "status": "accepted"
     },
     {
@@ -902,6 +902,38 @@
       ],
       "evidence": [],
       "notes": "Decisiones del usuario (2026-11-07): la entrada al Escáner en la Despensa es un segundo FAB junto a «Añadir alimento»; los accesos al Escáner de Mis Recetas (FAB de cámara y botón del estado vacío «Escanear la Despensa») se mantienen sin cambios; el reordenado se limita a lo necesario en la Lista de la Compra y la Despensa, sin tocar la top bar de Mis Recetas. Quedan para la spec: el orden exacto de los dos FABs de la Despensa, el contenido final del estado vacío de la Lista (hoy «Escanear la Despensa» + «Añadir ítem») y la coordinación con mover-opciones-a-bottom-bar si esa feature se implementa antes.",
+      "status": "not_started"
+    },
+    {
+      "id": "eliminar-estado-de-borrador-y-filtrar-favoritos",
+      "area": "funcional",
+      "title": "Eliminar el estado de Borrador y añadir filtro de favoritos",
+      "user_visible_behavior": "Las Recetas ya no tienen estado borrador: el formulario de alta y de edición solo permite guardar con todos los datos obligatorios (título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida) mediante un único botón de guardado, y los distintivos «Borrador»/«Publicada» desaparecen de las tarjetas de Mis Recetas y del formulario. Aceptar una Sugerencia o guardar una Propuesta del Pinche sigue creando la Receta directamente aunque le falte la foto. Mis Recetas añade el chip «Favoritas» en su fila de filtros, combinable con la búsqueda y los demás filtros.",
+      "depends_on": [
+        "crear-receta",
+        "editar-receta",
+        "buscar-y-filtrar-recetas",
+        "aceptar-sugerencia-de-receta",
+        "resolver-dudas-con-pinche"
+      ],
+      "steps": [
+        "Eliminar el estado Borrador/Publicada del modelo de Receta y de su persistencia, de modo que toda Receta se guarda sin estado de borrador",
+        "Cambiar el guardado del formulario (alta y edición) para exigir todos los obligatorios —título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (revisa ⚠ S07)— con un único botón («Guardar» en el alta, «Guardar cambios» en edición), retirando «Guardar Borrador» y «Publicar Receta»",
+        "Quitar de la interfaz los distintivos «Borrador»/«Publicada» de las tarjetas de Mis Recetas y de la cabecera del formulario, junto con sus textos es/en",
+        "Mantener que aceptar una Sugerencia o guardar una Propuesta del Pinche cree la Receta directamente aunque le falte la foto, ahora sin estado borrador",
+        "Añadir el chip «Favoritas» en la fila de filtros de Mis Recetas, combinable con la búsqueda y los filtros de momento de comida, con su estado «sin resultados» y el restablecer",
+        "Actualizar los textos es/en, los tests unitarios y E2E afectados (CreateRecipeE2ETest, EditRecipeE2ETest, MyRecipesCardsE2ETest, AiSuggestionsE2ETest, PincheE2ETest y los de búsqueda/filtros) y la documentación de dominio (docs/domain-model.md y ⚠ S07), manteniendo la paridad de claves entre locales"
+      ],
+      "verification": [
+        "E2E: en el alta, comprobar que no se puede guardar sin foto ni sin al menos 1 Ingrediente y 1 Paso válidos, y que con todos los obligatorios la Receta se guarda con el único botón y aparece en Mis Recetas sin distintivo de estado",
+        "E2E: editar una Receta y comprobar que «Guardar cambios» exige los mismos obligatorios y que, al guardarse, la Receta sigue sin distintivo de estado",
+        "E2E: aceptar una Sugerencia y guardar una Propuesta del Pinche y comprobar que la Receta aparece en Mis Recetas sin foto y sin distintivo de estado",
+        "E2E: marcar una Receta como favorita, activar el chip «Favoritas» y comprobar que solo aparecen las favoritas, su combinación con la búsqueda y los filtros, el «sin resultados» y el restablecer",
+        "E2E: comprobar que no aparece ningún texto «Borrador» ni «Publicada» y que los textos nuevos existen en español e inglés",
+        "Unit: la validación de guardado exige título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida, tanto en el alta como al editar"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-07): (D1) aceptar una Sugerencia o guardar una Propuesta del Pinche sigue guardando la Receta directamente aunque le falte la foto —excepción a los obligatorios, que solo se exigen en el formulario—; (D2) los distintivos «Borrador»/«Publicada» desaparecen por completo, sin sustituirlos por un «Publicada» fijo; (D3) el filtro de favoritos es un chip «Favoritas» en la fila de filtros de Mis Recetas, combinable con la búsqueda y los demás filtros. Este cambio revisa ⚠ S07 (los obligatorios pasan a exigirse en todo guardado manual, alta y edición) y modifica el comportamiento de las features aceptadas crear-receta, editar-receta, buscar-y-filtrar-recetas, aceptar-sugerencia-de-receta y resolver-dudas-con-pinche (anotado en sus notes; sus specs y evidencias históricas no se reescriben). Quedan para la spec: qué ocurre al editar una Receta sin foto creada desde Sugerencia/Pinche (si guardar exige foto, hay que añadirla), el destino de la columna status de Room (migración vs columna residual con valor único y fallback), el nombre exacto del botón único del alta y el tratamiento del Detalle ante Recetas sin foto o incompletas de esos flujos.",
       "status": "not_started"
     }
   ]
