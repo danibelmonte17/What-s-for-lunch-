@@ -877,6 +877,32 @@
       "evidence": [],
       "notes": "Decisiones del usuario (2026-11-07): «Mi perfil» como nueva pestaña de la BottomBar (amplía a 5 las 4 pestañas de mover-opciones-a-bottom-bar); tres secciones —«Alergias» e «Intolerancias o enfermedades que limitan la dieta» (p. ej. diabetes) con alta por texto en chips y borrado solo tras habilitar un botón de editar, y «Tipo de alimentación» con selección única entre Omnívora, Pescetariana, Vegetariana, Vegana y Cetogénica—; opción «No tengo ninguna» en cualquiera de las secciones de restricciones; el Pinche pide restricciones y tipo de alimentación antes de responder si el perfil está vacío (flujo bloqueante). Quedan para la spec: el almacenamiento (Room vs preferencias), el valor inicial del tipo de alimentación (sin preselección u Omnívora por defecto), la exclusividad entre «No tengo ninguna» y las chips, y la posición final de la pestaña. El perfil son datos de salud que viajan al proveedor de IA al chatear con el Pinche (RK03): actualizar el aviso de privacidad y usar solo datos ficticios en la evidencia. Fuera de alcance: aplicar el perfil a Sugerencias, Recetas con mi Despensa o búsquedas (solo el Pinche), salvo decisión posterior.",
       "status": "not_started"
+    },
+    {
+      "id": "mover-escaneo-a-la-despensa",
+      "area": "funcional",
+      "title": "Mover el escaneo de la Lista a la Despensa",
+      "user_visible_behavior": "La Lista de la Compra ya no ofrece la opción de escanear; la Despensa, que es donde se escanean los Alimentos, ofrece escanear desde un segundo botón flotante junto a «Añadir alimento», y ambas pantallas ordenan sus elementos para acoplar el cambio.",
+      "depends_on": [
+        "gestionar-alimentos-de-la-despensa",
+        "anadir-faltantes-a-la-lista",
+        "agrupar-y-completar-la-lista",
+        "escanear-despensa-con-ia"
+      ],
+      "steps": [
+        "Quitar de la Lista de la Compra el botón «Escanear la Despensa» del estado vacío y su navegación al Escáner, sin dejar ningún otro acceso al Escáner en esa pantalla",
+        "Añadir en la Despensa un segundo botón flotante «Escanear alimentos» con icono de cámara junto a «Añadir alimento», que abra el Escáner y conserve la vuelta a la Despensa tras guardar",
+        "Reordenar en ambas pantallas solo los elementos necesarios para acoplar el cambio (acciones, FABs y estado vacío de la Lista de la Compra y de la Despensa), sin tocar el resto de su contenido",
+        "Actualizar los textos es/en y los tests E2E afectados (ShoppingListE2ETest y PantryManagementE2ETest), manteniendo la paridad de claves entre locales"
+      ],
+      "verification": [
+        "E2E: abrir la Lista de la Compra vacía y comprobar que ya no aparece «Escanear la Despensa» ni ningún acceso al Escáner",
+        "E2E: abrir la Despensa y comprobar que «Escanear alimentos» abre el Escáner y que, tras guardar los Alimentos, se vuelve a la Despensa con ellos en el listado",
+        "E2E: comprobar el orden de los elementos de ambas pantallas y sus textos en español e inglés"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-07): la entrada al Escáner en la Despensa es un segundo FAB junto a «Añadir alimento»; los accesos al Escáner de Mis Recetas (FAB de cámara y botón del estado vacío «Escanear la Despensa») se mantienen sin cambios; el reordenado se limita a lo necesario en la Lista de la Compra y la Despensa, sin tocar la top bar de Mis Recetas. Quedan para la spec: el orden exacto de los dos FABs de la Despensa, el contenido final del estado vacío de la Lista (hoy «Escanear la Despensa» + «Añadir ítem») y la coordinación con mover-opciones-a-bottom-bar si esa feature se implementa antes.",
+      "status": "not_started"
     }
   ]
 }
