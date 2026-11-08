@@ -942,6 +942,39 @@
       ],
       "notes": "Decisiones del usuario (2026-11-07): (D1) aceptar una Sugerencia o guardar una Propuesta del Pinche sigue guardando la Receta directamente aunque le falte la foto —excepción a los obligatorios, que solo se exigen en el formulario—; (D2) los distintivos «Borrador»/«Publicada» desaparecen por completo, sin sustituirlos por un «Publicada» fijo; (D3) el filtro de favoritos es un chip «Favoritas» en la fila de filtros de Mis Recetas, combinable con la búsqueda y los demás filtros. Este cambio revisa ⚠ S07 (los obligatorios pasan a exigirse en todo guardado manual, alta y edición) y modifica el comportamiento de las features aceptadas crear-receta, editar-receta, buscar-y-filtrar-recetas, aceptar-sugerencia-de-receta y resolver-dudas-con-pinche (anotado en sus notes; sus specs y evidencias históricas no se reescriben). Quedan para la spec: qué ocurre al editar una Receta sin foto creada desde Sugerencia/Pinche (si guardar exige foto, hay que añadirla), el destino de la columna status de Room (migración vs columna residual con valor único y fallback), el nombre exacto del botón único del alta y el tratamiento del Detalle ante Recetas sin foto o incompletas de esos flujos. Decisión posterior del usuario (2026-11-07, D11, supera a D4 y resuelve Q-eliminar-estado-de-borrador-y-filtrar-favoritos-5): la foto es siempre opcional, en alta y en edición; los textos de esta entrada se han alineado con D11 (mantenimiento de la lista autorizado por el usuario el 2026-11-07).",
       "status": "accepted"
+    },
+    {
+      "id": "redisenar-formulario-de-receta",
+      "area": "funcional",
+      "title": "Rediseñar la vista Crear receta y unificar unidades",
+      "user_visible_behavior": "En «Detalles de cocina» el tiempo de preparación se elige con un reloj (TimePicker de Material 3 en modo entrada, horas:minutos por teclado), Raciones y Nivel aparecen en horizontal en dos bloques y ya no existe el tiempo de cocción. En Ingredientes la unidad se elige con un desplegable de la lista cerrada (ud, g, kg, ml, l) reutilizada en toda la app y desaparece la casilla de ingrediente opcional. En Pasos el texto se escribe en una caja con fondo blanco y el temporizador se fija con el mismo reloj.",
+      "depends_on": [
+        "crear-receta",
+        "editar-receta",
+        "ver-detalle-de-receta",
+        "mostrar-badge-de-coincidencia",
+        "anadir-faltantes-a-la-lista",
+        "anadir-item-a-la-lista"
+      ],
+      "steps": [
+        "Rehacer «Detalles de cocina» en dos bloques horizontales: fila con el reloj de Tiempo de preparación y el contador de Raciones (− valor +), y debajo el Nivel con sus chips en horizontal",
+        "Sustituir el campo de minutos de preparación por el TimePicker de Material 3 en modo entrada (teclado horas:minutos) y retirar el campo de Cocción del formulario",
+        "Eliminar cookMinutes en profundidad: modelo, Room con migración, desglose del Detalle, tarjetas, Pinche/Sugerencias y parsers de IA, con sus tests y specs",
+        "Crear el enum de unidades (ud, g, kg, ml, l) con textos es/en y usarlo en un desplegable en la fila de ingrediente y en el diálogo de ítem de la Lista de la Compra; reutilizarlo para mostrar en Detalle, tarjetas, Modo Cocina, Sugerencias y Pinche, conservando como texto las unidades legadas fuera del enum",
+        "Eliminar el concepto de ingrediente opcional: checkbox, campo optional del modelo y Room con migración, cálculo de Coincidencia, checklist del Detalle, «Añadir faltantes» y prompts/tarjetas de IA",
+        "Rediseñar la fila de Paso: texto en caja con fondo blanco y temporizador opcional con el mismo reloj",
+        "Actualizar textos es/en, testTags, tests E2E/unit y las specs y docs durables (domain-model, DESIGN, technical-discovery) con enmiendas en las features aceptadas afectadas"
+      ],
+      "verification": [
+        "E2E: con el reloj en modo entrada, teclear 1 h 05 min de preparación, guardar y reabrir: el tiempo persiste; el formulario no muestra ningún campo de cocción",
+        "E2E: crear una receta con unidades g, ml y ud elegidas con el desplegable y comprobar que se muestran igual en el formulario, el Detalle y la Lista de la Compra; una unidad legada (p. ej. «cucharadas») se sigue mostrando tal cual",
+        "E2E: la fila de ingrediente ya no tiene casilla de opcional y todos los ingredientes cuentan en la Coincidencia y en «Añadir faltantes»",
+        "E2E: en Pasos el texto se escribe en la caja blanca y el temporizador fijado con el reloj sobrevive al guardar y reabrir",
+        "Unit: el enum de unidades se parsea y las unidades legadas caen a texto; calculateMatch sin opcional; los parsers de IA ya no reciben cookMinutes"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-08): (D1) reloj = TimePicker de Material 3 en modo entrada, usado igual en Tiempo de preparación y en el temporizador de Pasos; (D2) «Detalles de cocina» en dos bloques —fila Tiempo+Raciones y Nivel en horizontal debajo—; (D3) tiempo de cocción eliminado en profundidad (modelo/Room con migración/Detalle/tarjetas/IA); (D4) unidades con desplegable en el formulario y en la Lista de la Compra, enum reutilizado para mostrar y unidades legadas fuera del enum como texto; (D5) se elimina el concepto de ingrediente opcional completo (el checkbox de la fila era «Opcional», no un check de preselección). Quedan para la spec: versión y test de migración de Room, límites y formato del reloj como duración (24 h, «sin temporizador»), qué hacer con cookMinutes y unidades llegadas de la IA y el alcance de las enmiendas en specs aceptadas. Fuera de alcance: recalcular o migrar unidades existentes, y tocar el Modo Cocina salvo por la lectura de unidades y la pérdida de la distinción obligatorio/opcional.",
+      "status": "not_started"
     }
   ]
 }
