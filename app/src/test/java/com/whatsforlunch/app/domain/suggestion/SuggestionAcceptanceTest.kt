@@ -5,7 +5,6 @@ import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -13,7 +12,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// T1 (D1, D2, D3): id estable, materialización como Borrador con origen Sugerencia y
+// T1 (D1, D2, D3): id estable, materialización como Receta con origen Sugerencia y
 // umbral estricto > 60 % para las Recetas que el prompt debe evitar.
 class SuggestionAcceptanceTest {
 
@@ -27,7 +26,7 @@ class SuggestionAcceptanceTest {
     }
 
     @Test
-    fun acceptingCreatesADraftSuggestionRecipeWithoutPhoto() {
+    fun acceptingCreatesASuggestionRecipeWithoutPhoto() {
         val suggestion = suggestion(
             title = "Tarta de manzana",
             ingredients = listOf(
@@ -45,7 +44,6 @@ class SuggestionAcceptanceTest {
 
         assertEquals(id, recipe.id)
         assertEquals("Tarta de manzana", recipe.title)
-        assertEquals(RecipeStatus.DRAFT, recipe.status)
         assertEquals(RecipeOrigin.SUGGESTION, recipe.origin)
         assertNull(recipe.photoPath)
         assertEquals(false, recipe.favorite)

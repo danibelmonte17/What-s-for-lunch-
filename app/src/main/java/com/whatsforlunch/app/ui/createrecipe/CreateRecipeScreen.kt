@@ -85,7 +85,6 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -116,17 +115,14 @@ object CreateRecipeTestTags {
     const val ADD_INGREDIENT = "create_recipe_add_ingredient"
     const val ADD_STEP = "create_recipe_add_step"
     const val FAVORITE_TOGGLE = "create_recipe_favorite"
-    const val SAVE_DRAFT = "create_recipe_save_draft"
-    const val PUBLISH = "create_recipe_publish"
-    const val SAVE_CHANGES = "create_recipe_save_changes"
+    const val SAVE = "create_recipe_save"
     const val NOTICE = "create_recipe_notice"
-    const val PUBLISH_ERRORS = "create_recipe_publish_errors"
+    const val SAVE_ERRORS = "create_recipe_save_errors"
 
     // Bloques y controles del rediseño fiel al prototipo (RF-1 a RF-8, RF-21).
     // La cabecera ya no dibuja «Guardar» (RF-21): el tag se conserva para que los E2E
     // puedan afirmar su ausencia sin depender del idioma.
     const val HEADER_SAVE = "create_recipe_header_save"
-    const val STATUS_BADGE = "create_recipe_status_badge"
     const val COVER = "create_recipe_cover"
     const val BASIC_SECTION = "create_recipe_basic_section"
     const val METRICS_GRID = "create_recipe_metrics_grid"
@@ -195,9 +191,7 @@ class CreateRecipeActions(
     val onTakePhoto: () -> Unit = {},
     val onGeneratePhoto: () -> Unit = {},
     val onRemovePhoto: () -> Unit = {},
-    val onSaveDraft: () -> Unit = {},
-    val onPublish: () -> Unit = {},
-    val onSaveChanges: () -> Unit = {},
+    val onSave: () -> Unit = {},
     val onDismissNotice: () -> Unit = {},
 )
 
@@ -243,7 +237,7 @@ fun CreateRecipeScreen(
 }
 
 // RF-3: cabecera con el título del formulario («Crear receta» en alta, «Editar Receta»
-// al editar) y el distintivo de estado de la Receta, a la derecha de la barra.
+// al editar), sin distintivo de estado (el estado Borrador/Publicada ya no existe).
 // RF-13, RF-14: la cabecera no dibuja «Guardar» en ningún modo: el único punto de
 // guardado son las acciones del dock (decisión Q-editar-receta-5, 2026-10-19).
 @OptIn(ExperimentalMaterial3Api::class)
@@ -274,39 +268,11 @@ private fun FormHeader(uiState: CreateRecipeUiState, actions: CreateRecipeAction
                 )
             }
         },
-        actions = {
-            // Petición del usuario (2026-10-19): el distintivo de estado va a la derecha
-            // de la cabecera, centrado en la barra y con 16 dp de margen derecho.
-            StatusBadge(
-                status = uiState.editingStatus ?: RecipeStatus.DRAFT,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(end = WarmSpacing.md),
-            )
-        },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
         ),
     )
-}
-
-// Distintivo de estado de la Receta (Borrador/Publicada) en píldora (RF-3, RF-13).
-@Composable
-private fun StatusBadge(status: RecipeStatus, modifier: Modifier = Modifier) {
-    Surface(
-        shape = PillShape,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-        contentColor = MaterialTheme.colorScheme.primary,
-        modifier = modifier.testTag(CreateRecipeTestTags.STATUS_BADGE),
-    ) {
-        Text(
-            text = stringResource(status.labelRes()),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-        )
-    }
 }
 
 @Composable
@@ -336,12 +302,12 @@ private fun NoticeBanner(notice: CreateRecipeNotice, onDismiss: () -> Unit) {
     }
 }
 
-// RF-15: junto al dock se enumeran los requisitos incumplidos que impiden Publicar.
+// RF-15: junto al dock se enumeran los requisitos incumplidos que impiden Guardar.
 @Composable
-private fun PublishErrors(errors: Set<RecipeRequirement>) {
-    Column(modifier = Modifier.fillMaxWidth().testTag(CreateRecipeTestTags.PUBLISH_ERRORS)) {
+private fun SaveErrors(errors: Set<RecipeRequirement>) {
+    Column(modifier = Modifier.fillMaxWidth().testTag(CreateRecipeTestTags.SAVE_ERRORS)) {
         Text(
-            text = stringResource(R.string.create_recipe_publish_blocked),
+            text = stringResource(R.string.create_recipe_save_blocked),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.error,
         )
@@ -1241,14 +1207,12 @@ private fun FavoriteSection(uiState: CreateRecipeUiState, actions: CreateRecipeA
     }
 }
 
-// RF-8, RF-14, RF-15 y RF-16: dock siempre visible con «Borrador» y
-// «Publicar Receta», deshabilitado (estilo distinguible) mientras falten requisitos,
-// que se enumeran junto al dock.
-// RF-5 a RF-8: al editar una Receta Publicada, el dock muestra una única acción
-// primaria «Guardar cambios» que mantiene el estado Publicada.
+// RF-EBF2/RF-EBF3: dock siempre visible con el único botón de guardado («Guardar»
+// en el alta, «Guardar cambios» en edición), deshabilitado (estilo distinguible)
+// mientras falten requisitos, que se enumeran junto al dock.
 @Composable
 private fun ActionDock(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
-    val published = uiState.editingStatus == RecipeStatus.PUBLISHED
+    val editing = uiState.recipeId != null
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         modifier = Modifier
@@ -1264,82 +1228,36 @@ private fun ActionDock(uiState: CreateRecipeUiState, actions: CreateRecipeAction
                 .padding(WarmSpacing.md),
             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
         ) {
-            if (uiState.publishErrors.isNotEmpty()) {
-                PublishErrors(errors = uiState.publishErrors)
+            if (uiState.saveErrors.isNotEmpty()) {
+                SaveErrors(errors = uiState.saveErrors)
             }
-            if (published) {
-                Button(
-                    onClick = actions.onSaveChanges,
-                    enabled = uiState.canPublish,
-                    shape = FieldShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            Button(
+                onClick = actions.onSave,
+                enabled = uiState.canSave,
+                shape = FieldShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+                    .testTag(CreateRecipeTestTags.SAVE),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Save,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                Text(
+                    text = stringResource(
+                        if (editing) R.string.create_recipe_save_changes else R.string.create_recipe_save,
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 52.dp)
-                        .testTag(CreateRecipeTestTags.SAVE_CHANGES),
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Save,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
-                    Text(
-                        text = stringResource(R.string.create_recipe_save_changes),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-                ) {
-                    FilledTonalButton(
-                        onClick = actions.onSaveDraft,
-                        shape = FieldShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 52.dp)
-                            .testTag(CreateRecipeTestTags.SAVE_DRAFT),
-                    ) {
-                        Text(text = stringResource(R.string.create_recipe_save_draft))
-                    }
-                    Button(
-                        onClick = actions.onPublish,
-                        enabled = uiState.canPublish,
-                        shape = FieldShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                        modifier = Modifier
-                            .weight(1.5f)
-                            .heightIn(min = 52.dp)
-                            .testTag(CreateRecipeTestTags.PUBLISH),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.RestaurantMenu,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(modifier = Modifier.width(WarmSpacing.xs))
-                        Text(
-                            text = stringResource(R.string.create_recipe_publish),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    }
-                }
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
         }
     }
@@ -1484,16 +1402,9 @@ private fun CreateRecipeNotice.messageRes(): Int = when (this) {
 }
 
 private fun RecipeRequirement.messageRes(): Int = when (this) {
-    RecipeRequirement.TITLE -> R.string.create_recipe_publish_error_title
-    RecipeRequirement.PHOTO -> R.string.create_recipe_publish_error_photo
-    RecipeRequirement.INGREDIENT -> R.string.create_recipe_publish_error_ingredient
-    RecipeRequirement.STEP -> R.string.create_recipe_publish_error_step
-    RecipeRequirement.INVALID_INGREDIENT -> R.string.create_recipe_publish_error_invalid_ingredient
-    RecipeRequirement.INVALID_STEP -> R.string.create_recipe_publish_error_invalid_step
-}
-
-// RF-3: el distintivo de la cabecera en modo edición nombra el estado de la Receta.
-private fun RecipeStatus.labelRes(): Int = when (this) {
-    RecipeStatus.DRAFT -> R.string.my_recipes_status_draft
-    RecipeStatus.PUBLISHED -> R.string.my_recipes_status_published
+    RecipeRequirement.TITLE -> R.string.create_recipe_save_error_title
+    RecipeRequirement.INGREDIENT -> R.string.create_recipe_save_error_ingredient
+    RecipeRequirement.STEP -> R.string.create_recipe_save_error_step
+    RecipeRequirement.INVALID_INGREDIENT -> R.string.create_recipe_save_error_invalid_ingredient
+    RecipeRequirement.INVALID_STEP -> R.string.create_recipe_save_error_invalid_step
 }

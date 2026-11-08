@@ -10,7 +10,6 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 
 ### Producto
 
-**Borrador**: Receta guardada que aún no está lista para cocinar; al publicarla queda disponible en Mis Recetas.
 **Comando de voz**: frase exacta que el Modo Cocina reconoce para actuar: «Siguiente», «Repetir» o «Pausar tiempo» (y «Next», «Repeat», «Pause timer» en inglés).
 **Ingrediente**: componente de una Receta, con cantidad, unidad y si es obligatorio u opcional.
 **Lista de la Compra**: ítems que faltan por comprar, agrupables por Pasillo o por Receta.
@@ -19,7 +18,8 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 **Momento culinario**: clasificación de una Receta en desayuno, almuerzo, cena o postre.
 **Paso**: instrucción secuencial de una Receta, con temporizador opcional y con los Ingredientes que usa (vínculo opcional; un Ingrediente puede usarse en varios Pasos).
 **Pinche**: asistente conversacional de cocina con IA. Responde dudas de cocina y puede proponer recetas con independencia de lo que haya en la Despensa; no sustituye a las Sugerencias de la Despensa.
-**Propuesta del Pinche**: receta que devuelve el Pinche dentro de una conversación, con texto, ingredientes y pasos. No es una Receta ni una Sugerencia: solo pasa a ser Receta (Borrador) si el usuario la guarda desde su Ficha.
+**Propuesta del Pinche**: receta que devuelve el Pinche dentro de una conversación, con texto, ingredientes y pasos. No es una Receta ni una Sugerencia: solo pasa a ser Receta si el usuario la guarda desde su Ficha.
+**Favorita**: Receta marcada como favorita por el usuario; Mis Recetas puede filtrarlas con el chip «Favoritas», combinable con la búsqueda y el Momento culinario.
 **Ficha**: vista dentro del Pinche con el texto, los ingredientes, los pasos y los Faltantes de una Propuesta del Pinche. Desde ella se guarda la Propuesta en Mis Recetas.
 **Raciones**: número de comensales de una Receta; ajusta las cantidades (entre 1 y 12).
 **Receta**: plato con ingredientes, pasos y metadatos; se crea a mano, se acepta desde una Sugerencia o se guarda desde el Pinche.
@@ -52,3 +52,4 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 **receta del chat**, **sugerencia del chat** → usar **Propuesta del Pinche**; **Sugerencia** queda reservado a las de la Despensa.
 **match** → usar **Coincidencia**. No confundir con el badge «85% Match» de la interfaz, que es el umbral mínimo de sugerencia (RD02) y no un sinónimo de Coincidencia.
 **Escaneo** y **Escáner** no son sinónimos: **Escaneo** es una captura concreta de la cámara; **Escáner** es la pantalla y el flujo que contiene escaneos y termina en Sugerencias.
+**Borrador**, **Publicada**, **publicar** (como transición de estado) → retirados con `eliminar-estado-de-borrador-y-filtrar-favoritos`: las Recetas ya no tienen estado y el formulario guarda con un único botón («Guardar»/«Guardar cambios»).

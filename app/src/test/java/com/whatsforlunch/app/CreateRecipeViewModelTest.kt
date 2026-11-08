@@ -1,6 +1,8 @@
 package com.whatsforlunch.app
 
 import com.whatsforlunch.app.data.ai.TestPromptSource
+import com.whatsforlunch.app.data.photo.PhotoAcquirer
+import com.whatsforlunch.app.data.photo.PhotoResult
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
@@ -8,7 +10,6 @@ import com.whatsforlunch.app.domain.createrecipe.RecipeValidation
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,14 @@ private class FakePhotoStore : PhotoStore {
     override suspend fun save(recipeId: String, bytes: ByteArray): String = "/tmp/$recipeId.jpg"
 
     override suspend fun delete(path: String) = Unit
+}
+
+private class FakePhotoAcquirer : PhotoAcquirer {
+    override suspend fun pickFromGallery(): PhotoResult = PhotoResult.Success(ByteArray(1))
+
+    override suspend fun takePhoto(): PhotoResult = PhotoResult.Success(ByteArray(1))
+
+    override suspend fun generate(prompt: String): PhotoResult = PhotoResult.Success(ByteArray(1))
 }
 
 // Vínculo Paso↔Ingrediente (RD21, RF-VPI1 a RF-VPI5): asignación por Paso (N:M y
@@ -120,12 +129,14 @@ class CreateRecipeViewModelTest {
     }
 
     // RF-VPI3/RF-VPI4 (verify 1 = Scenario 2): los vínculos y los ids estables
-    // sobreviven al guardar (Borrador) y a reabrir la Receta en edición.
+    // sobreviven al guardar y a reabrir la Receta en edición.
     @Test
-    fun savedDraftKeepsStableIdsAndStepLinksWhenReopened() = runTest {
+    fun savedRecipeKeepsStableIdsAndStepLinksWhenReopened() = runTest {
         val repository = InMemoryRecipeRepository()
         val viewModel = viewModel(repository)
         viewModel.onTitleChange("Tortilla de patatas")
+        viewModel.setPhotoAcquirer(FakePhotoAcquirer())
+        viewModel.onPickPhotoFromGallery()
         addIngredient(viewModel, index = 0, name = "Patatas")
         addIngredient(viewModel, index = 1, name = "Huevo")
         viewModel.onAddStep()
@@ -134,7 +145,7 @@ class CreateRecipeViewModelTest {
         viewModel.onStepTextChange(viewModel.uiState.value.steps[1].key, "Añadir el huevo")
         val ingredients = viewModel.uiState.value.ingredients
         viewModel.onStepIngredientToggle(viewModel.uiState.value.steps[0].key, ingredients[0].id)
-        viewModel.onSaveDraft()
+        viewModel.onSave()
         assertTrue(viewModel.uiState.value.saved)
 
         val saved = repository.observeRecipes().first().single()
@@ -151,48 +162,89 @@ class CreateRecipeViewModelTest {
     }
 
     // RF-VPI5 (D4, Scenario 5): una Receta sin vínculos (creada por IA o legada) es
-    // válida, se puede vincular editando y publicar no exige vínculos (D3).
+    // válida, se puede vincular editando y guardar no exige vínculos (D3).
     @Test
     fun recipesWithoutStepLinksAreValidAndCanGainLinks() = runTest {
-        val publishableWithoutLinks = Recipe(
+        val saveableWithoutLinks = Recipe(
             id = "ia-1",
             title = "Arroz con tomate",
             story = "Una receta sencilla",
             photoPath = "/tmp/ia-1.jpg",
-            status = RecipeStatus.DRAFT,
             origin = RecipeOrigin.SUGGESTION,
             ingredients = listOf(
                 RecipeIngredient(id = "ia-1-ingredient-0", name = "Tomate", quantity = 1.0, unit = "ud"),
             ),
             steps = listOf(RecipeStep(text = "Cocinar el arroz", ingredientIds = emptyList())),
         )
-        assertTrue(RecipeValidation.validateForPublish(publishableWithoutLinks).isEmpty())
+        assertTrue(RecipeValidation.validateForSave(saveableWithoutLinks).isEmpty())
 
         val repository = InMemoryRecipeRepository()
-        repository.saveRecipe(publishableWithoutLinks)
+        repository.saveRecipe(saveableWithoutLinks)
         val viewModel = viewModel(repository, recipeId = "ia-1")
         val step = viewModel.uiState.value.steps.single()
         val ingredient = viewModel.uiState.value.ingredients.single()
         assertTrue(step.ingredientIds.isEmpty())
 
         viewModel.onStepIngredientToggle(step.key, ingredient.id)
-        viewModel.onSaveDraft()
+        viewModel.onSave()
         assertTrue(viewModel.uiState.value.saved)
 
         val saved = repository.getRecipe("ia-1")!!
         assertEquals(listOf(saved.ingredients.single().id), saved.steps.single().ingredientIds)
     }
 
-    // D3: publicar no exige vínculos (RecipeValidation sin cambios) — una Receta
-    // completa con Pasos sin vincular publica sin requisitos nuevos.
+    // D11: al editar una Receta sin foto (Sugerencia/Pinche) el guardado no exige
+    // foto — la foto es siempre opcional.
     @Test
-    fun publishValidationDoesNotRequireStepLinks() {
-        val unmet = RecipeValidation.validateForPublish(
+    fun editingARecipeWithoutPhotoSavesWithoutPhoto() = runTest {
+        val photoless = Recipe(
+            id = "pinche-1",
+            title = "Crema de calabaza",
+            photoPath = null,
+            origin = RecipeOrigin.SUGGESTION,
+            ingredients = listOf(
+                RecipeIngredient(id = "pinche-1-ingredient-0", name = "Calabaza", quantity = 500.0, unit = "g"),
+            ),
+            steps = listOf(RecipeStep(text = "Triturar", ingredientIds = emptyList())),
+        )
+        val repository = InMemoryRecipeRepository()
+        repository.saveRecipe(photoless)
+        val viewModel = viewModel(repository, recipeId = "pinche-1")
+        assertTrue(viewModel.uiState.value.canSave)
+
+        viewModel.onTitleChange("Crema de calabaza tostada")
+        viewModel.onSave()
+        assertTrue(viewModel.uiState.value.saved)
+        assertEquals("Crema de calabaza tostada", repository.getRecipe("pinche-1")!!.title)
+    }
+
+    // RF-EBF2/RF-EBF3 + D11: la foto es siempre opcional; el alta guarda sin foto
+    // cuando el resto de obligatorios están completos.
+    @Test
+    fun createSavesWithoutPhoto() = runTest {
+        val repository = InMemoryRecipeRepository()
+        val viewModel = viewModel(repository)
+        viewModel.onTitleChange("Tortilla de patatas")
+        addIngredient(viewModel, index = 0, name = "Patatas")
+        viewModel.onAddStep()
+        viewModel.onStepTextChange(viewModel.uiState.value.steps[0].key, "Pochar")
+        assertTrue(viewModel.uiState.value.canSave)
+        assertEquals(emptySet<RecipeRequirement>(), viewModel.uiState.value.saveErrors)
+
+        viewModel.onSave()
+        assertTrue(viewModel.uiState.value.saved)
+        assertEquals(null, repository.observeRecipes().first().single().photoPath)
+    }
+
+    // D3: guardar no exige vínculos (RecipeValidation sin cambios) — una Receta
+    // completa con Pasos sin vincular guarda sin requisitos nuevos.
+    @Test
+    fun saveValidationDoesNotRequireStepLinks() {
+        val unmet = RecipeValidation.validateForSave(
             Recipe(
                 id = "sin-vinculos",
                 title = "Tarta de manzana",
                 photoPath = "/tmp/tarta.jpg",
-                status = RecipeStatus.DRAFT,
                 ingredients = listOf(
                     RecipeIngredient(name = "Manzana", quantity = 3.0, unit = "ud"),
                 ),

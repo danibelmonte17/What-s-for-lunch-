@@ -5,7 +5,6 @@ import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
@@ -60,13 +59,12 @@ class PincheProposalRulesTest {
     }
 
     @Test
-    fun proposalToRecipeBuildsADraftWithSuggestionOriginAndNoPhoto() {
+    fun proposalToRecipeBuildsARecipeWithSuggestionOriginAndNoPhoto() {
         val suggestion = proposal(required = listOf("Tomate", "Harina"), optional = listOf("Albahaca"))
         val recipe = PincheProposalRules.proposalToRecipe(suggestion)
         val id = PincheProposalRules.proposalRecipeId(suggestion.title)
 
         assertEquals(id, recipe.id)
-        assertEquals(RecipeStatus.DRAFT, recipe.status)
         assertEquals(RecipeOrigin.SUGGESTION, recipe.origin)
         assertNull(recipe.photoPath)
         assertFalse(recipe.favorite)

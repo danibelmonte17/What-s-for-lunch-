@@ -89,8 +89,6 @@
     <string name="pantry_empty_message">Add the foods you have at home.</string>
 
     <!-- My Recipes: cards -->
-    <string name="my_recipes_status_draft">Draft</string>
-    <string name="my_recipes_status_published">Published</string>
     <string name="my_recipes_card_time">%1$d min</string>
     <string name="my_recipes_card_servings">%1$d servings</string>
     <string name="my_recipes_card_match">%1$d%%</string>
@@ -100,6 +98,7 @@
     <string name="my_recipes_action_edit_short">Edit</string>
     <string name="my_recipes_search_hint">Search by recipe or ingredient</string>
     <string name="my_recipes_filter_all">All</string>
+    <string name="my_recipes_filter_favorites">Favorites</string>
     <string name="my_recipes_filter_label">Filter by meal moment</string>
     <string name="my_recipes_no_results_title">No matching recipes</string>
     <string name="my_recipes_no_results_message">Try another search or meal moment.</string>
@@ -181,16 +180,14 @@
     <string name="create_recipe_favorite_subtitle">Quick access in your library</string>
     <string name="create_recipe_ingredients_count">%1$d items</string>
     <string name="create_recipe_steps_count">%1$d steps defined</string>
-    <string name="create_recipe_save_draft">Draft</string>
-    <string name="create_recipe_publish">Publish Recipe</string>
+    <string name="create_recipe_save">Save</string>
     <string name="create_recipe_save_changes">Save changes</string>
-    <string name="create_recipe_publish_blocked">Cannot publish yet:</string>
-    <string name="create_recipe_publish_error_title">Title is missing</string>
-    <string name="create_recipe_publish_error_photo">Photo is missing</string>
-    <string name="create_recipe_publish_error_ingredient">Add at least one ingredient</string>
-    <string name="create_recipe_publish_error_step">Add at least one step</string>
-    <string name="create_recipe_publish_error_invalid_ingredient">Some ingredients have no name or an invalid quantity</string>
-    <string name="create_recipe_publish_error_invalid_step">Some steps have no text</string>
+    <string name="create_recipe_save_blocked">Cannot save yet:</string>
+    <string name="create_recipe_save_error_title">Title is missing</string>
+    <string name="create_recipe_save_error_ingredient">Add at least one ingredient</string>
+    <string name="create_recipe_save_error_step">Add at least one step</string>
+    <string name="create_recipe_save_error_invalid_ingredient">Some ingredients have no name or an invalid quantity</string>
+    <string name="create_recipe_save_error_invalid_step">Some steps have no text</string>
     <string name="create_recipe_notice_ai_key_missing">Set your AI API key in Settings to generate images.</string>
     <string name="create_recipe_notice_ai_failed">The image could not be generated. You can pick a photo manually.</string>
     <string name="create_recipe_notice_ai_failed_no_connection">No connection. Check your network and try again; you can also pick a photo manually.</string>

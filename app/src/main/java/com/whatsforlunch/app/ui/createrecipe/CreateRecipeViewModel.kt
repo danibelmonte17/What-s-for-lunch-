@@ -16,7 +16,6 @@ import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import java.util.UUID
@@ -81,17 +80,15 @@ data class CreateRecipeUiState(
     val ingredients: List<IngredientFieldUiState> = emptyList(),
     val steps: List<StepFieldUiState> = emptyList(),
     val titleError: Boolean = false,
-    // Requisitos incumplidos de Publicar, en vivo (fuente única:
-    // RecipeValidation.validateForPublish) y si el formulario ya los cumple.
-    val publishErrors: Set<RecipeRequirement> = emptySet(),
-    val canPublish: Boolean = false,
+    // Requisitos incumplidos del guardado, en vivo (fuente única:
+    // RecipeValidation.validateForSave) y si el formulario ya los cumple.
+    val saveErrors: Set<RecipeRequirement> = emptySet(),
+    val canSave: Boolean = false,
     val notice: CreateRecipeNotice? = null,
     val isPhotoLoading: Boolean = false,
     val saved: Boolean = false,
-    // Modo edición: id de la Receta abierta (null = alta) y el estado con el que se
-    // guardará si no se publica (RF-5, RF-6, RF-9, RF-10, RF-16).
+    // Modo edición: id de la Receta abierta (null = alta) (RF-5, RF-6, RF-9, RF-10).
     val recipeId: String? = null,
-    val editingStatus: RecipeStatus? = null,
     // RF-18: el id recibido no corresponde a ninguna Receta; se vuelve a Mis Recetas.
     val recipeMissing: Boolean = false,
 )
@@ -113,7 +110,7 @@ class CreateRecipeViewModel(
     // Origen de la Receta guardada; la edición lo conserva (RF-16).
     private var originalOrigin: RecipeOrigin = RecipeOrigin.USER
 
-    private val _uiState = MutableStateFlow(withPublishState(CreateRecipeUiState()))
+    private val _uiState = MutableStateFlow(withSaveState(CreateRecipeUiState()))
     val uiState: StateFlow<CreateRecipeUiState> = _uiState.asStateFlow()
 
     init {
@@ -257,36 +254,15 @@ class CreateRecipeViewModel(
 
     fun onDismissNotice() = mutate { it.copy(notice = null) }
 
-    // RF-10: guarda manteniendo el estado Borrador (también en modo edición).
-    fun onSaveDraft() {
-        val recipe = buildRecipe(_uiState.value, RecipeStatus.DRAFT)
-        if (RecipeRequirement.TITLE in RecipeValidation.validateForDraft(recipe)) {
-            mutate { it.copy(titleError = true) }
-        } else {
-            persist(recipe)
-        }
-    }
-
-    // RF-11: publica la Receta (alta o transición Borrador -> Publicada al editar).
-    fun onPublish() {
-        val recipe = buildRecipe(_uiState.value, RecipeStatus.PUBLISHED)
-        val unmet = RecipeValidation.validateForPublish(recipe)
+    // RF-10: guarda la Receta con el botón único del formulario (alta y edición),
+    // solo si cumple los obligatorios (RF-EBF3). La foto es siempre opcional (D11).
+    fun onSave() {
+        val recipe = buildRecipe(_uiState.value)
+        val unmet = RecipeValidation.validateForSave(recipe)
         if (unmet.isEmpty()) {
             persist(recipe)
         } else {
             // Defensivo: el botón llega deshabilitado mientras haya requisitos incumplidos.
-            mutate { it.copy(titleError = RecipeRequirement.TITLE in unmet) }
-        }
-    }
-
-    // RF-6: guarda los cambios de una Receta Publicada manteniendo su estado, solo si
-    // sigue cumpliendo los requisitos de Publicar (RF-7).
-    fun onSaveChanges() {
-        val recipe = buildRecipe(_uiState.value, _uiState.value.editingStatus ?: RecipeStatus.PUBLISHED)
-        val unmet = RecipeValidation.validateForPublish(recipe)
-        if (unmet.isEmpty()) {
-            persist(recipe)
-        } else {
             mutate { it.copy(titleError = RecipeRequirement.TITLE in unmet) }
         }
     }
@@ -328,7 +304,7 @@ class CreateRecipeViewModel(
         }
     }
 
-    private fun buildRecipe(state: CreateRecipeUiState, status: RecipeStatus): Recipe {
+    private fun buildRecipe(state: CreateRecipeUiState): Recipe {
         // En modo edición se conservan el id y el origen de la Receta (RF-2, RF-16).
         val id = state.recipeId ?: newRecipeId
         return Recipe(
@@ -346,7 +322,6 @@ class CreateRecipeViewModel(
             caloriesPerServing = state.caloriesPerServing.toIntOrNull()?.takeIf { it >= 0 },
             photoPath = state.photoPath,
             favorite = state.favorite,
-            status = status,
             origin = originalOrigin,
             ingredients = state.ingredients.mapIndexed { index, row ->
                 RecipeIngredient(
@@ -412,19 +387,19 @@ class CreateRecipeViewModel(
                 )
             },
             recipeId = recipe.id,
-            editingStatus = recipe.status,
         )
     }
 
-    // Cualquier cambio recalcula los requisitos incumplidos de Publicar y si el
-    // formulario puede publicar (RF-14 a RF-16); fuente única de verdad: validateForPublish.
+    // Cualquier cambio recalcula los requisitos incumplidos del guardado y si el
+    // formulario ya puede guardar (RF-EBF2, RF-EBF3); fuente única de verdad:
+    // validateForSave.
     private fun mutate(transform: (CreateRecipeUiState) -> CreateRecipeUiState) {
-        _uiState.update { withPublishState(transform(it)) }
+        _uiState.update { withSaveState(transform(it)) }
     }
 
-    private fun withPublishState(state: CreateRecipeUiState): CreateRecipeUiState {
-        val unmet = RecipeValidation.validateForPublish(buildRecipe(state, RecipeStatus.PUBLISHED))
-        return state.copy(publishErrors = unmet, canPublish = unmet.isEmpty())
+    private fun withSaveState(state: CreateRecipeUiState): CreateRecipeUiState {
+        val unmet = RecipeValidation.validateForSave(buildRecipe(state))
+        return state.copy(saveErrors = unmet, canSave = unmet.isEmpty())
     }
 
     private fun updateIngredient(key: Long, transform: (IngredientFieldUiState) -> IngredientFieldUiState) =

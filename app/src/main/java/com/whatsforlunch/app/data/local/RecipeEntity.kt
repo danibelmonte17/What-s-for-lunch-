@@ -18,6 +18,5 @@ data class RecipeEntity(
     val caloriesPerServing: Int?,
     val photoPath: String?,
     val favorite: Boolean,
-    val status: String,
     val origin: String,
 )

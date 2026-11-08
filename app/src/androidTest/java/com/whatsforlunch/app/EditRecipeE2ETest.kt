@@ -41,7 +41,6 @@ import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
@@ -59,6 +58,7 @@ import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -110,9 +110,11 @@ private class EditPhotoAcquirer(
     override suspend fun generate(prompt: String): PhotoResult = PhotoResult.Cancelled
 }
 
-// verify 1 y escenarios propios · RF-1 a RF-16: el formulario en modo edición montado
-// sobre un repositorio en memoria con la Receta ya guardada. Cada valor sembrado es
-// distinto del valor por defecto del alta, para que la precarga sea verificable.
+// verify 1 y escenarios propios · RF-EBF2, RF-EBF3, RF-EBF4: el formulario en modo
+// edición montado sobre un repositorio en memoria con la Receta ya guardada. Cada
+// valor sembrado es distinto del valor por defecto del alta, para que la precarga sea
+// verificable. El dock tiene el único botón «Guardar cambios» (D6), sin distintivos de
+// estado (D2).
 @RunWith(AndroidJUnit4::class)
 class EditRecipeE2ETest {
 
@@ -161,15 +163,16 @@ class EditRecipeE2ETest {
         runBlocking { repository.observeRecipes().first() }
 
     // RF-2: todos los campos de la Receta quedan precargados al abrir en modo edición;
-    // RF-3: la cabecera pasa a «Editar Receta» con el distintivo de su estado;
-    // RF-5: en una Publicada el dock muestra una única acción primaria «Guardar cambios».
+    // RF-EBF2/RF-EBF6: el dock muestra el único botón «Guardar cambios», sin
+    // distintivo de estado y sin «Guardar» de cabecera (RF-13).
     @Test
-    fun editingPreloadsRecipeFieldsAndPublishedDock() {
+    fun editingPreloadsRecipeFieldsAndSingleSaveDock() {
         launchEditor(repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-precarga.png"))), SEEDED_ID)
 
         composeRule.onNodeWithText(editorText(R.string.create_recipe_edit_title)).assertIsDisplayed()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.STATUS_BADGE).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.my_recipes_status_published)).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("create_recipe_status_badge").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Borrador").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Publicada").assertCountEquals(0)
         composeRule.onNodeWithText(editorText(R.string.create_recipe_header_subtitle)).assertIsDisplayed()
 
         composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).assertTextContains(seededTitle)
@@ -190,43 +193,46 @@ class EditRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("5")
         composeRule.onNodeWithTag(CreateRecipeTestTags.FAVORITE_TOGGLE).performScrollTo().assertIsOn()
 
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_DRAFT).assertCountEquals(0)
-        composeRule.onAllNodesWithTag(CreateRecipeTestTags.PUBLISH).assertCountEquals(0)
-        // RF-13: en edición no hay «Guardar» de cabecera; el dock es el único guardado.
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_save_changes)).assertIsDisplayed()
+        // El único guardado es el dock; no hay botones retirados ni «Guardar» de cabecera.
+        composeRule.onAllNodesWithTag("create_recipe_save_draft").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("create_recipe_publish").assertCountEquals(0)
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
-    // RF-9: al editar un Borrador, el dock es el del alta («Borrador» y
-    // «Publicar Receta»).
+    // S4/RF-EBF4 (verify 3, D11): una Receta nacida sin foto (Sugerencia/Pinche) se
+    // puede editar y guardar sin foto y sin distintivo de estado.
     @Test
-    fun draftEditingShowsCreationDock() {
-        launchEditor(repositoryWith(seededRecipe(status = RecipeStatus.DRAFT)), SEEDED_ID)
+    fun photolessRecipeEditsAndSavesWithoutPhoto() {
+        val repository = repositoryWith(seededRecipe(photoPath = null, origin = RecipeOrigin.SUGGESTION))
+        launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CreateRecipeTestTags.STATUS_BADGE).assertIsDisplayed()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).assertIsDisplayed()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsDisplayed()
-        composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertCountEquals(0)
-        // RF-13: el dock del alta es el único guardado; no hay «Guardar» de cabecera.
-        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsEnabled()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_ERRORS).assertCountEquals(0)
+
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Tortilla sin foto mejorada")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
+
+        val saved = storedRecipes(repository).single()
+        assertEquals("Tortilla sin foto mejorada", saved.title)
+        assertNull(saved.photoPath)
     }
 
-    // RF-7 y RF-8: una Publicada que deja de cumplir los requisitos de Publicar mantiene
-    // «Guardar cambios» deshabilitado y enumera junto al dock los requisitos incumplidos.
+    // S3/RF-EBF3: una Receta en edición que deja de cumplir los obligatorios tiene
+    // «Guardar cambios» deshabilitado y la lista de requisitos junto al dock. D11: la
+    // foto es siempre opcional y no aparece en la lista.
     @Test
-    fun publishedEditingWithoutRequirementsBlocksSavingChanges() {
+    fun editingWithoutRequirementsBlocksSavingChanges() {
         val repository = repositoryWith(seededRecipeWithoutDetails())
-        launchEditor(repository, SEEDED_ID, photoAcquirer = EditPhotoAcquirer(PhotoResult.Success(editImageBytes())))
+        launchEditor(repository, SEEDED_ID)
 
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsNotEnabled()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH_ERRORS).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_photo)).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_ingredient)).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_step)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsNotEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_ERRORS).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_save_error_ingredient)).assertIsDisplayed()
+        composeRule.onNodeWithText(editorText(R.string.create_recipe_save_error_step)).assertIsDisplayed()
 
-        // Completa la foto, un ingrediente y un paso: «Guardar cambios» se habilita y
-        // guarda manteniendo el estado Publicada (RF-6).
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PHOTO_GALLERY).performScrollTo().performClick()
+        // Completa un ingrediente y un paso: «Guardar cambios» se habilita y guarda.
         composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_INGREDIENT).performScrollTo().performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientName(0)).performScrollTo()
             .performTextReplacement("Patata")
@@ -236,117 +242,56 @@ class EditRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(0)).performScrollTo()
             .performTextReplacement("Pochar la cebolla")
 
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onAllNodesWithTag(CreateRecipeTestTags.PUBLISH_ERRORS).assertCountEquals(0)
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsEnabled()
+        composeRule.onAllNodesWithTag(CreateRecipeTestTags.SAVE_ERRORS).assertCountEquals(0)
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
 
         val saved = storedRecipes(repository).single()
-        assertEquals(RecipeStatus.PUBLISHED, saved.status)
+        assertEquals(1, saved.ingredients.size)
+        assertEquals(1, saved.steps.size)
     }
 
-    // RF-6 y RF-16: guardar los cambios de una Publicada mantiene el estado y el origen.
+    // RF-6 y RF-16: guardar los cambios mantiene el id y el origen de la Receta.
     @Test
-    fun saveChangesKeepsPublishedStatusAndOrigin() {
+    fun savingChangesKeepsIdAndOrigin() {
         val repository = repositoryWith(
             seededRecipe(origin = RecipeOrigin.SUGGESTION, photoPath = editPhotoFile("editar-publicada.png")),
         )
         launchEditor(repository, SEEDED_ID)
 
         composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Tortilla mejorada")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
 
         val saved = storedRecipes(repository).single()
         assertEquals(SEEDED_ID, saved.id)
         assertEquals("Tortilla mejorada", saved.title)
-        assertEquals(RecipeStatus.PUBLISHED, saved.status)
         assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
         assertEquals(1, saved.ingredients.size)
         assertEquals(1, saved.steps.size)
     }
 
-    // RF-10: «Borrador» sobre un Borrador en edición guarda manteniendo el estado.
-    @Test
-    fun saveDraftFromEditingKeepsDraftStatus() {
-        val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
-        launchEditor(repository, SEEDED_ID)
-
-        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Borrador corregido")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
-
-        val saved = storedRecipes(repository).single()
-        assertEquals("Borrador corregido", saved.title)
-        assertEquals(RecipeStatus.DRAFT, saved.status)
-    }
-
-    // RF-11 y RF-12: publicar desde la edición de un Borrador que cumple los requisitos
-    // deja la Receta Publicada.
-    @Test
-    fun publishFromEditingSetsPublishedStatus() {
-        val repository = repositoryWith(
-            seededRecipe(status = RecipeStatus.DRAFT, photoPath = editPhotoFile("editar-borrador.png")),
-        )
-        launchEditor(repository, SEEDED_ID)
-
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsEnabled()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).performClick()
-
-        val saved = storedRecipes(repository).single()
-        assertEquals("Tortilla de patatas", saved.title)
-        assertEquals(RecipeStatus.PUBLISHED, saved.status)
-    }
-
-    // RF-12: un Borrador en edición que no cumple los requisitos tiene «Publicar Receta»
-    // deshabilitado y los requisitos incumplidos junto al dock.
-    @Test
-    fun draftEditingWithoutRequirementsBlocksPublish() {
-        val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
-        launchEditor(repository, SEEDED_ID)
-
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsNotEnabled()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH_ERRORS).assertIsDisplayed()
-        composeRule.onNodeWithText(editorText(R.string.create_recipe_publish_error_photo)).assertIsDisplayed()
-    }
-
     // RF-13: en modo edición la cabecera no dibuja «Guardar»; el único punto de
-    // guardado es la acción del dock, que mantiene el estado de la Receta.
+    // guardado es la acción del dock.
     @Test
-    fun editingHasNoHeaderSaveAction() {
-        val repository = repositoryWith(seededRecipe(status = RecipeStatus.DRAFT, photoPath = null))
+    fun editingHasNoHeaderSaveActionAndDockSaves() {
+        val repository = repositoryWith(seededRecipe(photoPath = null))
         launchEditor(repository, SEEDED_ID)
 
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
-        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Borrador desde dock")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Tortilla desde dock")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
 
         val saved = storedRecipes(repository).single()
-        assertEquals("Borrador desde dock", saved.title)
-        assertEquals(RecipeStatus.DRAFT, saved.status)
-    }
-
-    // RF-13: tampoco sobre una Publicada; «Guardar cambios» del dock sigue siendo el
-    // único guardado y conserva el estado.
-    @Test
-    fun publishedEditingHasNoHeaderSaveAction() {
-        val repository = repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-cabecera.png")))
-        launchEditor(repository, SEEDED_ID)
-
-        composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Publicada desde dock")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
-
-        val saved = storedRecipes(repository).single()
-        assertEquals("Publicada desde dock", saved.title)
-        assertEquals(RecipeStatus.PUBLISHED, saved.status)
+        assertEquals("Tortilla desde dock", saved.title)
     }
 
     // RF-14: con el dock deshabilitado no queda ninguna acción de guardado en la
     // cabecera que pudiera saltarse el bloqueo.
     @Test
-    fun headerSaveIsAbsentWhilePublishedSaveIsDisabled() {
+    fun headerSaveIsAbsentWhileSaveIsDisabled() {
         launchEditor(repositoryWith(seededRecipeWithoutDetails()), SEEDED_ID)
 
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsNotEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsNotEnabled()
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
     }
 
@@ -374,7 +319,7 @@ class EditRecipeE2ETest {
         )
 
         composeRule.onNodeWithText(editorText(R.string.create_recipe_edit_title)).assertIsDisplayed()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsDisplayed()
         composeRule.onNodeWithText(editorText(R.string.create_recipe_save_changes)).assertIsDisplayed()
         assertEquals("Edit Recipe", editorText(R.string.create_recipe_edit_title))
         assertEquals("Save changes", editorText(R.string.create_recipe_save_changes))
@@ -440,7 +385,7 @@ class EditRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(1)).assertIsOff()
         composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_ACCEPT).performClick()
 
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
         val saved = storedRecipes(repository).single()
         assertEquals(listOf("$SEEDED_ID-i0"), saved.steps[0].ingredientIds)
         assertTrue(saved.steps[1].ingredientIds.isEmpty())
@@ -448,25 +393,24 @@ class EditRecipeE2ETest {
     }
 
     // RF-VPI5 · S5: una Receta con Pasos sin vínculos (creada por la IA o anterior a la
-    // feature) sigue válida para Publicar y se puede vincular editando, sin requisitos
-    // nuevos (D3/D4).
+    // feature) sigue guardable y se puede vincular editando, sin requisitos nuevos (D3).
     @Test
     fun recipeWithoutLinksCanBeLinkedWithoutNewRequirements() {
         val repository = repositoryWith(
-            seededRecipe(status = RecipeStatus.DRAFT, photoPath = editPhotoFile("editar-sin-vinculos.png")),
+            seededRecipe(photoPath = editPhotoFile("editar-sin-vinculos.png")),
         )
         launchEditor(repository, SEEDED_ID)
 
         stepSummaryShouldBe(0, editorText(R.string.create_recipe_step_ingredients_none))
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsEnabled()
 
         linkStepIngredient(stepIndex = 0, ingredientIndex = 0)
         stepSummaryShouldBe(0, editorQuantity(1))
 
-        // Vincular no añade requisitos: Publicar sigue habilitado (D3) y el vínculo se
-        // guarda al confirmar.
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PUBLISH).assertIsEnabled()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_DRAFT).performClick()
+        // Vincular no añade requisitos: «Guardar cambios» sigue habilitado (D3) y el
+        // vínculo se guarda al confirmar.
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
         val saved = storedRecipes(repository).single()
         assertEquals(listOf(saved.ingredients.single().id), saved.steps.single().ingredientIds)
     }
@@ -527,8 +471,9 @@ class EditRecipeE2ETest {
 
         // RF-2: cada valor difiere del valor por defecto del alta (momento Almuerzo,
         // dificultad Media, 4 raciones, sin favorito) para que la precarga se note.
+        // Sin foto por defecto (D11: la foto es siempre opcional) y con
+        // ingredientes/pasos válidos para que el guardado no quede bloqueado.
         fun seededRecipe(
-            status: RecipeStatus = RecipeStatus.PUBLISHED,
             origin: RecipeOrigin = RecipeOrigin.USER,
             photoPath: String? = null,
         ): Recipe = Recipe(
@@ -543,7 +488,6 @@ class EditRecipeE2ETest {
             caloriesPerServing = 250,
             photoPath = photoPath,
             favorite = true,
-            status = status,
             origin = origin,
             ingredients = listOf(
                 RecipeIngredient(id = "$SEEDED_ID-i0", name = "Patata", quantity = 700.0, unit = "g", optional = true),
@@ -551,8 +495,8 @@ class EditRecipeE2ETest {
             steps = listOf(RecipeStep(id = "$SEEDED_ID-s0", text = "Pochar la cebolla", timerMinutes = 5)),
         )
 
-        // Publicada que ha dejado de cumplir los requisitos de Publicar (RF-7, RF-8):
-        // sin foto, sin ingredientes y sin pasos.
+        // Receta que ha dejado de cumplir los obligatorios de guardado (RF-EBF3):
+        // sin ingredientes y sin pasos. D11: la foto es siempre opcional.
         fun seededRecipeWithoutDetails(): Recipe = Recipe(
             id = SEEDED_ID,
             title = seededTitle,
@@ -563,7 +507,6 @@ class EditRecipeE2ETest {
             difficulty = Difficulty.EASY,
             baseServings = 2,
             photoPath = null,
-            status = RecipeStatus.PUBLISHED,
         )
     }
 }
@@ -596,7 +539,7 @@ class EditRecipeRouteE2ETest {
     }
 }
 
-// verify 1 · RF-6, RF-17: la app real edita el título de una Receta Publicada y Mis
+// verify 1 · RF-6, RF-17: la app real edita el título de una Receta guardada y Mis
 // Recetas muestra el título nuevo.
 @RunWith(AndroidJUnit4::class)
 class EditRecipeAppE2ETest {
@@ -624,7 +567,6 @@ class EditRecipeAppE2ETest {
                     difficulty = Difficulty.EASY,
                     baseServings = 4,
                     photoPath = editPhotoFile("editar-app-e2e.png"),
-                    status = RecipeStatus.PUBLISHED,
                     ingredients = listOf(
                         RecipeIngredient(name = "Patata", quantity = 700.0, unit = "g"),
                     ),
@@ -643,14 +585,14 @@ class EditRecipeAppE2ETest {
             composeRule.onAllNodesWithText("Tortilla de patatas").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag(CreateRecipeTestTags.TITLE_FIELD).performTextReplacement("Tortilla mejorada")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).assertIsEnabled()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE_CHANGES).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsEnabled()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Tortilla mejorada").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Tortilla mejorada").assertIsDisplayed()
-        assertEquals(RecipeStatus.PUBLISHED, runBlocking { repository.getRecipe("editar-e2e-1") }?.status)
+        assertEquals("Tortilla mejorada", runBlocking { repository.getRecipe("editar-e2e-1") }?.title)
     }
 }

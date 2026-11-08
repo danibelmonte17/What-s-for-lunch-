@@ -9,7 +9,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // de modo que las Recetas siguen ahí tras reiniciar la app (RF-18). La versión 3
 // añade la Lista de la Compra (RD18) sin tocar las tablas anteriores y la versión 4
 // añade los ids estables de Ingrediente (`domainId`) y los vínculos
-// Paso→Ingrediente (`ingredientIds`, RD21) sin tocar los datos existentes.
+// Paso→Ingrediente (`ingredientIds`, RD21) sin tocar los datos existentes. La
+// versión 5 elimina la columna `status` de `recipes` (las Recetas ya no tienen
+// estado Borrador/Publicada) recreando la tabla y conservando los datos.
 @Database(
     entities = [
         RecipeEntity::class,
@@ -19,7 +21,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ShoppingListItemEntity::class,
         ShoppingItemSourceEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class RecipeDatabase : RoomDatabase() {
@@ -84,6 +86,35 @@ abstract class RecipeDatabase : RoomDatabase() {
                     "UPDATE `ingredients` SET `domainId` = `recipeId` || '-ingredient-' || `position`",
                 )
                 db.execSQL("ALTER TABLE `steps` ADD COLUMN `ingredientIds` TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        /**
+         * Removes the recipe `status` column (the draft/published state is gone)
+         * on top of v4. `ALTER TABLE ... DROP COLUMN` is not available in every
+         * Android SQLite version, so the table is recreated and the data copied.
+         */
+        val MIGRATION_4_5: Migration = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `recipes_new` " +
+                        "(`id` TEXT NOT NULL, `title` TEXT NOT NULL, `story` TEXT NOT NULL, " +
+                        "`mealMoment` TEXT NOT NULL, `prepMinutes` INTEGER NOT NULL, " +
+                        "`cookMinutes` INTEGER NOT NULL, `difficulty` TEXT NOT NULL, " +
+                        "`baseServings` INTEGER NOT NULL, `caloriesPerServing` INTEGER, " +
+                        "`photoPath` TEXT, `favorite` INTEGER NOT NULL, `origin` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "INSERT INTO `recipes_new` (`id`, `title`, `story`, `mealMoment`, `prepMinutes`, " +
+                        "`cookMinutes`, `difficulty`, `baseServings`, `caloriesPerServing`, " +
+                        "`photoPath`, `favorite`, `origin`) " +
+                        "SELECT `id`, `title`, `story`, `mealMoment`, `prepMinutes`, `cookMinutes`, " +
+                        "`difficulty`, `baseServings`, `caloriesPerServing`, `photoPath`, `favorite`, " +
+                        "`origin` FROM `recipes`",
+                )
+                db.execSQL("DROP TABLE `recipes`")
+                db.execSQL("ALTER TABLE `recipes_new` RENAME TO `recipes`")
             }
         }
     }

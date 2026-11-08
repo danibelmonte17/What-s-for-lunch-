@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -37,7 +38,6 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
@@ -382,10 +382,10 @@ class AiSuggestionsE2ETest {
     }
 
     // S1 (verify 1 de `aceptar-sugerencia-de-receta`): aceptar guarda la propuesta como
-    // Borrador con origen Sugerencia (RD07), muestra el aviso y la Receta aparece en
-    // Mis Recetas con su badge «Borrador».
+    // Receta con origen Sugerencia (RD07), muestra el aviso y la Receta aparece en
+    // Mis Recetas sin foto y sin distintivo de estado (S5).
     @Test
-    fun acceptingSavesTheSuggestionAsADraftRecipeVisibleInMyRecipes() {
+    fun acceptingSavesTheSuggestionAsARecipeVisibleInMyRecipes() {
         val pantry = pantryWith(
             PantryItem("manzana", "Manzana", 3),
             PantryItem("nata", "Nata", 1),
@@ -460,7 +460,6 @@ class AiSuggestionsE2ETest {
         val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
         composeRule.waitUntil(5_000) { runBlocking { recipes.getRecipe(id) } != null }
         val saved = runBlocking { recipes.getRecipe(id) }!!
-        assertEquals(RecipeStatus.DRAFT, saved.status)
         assertEquals(RecipeOrigin.SUGGESTION, saved.origin)
         assertNull(saved.photoPath)
         assertEquals(listOf("$id-ingredient-0", "$id-ingredient-1"), saved.ingredients.map { it.id })
@@ -471,7 +470,10 @@ class AiSuggestionsE2ETest {
             composeRule.onAllNodesWithText("Tarta de manzana").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Tarta de manzana").assertIsDisplayed()
-        composeRule.onNodeWithText("Borrador").assertIsDisplayed()
+        // S5/RF-EBF6: sin foto y sin ningún distintivo de estado.
+        composeRule.onAllNodesWithText("Borrador").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Publicada").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("my_recipes_card_status").assertCountEquals(0)
     }
 
     // S2 (verify 2 de `aceptar-sugerencia-de-receta`): aceptar dos veces la misma

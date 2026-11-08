@@ -32,7 +32,6 @@ import com.whatsforlunch.app.data.scanner.ScanDraftHolder
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
-import com.whatsforlunch.app.domain.model.RecipeStatus
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsScreen
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsTestTags
@@ -68,21 +67,22 @@ class PantryRecipesE2ETest {
     }
 
     // S1 (verify 1): título propio, tarjetas ordenadas por Coincidencia, badge y
-    // desglose; un Borrador entra igual que una Publicada (RF-SDR2).
+    // desglose; todas las Recetas entran por igual (RF-SDR2; ya no hay estado que
+    // filtrar).
     @Test
     fun recommendationsListShowsOrderedCardsWithBadgesAndIngredientBreakdown() {
         val recipes = InMemoryRecipeRepository()
         val pantry = InMemoryPantryRepository()
-        val full = recipe(id = "full", title = "Tortilla de patatas", required = 4, status = RecipeStatus.PUBLISHED)
-        val eightyFive = recipe(id = "eighty-five", title = "Pechuga al horno", required = 20, status = RecipeStatus.PUBLISHED)
-        val draft = recipe(id = "draft", title = "Borrador compatible", required = 2, status = RecipeStatus.DRAFT)
+        val full = recipe(id = "full", title = "Tortilla de patatas", required = 4)
+        val eightyFive = recipe(id = "eighty-five", title = "Pechuga al horno", required = 20)
+        val small = recipe(id = "small", title = "Sopa ligera", required = 2)
         runBlocking {
             recipes.saveRecipe(full)
             recipes.saveRecipe(eightyFive)
-            recipes.saveRecipe(draft)
+            recipes.saveRecipe(small)
             addPantry(pantry, full, 4)
             addPantry(pantry, eightyFive, 17)
-            addPantry(pantry, draft, 2)
+            addPantry(pantry, small, 2)
         }
 
         launchRecommendations(recipes, pantry)
@@ -90,16 +90,16 @@ class PantryRecipesE2ETest {
         composeRule.onNodeWithTag(RecommendationsTestTags.TITLE).assertTextEquals("Recetas con mi Despensa")
         composeRule.onNodeWithTag(RecommendationsTestTags.SECTION_TITLE).assertTextEquals("Recetas Compatibles")
         composeRule.onNodeWithTag(RecommendationsTestTags.card("full")).assertIsDisplayed()
-        composeRule.onNodeWithTag(RecommendationsTestTags.card("draft")).assertIsDisplayed()
+        composeRule.onNodeWithTag(RecommendationsTestTags.card("small")).assertIsDisplayed()
         composeRule.onNodeWithTag(RecommendationsTestTags.card("eighty-five")).assertIsDisplayed()
 
         val fullTop = composeRule.onNodeWithTag(RecommendationsTestTags.card("full"))
             .fetchSemanticsNode().boundsInRoot.top
-        val draftTop = composeRule.onNodeWithTag(RecommendationsTestTags.card("draft"))
+        val smallTop = composeRule.onNodeWithTag(RecommendationsTestTags.card("small"))
             .fetchSemanticsNode().boundsInRoot.top
         val eightyFiveTop = composeRule.onNodeWithTag(RecommendationsTestTags.card("eighty-five"))
             .fetchSemanticsNode().boundsInRoot.top
-        assertTrue(draftTop < fullTop)
+        assertTrue(smallTop < fullTop)
         assertTrue(fullTop < eightyFiveTop)
 
         composeRule.onAllNodesWithText("100% Match").assertCountEquals(2)
@@ -350,11 +350,9 @@ class PantryRecipesE2ETest {
         id: String,
         title: String,
         required: Int,
-        status: RecipeStatus = RecipeStatus.PUBLISHED,
     ): Recipe = Recipe(
         id = id,
         title = title,
-        status = status,
         ingredients = (1..required).map { index ->
             RecipeIngredient(id = "$id-$index", name = "$id ingredient $index")
         },
