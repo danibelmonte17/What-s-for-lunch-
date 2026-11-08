@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +85,8 @@ import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import com.whatsforlunch.app.domain.shoppinglist.aisleKey
 import com.whatsforlunch.app.ui.components.SkilletIcon
+import com.whatsforlunch.app.ui.nav.AppBottomBar
+import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
@@ -90,11 +94,11 @@ import com.whatsforlunch.app.ui.theme.warmShadow
 import java.math.BigDecimal
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 // Identificadores estables para las pruebas instrumentadas (E2E) de la Lista.
 object ShoppingListTestTags {
     const val SCREEN = "shopping_list_screen"
-    const val BACK = "shopping_list_back"
     const val TITLE = "shopping_list_title"
     const val LIST = "shopping_list_items"
     const val ITEM = "shopping_list_item"
@@ -152,7 +156,6 @@ private const val COMPLETED_ROW_ALPHA = 0.6f
 @Composable
 fun ShoppingListScreen(
     uiState: ShoppingListUiState,
-    onBack: () -> Unit,
     onScanPantry: () -> Unit,
     onDeleteItem: (String) -> Unit,
     onUndoDelete: () -> Unit,
@@ -165,12 +168,16 @@ fun ShoppingListScreen(
     onSetGroupMode: (ShoppingGroupMode) -> Unit,
     onClearCompleted: () -> Unit,
     modifier: Modifier = Modifier,
+    onTabSelected: (AppTab) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.shopping_list_item_deleted)
     val completedRemovedMessage = stringResource(R.string.shopping_list_items_removed)
     val undoLabel = stringResource(R.string.shopping_list_undo)
     val pendingUndo = uiState.pendingUndo
+    // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
+    val itemListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(pendingUndo) {
         if (pendingUndo == null) return@LaunchedEffect
@@ -189,22 +196,14 @@ fun ShoppingListScreen(
         modifier = modifier.testTag(ShoppingListTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
+            // RF-MOB5: la Lista de la Compra es destino de primer nivel y ya no
+            // muestra «Volver»; conserva sus acciones propias.
             TopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.shopping_list_title),
                         modifier = Modifier.testTag(ShoppingListTestTags.TITLE),
                     )
-                },
-                navigationIcon = {
-                    TextButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .heightIn(min = 48.dp)
-                            .testTag(ShoppingListTestTags.BACK),
-                    ) {
-                        Text(stringResource(R.string.action_back))
-                    }
                 },
                 actions = {
                     // RF-AGL7 (D7): «Limpiar comprados» solo aparece cuando hay
@@ -228,6 +227,13 @@ fun ShoppingListScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
+            )
+        },
+        bottomBar = {
+            AppBottomBar(
+                selectedTab = AppTab.SHOPPING_LIST,
+                onTabSelected = onTabSelected,
+                onReselect = { coroutineScope.launch { itemListState.animateScrollToItem(0) } },
             )
         },
         floatingActionButton = {
@@ -278,6 +284,7 @@ fun ShoppingListScreen(
                         .padding(top = WarmSpacing.md),
                 )
                 LazyColumn(
+                    state = itemListState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = WarmSpacing.md)

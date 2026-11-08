@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,12 +57,16 @@ import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
+import com.whatsforlunch.app.ui.nav.AppBottomBar
+import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
+import kotlinx.coroutines.launch
 
 object PantryTestTags {
     const val SCREEN = "pantry_screen"
+    const val TOP_BAR_TITLE = "pantry_top_bar_title"
     const val EMPTY_TITLE = "pantry_empty_title"
     const val EMPTY_MESSAGE = "pantry_empty_message"
     const val ADD_ITEM = "pantry_add_item"
@@ -93,12 +99,12 @@ object PantryTestTags {
 @Composable
 fun PantryScreen(
     uiState: PantryUiState,
-    onBack: () -> Unit,
     onSaveItem: (String?, String, Int) -> Unit,
     onDeleteItem: (String) -> Unit,
     onErrorConsumed: () -> Unit,
     onSaveCompletedConsumed: () -> Unit,
     modifier: Modifier = Modifier,
+    onTabSelected: (AppTab) -> Unit = {},
 ) {
     var itemToEdit by remember { mutableStateOf<PantryItem?>(null) }
     var itemToDelete by remember { mutableStateOf<PantryItem?>(null) }
@@ -106,6 +112,9 @@ fun PantryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val deleteErrorMessage = stringResource(R.string.pantry_delete_error)
     val saveErrorMessage = stringResource(R.string.pantry_save_error)
+    // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
+    val itemListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.saveError) {
         if (uiState.saveError == PantrySaveError.DeleteFailed || uiState.saveError == PantrySaveError.SaveFailed) {
@@ -132,17 +141,25 @@ fun PantryScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
+            // RF-MOB5: la Despensa es destino de primer nivel y ya no muestra «Volver».
             TopAppBar(
-                title = { Text(stringResource(R.string.pantry_title)) },
-                navigationIcon = {
-                    TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.action_back))
-                    }
+                title = {
+                    Text(
+                        stringResource(R.string.pantry_title),
+                        modifier = Modifier.testTag(PantryTestTags.TOP_BAR_TITLE),
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
+            )
+        },
+        bottomBar = {
+            AppBottomBar(
+                selectedTab = AppTab.PANTRY,
+                onTabSelected = onTabSelected,
+                onReselect = { coroutineScope.launch { itemListState.animateScrollToItem(0) } },
             )
         },
         floatingActionButton = {
@@ -191,6 +208,7 @@ fun PantryScreen(
             }
         } else {
             LazyColumn(
+                state = itemListState,
                 modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = WarmSpacing.md)
                     .testTag(PantryTestTags.ITEM_LIST),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = WarmSpacing.md),

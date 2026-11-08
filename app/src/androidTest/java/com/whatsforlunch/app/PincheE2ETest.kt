@@ -43,6 +43,8 @@ import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
+import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
+import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.pinche.PincheScreen
 import com.whatsforlunch.app.ui.pinche.PincheTestTags
 import com.whatsforlunch.app.ui.pinche.PincheViewModel
@@ -157,7 +159,6 @@ class PincheE2ETest {
                     if (showPinche.value) {
                         PincheScreen(
                             uiState = pincheState,
-                            onBack = { showPinche.value = false },
                             onOpenSettings = {},
                             onInputChange = pincheViewModel::onInputChange,
                             onSend = { pincheViewModel.send("es") },
@@ -359,7 +360,6 @@ class PincheE2ETest {
                     if (showPinche.value) {
                         PincheScreen(
                             uiState = pincheState,
-                            onBack = { showPinche.value = false },
                             onOpenSettings = {},
                             onInputChange = pincheViewModel::onInputChange,
                             onSend = { pincheViewModel.send("es") },
@@ -367,13 +367,14 @@ class PincheE2ETest {
                             onRetry = { pincheViewModel.retry("es") },
                             onSaveProposal = pincheViewModel::saveProposal,
                             onClearNotice = pincheViewModel::clearNotice,
+                            onTabSelected = { tab -> if (tab == AppTab.MY_RECIPES) showPinche.value = false },
                         )
                     } else {
                         MyRecipesScreen(
                             uiState = myRecipesState,
                             onCreateRecipe = {},
                             onScanPantry = {},
-                            onOpenPinche = { showPinche.value = true },
+                            onTabSelected = { tab -> if (tab == AppTab.PINCHE) showPinche.value = true },
                             onSearchQueryChanged = myRecipesViewModel::onSearchQueryChanged,
                             onMealMomentSelected = myRecipesViewModel::onMealMomentSelected,
                         )
@@ -385,14 +386,14 @@ class PincheE2ETest {
 
         composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD).performTextInput("Arroz")
         composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.LUNCH)).performClick()
-        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PINCHE).performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).performClick()
         dismissKeyboard()
 
         composeRule.onNodeWithTag(PincheTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Hola, soy el Pinche. Pregúntame lo que quieras de cocina.")
             .assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Volver").performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
         assertEquals("Arroz", myRecipesViewModel.uiState.value.searchQuery)
         assertEquals(MealMoment.LUNCH, myRecipesViewModel.uiState.value.mealMomentFilter)
@@ -485,7 +486,6 @@ class PincheE2ETest {
                 WhatsForLunchTheme {
                     PincheScreen(
                         uiState = state,
-                        onBack = {},
                         onOpenSettings = onOpenSettings,
                         onInputChange = viewModel::onInputChange,
                         onSend = { viewModel.send(language) },

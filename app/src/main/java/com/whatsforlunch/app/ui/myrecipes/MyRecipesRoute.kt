@@ -3,6 +3,7 @@ package com.whatsforlunch.app.ui.myrecipes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.whatsforlunch.app.ui.nav.AppTab
 import org.koin.androidx.compose.koinViewModel
 
 // Une el ViewModel (MVVM + StateFlow) con la pantalla sin estado.
@@ -13,10 +14,8 @@ fun MyRecipesRoute(
     onEditRecipe: (String) -> Unit,
     onOpenRecipe: (String) -> Unit = {},
     onOpenPantryRecipes: () -> Unit = {},
-    onOpenPantry: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
-    onOpenPinche: () -> Unit = {},
-    onOpenShoppingList: () -> Unit = {},
+    onTabSelected: (AppTab) -> Unit = {},
     viewModel: MyRecipesViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -27,10 +26,8 @@ fun MyRecipesRoute(
         onEditRecipe = onEditRecipe,
         onOpenRecipe = onOpenRecipe,
         onOpenPantryRecipes = onOpenPantryRecipes,
-        onOpenPantry = onOpenPantry,
         onOpenSettings = onOpenSettings,
-        onOpenPinche = onOpenPinche,
-        onOpenShoppingList = onOpenShoppingList,
+        onTabSelected = onTabSelected,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onMealMomentSelected = viewModel::onMealMomentSelected,
         onFavoriteFilterToggle = viewModel::onFavoriteFilterToggle,

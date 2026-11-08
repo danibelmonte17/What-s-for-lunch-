@@ -67,7 +67,6 @@
 
     <!-- Despensa -->
     <string name="pantry_title">Despensa</string>
-    <string name="pantry_open_accessibility">Despensa</string>
     <string name="pantry_add_food">Añadir alimento</string>
     <string name="pantry_add_title">Añadir alimento</string>
     <string name="pantry_edit_title">Editar alimento</string>
@@ -281,7 +280,6 @@
     <string name="ai_suggestions_state_discarded">Descartada</string>
     <string name="ai_suggestions_accepted_notice">Guardada en Mis Recetas</string>
     <string name="pinche_title">Pinche</string>
-    <string name="pinche_open_accessibility">Abrir el Pinche</string>
     <string name="pinche_you">Tú</string>
     <string name="pinche_greeting">Hola, soy el Pinche. Pregúntame lo que quieras de cocina.</string>
     <string name="pinche_quick_1">¿Qué ceno con lo que tengo?</string>
@@ -306,7 +304,6 @@
     <string name="pinche_timer_minutes">%1$d min</string>
     <string name="pinche_notice_dismiss">Descartar aviso</string>
     <string name="pinche_message_accessibility">Mensaje de %1$s</string>
-    <string name="action_open_shopping_list">Lista de la Compra</string>
     <string name="shopping_list_title">Lista de la Compra</string>
     <string name="shopping_list_item_line">%1$s (%2$s)</string>
     <string name="shopping_list_item_deleted">Ítem eliminado</string>

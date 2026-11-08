@@ -10,24 +10,33 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.core.app.ActivityOptionsCompat
+import com.whatsforlunch.app.data.local.RecipeDatabase
+import com.whatsforlunch.app.data.photo.PhotoStore
+import com.whatsforlunch.app.data.repository.RoomRecipeRepository
+import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
 import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.GlobalContext
 
 // verify 2 · RF-9, RF-10, RF-11, RF-6, RF-7, RF-8: textos visibles localizados es/en,
 // navegación a los destinos provisionales con vuelta atrás y fallback a español.
@@ -67,7 +76,7 @@ class MyRecipesLocalizationE2ETest {
     @Test
     fun spanishEmptyStateShowsSpanishTexts() {
         showApp(Locale("es", "ES"))
-        composeRule.onNodeWithText("Mis Recetas").assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mis Recetas")
         composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
         composeRule.onNodeWithText("Crea tu primera receta o escanea la Despensa para empezar.")
             .assertIsDisplayed()
@@ -78,7 +87,7 @@ class MyRecipesLocalizationE2ETest {
     @Test
     fun englishEmptyStateShowsEnglishTexts() {
         showApp(Locale.ENGLISH)
-        composeRule.onNodeWithText("My Recipes").assertIsDisplayed()
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My Recipes")
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
         composeRule.onNodeWithText("Create your first recipe or scan your Pantry to get started.")
             .assertIsDisplayed()
@@ -140,6 +149,46 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithText("Back").performClick()
         composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
     }
+
+    // S3 (RF-MOB1, RF-MOB3, verify 3): las etiquetas de la barra inferior y los
+    // textos accesibles de los dos FABs siguen el idioma de la app.
+    @Test
+    fun spanishBottomBarAndFabsShowSpanishTexts() {
+        seedRecipe()
+        showApp(Locale("es", "ES"))
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("Mis Recetas")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).assertTextEquals("Despensa")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST).assertTextEquals("Lista de la Compra")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).assertTextEquals("Pinche")
+        composeRule.onNodeWithContentDescription("Recetas con mi Despensa").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Escanear la Despensa").assertIsDisplayed()
+    }
+
+    @Test
+    fun englishBottomBarAndFabsShowEnglishTexts() {
+        seedRecipe()
+        showApp(Locale.ENGLISH)
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("My Recipes")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).assertTextEquals("Pantry")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST).assertTextEquals("Shopping List")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).assertTextEquals("Pinche")
+        composeRule.onNodeWithContentDescription("Recipes with my Pantry").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Scan your Pantry").assertIsDisplayed()
+    }
+
+    // Los FABs solo se muestran con Recetas (D3), así que S3 siembra una antes de
+    // mostrar la app.
+    private fun seedRecipe() {
+        val database = GlobalContext.get().get<RecipeDatabase>()
+        val repository = RoomRecipeRepository(database.recipeDao(), LocalizationNoOpPhotoStore)
+        runBlocking { repository.saveRecipe(Recipe(id = "tortilla", title = "Tortilla")) }
+    }
+}
+
+private object LocalizationNoOpPhotoStore : PhotoStore {
+    override suspend fun save(recipeId: String, bytes: ByteArray): String = "photo://$recipeId"
+
+    override suspend fun delete(path: String) = Unit
 }
 
 private object TestActivityResultRegistryOwner : ActivityResultRegistryOwner {

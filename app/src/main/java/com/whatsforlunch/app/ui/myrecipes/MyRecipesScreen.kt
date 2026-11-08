@@ -21,10 +21,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.BakeryDining
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Icecream
-import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.RamenDining
 import androidx.compose.material.icons.outlined.RestaurantMenu
@@ -41,7 +41,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -64,6 +63,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -93,13 +93,17 @@ import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.MomentBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
+import com.whatsforlunch.app.ui.nav.AppBottomBar
+import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
+import kotlinx.coroutines.launch
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
 object MyRecipesTestTags {
     const val SCREEN = "my_recipes_screen"
+    const val TOP_BAR_TITLE = "my_recipes_top_bar_title"
     const val EMPTY_TITLE = "my_recipes_empty_title"
     const val EMPTY_MESSAGE = "my_recipes_empty_message"
     const val CREATE_RECIPE = "action_create_recipe"
@@ -134,11 +138,10 @@ object MyRecipesTestTags {
     const val DELETE_DIALOG = "my_recipes_delete_dialog"
     const val DELETE_CONFIRM = "my_recipes_delete_confirm"
     const val DELETE_CANCEL = "my_recipes_delete_cancel"
-    const val OPEN_PANTRY = "action_open_pantry"
+    // RF-MOB3 (D8): «Recetas con mi Despensa» conserva su acción y su destino, y por
+    // eso mantiene su testTag aunque ahora sea un botón flotante.
     const val OPEN_PANTRY_RECIPES = "action_open_pantry_recipes"
     const val OPEN_SETTINGS = "action_open_settings"
-    const val OPEN_PINCHE = "action_open_pinche"
-    const val OPEN_SHOPPING_LIST = "action_open_shopping_list"
 
     fun filterChip(moment: MealMoment): String = "${FILTER_CHIP}_${moment.name.lowercase()}"
     fun filterChipIcon(moment: MealMoment): String = "${FILTER_CHIP_ICON}_${moment.name.lowercase()}"
@@ -150,24 +153,25 @@ fun MyRecipesScreen(
     uiState: MyRecipesUiState,
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
+    modifier: Modifier = Modifier,
     onEditRecipe: (String) -> Unit = {},
     onOpenRecipe: (String) -> Unit = {},
     onOpenPantryRecipes: () -> Unit = {},
-    onOpenPantry: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
-    onOpenPinche: () -> Unit = {},
-    onOpenShoppingList: () -> Unit = {},
+    onTabSelected: (AppTab) -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
     onFavoriteFilterToggle: () -> Unit = {},
     onResetFilters: () -> Unit = {},
     onDeleteRecipe: (String) -> Unit = {},
     onDeleteErrorConsumed: () -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val deleteErrorMessage = stringResource(R.string.my_recipes_delete_error)
+    // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
+    val recipeListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.deleteError) {
         if (uiState.deleteError) {
@@ -180,49 +184,16 @@ fun MyRecipesScreen(
         modifier = modifier.testTag(MyRecipesTestTags.SCREEN),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
+            // RF-MOB2: la top bar solo conserva «Ajustes»; el resto de accesos vive
+            // en la barra inferior y en los botones flotantes.
             TopAppBar(
-                title = { Text(text = stringResource(R.string.my_recipes_title)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.my_recipes_title),
+                        modifier = Modifier.testTag(MyRecipesTestTags.TOP_BAR_TITLE),
+                    )
+                },
                 actions = {
-                    IconButton(
-                        onClick = onOpenShoppingList,
-                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_SHOPPING_LIST),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.ShoppingCart,
-                            contentDescription = stringResource(R.string.action_open_shopping_list),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    IconButton(
-                        onClick = onOpenPinche,
-                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PINCHE),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.Chat,
-                            contentDescription = stringResource(R.string.pinche_open_accessibility),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    IconButton(
-                        onClick = onOpenPantryRecipes,
-                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.MenuBook,
-                            contentDescription = stringResource(R.string.recommendations_open_accessibility),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    IconButton(
-                        onClick = onOpenPantry,
-                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Inventory2,
-                            contentDescription = stringResource(R.string.pantry_open_accessibility),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier.testTag(MyRecipesTestTags.OPEN_SETTINGS),
@@ -240,18 +211,43 @@ fun MyRecipesScreen(
                 ),
             )
         },
+        bottomBar = {
+            AppBottomBar(
+                selectedTab = AppTab.MY_RECIPES,
+                onTabSelected = onTabSelected,
+                onReselect = { coroutineScope.launch { recipeListState.animateScrollToItem(0) } },
+            )
+        },
         floatingActionButton = {
+            // RF-MOB3 (D3): los dos FABs aparecen juntos y solo cuando hay Recetas,
+            // con «Recetas con mi Despensa» apilado encima del de cámara.
             if (uiState.recipes.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = onScanPantry,
-                    modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.PhotoCamera,
-                        contentDescription = stringResource(R.string.action_scan_pantry),
-                    )
+                    FloatingActionButton(
+                        onClick = onOpenPantryRecipes,
+                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES),
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                            contentDescription = stringResource(R.string.recommendations_open_accessibility),
+                        )
+                    }
+                    FloatingActionButton(
+                        onClick = onScanPantry,
+                        modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB),
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PhotoCamera,
+                            contentDescription = stringResource(R.string.action_scan_pantry),
+                        )
+                    }
                 }
             }
         },
@@ -277,6 +273,7 @@ fun MyRecipesScreen(
                 onMealMomentSelected = onMealMomentSelected,
                 onFavoriteFilterToggle = onFavoriteFilterToggle,
                 onDeleteRecipe = { recipeToDelete = it },
+                listState = recipeListState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -393,6 +390,7 @@ private fun RecipeList(
     onFavoriteFilterToggle: () -> Unit,
     onDeleteRecipe: (Recipe) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     Column(modifier = modifier.padding(horizontal = WarmSpacing.md)) {
         SearchAndFilterControls(
@@ -404,6 +402,7 @@ private fun RecipeList(
             onFavoriteFilterToggle = onFavoriteFilterToggle,
         )
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()

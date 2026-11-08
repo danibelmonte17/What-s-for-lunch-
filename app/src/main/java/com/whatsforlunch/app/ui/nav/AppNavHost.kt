@@ -50,6 +50,17 @@ object AppRoutes {
     fun cookMode(recipeId: String, servings: Int): String = "cook_mode/$recipeId?$SERVINGS_ARG=$servings"
 }
 
+// RF-MOB4 (D5): la navegación por pestañas deja el back stack [my_recipes, pestaña
+// actual]; `popUpTo` descarta la pestaña anterior y `launchSingleTop` evita
+// duplicar entradas (back repetido nunca apila otra Mis Recetas). Mis Recetas
+// vuelve a su entrada existente y conserva búsqueda, momento y «Favoritas».
+private fun NavHostController.openTab(tab: AppTab) {
+    navigate(tab.route) {
+        popUpTo(AppRoutes.MY_RECIPES) { inclusive = false }
+        launchSingleTop = true
+    }
+}
+
 @Composable
 fun WhatsForLunchApp(
     modifier: Modifier = Modifier,
@@ -67,10 +78,8 @@ fun WhatsForLunchApp(
                 onEditRecipe = { recipeId -> navController.navigate(AppRoutes.editRecipe(recipeId)) },
                 onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
                 onOpenPantryRecipes = { navController.navigate(AppRoutes.PANTRY_RECIPES) },
-                onOpenPantry = { navController.navigate(AppRoutes.PANTRY) },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
-                onOpenPinche = { navController.navigate(AppRoutes.PINCHE) },
-                onOpenShoppingList = { navController.navigate(AppRoutes.SHOPPING_LIST) },
+                onTabSelected = { tab -> navController.openTab(tab) },
             )
         }
         composable(
@@ -126,9 +135,10 @@ fun WhatsForLunchApp(
             ScannerRoute(
                 onBack = { navController.popBackStack() },
                 onSaved = {
-                    navController.navigate(AppRoutes.PANTRY) {
-                        popUpTo(AppRoutes.SCAN_PANTRY) { inclusive = true }
-                    }
+                    // RF-MOB4 (D5): tras guardar se aterriza en la pestaña Despensa
+                    // con el back stack [my_recipes, pantry]; el Escáner no queda en
+                    // la pila y el back vuelve a Mis Recetas.
+                    navController.openTab(AppTab.PANTRY)
                 },
             )
         }
@@ -148,23 +158,23 @@ fun WhatsForLunchApp(
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )
         }
-        // RF-PCH1: el Pinche se abre desde la top bar de Mis Recetas.
+        // RF-PCH1: el Pinche es una pestaña de la barra inferior (RF-MOB1).
         composable(AppRoutes.PINCHE) {
             PincheRoute(
-                onBack = { navController.popBackStack() },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+                onTabSelected = { tab -> navController.openTab(tab) },
             )
         }
-        // RD18: la Lista de la Compra se abre desde la top bar de Mis Recetas y su
+        // RD18: la Lista de la Compra es una pestaña de la barra inferior y su
         // estado vacío lleva al Escáner (RF-AFL6/RF-AFL7).
         composable(AppRoutes.SHOPPING_LIST) {
             ShoppingListRoute(
-                onBack = { navController.popBackStack() },
                 onScanPantry = { navController.navigate(AppRoutes.SCAN_PANTRY) },
+                onTabSelected = { tab -> navController.openTab(tab) },
             )
         }
         composable(AppRoutes.PANTRY) {
-            PantryRoute(onBack = { navController.popBackStack() })
+            PantryRoute(onTabSelected = { tab -> navController.openTab(tab) })
         }
         composable(AppRoutes.SETTINGS) {
             SettingsRoute(onBack = { navController.popBackStack() })
