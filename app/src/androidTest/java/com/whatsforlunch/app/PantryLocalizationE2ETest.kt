@@ -77,6 +77,7 @@ class PantryLocalizationE2ETest {
                 WhatsForLunchTheme {
                     PantryScreen(
                         uiState = PantryUiState(items = listOf(PantryItem("test-id", itemName, 2))),
+                        onScanFood = {},
                         onSaveItem = { _, _, _ -> },
                         onDeleteItem = {},
                         onErrorConsumed = {},

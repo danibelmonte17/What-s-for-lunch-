@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.CreateRecipeAppE2ETest" tests="5" failures="0" errors="0" skipped="0" time="65.87" timestamp="2026-11-08T13:36:01" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="savedRecipeAppearsInMyRecipesWithoutStatusBadges" classname="com.whatsforlunch.app.CreateRecipeAppE2ETest" time="21.346" />
+  <testcase name="cardWithoutPhotoShowsMomentBadgeNextToTitle" classname="com.whatsforlunch.app.MyRecipesCardsE2ETest" time="10.48" />
+  <testcase name="cardWithPhotoShowsCoverBadgeAndMetadata" classname="com.whatsforlunch.app.MyRecipesCardsE2ETest" time="7.851" />
+  <testcase name="missingRecipeReturnsWithoutOpeningForm" classname="com.whatsforlunch.app.EditRecipeRouteE2ETest" time="10.829" />
+  <testcase name="editedTitleAppearsInMyRecipes" classname="com.whatsforlunch.app.EditRecipeAppE2ETest" time="12.003" />
+</testsuite>

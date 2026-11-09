@@ -39,7 +39,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -152,7 +151,6 @@ private const val COMPLETED_ROW_ALPHA = 0.6f
 @Composable
 fun ShoppingListScreen(
     uiState: ShoppingListUiState,
-    onScanPantry: () -> Unit,
     onDeleteItem: (String) -> Unit,
     onUndoDelete: () -> Unit,
     onUndoExpired: () -> Unit,
@@ -260,7 +258,6 @@ fun ShoppingListScreen(
     ) { innerPadding ->
         if (uiState.items.isEmpty()) {
             EmptyShoppingList(
-                onScanPantry = onScanPantry,
                 onAddItem = onAddItem,
                 modifier = Modifier
                     .fillMaxSize()
@@ -652,7 +649,6 @@ private fun OriginBadge(item: ShoppingListItem) {
 
 @Composable
 private fun EmptyShoppingList(
-    onScanPantry: () -> Unit,
     onAddItem: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -693,21 +689,14 @@ private fun EmptyShoppingList(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = WarmSpacing.sm),
         )
+        // D2 (mover-escaneo-a-la-despensa): el CTA «Escanear la Despensa» se retira
+        // de la Lista; «Añadir ítem» pasa a botón primario en su hueco y el tag
+        // EMPTY_CTA queda sin uso en la UI (los tests lo aseguran ausente).
         Button(
-            onClick = onScanPantry,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = WarmSpacing.xl)
-                .heightIn(min = 52.dp)
-                .testTag(ShoppingListTestTags.EMPTY_CTA),
-        ) {
-            Text(stringResource(R.string.action_scan_pantry))
-        }
-        OutlinedButton(
             onClick = onAddItem,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = WarmSpacing.sm)
+                .padding(top = WarmSpacing.xl)
                 .heightIn(min = 52.dp)
                 .testTag(ShoppingListTestTags.EMPTY_ADD_CTA),
         ) {

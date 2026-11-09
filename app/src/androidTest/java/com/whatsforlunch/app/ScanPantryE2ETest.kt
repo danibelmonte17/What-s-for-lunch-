@@ -620,6 +620,7 @@ class ScanPantryE2ETest {
                         leftScanner.value -> androidx.compose.material3.Text("Scanner parent", Modifier.testTag(LEFT_AFTER_EXIT))
                         showPantry.value -> PantryScreen(
                             uiState = PantryUiState(items = pantryItems),
+                            onScanFood = {},
                             onSaveItem = { _, _, _ -> },
                             onDeleteItem = {},
                             onErrorConsumed = {},

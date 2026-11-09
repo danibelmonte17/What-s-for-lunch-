@@ -178,10 +178,16 @@ fun WhatsForLunchApp(
         composable(AppRoutes.SCAN_PANTRY) {
             ScannerRoute(
                 onBack = { navController.popBackStack() },
+                // D5: `launchSingleTop` evita duplicar la Despensa en el back stack
+                // cuando el Escáner se abre desde ella (MY_RECIPES → PANTRY →
+                // SCAN_PANTRY); con la entrada desde Mis Recetas el comportamiento
+                // no cambia.
                 onSaved = {
                     // RF-MOB4 (D5): tras guardar se aterriza en la pestaña Despensa
                     // con el back stack [my_recipes, pantry]; el Escáner no queda en
-                    // la pila y el back vuelve a Mis Recetas.
+                    // la pila y el back vuelve a Mis Recetas. `openTab` aplica
+                    // `launchSingleTop`, así que la Despensa no se duplica al
+                    // escanear desde ella (`mover-escaneo-a-la-despensa`, D5).
                     navController.openTab(AppTab.PANTRY)
                 },
             )
@@ -210,15 +216,20 @@ fun WhatsForLunchApp(
             )
         }
         // RD18: la Lista de la Compra es una pestaña de la barra inferior y su
-        // estado vacío lleva al Escáner (RF-AFL6/RF-AFL7).
+        // estado vacío ya no lleva al Escáner: el escaneo vive en la Despensa
+        // (`mover-escaneo-a-la-despensa`, D2).
         composable(AppRoutes.SHOPPING_LIST) {
             ShoppingListRoute(
-                onScanPantry = { navController.navigate(AppRoutes.SCAN_PANTRY) },
                 scrollToTopTick = scrollToTopTick,
             )
         }
+        // La Despensa es donde se escanean los Alimentos (D1): su FAB y su estado
+        // vacío abren el Escáner.
         composable(AppRoutes.PANTRY) {
-            PantryRoute(scrollToTopTick = scrollToTopTick)
+            PantryRoute(
+                onScanFood = { navController.navigate(AppRoutes.SCAN_PANTRY) },
+                scrollToTopTick = scrollToTopTick,
+            )
         }
         composable(AppRoutes.SETTINGS) {
             SettingsRoute(onBack = { navController.popBackStack() })
@@ -226,4 +237,3 @@ fun WhatsForLunchApp(
         }
     }
 }
-

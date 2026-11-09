@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.RecipeDetailE2ETest" tests="31" failures="0" errors="0" skipped="0" time="290.769" timestamp="2026-11-08T13:41:34" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="servingsStepperIsDisabledAtUpperBound" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="10.984" />
+  <testcase name="matchBadgeReactsToPantryChanges" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="8.747" />
+  <testcase name="tappingCardBodyOpensDetailAndBackKeepsSearch" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="13.161" />
+  <testcase name="loweringServingsHalvesIngredientQuantities" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="11.262" />
+  <testcase name="servingsSelectionIsNotPersistedWhenReopeningDetail" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="12.951" />
+  <testcase name="fullRecipeShowsMetricsChecklistAndSteps" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="8.403" />
+  <testcase name="scaledQuantitiesRoundToAtMostOneDecimal" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="12.89" />
+  <testcase name="startCookingCtaOpensCookModeAndBack" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="10.466" />
+  <testcase name="unknownIdShowsNotFoundWithBackAction" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="8.079" />
+  <testcase name="servingsStepperIsDisabledAtLowerBound" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="10.134" />
+  <testcase name="checklistMarksRowsAndResetsWhenReopening" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="12.831" />
+  <testcase name="incompleteRecipeShowsEmptyStates" classname="com.whatsforlunch.app.RecipeDetailE2ETest" time="8.614" />
+  <testcase name="searchAndMomentControlsExposeTheirVisualStructure" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="11.577" />
+  <testcase name="collectionWithRecipesShowsScanPantryFab" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="9.97" />
+  <testcase name="favoritesChipShowsOnlyFavoritesAndCombinesWithOtherFilters" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="12.96" />
+  <testcase name="togglingFavoritesOffShowsAllRecipesAgain" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="11.095" />
+  <testcase name="keepsSearchAndMomentFilterWhenReturningWithinTheSession" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="13.927" />
+  <testcase name="resetClearsSearchMomentAndFavoritesFilter" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="13.271" />
+  <testcase name="emptyCollectionHidesSearchAndFilterControls" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="6.715" />
+  <testcase name="searchesIngredientsCombinesCriteriaShowsNoResultsAndResets" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="16.245" />
+  <testcase name="clearingSearchKeepsMomentFilter" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="11.976" />
+  <testcase name="emptyStateTextFollowsTheSpanishLocale" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="11.429" />
+  <testcase name="filtersByDinnerAndOffersAllMomentsWithAllSelectedByDefault" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="7.608" />
+  <testcase name="searchTextsFollowTheEnglishLocale" classname="com.whatsforlunch.app.SearchAndFilterRecipesE2ETest" time="11.926" />
+  <testcase name="appOpensInMyRecipesWithEmptyState" classname="com.whatsforlunch.app.AppLaunchE2ETest" time="10.012" />
+  <testcase name="capturesJpegInMemoryWithoutCreatingFiles" classname="com.whatsforlunch.app.CameraXScanImageSourceTest" time="10.863" />
+  <testcase name="savedKeyIsCiphertextOnDiskAndRoundTrips" classname="com.whatsforlunch.app.KeystoreAiKeyStoreTest" time="0.134" />
+  <testcase name="clearRemovesTheKey" classname="com.whatsforlunch.app.KeystoreAiKeyStoreTest" time="0.057" />
+  <testcase name="corruptedCiphertextReturnsNullWithoutCrashing" classname="com.whatsforlunch.app.KeystoreAiKeyStoreTest" time="0.032" />
+  <testcase name="migrationFromV4RemovesStatusColumnAndKeepsRecipeData" classname="com.whatsforlunch.app.RecipeMigrationTest" time="0.287" />
+  <testcase name="migrationFromV3KeepsRecipeDataAndBackfillsStableIngredientIds" classname="com.whatsforlunch.app.RecipeMigrationTest" time="0.236" />
+</testsuite>

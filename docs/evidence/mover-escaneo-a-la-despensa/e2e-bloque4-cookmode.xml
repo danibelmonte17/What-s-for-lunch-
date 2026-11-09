@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.CookModeE2ETest" tests="25" failures="0" errors="0" skipped="0" time="229.439" timestamp="2026-11-08T13:46:28" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="detailCtaIsDisabledWithoutSteps" classname="com.whatsforlunch.app.CookModeE2ETest" time="12.665" />
+  <testcase name="cookModeTextsChangeWithTheLanguage" classname="com.whatsforlunch.app.CookModeE2ETest" time="7.102" />
+  <testcase name="startingCookingModeShowsFirstStepWithScaledIngredients" classname="com.whatsforlunch.app.CookModeE2ETest" time="14.998" />
+  <testcase name="finishingReturnsToDetailKeepingTheChosenServings" classname="com.whatsforlunch.app.CookModeE2ETest" time="12.519" />
+  <testcase name="leavingMidCookRestartsAtFirstStepWhenReopening" classname="com.whatsforlunch.app.CookModeE2ETest" time="12.767" />
+  <testcase name="advancingStepUpdatesProgressAndShowsFinishButton" classname="com.whatsforlunch.app.CookModeE2ETest" time="9.171" />
+  <testcase name="stepWithoutLinksShowsNoIngredientsMessage" classname="com.whatsforlunch.app.CookModeE2ETest" time="6.546" />
+  <testcase name="alarmRingsWhenTheCountdownReachesZero" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="7.858" />
+  <testcase name="timerTextsChangeWithTheLanguage" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="5.956" />
+  <testcase name="pausingFreezesTheCountdownAndResumingContinues" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="10.825" />
+  <testcase name="resetRestoresTheCurrentMetaAndLeavesItRunning" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="8.537" />
+  <testcase name="addMinuteSilencesTheAlarmAndExtendsTheCountdown" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="7.055" />
+  <testcase name="stepWithoutTimerShowsNoWidget" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="7.739" />
+  <testcase name="changingStepDiscardsTheTimerAndTheAlarm" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="7.957" />
+  <testcase name="startingIsManualAndTheCountdownDecrements" classname="com.whatsforlunch.app.CookModeTimerE2ETest" time="8.29" />
+  <testcase name="missingRecognitionServiceShowsNoticeAndListenStillWorks" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="6.511" />
+  <testcase name="englishAppUsesEnglishCommandsAndVisibleTexts" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="6.506" />
+  <testcase name="nextTranscriptAdvancesTheStepAndAnnouncesIt" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="8.557" />
+  <testcase name="listenButtonSpeaksWithVoiceOffWithoutStartingTheRecognizer" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="9.078" />
+  <testcase name="repeatTranscriptReannouncesWithoutAdvancingAndPhrasesAreIgnored" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="9.173" />
+  <testcase name="pauseTimerTranscriptPausesTheCountdownAndNeverResumes" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="8.292" />
+  <testcase name="nextTranscriptOnTheLastStepFinishesCookingMode" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="11.536" />
+  <testcase name="deniedMicrophoneShowsNoticeKeepsButtonsUsableAndRetrySucceeds" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="12.442" />
+  <testcase name="missingTextToSpeechShowsNoticeAndKeepsTheModeUsable" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="8.119" />
+  <testcase name="enablingVoiceShowsActiveChipCommandsBarAndAnnouncesTheStep" classname="com.whatsforlunch.app.CookModeVoiceE2ETest" time="6.283" />
+</testsuite>

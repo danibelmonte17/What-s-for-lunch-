@@ -9,7 +9,6 @@ import org.koin.androidx.compose.koinViewModel
 // Une el ViewModel (MVVM + StateFlow) con la pantalla sin estado.
 @Composable
 fun ShoppingListRoute(
-    onScanPantry: () -> Unit,
     modifier: Modifier = Modifier,
     scrollToTopTick: Int = 0,
     viewModel: ShoppingListViewModel = koinViewModel(),
@@ -17,7 +16,6 @@ fun ShoppingListRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ShoppingListScreen(
         uiState = uiState,
-        onScanPantry = onScanPantry,
         onDeleteItem = viewModel::deleteItem,
         onUndoDelete = viewModel::undoDelete,
         onUndoExpired = viewModel::dismissUndo,

@@ -67,6 +67,7 @@
     <!-- Pantry -->
     <string name="pantry_title">Pantry</string>
     <string name="pantry_add_food">Add food</string>
+    <string name="pantry_scan_food">Scan foods</string>
     <string name="pantry_add_title">Add food</string>
     <string name="pantry_edit_title">Edit food</string>
     <string name="pantry_save_changes">Save changes</string>

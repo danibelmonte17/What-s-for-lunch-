@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Kitchen
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -29,6 +30,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -65,6 +67,9 @@ object PantryTestTags {
     const val EMPTY_TITLE = "pantry_empty_title"
     const val EMPTY_MESSAGE = "pantry_empty_message"
     const val ADD_ITEM = "pantry_add_item"
+    const val SCAN_FOOD = "pantry_scan_food"
+    const val SCAN_FOOD_CTA = "pantry_scan_food_cta"
+    const val EMPTY_ADD_CTA = "pantry_empty_add_item"
     const val ITEM_LIST = "pantry_item_list"
     const val ITEM_CARD = "pantry_item_card"
     const val ITEM_NAME = "pantry_item_name"
@@ -94,6 +99,7 @@ object PantryTestTags {
 @Composable
 fun PantryScreen(
     uiState: PantryUiState,
+    onScanFood: () -> Unit,
     onSaveItem: (String?, String, Int) -> Unit,
     onDeleteItem: (String) -> Unit,
     onErrorConsumed: () -> Unit,
@@ -155,14 +161,29 @@ fun PantryScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { itemToEdit = null; showEditor = true },
-                icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.pantry_add_food)) },
-                modifier = Modifier.testTag(PantryTestTags.ADD_ITEM),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            )
+            // D1: dos FABs apilados junto a la esquina — «Escanear alimentos» encima
+            // y el existente «Añadir alimento» abajo.
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onScanFood,
+                    icon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
+                    text = { Text(stringResource(R.string.pantry_scan_food)) },
+                    modifier = Modifier.testTag(PantryTestTags.SCAN_FOOD),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                )
+                ExtendedFloatingActionButton(
+                    onClick = { itemToEdit = null; showEditor = true },
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.pantry_add_food)) },
+                    modifier = Modifier.testTag(PantryTestTags.ADD_ITEM),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
         },
     ) { innerPadding ->
         if (uiState.items.isEmpty()) {
@@ -193,9 +214,17 @@ fun PantryScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = WarmSpacing.sm).testTag(PantryTestTags.EMPTY_MESSAGE),
                 )
+                // D3: el estado vacío replica los dos FABs — «Escanear alimentos»
+                // primario y «Añadir alimento» debajo.
                 Button(
+                    onClick = onScanFood,
+                    modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.lg).heightIn(min = 52.dp)
+                        .testTag(PantryTestTags.SCAN_FOOD_CTA),
+                ) { Text(stringResource(R.string.pantry_scan_food)) }
+                OutlinedButton(
                     onClick = { itemToEdit = null; showEditor = true },
-                    modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.lg).heightIn(min = 52.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm).heightIn(min = 52.dp)
+                        .testTag(PantryTestTags.EMPTY_ADD_CTA),
                 ) { Text(stringResource(R.string.pantry_add_food)) }
             }
         } else {

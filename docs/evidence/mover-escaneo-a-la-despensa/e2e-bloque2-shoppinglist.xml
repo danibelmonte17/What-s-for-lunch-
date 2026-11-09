@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.ShoppingListE2ETest" tests="40" failures="0" errors="0" skipped="0" time="338.479" timestamp="2026-11-08T12:52:33" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="editingKeepsALargeQuantityUnchangedThroughTheDialog" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="22.615" />
+  <testcase name="completedRowsKeepTheirContentAndShowTheClearAction" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="8.802" />
+  <testcase name="emptyListShowsNoScannerAccessAndOnlyTheAddItemCta" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.744" />
+  <testcase name="manualAddShowsTheItemWithAisleLabelAndManualBadge" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="15.238" />
+  <testcase name="rowContentChangesWithTheGroupingMode" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="6.876" />
+  <testcase name="invalidNameOrQuantityShowsAnErrorAndKeepsTheDialogOpen" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="17.936" />
+  <testcase name="deletingAnItemShowsUndoAndRestoresIt" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="5.989" />
+  <testcase name="itemsAreGroupedByAisleByDefaultWithUncategorizedLast" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="8.412" />
+  <testcase name="multiSourceItemsAppearInEveryGroupAndCountOnce" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="5.915" />
+  <testcase name="completedItemsSurviveTheRoundTripAndTheModeResets" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="14.909" />
+  <testcase name="theProgressBarReflectsHalfOfTheItemsCompleted" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="8.617" />
+  <testcase name="recommendationCardAddsItsMissingItems" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="10.109" />
+  <testcase name="roomRepositoryKeepsItemsAcrossReopenAndRestoresDeletedSources" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.067" />
+  <testcase name="repeatingTheActionDoesNotDuplicateOrDoubleTheItems" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="15.104" />
+  <testcase name="editingAnItemOnlyChangesQuantityUnitAndAisle" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="11.557" />
+  <testcase name="fullMatchHidesTheAddActions" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="6.701" />
+  <testcase name="clearCompletedRemovesThemAndUndoRestoresThemAll" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.773" />
+  <testcase name="pincheProposalAddsMissingItemsAndBecomesDisabled" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.297" />
+  <testcase name="manualAddOfAnExistingNameEditsItWithoutCreatingANewRow" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="16.3" />
+  <testcase name="emptyStateAddCtaOpensTheDialogAndSavesTheItem" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="13.609" />
+  <testcase name="uncheckingAnItemRevertsTheProgress" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.459" />
+  <testcase name="migrationFromV2KeepsRecipesAndPantryAndCreatesShoppingTables" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.875" />
+  <testcase name="editingKeepsTheCompletedStateAndTheEmptyListHasNoProgressCard" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="10.704" />
+  <testcase name="itemsFromTwoRecipesAreGroupedUnderTheirRecipe" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="5.359" />
+  <testcase name="twoRecipesAddUpAndTheBadgeCountsSources" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="8.747" />
+  <testcase name="manualAddWithoutQuantityOrAisleUsesTheDefaults" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="7.538" />
+  <testcase name="detailAddsMissingItemsToTheShoppingListWithOrigin" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="5.6" />
+  <testcase name="showsRequiredIngredientPercentageAndReactsToPantryChanges" classname="com.whatsforlunch.app.MatchBadgeE2ETest" time="4.204" />
+  <testcase name="recipeCardWithPhotoShowsExactlyOneMatchBadge" classname="com.whatsforlunch.app.MatchBadgeE2ETest" time="3.846" />
+  <testcase name="pincheIsLocalizedInEnglish" classname="com.whatsforlunch.app.PincheE2ETest" time="4.276" />
+  <testcase name="emptyPantryShowsEveryRequiredIngredientAsMissing" classname="com.whatsforlunch.app.PincheE2ETest" time="4.073" />
+  <testcase name="chipSendsItsQuestionAndHidesOnceTheConversationStarts" classname="com.whatsforlunch.app.PincheE2ETest" time="3.682" />
+  <testcase name="answerWithoutAValidProposalShowsOnlyText" classname="com.whatsforlunch.app.PincheE2ETest" time="5.651" />
+  <testcase name="failedSaveShowsNoticeAndEnablesTheButtonAgain" classname="com.whatsforlunch.app.PincheE2ETest" time="3.741" />
+  <testcase name="failureShowsRetryAndRetryingDoesNotDuplicateTheUserMessage" classname="com.whatsforlunch.app.PincheE2ETest" time="5.75" />
+  <testcase name="answerWithProposalShowsTheCardWithIngredientsStepsAndMissingItems" classname="com.whatsforlunch.app.PincheE2ETest" time="5.729" />
+  <testcase name="pincheOpensFromMyRecipesAndKeepsSearchAndFilterOnBack" classname="com.whatsforlunch.app.PincheE2ETest" time="4.56" />
+  <testcase name="savingTheProposalCreatesARecipeInMyRecipesWithoutDuplicates" classname="com.whatsforlunch.app.PincheE2ETest" time="6.27" />
+  <testcase name="cookingQuestionIsAnsweredWithTextOnly" classname="com.whatsforlunch.app.PincheE2ETest" time="5.232" />
+  <testcase name="missingApiKeyShowsNoticeAndOpensSettings" classname="com.whatsforlunch.app.PincheE2ETest" time="4.17" />
+</testsuite>
