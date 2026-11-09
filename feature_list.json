@@ -48,7 +48,7 @@
         "docs/evidence/crear-receta/informe-validacion.md + 2 capturas es",
         "PROGRESS.md: 26 RF verificados en el ciclo 2 (sesión 12): 22 E2E + 10 unit + adb/uiautomator"
       ],
-      "notes": "Publicar exige título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (⚠ S07, Q-crear-receta-1). Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): desaparecen el estado Borrador/Publicada y los botones «Guardar Borrador»/«Publicar Receta» —el guardado único exige los mismos obligatorios— y el distintivo de estado de las tarjetas.",
+      "notes": "Publicar exige título, foto, al menos 1 Ingrediente y 1 Paso válidos y ninguna fila inválida (⚠ S07, Q-crear-receta-1). Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): desaparecen el estado Borrador/Publicada y los botones «Guardar Borrador»/«Publicar Receta» —el guardado único exige los mismos obligatorios— y el distintivo de estado de las tarjetas. Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l) con desplegable en la fila de Ingrediente del formulario; las unidades legadas no se migran y entran como opción extra al editar; la unidad que llega de la IA se normaliza al enum (vacía o desconocida → «ud»). Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -118,7 +118,7 @@
         "docs/evidence/editar-receta/ (informe con ciclos 2, 3 y 4 + 2 capturas es)",
         "PROGRESS.md: 18 RF + 4 NFR verificados; revalidada en las sesiones 23, 24 y 38"
       ],
-      "notes": "Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): desaparece el estado Borrador/Publicada; el único guardado exige los obligatorios y ya no hay dock por estado.",
+      "notes": "Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): desaparece el estado Borrador/Publicada; el único guardado exige los obligatorios y ya no hay dock por estado. Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l) y al editar se muestra en el desplegable de la fila; las unidades legadas no se migran y entran como opción extra; la unidad que llega de la IA se normaliza al enum (vacía o desconocida → «ud»). Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -452,7 +452,7 @@
         "Informe de implementación: docs/validations/sugerir-recetas-con-ia.md (no es aceptación; pendiente feature-validator).",
         "Validación independiente (feature-validator, sesión 69, 2026-10-23): accept. Checks reejecutados: lintDebug 0 errores (50 warnings), testDebugUnitTest --rerun-tasks 118/118 en 20 suites, assembleDebug OK, compileDebugAndroidTestKotlin OK; init.ps1 exit 1 por no haber emulador conectado (gate no bloqueante). Evidencia cara inspeccionada: AiSuggestionsE2ETest 8/8 (S1-S8), CompatibleRecipesE2ETest + ScanPantryE2ETest 31/31 y suite completa 127 pruebas (2 SettingsE2ETest omitidas por Assume). Contrato D1-D10 y alcance respetados; seguridad sin hallazgos; sin llamadas reales ni API keys reales; RK03 como puerta de release. 7 hallazgos Low no bloqueantes (F1-F7). Informe: docs/validations/sugerir-recetas-con-ia.md §7."
       ],
-      "notes": "Proveedor compatible con OpenAI vía OpenRouter; verificar «sin retención» (RK03); sin key → pedir configuración",
+      "notes": "Proveedor compatible con OpenAI vía OpenRouter; verificar «sin retención» (RK03); sin key → pedir configuración Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l), las tarjetas la muestran con `unitLabel` y la respuesta de la IA se normaliza al enum (vacía o desconocida → «ud») sin cambiar las claves del contrato. Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -515,7 +515,7 @@
         "Evidencia: docs/validations/aceptar-sugerencia-de-receta.md (no es aceptación). Capturas es de la tarjeta con acciones/estado y de Mis Recetas con la Receta aceptada pendientes del validador según el Plan de verificación de la spec (UI solo el validador). Sin llamadas reales a DevExpert Inference ni API keys reales.",
         "Aceptación independiente (feature-validator, sesión 75, 2026-10-24): accept. Checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554): testDebugUnitTest --rerun-tasks 146/146 en 24 suites (SuggestionAcceptanceTest 6/6, SuggestionPromptTest 3/3, AiSuggestionsViewModelTest 12/12); lintDebug 0 errores / 49 warnings (ninguno nuevo); init.ps1 llega a «Entorno listo» con exit 1 del wrapper por el falso fallo conocido de adb shell monkey/pidof (no bloqueante); AiSuggestionsE2ETest 14/14 reejecutada; paridad es/en 213/213; 2 PNG binarios válidos de 1280x2856; sin secretos. S1-S6 verificados y D1-D5 respetadas (Borrador sin foto con origin=SUGGESTION, id estable + upsert sin duplicados, descartar no guarda, permanencia en la lista con aviso, prompt solo con Recetas > 60 %), alcance intacto (sin Room/migraciones, publicar, navegación nueva, badge de origen ni cambios en calculateMatch/MatchBadge/RD13). Suite E2E completa 137 tests inspeccionada y coherente. Sin hallazgos Critical/High/Medium; 4 notas Low no bloqueantes (L1 technical-discovery cita S1-S8, L2 aviso SAVED sin autodescartar, L3 acceptSuggestion sin guarda de estado, L4 T7/cabecera de la spec — L1 y L4 cerrados por el orquestador). Sin llamadas reales a la IA ni API keys reales. Informe: docs/validations/aceptar-sugerencia-de-receta.md (§9); capturas: docs/evidence/aceptar-sugerencia-de-receta/."
       ],
-      "notes": "origen = Sugerencia (RD07); una Sugerencia no se acepta dos veces. Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): la Receta aceptada se sigue guardando sin foto, pero ya no queda como Borrador (el estado desaparece).",
+      "notes": "origen = Sugerencia (RD07); una Sugerencia no se acepta dos veces. Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): la Receta aceptada se sigue guardando sin foto, pero ya no queda como Borrador (el estado desaparece). Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l) y la Receta aceptada se guarda con las unidades ya normalizadas al enum (vacía o desconocida → «ud»). Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -564,7 +564,7 @@
         "U1 (utensilios) resuelta por omisión en el MVP: la sección «Utensilios necesarios» NO se implementa en el Detalle; el resto de T1-T6 íntegro.",
         "Aceptación independiente (feature-validator, sesión 48): accept — gates reranqueados por el validador sobre el árbol sin commitear en Pixel_10_Pro API 37: init exit 0, lintDebug 0 errores, testDebugUnitTest --rerun-tasks 56/56 (RecipeDetailViewModelTest 6/6), assembleDebug OK, RecipeDetailE2ETest focalizada 7/7 y connectedDebugAndroidTest completa 94/94, 0 fallos/0 omitidos (7m 3s); S1-S7 y D1-D7 reproducidas a mano con adb/uiautomator sobre la app real en es y en (tap del cuerpo abre el Detalle y Editar/Eliminar no; búsqueda «Tortilla» conservada al volver; badge 50%→100% verificado con E2E+unit por no existir recorrido de UI; borrador con «—»/«Sin ingredientes»/«Sin pasos»/sin badge; CTA → «Modo Cocina» → Volver; checklist 2 de 3 → salir → reabrir → 0 de 3; D7 0,5 kg/0.25 kg según locale); U1 verificada: la sección de utensilios NO aparece (barridos es/en = 0 hits); seguridad sin hallazgos (sin secretos/red/permisos/dependencias nuevas, Room parametrizado, fotos solo de la ruta interna). 3 hallazgos Low no bloqueantes (tap en la portada no abre el Detalle —D1 lo limita al cuerpo—, nota sobre la captura larga cosida, nota de que S3 en caliente y S6 solo son verificables con tests). Informe: docs/validations/ver-detalle-de-receta.md; 2 capturas en docs/evidence/ver-detalle-de-receta/"
       ],
-      "notes": "Badge reutilizado de ui/components/ (D5) con testTags por pantalla; checklist marcado local sin persistencia (D3); CTA hacia destino provisional (D4). Utensilios omitidos en el MVP (U1). 3 hallazgos Low no bloqueantes en el informe de validación.",
+      "notes": "Badge reutilizado de ui/components/ (D5) con testTags por pantalla; checklist marcado local sin persistencia (D3); CTA hacia destino provisional (D4). Utensilios omitidos en el MVP (U1). 3 hallazgos Low no bloqueantes en el informe de validación. Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l) y el checklist del Detalle la compone con `unitLabel` (código → clave es/en, legada → texto, vacía → se omite); sin conversiones ni migración. Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -643,7 +643,7 @@
         "PROGRESS.md: gates lint 0 errores/49 warnings, unit 38 suites/251 tests, paridad es/en 305 claves, E2E focalizada 19/19 (S1-S7) y batería 195 tests (2 omitidos por Assume) sin regresión (4 flakes del AVD re-ejecutados 10/10 verde)",
         "docs/validations/cocinar-paso-a-paso.md (2026-10-28, feature-validator con agente): revise (F1-F3, Low, documental) → repair → revalidación accept → accepted; código, tests y comportamiento cumplen la spec (RF-CPP1..6, S1-S7, D1-D9); tier barato reproducido, batería parcial 125/195 con el AVD acreditado como causa de los fallos, focalizada 17/17, CookModeE2ETest 7/7 y RecipeDetailE2ETest 12/12; reconciliaciones 195 = 188 + 7 y 305 = 297 + 8 confirmadas en la revalidación"
       ],
-      "notes": "",
+      "notes": "Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l) y el drawer del Modo Cocina la compone con `unitLabel` igual que el Detalle; el escalado RD03 y los vínculos RD21 quedan intactos. Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -721,7 +721,7 @@
         "T0 (llamada real autorizada, previa): HTTP 200 con el alias chat, finish_reason tool_calls y get_pantry con arguments {}; no se repitió ninguna llamada real. Verificación automática solo con FakePincheChatClient. Informe: docs/validations/resolver-dudas-con-pinche.md; 2 PNG es válidos en docs/evidence/resolver-dudas-con-pinche/.",
         "Aceptación independiente (feature-validator, sesión 79, 2026-10-26): accept — checks reejecutados en AVD Pixel_10_Pro API 37 (emulator-5554, arrancado y apagado por el validador): lintDebug 0 errores / 49 warnings; testDebugUnitTest --rerun-tasks 173/173 en 27 suites; assembleDebug BUILD SUCCESSFUL; PincheE2ETest 11/11 y suite E2E completa 148 ejecutados / 0 fallos / 0 errores / 1 omitido (SettingsE2ETest por Assume); paridad es/en 238/238; T0 documentado sin repetir la llamada real y toda la verificación con FakePincheChatClient; 2 PNG válidos revisados; comprobación manual de entrada/vuelta con adb/uiautomator. Sin hallazgos Critical/High/Medium ni de seguridad; 3 notas Low no bloqueantes (cobertura del bucle de tools por inspección, init.ps1 no reproducible exit 0 por el falso fallo de monkey y detalles documentales). Informe: docs/validations/resolver-dudas-con-pinche.md §7."
       ],
-      "notes": "Sin voz (diferida con ⚠ S04); conversación y Propuestas solo en memoria; function calling de solo lectura (⚠ S08); Faltantes solo se muestran (la Lista es de anadir-faltantes-a-la-lista). Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): la Propuesta guardada ya no queda como Borrador (el estado desaparece) y sigue sin foto.",
+      "notes": "Sin voz (diferida con ⚠ S04); conversación y Propuestas solo en memoria; function calling de solo lectura (⚠ S08); Faltantes solo se muestran (la Lista es de anadir-faltantes-a-la-lista). Enmienda por eliminar-estado-de-borrador-y-filtrar-favoritos (sesión 109, decisión posterior del usuario): la Propuesta guardada ya no queda como Borrador (el estado desaparece) y sigue sin foto. Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l), la Ficha la muestra con `unitLabel` y la Propuesta normaliza la unidad al enum al materializar la Receta (modifica puntualmente el alcance «sin tocar SuggestionRules» de su checklist). Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -750,7 +750,7 @@
         "Validación independiente (feature-validator, sesión 85, 2026-10-26): accept — H1 y L1-L4 cerrados; checks reejecutados con --rerun-tasks: lint 0 errores/49 warnings, unit 205/205 en 34 suites, init.ps1 exit 0, assembleDebug OK y paridad es/en 266/266; E2E 164/0/0/2 ejecutada (ShoppingListE2ETest 10/10). Informe en docs/validations/anadir-faltantes-a-la-lista.md §9.",
         "Histórico: validación independiente de la sesión 84 → revise (S5 sin guardar/repetir desde el Borrador; 4 warnings nuevos); repair brief aplicado y revalidado en la sesión 85."
       ],
-      "notes": "Cada ítem conserva su Origen (RD09)",
+      "notes": "Cada ítem conserva su Origen (RD09) Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad pasa de texto libre a lista cerrada (ud, g, kg, ml, l); los Faltantes siguen aportando a la Lista la unidad de la Receta tal cual (enum o legada, sin conversiones) y la fila la muestra con `unitLabel`. Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -775,7 +775,7 @@
         "Repair del revise (sesión 89, 2026-10-27): formatEditableQuantity en el prellenado del diálogo (sin millares ni redondeo) + tests de round-trip 1200.0/1234.5/0.1234 es-en + E2E de edición con 1500 ml; L1 cuadrado (la cifra «172» era 170 @Test + 2 omitidos por Assume contados dos veces por el runner) y XML de la batería conservado",
         "Validación independiente (sesión 90, 2026-10-27): accept → accepted (docs/validations/anadir-item-a-la-lista.md § «Revalidación tras el repair»); H1 y L1 cerrados con verificación independiente (unit/E2E re-ejecutados y batería/XML auditados), F1 Low documental (firma del flake) corregido por el orquestador"
       ],
-      "notes": "Alta por voz según ⚠ S04",
+      "notes": "Alta por voz según ⚠ S04 Enmienda por `unificar-unidades` (sesión 119, decisión del usuario 2026-11-09, patrón completo): la unidad del ítem pasa de texto libre a lista cerrada (ud, g, kg, ml, l) con desplegable en el diálogo («ud» por defecto en ítems nuevos y legada como opción extra); la validación de RD19 no se endurece. Detalle en la nota al final de su spec.",
       "status": "accepted"
     },
     {
@@ -955,36 +955,77 @@
       "status": "accepted"
     },
     {
+      "id": "unificar-unidades",
+      "area": "funcional",
+      "title": "Unificar las unidades de Ingredientes e ítems con un enum",
+      "user_visible_behavior": "La unidad de los Ingredientes y de los ítems de la Lista de la Compra se elige con un desplegable de lista cerrada (ud, g, kg, ml, l) con «ud» por defecto en las filas nuevas; las unidades legadas fuera de la lista se siguen mostrando como texto y, al editar, aparecen como opción extra del desplegable; la unidad que llega de la IA se normaliza al enum y toda la app muestra las unidades con los mismos textos es/en.",
+      "depends_on": [
+        "crear-receta",
+        "editar-receta",
+        "ver-detalle-de-receta",
+        "cocinar-paso-a-paso",
+        "anadir-faltantes-a-la-lista",
+        "anadir-item-a-la-lista",
+        "sugerir-recetas-con-ia",
+        "aceptar-sugerencia-de-receta",
+        "resolver-dudas-con-pinche"
+      ],
+      "steps": [
+        "Crear el enum de unidades (ud, g, kg, ml, l) con textos es/en y usarlo en un desplegable en la fila de ingrediente del formulario y en el diálogo de ítem de la Lista de la Compra, con «ud» por defecto en las filas nuevas y la unidad legada como opción extra al editar",
+        "Reutilizar el enum para mostrar la unidad en el Detalle, las tarjetas, el Modo Cocina, las Sugerencias y el Pinche, conservando como texto las unidades legadas fuera del enum",
+        "Normalizar la unidad que llega de la IA (Sugerencias y Propuestas del Pinche) al enum: la vacía o fuera de la lista cae a «ud»",
+        "Actualizar textos es/en, testTags, tests E2E/unit y las specs y docs durables (domain-model, DESIGN, technical-discovery) con enmiendas en las features aceptadas afectadas"
+      ],
+      "verification": [
+        "E2E: crear una receta con unidades g, ml y ud elegidas con el desplegable y comprobar que se muestran igual en el formulario, el Detalle y la Lista de la Compra; una unidad legada (p. ej. «cucharadas») se sigue mostrando tal cual",
+        "E2E: en el diálogo de ítem de la Lista de la Compra la unidad se elige con el mismo desplegable y, al editar un ítem legado, su unidad aparece como opción extra",
+        "E2E: con el cliente de IA simulado devolviendo unidades desconocidas y vacías, aceptar la propuesta y comprobar que los Ingredientes guardados quedan con unidades del enum («ud»)",
+        "Unit: el enum de unidades se parsea y las unidades legadas caen a texto"
+      ],
+      "evidence": [
+        "Implementación autoverificada (sesión 119, feature-implementer, 2026-11-09): `passing` (no es aceptación; pendiente de feature-validator). Enum `IngredientUnit` (ud/g/kg/ml/l con `fromCode`/`normalize`) + `ui/components/UnitDropdown.kt` (`ExposedDropdownMenuBox` de solo lectura, `singleLine`, menú con `widthIn(min=160.dp)`, tags `option_*` y `unitLabel`; legada como opción extra con «(sin unidad)»/«(no unit)») + `ui/theme/Field.kt` (`FieldShape`/`warmFieldColors` compartidos); «ud» por defecto en filas nuevas de formulario y diálogo; `unitLabel` en Detalle, Modo Cocina, Sugerencias, Pinche, filas de la Lista y diálogo de vínculos; normalización D2 en `SuggestionRules.normalizeOne` y `PincheProposalRules.proposalToRecipe`; 6 claves `unit_*` es/en; docs durables (RD19/RD21/casos límite, DESIGN, CONTEXT, technical-discovery) y nota de enmienda al final de las 9 specs aceptadas afectadas.",
+        "Gates: `init.ps1` «Entorno listo»; `lintDebug` 0 errores / 48 warnings (= línea base, ninguna incidencia en el diff); `testDebugUnitTest` 43 suites / 313 tests / 0 fallos (base 42/305 + `IngredientUnitTest` 6 + 1 `SuggestionRulesTest` + 1 `PincheProposalRulesTest`); `assembleDebug` OK; paridad es/en 326/326 `string` + 5/5 `plurals`, diff = 0.",
+        "E2E focalizada: `CreateRecipeE2ETest`+`EditRecipeE2ETest`+`EditRecipeRouteE2ETest`+`ShoppingListE2ETest`+`AiSuggestionsE2ETest` = 83 tests en verde tras corregir una aserción afectada por D1 (filas sin cantidad muestran «{nombre} (ud)»); regresión `RecipeDetailE2ETest`/`CookModeE2ETest`/`ShoppingListE2ETest` en verde; 2 fallos ambientales de `PincheE2ETest` (teardown DESTROYED + System has crashed) verificados 2/2 aislados.",
+        "Batería `./e2e.ps1` (AVD libre `Pixel_8_Pro` API 37 vía `ANDROID_SERIAL`, 13 m 28 s): **235 tests = inventario `@Test` → 233 verdes + 1 omitido (`SettingsE2ETest`/`Assume`) + 1 flake conocido** `deletingTheKeyAsksToConfigureItAgainForAiFeatures` (pasa aislado 1/1 en el árbol final); 0 errores y 0 regresiones. Log: `docs/evidence/unificar-unidades/e2e-battery-final-2026-11-09.log`.",
+        "Hallazgo fuera de alcance reparado con autorización del usuario: `PantryManagementE2ETest#scannerSaveReturnsToThePantryWithTheSavedFoods` estaba roto desde la fusión de las ramas `mover-opciones-a-bottom-bar`/`mover-escaneo-a-la-despensa` (pulsa el «Volver» retirado por RF-MOB5); adaptado a la pestaña de la barra inferior con aserción de Despensa no duplicada, clase 9/9.",
+        "Evidencia visual: 3 capturas PNG 1280×2856 es/en en `docs/evidence/unificar-unidades/` (desplegable abierto con 6 opciones, checklist del Detalle con enum + legada, desplegable en inglés) e `informe.md` con el barrido S5 (0 literales de unidad en `main` fuera de `IngredientUnit.kt`; `R.string.unit_*` solo en `UnitDropdown.kt`).",
+        "Validación independiente (sesión 119b, `feature-validator` con subagente `validator`, 2026-11-09): **accept** → `accepted` (informe en `docs/validations/unificar-unidades.md`; el validador corrió en sesión independiente, no participó en la implementación y solo escribió su informe; el acceptance lo persiste el orquestador). Tier barato re-ejecutado por el validador y reproducido: `init.ps1` exit 0 «Entorno listo» (`ANDROID_SERIAL=emulator-5556`), `lintDebug --rerun-tasks` **0 errores / 48 warnings** (0 incidencias en ficheros del diff), `testDebugUnitTest --rerun-tasks` **43 suites / 313 tests / 0 fallos / 0 omitidos**, `assembleDebug` OK, paridad **326/326 + 5/5 plurales, diff 0**, inventario `@Test` **235 en 24 ficheros** (= batería), barrido S5 y `local.properties` solo `sdk.dir`. Tier caro solo inspeccionado sin deriva (última fuente 16:33 < batería 16:53–17:06): batería **235 = 233 verdes + 1 omitido + 1 flake** (`deletingTheKeyAsks…`, reejecutado aislado **1/1 con log del árbol final** `e2e-settings-flake-isolated-final-tree-2026-11-09.log`), focalizada 83 (1 fallo D1 corregido y en verde en la batería), regresión 47/49 con los 2 fallos ambientales de Pinche verificados 2/2 aislados y las 3 capturas PNG abiertas y verificadas (cabecera `89 50 4E 47`, IHDR 1280×2856, contenido coherente). **0 hallazgos Critical/High/Medium**; 4 Low: F1 (2 avisos de compilación por `MenuAnchorType` deprecado en `UnitDropdown.kt`, siguiente ciclo de código), F2/F3 (wording del `informe.md`, corregidos al persistir: log aislado del árbol final añadido y aborto de la pasada de regresión declarado) y F4 (patrón completo: `notes` de las 9 features aceptadas actualizados con su enmienda, decisión registrada en la sesión 118). Seguridad sin hallazgos (checklist acotada al diff: sin secretos/PII, sin permisos ni dependencias nuevos, sin red ni llamadas de pago, `local.properties` solo `sdk.dir`). Alcance: la única reparación fuera de alcance (`PantryManagementE2ETest#scannerSaveReturns…`, autorizada por el usuario) juzgada **correcta, acotada y bien documentada → no bloquea**. `feature_list.json` solo `status`/`evidence` (+ `notes` por el patrón completo) → **`accepted`**."
+      ],
+      "notes": "Sale de partir redisenar-formulario-de-receta (2026-11-09, decisión del usuario): esta feature lleva el enum de unidades (decisión de unidades de la entrada original) y sus desplegables; el rediseño del formulario y la eliminación de cookMinutes y de la opcionalidad van en redisenar-formulario-de-receta, que depende de esta. Decisiones del usuario (2026-11-09): (D1) unidad obligatoria de lista cerrada sin entrada vacía, «ud» por defecto en filas nuevas y unidades legadas como opción extra al editar; (D2) la unidad que llega de la IA se normaliza al enum (vacía o fuera de la lista → «ud»). Derivadas: D3 los códigos del enum (ud, g, kg, ml, l) son los textos visibles en ambos idiomas (claves es/en); D4 la regla de normalización vive en domain/ (P25) y el desplegable es UI compartida; D5 las unidades ya guardadas no se migran ni se recalculan y siguen mostrándose como texto (incluido el ítem legado sin unidad de RD19). Fuera de alcance: conversiones entre unidades, migrar unidades existentes, y tocar cookMinutes ni la opcionalidad (van en redisenar-formulario-de-receta).",
+      "status": "accepted"
+    },
+    {
       "id": "redisenar-formulario-de-receta",
       "area": "funcional",
-      "title": "Rediseñar la vista Crear receta y unificar unidades",
-      "user_visible_behavior": "En «Detalles de cocina» el tiempo de preparación se elige con un reloj (TimePicker de Material 3 en modo entrada, horas:minutos por teclado), Raciones y Nivel aparecen en horizontal en dos bloques y ya no existe el tiempo de cocción. En Ingredientes la unidad se elige con un desplegable de la lista cerrada (ud, g, kg, ml, l) reutilizada en toda la app y desaparece la casilla de ingrediente opcional. En Pasos el texto se escribe en una caja con fondo blanco y el temporizador se fija con el mismo reloj.",
+      "title": "Rediseñar la vista Crear receta",
+      "user_visible_behavior": "En «Detalles de cocina» el tiempo de preparación se elige con un reloj (TimePicker de Material 3 en modo entrada, horas:minutos por teclado), Raciones y Nivel aparecen en horizontal en dos bloques y ya no existe el tiempo de cocción. Desaparece la casilla de ingrediente opcional y todos los Ingredientes cuentan en la Coincidencia y en «Añadir faltantes». En Pasos el texto se escribe en una caja con fondo blanco y el temporizador se fija con el mismo reloj, con un control «Sin temporizador».",
       "depends_on": [
+        "unificar-unidades",
         "crear-receta",
         "editar-receta",
         "ver-detalle-de-receta",
         "mostrar-badge-de-coincidencia",
         "anadir-faltantes-a-la-lista",
-        "anadir-item-a-la-lista"
+        "sugerir-recetas-con-ia",
+        "aceptar-sugerencia-de-receta",
+        "resolver-dudas-con-pinche"
       ],
       "steps": [
         "Rehacer «Detalles de cocina» en dos bloques horizontales: fila con el reloj de Tiempo de preparación y el contador de Raciones (− valor +), y debajo el Nivel con sus chips en horizontal",
         "Sustituir el campo de minutos de preparación por el TimePicker de Material 3 en modo entrada (teclado horas:minutos) y retirar el campo de Cocción del formulario",
         "Eliminar cookMinutes en profundidad: modelo, Room con migración, desglose del Detalle, tarjetas, Pinche/Sugerencias y parsers de IA, con sus tests y specs",
-        "Crear el enum de unidades (ud, g, kg, ml, l) con textos es/en y usarlo en un desplegable en la fila de ingrediente y en el diálogo de ítem de la Lista de la Compra; reutilizarlo para mostrar en Detalle, tarjetas, Modo Cocina, Sugerencias y Pinche, conservando como texto las unidades legadas fuera del enum",
         "Eliminar el concepto de ingrediente opcional: checkbox, campo optional del modelo y Room con migración, cálculo de Coincidencia, checklist del Detalle, «Añadir faltantes» y prompts/tarjetas de IA",
         "Rediseñar la fila de Paso: texto en caja con fondo blanco y temporizador opcional con el mismo reloj",
         "Actualizar textos es/en, testTags, tests E2E/unit y las specs y docs durables (domain-model, DESIGN, technical-discovery) con enmiendas en las features aceptadas afectadas"
       ],
       "verification": [
         "E2E: con el reloj en modo entrada, teclear 1 h 05 min de preparación, guardar y reabrir: el tiempo persiste; el formulario no muestra ningún campo de cocción",
-        "E2E: crear una receta con unidades g, ml y ud elegidas con el desplegable y comprobar que se muestran igual en el formulario, el Detalle y la Lista de la Compra; una unidad legada (p. ej. «cucharadas») se sigue mostrando tal cual",
         "E2E: la fila de ingrediente ya no tiene casilla de opcional y todos los ingredientes cuentan en la Coincidencia y en «Añadir faltantes»",
-        "E2E: en Pasos el texto se escribe en la caja blanca y el temporizador fijado con el reloj sobrevive al guardar y reabrir",
-        "Unit: el enum de unidades se parsea y las unidades legadas caen a texto; calculateMatch sin opcional; los parsers de IA ya no reciben cookMinutes"
+        "E2E: en Pasos el texto se escribe en la caja blanca y el temporizador fijado con el reloj (o «Sin temporizador») sobrevive al guardar y reabrir",
+        "Unit: calculateMatch sin opcional; los parsers de IA ya no reciben cookMinutes"
       ],
       "evidence": [],
-      "notes": "Decisiones del usuario (2026-11-08): (D1) reloj = TimePicker de Material 3 en modo entrada, usado igual en Tiempo de preparación y en el temporizador de Pasos; (D2) «Detalles de cocina» en dos bloques —fila Tiempo+Raciones y Nivel en horizontal debajo—; (D3) tiempo de cocción eliminado en profundidad (modelo/Room con migración/Detalle/tarjetas/IA); (D4) unidades con desplegable en el formulario y en la Lista de la Compra, enum reutilizado para mostrar y unidades legadas fuera del enum como texto; (D5) se elimina el concepto de ingrediente opcional completo (el checkbox de la fila era «Opcional», no un check de preselección). Quedan para la spec: versión y test de migración de Room, límites y formato del reloj como duración (24 h, «sin temporizador»), qué hacer con cookMinutes y unidades llegadas de la IA y el alcance de las enmiendas en specs aceptadas. Fuera de alcance: recalcular o migrar unidades existentes, y tocar el Modo Cocina salvo por la lectura de unidades y la pérdida de la distinción obligatorio/opcional.",
+      "notes": "De la partición de redisenar-formulario-de-receta (2026-11-09, decisión del usuario): el enum de unidades y sus desplegables (decisión D4 original) van en unificar-unidades, de la que esta feature depende. Decisiones del usuario (2026-11-08): (D1) reloj = TimePicker de Material 3 en modo entrada, usado igual en Tiempo de preparación y en el temporizador de Pasos; (D2) «Detalles de cocina» en dos bloques —fila Tiempo+Raciones y Nivel en horizontal debajo—; (D3) tiempo de cocción eliminado en profundidad (modelo/Room con migración/Detalle/tarjetas/IA); (D5) se elimina el concepto de ingrediente opcional completo (el checkbox de la fila era «Opcional», no un check de preselección). Decisiones del usuario (2026-11-09): (D6) al migrar, el tiempo de cocción se suma al de preparación (prepMinutes := preparación + cocción) para conservar el tiempo total; (D7) el reloj es duración HH:MM en 24 h (00:00–23:59; 00:00 = 0 min en preparación) y cada Paso lleva un control «Sin temporizador» (los Pasos nuevos nacen sin temporizador); (D8) el contrato de IA pierde «cm» y «o» (los parsers ya no reciben cookMinutes ni opcionalidad). Quedan para la spec la versión y el test de migración de Room y las enmiendas en specs aceptadas (patrón completo, confirmado por el usuario el 2026-11-09). Fuera de alcance: recalcular o migrar unidades existentes (unificar-unidades) y tocar el Modo Cocina salvo por la pérdida de la distinción obligatorio/opcional.",
       "status": "not_started"
     }
   ]

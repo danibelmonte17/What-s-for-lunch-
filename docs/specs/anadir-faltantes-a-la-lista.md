@@ -279,3 +279,11 @@ Cada fase deja `lint` y `unit` en verde antes de pasar a la siguiente.
 - [ ] ¿La migración 2→3 conserva las Recetas y la Despensa previas?
 - [ ] ¿Paridad es/en de todos los textos y contratos estables (testTags, rutas) sin romper los E2E existentes?
 - [ ] ¿`init`, `lint` y `unit` en verde, `assembleDebug` sin errores y evidencia + `feature_list.json` actualizados?
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad pasa de texto libre a **lista cerrada (ud, g, kg, ml, l)**. Los Faltantes siguen aportando a la Lista la unidad de la Receta tal cual (enum o legada, **sin conversiones ni recálculo**), y la fila de la Lista la presenta con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). RD15, RD18 y el resto del flujo quedan intactos.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*

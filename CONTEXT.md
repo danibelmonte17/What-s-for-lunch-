@@ -11,7 +11,7 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 ### Producto
 
 **Comando de voz**: frase exacta que el Modo Cocina reconoce para actuar: «Siguiente», «Repetir» o «Pausar tiempo» (y «Next», «Repeat», «Pause timer» en inglés).
-**Ingrediente**: componente de una Receta, con cantidad, unidad y si es obligatorio u opcional.
+**Ingrediente**: componente de una Receta, con cantidad, unidad de lista cerrada (ud, g, kg, ml, l —`unificar-unidades`—; las unidades legadas guardadas se muestran como texto) y si es obligatorio u opcional.
 **Lista de la Compra**: ítems que faltan por comprar, agrupables por Pasillo o por Receta.
 **Mis Recetas**: Recetas del usuario (creadas a mano, aceptadas desde una Sugerencia o guardadas desde el Pinche) y pantalla de entrada de la app.
 **Modo Cocina**: guía de una Receta paso a paso, manos libres, con temporizadores y voz.

@@ -343,3 +343,11 @@ Especificación verificable por `uiautomator` y captura (sin exigir muestreo de 
 - [ ] No se añadió comportamiento de producto ni trabajo de otras features (en particular: **sin aceptar/descartar Sugerencias ni `origen = Sugerencia`**, sin persistencia de Sugerencias ni migraciones de Room, sin `/images/generations`, sin Pinche/Lista de la Compra/Modo Cocina y sin tocar `calculateMatch`, `MatchBadge` ni RD13).
 - [ ] Sin llamadas reales de pago a la IA en la verificación (solo cliente simulado) y sin API keys reales en ficheros, logs ni evidencia (`⚠ S05`, `RK01`).
 - [ ] `docs/risks-and-open-questions.md` registra `Q-sugerir-recetas-con-ia-1..6` resueltas y la tarea de `RK03` actualizada a puerta de release (D6).
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. Al normalizar la respuesta de la IA, `SuggestionRules.normalizeOne` normaliza la unidad al enum (**D2**: la vacía o desconocida queda en «ud»); el contrato JSON compacto **no cambia de claves** (solo cambia el resultado normalizado de `u`). Las tarjetas presentan la unidad con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). Lo demás (`calculateMatch`, `MatchBadge`, RD13) queda intacto.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*

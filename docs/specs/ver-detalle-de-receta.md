@@ -265,3 +265,11 @@ Contrato visual (verificable por `uiautomator` y captura):
 - [ ] Cobertura E2E persistente añadida y suite completa en verde.
 - [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
 - [ ] No se añadió comportamiento de producto ni trabajo de otras features (en particular: sin selector de raciones, sin «Añadir a la lista», sin pantalla de Modo Cocina definitiva).
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. El checklist del Detalle compone la unidad con `unitLabel` (código del enum → clave `unit_ud`…`unit_l` en es/en; unidad legada → texto tal cual; vacía → se omite, RD19). Sin conversiones ni migración de unidades y sin cambios en el escalado RD03 ni en el resto del Detalle.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*

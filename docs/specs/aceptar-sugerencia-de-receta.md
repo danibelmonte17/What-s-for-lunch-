@@ -275,3 +275,11 @@ Especificación verificable por `uiautomator` y captura (sin exigir muestreo de 
 - [x] No se añadió comportamiento de producto ni trabajo de otras features (en particular: **sin publicar** la Receta aceptada, sin navegación al Detalle, sin persistencia de Sugerencias ni migraciones de Room, sin badge de `origen` en la UI, sin Pinche/Lista de la Compra/Modo Cocina y sin tocar `calculateMatch`, `MatchBadge` ni RD13).
 - [x] Sin llamadas reales de pago a la IA en la verificación (solo cliente simulado) y sin API keys reales en ficheros, logs ni evidencia (`⚠ S05`, `RK01`).
 - [x] `docs/risks-and-open-questions.md` registra `Q-aceptar-sugerencia-de-receta-1..5` resueltas y `RK03` ampliado con los datos nuevos que salen del dispositivo (títulos e ingredientes de Recetas existentes).
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. Al aceptar la Sugerencia, la Receta se guarda con las unidades ya **normalizadas al enum** (D2: la vacía o desconocida → «ud»), garantizado en `SuggestionRules.normalizeOne`; las tarjetas presentan la unidad con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). El resto del flujo de aceptación (id estable, origen, obligatorios D11) queda intacto.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
