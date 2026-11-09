@@ -77,6 +77,7 @@ import com.whatsforlunch.app.domain.servings.ServingsScaling
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.MomentBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
+import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -769,7 +770,7 @@ private fun IngredientRow(
             Spacer(modifier = Modifier.width(WarmSpacing.sm))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = ingredientLine(ingredient, locale),
+                    text = ingredientLine(ingredient, locale, unit = unitLabel(ingredient.unit)),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -797,14 +798,20 @@ private fun IngredientRow(
 }
 
 // «cantidad unidad nombre» (D7: formato del idioma activo sin ceros sobrantes).
-// Compartido con el Modo Cocina (RF-CPP2, mismo formato que el Detalle).
-internal fun ingredientLine(ingredient: RecipeIngredient, locale: Locale): String {
+// Compartido con el Modo Cocina (RF-CPP2, mismo formato que el Detalle). `unit`
+// llega presentado con `unitLabel` (unificar-unidades, D4): los códigos del enum
+// con sus textos es/en y la unidad legada como texto; la vacía se omite (RD19).
+internal fun ingredientLine(
+    ingredient: RecipeIngredient,
+    locale: Locale,
+    unit: String = ingredient.unit,
+): String {
     val quantity = if (ingredient.quantity > 0.0) {
         formatQuantity(ingredient.quantity, locale)
     } else {
         ""
     }
-    return listOf(quantity, ingredient.unit, ingredient.name)
+    return listOf(quantity, unit, ingredient.name)
         .filter { it.isNotBlank() }
         .joinToString(" ")
 }

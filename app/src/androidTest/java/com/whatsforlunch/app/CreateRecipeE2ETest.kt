@@ -46,6 +46,7 @@ import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
+import com.whatsforlunch.app.ui.components.optionTag
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeScreen
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
@@ -160,6 +161,13 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(index)).performScrollTo().performTextInput(text)
     }
 
+    // Abre el desplegable de unidad de la fila de Ingrediente y elige una opción
+    // del enum cerrado (unificar-unidades, D1).
+    private fun selectUnit(index: Int, option: String) {
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(index)).performScrollTo().performClick()
+        composeRule.onNodeWithTag(optionTag(CreateRecipeTestTags.ingredientUnit(index), option)).performClick()
+    }
+
     @Test
     fun newFormPreselectsLunch() {
         launchForm()
@@ -181,6 +189,27 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientName(0)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.removeIngredient(0)).performScrollTo().performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_INGREDIENT).performScrollTo().assertIsDisplayed()
+    }
+
+    // unificar-unidades · verify 1 (S1): la unidad se elige con el desplegable de
+    // lista cerrada (g, ml, ud) y las filas nuevas nacen con «ud» (D1); el valor
+    // guardado en la Receta es el del enum.
+    @Test
+    fun unitDropdownSavesClosedListUnitsWithUdAsTheNewRowDefault() {
+        val repository = launchForm()
+        typeTitle("Con unidades")
+        addValidIngredient(index = 0, name = "Harina", quantity = "200")
+        selectUnit(index = 0, option = "g")
+        addValidIngredient(index = 1, name = "Leche", quantity = "150")
+        selectUnit(index = 1, option = "ml")
+        addValidIngredient(index = 2, name = "Huevo", quantity = "2")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(2)).performScrollTo()
+            .assertTextContains("ud")
+        addValidStep()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
+
+        val saved = runBlocking { repository.observeRecipes().first() }.single()
+        assertEquals(listOf("g", "ml", "ud"), saved.ingredients.map { it.unit })
     }
 
     // RF-10 y RF-11: modificar y eliminar cualquier Paso existente.
@@ -448,8 +477,10 @@ class CreateRecipeE2ETest {
 
         // «Cancelar» descarta la selección sin tocar la Receta.
         openStepIngredientsDialog(0)
-        composeRule.onNodeWithText("Patatas (700)").assertIsDisplayed()
-        composeRule.onNodeWithText("Huevo (2)").assertIsDisplayed()
+        // D1 (unificar-unidades): las filas nuevas llevan «ud», así que la etiqueta
+        // de la opción la incluye.
+        composeRule.onNodeWithText("Patatas (700 ud)").assertIsDisplayed()
+        composeRule.onNodeWithText("Huevo (2 ud)").assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOff()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOn()
@@ -552,7 +583,8 @@ class CreateRecipeE2ETest {
             composeRule.onAllNodesWithText("Cancel")
                 .filter(hasTestTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL))
                 .assertCountEquals(1)
-            composeRule.onNodeWithText("Potatoes (700)").assertIsDisplayed()
+            // D1 (unificar-unidades): la fila nueva lleva «ud», también en inglés.
+            composeRule.onNodeWithText("Potatoes (700 ud)").assertIsDisplayed()
             composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL).performClick()
 
             linkStepIngredient(stepIndex = 0, ingredientIndex = 0)

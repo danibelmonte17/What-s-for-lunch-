@@ -58,6 +58,7 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.cookmode.StepTimerPhase
 import com.whatsforlunch.app.domain.cookmode.StepTimerState
 import com.whatsforlunch.app.domain.model.RecipeIngredient
+import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.recipedetail.ingredientLine
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
@@ -739,7 +740,11 @@ private fun StepIngredientsDrawer(
                     ) {
                         rows.forEach { ingredient ->
                             Text(
-                                text = ingredientLine(ingredient, locale),
+                                text = ingredientLine(
+                                    ingredient,
+                                    locale,
+                                    unit = unitLabel(ingredient.unit),
+                                ),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.testTag(CookModeTestTags.INGREDIENT_ROW),

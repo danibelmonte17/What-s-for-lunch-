@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasTestTag
@@ -62,6 +63,7 @@ import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
+import com.whatsforlunch.app.ui.components.optionTag
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
@@ -554,7 +556,8 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
         composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Pan")
         composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("2")
-        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("uds")
+        // D1 (unificar-unidades): el ítem nuevo nace con la unidad «ud» del enum.
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).assertTextContains("ud")
         composeRule.onNodeWithTag(ShoppingListTestTags.aisleOption("PANTRY_OILS"))
             .performScrollTo()
             .performClick()
@@ -562,9 +565,9 @@ class ShoppingListE2ETest {
 
         val itemId = ShoppingListRules.itemIdFor("Pan")
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Pan (2 uds)").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Pan (2 ud)").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Pan (2 uds)").assertIsDisplayed()
+        composeRule.onNodeWithText("Pan (2 ud)").assertIsDisplayed()
         // D6: la etiqueta de Pasillo de la fila se muestra en «Por Receta»; allí
         // el badge «Despensa baja» (sin fuentes) se conserva.
         selectRecipeGrouping()
@@ -597,7 +600,7 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
         composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("harina")
         composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("500")
-        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("g")
+        selectUnit("g")
         composeRule.onNodeWithTag(ShoppingListTestTags.aisleOption("PANTRY_OILS"))
             .performScrollTo()
             .performClick()
@@ -674,7 +677,9 @@ class ShoppingListE2ETest {
         composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).assertCountEquals(0)
     }
 
-    // S5: cantidad y Pasillo son opcionales; el ítem queda «Sin clasificar».
+    // S5: cantidad y Pasillo son opcionales; el ítem queda «Sin clasificar». La
+    // unidad es la «ud» por defecto de las filas nuevas (D1 de unificar-unidades),
+    // por lo que la fila la muestra junto al nombre.
     @Test
     fun manualAddWithoutQuantityOrAisleUsesTheDefaults() {
         launchFullApp()
@@ -686,9 +691,9 @@ class ShoppingListE2ETest {
 
         val itemId = ShoppingListRules.itemIdFor("Leche")
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Leche").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Leche (ud)").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Leche").assertIsDisplayed()
+        composeRule.onNodeWithText("Leche (ud)").assertIsDisplayed()
         // D6: la etiqueta de Pasillo de la fila se muestra en «Por Receta».
         selectRecipeGrouping()
         composeRule.onNode(
@@ -708,10 +713,12 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Pan")
         composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
 
+        // D1 (unificar-unidades): el ítem nace con la unidad «ud», que la fila
+        // muestra junto al nombre.
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Pan").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Pan (ud)").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Pan").assertIsDisplayed()
+        composeRule.onNodeWithText("Pan (ud)").assertIsDisplayed()
         composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).assertCountEquals(1)
         composeRule.onAllNodesWithTag(ShoppingListTestTags.EMPTY).assertCountEquals(0)
     }
@@ -727,7 +734,7 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
         composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Leche")
         composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("1500")
-        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("ml")
+        selectUnit("ml")
         composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
 
         val expectedLine = "Leche (${formatQuantity(1500.0, Locale("es", "ES"))} ml)"
@@ -1083,10 +1090,10 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
         composeRule.onNodeWithTag(ShoppingListTestTags.NAME_FIELD).performTextReplacement("Pan")
         composeRule.onNodeWithTag(ShoppingListTestTags.QUANTITY_FIELD).performTextReplacement("2")
-        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performTextReplacement("uds")
+        // D1 (unificar-unidades): sin tocar la unidad se conserva el «ud» por defecto.
         composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Pan (2 uds)").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Pan (2 ud)").fetchSemanticsNodes().isNotEmpty()
         }
 
         val pan = ShoppingListRules.itemIdFor("Pan")
@@ -1138,6 +1145,54 @@ class ShoppingListE2ETest {
         composeRule.onAllNodesWithTag(ShoppingListTestTags.PROGRESS_CARD).assertCountEquals(0)
         composeRule.onAllNodesWithTag(ShoppingListTestTags.GROUP_BY_LABEL).assertCountEquals(0)
         composeRule.onAllNodesWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertCountEquals(0)
+    }
+
+    // unificar-unidades (verify 2, S3): el diálogo ofrece los cinco valores del enum
+    // con «ud» preseleccionado en los ítems nuevos; al editar, una unidad legada
+    // entra como opción extra seleccionada y la vacía se rotula «(sin unidad)», de
+    // modo que conservarla no exige tocar el desplegable (D1/D5).
+    @Test
+    fun unitDropdownOffersTheClosedListAndKeepsLegacyUnitsAsExtraOption() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.saveManualItem(id = null, name = "Café", quantity = 1.0, unit = "cucharadas", aisle = null)
+            repository.saveManualItem(id = null, name = "Toallitas", quantity = null, unit = "", aisle = null)
+        }
+        launchShoppingList(ShoppingListViewModel(repository))
+
+        // Ítem nuevo: «ud» preseleccionado y las cinco opciones del enum (D1).
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).assertTextContains("ud")
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performClick()
+        listOf("ud", "g", "kg", "ml", "l").forEach { code ->
+            composeRule.onNodeWithTag(optionTag(ShoppingListTestTags.UNIT_FIELD, code)).assertIsDisplayed()
+        }
+        composeRule.onNodeWithTag(optionTag(ShoppingListTestTags.UNIT_FIELD, "kg")).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).assertTextContains("kg")
+        composeRule.onNodeWithTag(ShoppingListTestTags.CANCEL_EDIT).performClick()
+
+        // Ítem legado con unidad fuera del enum: opción extra seleccionada (D5).
+        val cafe = ShoppingListRules.itemIdFor("Café")
+        composeRule.onNodeWithTag(ShoppingListTestTags.edit(cafe)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).assertTextContains("cucharadas")
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performClick()
+        composeRule.onNodeWithTag(optionTag(ShoppingListTestTags.UNIT_FIELD, "cucharadas")).assertIsDisplayed()
+        composeRule.onNodeWithTag(optionTag(ShoppingListTestTags.UNIT_FIELD, "cucharadas")).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithText("Café (1 cucharadas)").assertIsDisplayed()
+
+        // Ítem legado sin unidad: rotulado «(sin unidad)» y conservado al guardar.
+        val toallitas = ShoppingListRules.itemIdFor("Toallitas")
+        composeRule.onNodeWithTag(ShoppingListTestTags.edit(toallitas)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).assertTextContains("(sin unidad)")
+        composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithText("Toallitas").assertIsDisplayed()
     }
 
     // --- Helpers -----------------------------------------------------------------
@@ -1214,6 +1269,12 @@ class ShoppingListE2ETest {
     private fun selectRecipeGrouping() {
         composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).performClick()
         composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).assertIsOn()
+    }
+
+    // Abre el desplegable de unidad del diálogo y elige una opción (unificar-unidades).
+    private fun selectUnit(option: String) {
+        composeRule.onNodeWithTag(ShoppingListTestTags.UNIT_FIELD).performClick()
+        composeRule.onNodeWithTag(optionTag(ShoppingListTestTags.UNIT_FIELD, option)).performClick()
     }
 
     // Posición vertical de un nodo, para comprobar el orden de grupos y filas.

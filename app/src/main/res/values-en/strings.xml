@@ -122,6 +122,15 @@
     <string name="difficulty_medium">Medium</string>
     <string name="difficulty_hard">Hard</string>
 
+    <!-- Ingredient and item unit: closed list (RD19); the codes are the same in
+         both languages and the legacy empty one is labelled separately -->
+    <string name="unit_ud">ud</string>
+    <string name="unit_g">g</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_ml">ml</string>
+    <string name="unit_l">l</string>
+    <string name="unit_none">(no unit)</string>
+
     <!-- Recipe creation form -->
     <string name="create_recipe_title">Create recipe</string>
     <string name="create_recipe_edit_title">Edit Recipe</string>

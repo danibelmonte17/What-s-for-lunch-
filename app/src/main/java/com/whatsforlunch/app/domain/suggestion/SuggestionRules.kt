@@ -2,6 +2,7 @@ package com.whatsforlunch.app.domain.suggestion
 
 import com.whatsforlunch.app.domain.match.calculateMatch
 import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.IngredientUnit
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
@@ -83,7 +84,9 @@ object SuggestionRules {
                 // D8: una cantidad no numérica o ≤ 0 queda en 1; el ingrediente nunca
                 // se descarta por su cantidad.
                 quantity = positiveOrNull(ingredient.quantity) ?: DEFAULT_INGREDIENT_QUANTITY,
-                unit = ingredient.unit?.trim().orEmpty(),
+                // D2 (unificar-unidades): la unidad de la IA se normaliza al enum
+                // cerrado; la vacía o desconocida cae a «ud».
+                unit = IngredientUnit.normalize(ingredient.unit),
                 optional = ingredient.optional ?: false,
             )
         }

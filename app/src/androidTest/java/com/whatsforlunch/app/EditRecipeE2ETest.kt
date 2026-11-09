@@ -43,6 +43,7 @@ import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.ui.components.optionTag
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeScreen
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
@@ -199,6 +200,35 @@ class EditRecipeE2ETest {
         composeRule.onAllNodesWithTag("create_recipe_save_draft").assertCountEquals(0)
         composeRule.onAllNodesWithTag("create_recipe_publish").assertCountEquals(0)
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.HEADER_SAVE).assertCountEquals(0)
+    }
+
+    // unificar-unidades · verify 1 (S2, D1/D5): una unidad legada fuera del enum se
+    // muestra como texto en el desplegable y entra como opción extra seleccionada
+    // junto a los cinco valores; si no se elige otra, al guardar se conserva igual.
+    @Test
+    fun legacyUnitIsShownAsTextAndOfferedAsAnExtraOption() {
+        val repository = repositoryWith(
+            seededRecipe().copy(
+                ingredients = listOf(
+                    RecipeIngredient(id = "$SEEDED_ID-i0", name = "Patata", quantity = 700.0, unit = "cucharadas"),
+                ),
+            ),
+        )
+        launchEditor(repository, SEEDED_ID)
+
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(0)).performScrollTo()
+            .assertTextContains("cucharadas")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(0)).performClick()
+        listOf("ud", "g", "kg", "ml", "l").forEach { code ->
+            composeRule.onNodeWithTag(optionTag(CreateRecipeTestTags.ingredientUnit(0), code)).assertIsDisplayed()
+        }
+        composeRule.onNodeWithTag(optionTag(CreateRecipeTestTags.ingredientUnit(0), "cucharadas"))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(optionTag(CreateRecipeTestTags.ingredientUnit(0), "cucharadas")).performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
+
+        val saved = storedRecipes(repository).single()
+        assertEquals("cucharadas", saved.ingredients.single().unit)
     }
 
     // S4/RF-EBF4 (verify 3, D11): una Receta nacida sin foto (Sugerencia/Pinche) se

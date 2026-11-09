@@ -93,6 +93,27 @@ class SuggestionRulesTest {
         assertEquals(12, suggestion.baseServings)
     }
 
+    // D2 (unificar-unidades): la unidad que llega de la IA se normaliza al enum
+    // cerrado; la vacía o desconocida cae a «ud».
+    @Test
+    fun aiUnitsAreNormalizedToTheClosedEnum() {
+        val suggestion = SuggestionRules.normalize(
+            listOf(
+                proposal(
+                    ingredients = listOf(
+                        RawRecipeIngredient(name = "Harina", quantity = 200.0, unit = "gramos"),
+                        RawRecipeIngredient(name = "Leche", quantity = 1.0, unit = " ML "),
+                        RawRecipeIngredient(name = "Huevo", quantity = 2.0, unit = ""),
+                        RawRecipeIngredient(name = "Sal", quantity = 1.0, unit = null),
+                        RawRecipeIngredient(name = "Azúcar", quantity = 1.0, unit = "kg"),
+                    ),
+                ),
+            ),
+        ).single()
+
+        assertEquals(listOf("ud", "ml", "ud", "ud", "kg"), suggestion.ingredients.map { it.unit })
+    }
+
     @Test
     fun duplicateTitlesKeepTheFirstProposal() {
         val suggestions = SuggestionRules.normalize(

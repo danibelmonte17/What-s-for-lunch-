@@ -53,7 +53,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -85,8 +84,12 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
+import com.whatsforlunch.app.ui.components.UnitDropdown
+import com.whatsforlunch.app.ui.components.unitLabel
+import com.whatsforlunch.app.ui.theme.FieldShape
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
+import com.whatsforlunch.app.ui.theme.warmFieldColors
 import com.whatsforlunch.app.ui.theme.warmShadow
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
@@ -195,10 +198,10 @@ class CreateRecipeActions(
     val onDismissNotice: () -> Unit = {},
 )
 
-// Formas del sistema visual: 1rem en secciones, 0.75rem en campos y píldora en
+// Formas del sistema visual: 1rem en secciones, 0.75rem en campos (FieldShape
+// compartido en ui/theme/Field.kt con el desplegable de unidades) y píldora en
 // chips y badges (RF-13).
 private val SectionShape: Shape = RoundedCornerShape(WarmRadius.lg)
-private val FieldShape: Shape = RoundedCornerShape(WarmRadius.md)
 private val PillShape: Shape = RoundedCornerShape(50)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -841,7 +844,7 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
                 shape = FieldShape,
                 colors = warmFieldColors(),
                 modifier = Modifier
-                    .weight(1.5f)
+                    .weight(1.2f)
                     .heightIn(min = 48.dp)
                     .testTag(CreateRecipeTestTags.ingredientName(index)),
             )
@@ -859,17 +862,15 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
                     .semantics { contentDescription = quantityLabel }
                     .testTag(CreateRecipeTestTags.ingredientQuantity(index)),
             )
-            OutlinedTextField(
+            // Unidad de lista cerrada (unificar-unidades, D1): desplegable con los
+            // cinco valores del enum; una unidad legada entra como opción extra. El
+            // peso 1.1 deja la etiqueta «Unidad» y valores legados de una línea.
+            UnitDropdown(
                 value = row.unit,
                 onValueChange = { actions.onIngredientUnitChange(row.key, it) },
-                placeholder = { Text(text = stringResource(R.string.create_recipe_ingredient_unit)) },
-                singleLine = true,
-                shape = FieldShape,
-                colors = warmFieldColors(),
-                modifier = Modifier
-                    .weight(0.8f)
-                    .heightIn(min = 48.dp)
-                    .testTag(CreateRecipeTestTags.ingredientUnit(index)),
+                testTag = CreateRecipeTestTags.ingredientUnit(index),
+                label = { Text(text = stringResource(R.string.create_recipe_ingredient_unit)) },
+                modifier = Modifier.weight(1.1f),
             )
             Checkbox(
                 checked = row.optional,
@@ -1083,9 +1084,10 @@ private fun stepIngredientsSummary(count: Int): String =
         pluralStringResource(R.plurals.create_recipe_step_ingredients_count, count, count)
     }
 
-// Etiqueta de una opción del diálogo: «nombre (cantidad unidad)» (RF-VPI2).
-private fun ingredientOptionLabel(ingredient: IngredientFieldUiState): String {
-    val details = listOf(ingredient.quantity, ingredient.unit)
+// Etiqueta de una opción del diálogo: «nombre (cantidad unidad)» (RF-VPI2); la
+// unidad llega presentada con `unitLabel` (unificar-unidades, D4).
+private fun ingredientOptionLabel(ingredient: IngredientFieldUiState, unit: String): String {
+    val details = listOf(ingredient.quantity, unit)
         .filter { it.isNotBlank() }
         .joinToString(" ")
     return if (details.isEmpty()) ingredient.name else "${ingredient.name} ($details)"
@@ -1138,7 +1140,7 @@ private fun StepIngredientsDialog(
                                 ),
                             )
                             Text(
-                                text = ingredientOptionLabel(ingredient),
+                                text = ingredientOptionLabel(ingredient, unitLabel(ingredient.unit)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
@@ -1345,19 +1347,8 @@ private fun AddRowButton(onClick: () -> Unit, label: Int, testTag: String) {
     }
 }
 
-// Campos rellenos en surface-container-low con anillo de foco primary (RF-10, RF-12).
-@Composable
-private fun warmFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    focusedBorderColor = MaterialTheme.colorScheme.primary,
-    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    errorBorderColor = MaterialTheme.colorScheme.error,
-    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-    cursorColor = MaterialTheme.colorScheme.primary,
-)
+// Campos rellenos: warmFieldColors vive en ui/theme/Field.kt (compartido con el
+// desplegable de unidades).
 
 @Composable
 private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {

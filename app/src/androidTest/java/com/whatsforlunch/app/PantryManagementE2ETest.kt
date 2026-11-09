@@ -26,6 +26,7 @@ import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import com.whatsforlunch.app.ui.scanner.ScannerTestTags
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -188,9 +189,15 @@ class PantryManagementE2ETest {
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Tomate fresco").assertIsDisplayed()
 
-        // D5: «Volver» desde la Despensa lleva a Mis Recetas (sin PANTRY duplicado).
-        composeRule.onNodeWithText(localized(R.string.action_back)).performClick()
+        // D5 (adaptado a RF-MOB5 de `mover-opciones-a-bottom-bar`): la Despensa ya no
+        // muestra «Volver» (es destino de primer nivel con barra inferior, sesión 117),
+        // así que la vuelta a Mis Recetas se hace por su pestaña; al volver a la Despensa
+        // la pantalla no está duplicada.
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
+        openPantry()
+        assertEquals(1, composeRule.onAllNodesWithTag(PantryTestTags.SCREEN).fetchSemanticsNodes().size)
+        composeRule.onNodeWithText("Tomate fresco").assertIsDisplayed()
     }
 
     private fun openPantry() {

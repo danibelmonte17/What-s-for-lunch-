@@ -123,6 +123,15 @@
     <string name="difficulty_medium">Media</string>
     <string name="difficulty_hard">Difícil</string>
 
+    <!-- Unidad de Ingredientes e ítems: lista cerrada (RD19); los códigos son
+         iguales en ambos idiomas y la legada vacía se rotula aparte -->
+    <string name="unit_ud">ud</string>
+    <string name="unit_g">g</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_ml">ml</string>
+    <string name="unit_l">l</string>
+    <string name="unit_none">(sin unidad)</string>
+
     <!-- Formulario de alta de Receta -->
     <string name="create_recipe_title">Crear receta</string>
     <string name="create_recipe_edit_title">Editar Receta</string>

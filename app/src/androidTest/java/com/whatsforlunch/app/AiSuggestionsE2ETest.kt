@@ -25,6 +25,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.ai.AiFailureCause
 import com.whatsforlunch.app.data.ai.RecipeAvoidance
 import com.whatsforlunch.app.data.ai.RecipeSuggester
+import com.whatsforlunch.app.data.ai.RecipeSuggestionParser
 import com.whatsforlunch.app.data.ai.RecipeSuggestionsResult
 import com.whatsforlunch.app.data.ai.ScanAnalysisResult
 import com.whatsforlunch.app.data.ai.ScanImageAnalyzer
@@ -42,6 +43,7 @@ import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.suggestion.SuggestableFood
 import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
+import com.whatsforlunch.app.domain.suggestion.SuggestionRules
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsScreen
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsTestTags
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
@@ -474,6 +476,42 @@ class AiSuggestionsE2ETest {
         composeRule.onAllNodesWithText("Borrador").assertCountEquals(0)
         composeRule.onAllNodesWithText("Publicada").assertCountEquals(0)
         composeRule.onAllNodesWithTag("my_recipes_card_status").assertCountEquals(0)
+    }
+
+    // unificar-unidades · verify 3 (S4, D2): el cliente simulado devuelve unidades
+    // desconocidas («gramos»), con espacios (« ML »), vacía y ausente; el parser y
+    // la normalización reales las convierten en unidades del enum cerrado («ud» para
+    // lo desconocido y lo vacío) y así se guarda la Receta al aceptar.
+    @Test
+    fun acceptingNormalizesAiUnitsToTheClosedEnum() {
+        val rawResponse = """{"s":[{"t":"Tarta de manzana","st":"Con unidades raras","mm":"DESSERT",
+            "pm":10,"cm":20,"df":"EASY","bs":4,"kcal":320,
+            "i":[{"n":"Harina","q":200,"u":"gramos"},{"n":"Leche","q":150,"u":" ML "},
+                 {"n":"Huevo","q":2},{"n":"Sal","q":1,"u":""}],
+            "p":[{"t":"Mezcla todo","m":5}]}]}"""
+        val parsed = requireNotNull(RecipeSuggestionParser.parse(rawResponse))
+        val normalized = SuggestionRules.normalize(parsed).single()
+        val recipes = InMemoryRecipeRepository()
+        val suggester = FakeRecipeSuggester(
+            listOf(RecipeSuggestionsResult.Success(listOf(normalized))),
+        )
+        launchSuggestions(
+            pantry = pantryWith(PantryItem("manzana", "Manzana", 3)),
+            suggester = suggester,
+            recipes = recipes,
+        )
+
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.REQUEST).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(AiSuggestionsTestTags.RESULT_LIST)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).performClick()
+
+        val id = SuggestionAcceptance.suggestionRecipeId("Tarta de manzana")
+        composeRule.waitUntil(5_000) { runBlocking { recipes.getRecipe(id) } != null }
+        val saved = runBlocking { recipes.getRecipe(id) }!!
+        assertEquals(listOf("ud", "ml", "ud", "ud"), saved.ingredients.map { it.unit })
     }
 
     // S2 (verify 2 de `aceptar-sugerencia-de-receta`): aceptar dos veces la misma

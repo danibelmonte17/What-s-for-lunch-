@@ -83,6 +83,22 @@ class PincheProposalRulesTest {
         )
     }
 
+    // D2 (unificar-unidades): al materializar la Propuesta la unidad queda
+    // garantizada en el enum cerrado (lo vacío y lo desconocido caen a «ud»).
+    @Test
+    fun proposalToRecipeNormalizesUnitsToTheClosedEnum() {
+        val base = proposal(required = listOf("Tomate", "Harina"))
+        val suggestion = base.copy(
+            ingredients = base.ingredients.mapIndexed { index, ingredient ->
+                ingredient.copy(unit = if (index == 0) "gramos" else "")
+            },
+        )
+
+        val recipe = PincheProposalRules.proposalToRecipe(suggestion)
+
+        assertEquals(listOf("ud", "ud"), recipe.ingredients.map { it.unit })
+    }
+
     private fun proposal(
         required: List<String> = listOf("Tomate"),
         optional: List<String> = emptyList(),

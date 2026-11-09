@@ -53,6 +53,7 @@ import com.whatsforlunch.app.domain.suggestion.SuggestionAcceptance
 import com.whatsforlunch.app.domain.suggestion.SuggestionState
 import com.whatsforlunch.app.domain.suggestion.SuggestionWithMatch
 import com.whatsforlunch.app.ui.components.MatchBadge
+import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import java.text.NumberFormat
@@ -551,7 +552,7 @@ private fun IngredientsSection(ingredients: List<RecipeIngredient>, locale: Loca
         ingredients.forEach { ingredient ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    ingredientLine(ingredient, locale),
+                    ingredientLine(ingredient, locale, unit = unitLabel(ingredient.unit)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -630,14 +631,15 @@ private fun StepsSection(steps: List<RecipeStep>) {
     }
 }
 
-// «cantidad unidad nombre» con el formato decimal del idioma activo.
-private fun ingredientLine(ingredient: RecipeIngredient, locale: Locale): String {
+// «cantidad unidad nombre» con el formato decimal del idioma activo. `unit` llega
+// presentado con `unitLabel` (unificar-unidades, D4).
+private fun ingredientLine(ingredient: RecipeIngredient, locale: Locale, unit: String = ingredient.unit): String {
     val quantity = if (ingredient.quantity > 0.0) {
         NumberFormat.getNumberInstance(locale).format(ingredient.quantity)
     } else {
         ""
     }
-    return listOf(quantity, ingredient.unit, ingredient.name)
+    return listOf(quantity, unit, ingredient.name)
         .filter { it.isNotBlank() }
         .joinToString(" ")
 }

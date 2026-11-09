@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.domain.pinche
 
+import com.whatsforlunch.app.domain.model.IngredientUnit
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeOrigin
@@ -57,7 +58,13 @@ object PincheProposalRules {
             favorite = false,
             origin = RecipeOrigin.SUGGESTION,
             ingredients = proposal.ingredients.mapIndexed { index, ingredient ->
-                ingredient.copy(id = "$id-ingredient-$index")
+                // D2 (unificar-unidades): al materializar la Propuesta la unidad queda
+                // garantizada en el enum cerrado (idempotente con la normalización de
+                // SuggestionRules en la que ya entró al parsear la respuesta).
+                ingredient.copy(
+                    id = "$id-ingredient-$index",
+                    unit = IngredientUnit.normalize(ingredient.unit),
+                )
             },
             steps = proposal.steps.mapIndexed { index, step ->
                 step.copy(id = "$id-step-$index")

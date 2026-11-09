@@ -12,6 +12,7 @@ import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
 import com.whatsforlunch.app.domain.createrecipe.RecipeValidation
 import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.IngredientUnit
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
@@ -171,6 +172,8 @@ class CreateRecipeViewModel(
             ingredients = it.ingredients + IngredientFieldUiState(
                 key = nextKey(),
                 id = UUID.randomUUID().toString(),
+                // D1: las filas nuevas nacen con la unidad «ud» del enum.
+                unit = IngredientUnit.UD.code,
             ),
         )
     }
