@@ -846,9 +846,12 @@
         "E2E: comprobar que la top bar solo muestra Ajustes y que «Recetas con mi Despensa» se abre desde el nuevo botón flotante conservando su icono",
         "E2E: comprobar los textos de la barra y de los botones en español e inglés"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/mover-opciones-a-bottom-bar/informe.md (implementación autoverificada sesión 114, feature-implementer: passing; lint 0 errores/48 warnings, unit 42 suites/305 tests, assembleDebug OK, paridad 319/319 claves + 5/5 plurals; E2E focalizada 7 clases 89/89 verde + 4 clases corregidas 23/23, batería completa 227 = inventario @Test con 225 verdes + 1 flake ajeno (SettingsE2ETest.deletingTheKeyAsksToConfigureItAgainForAiFeatures, pasa en aislamiento, no está en el diff) + 1 omitido por assumeTrue sin AI_API_KEY; comprobaciones manuales adb con 2 capturas 1280×2856)",
+        "docs/validations/mover-opciones-a-bottom-bar.md (validación independiente sesión 115, feature-validator: accept; tier barato re-ejecutado y reproducido — init exit 0, lint 0 errores/48 warnings, unit 42 suites/305 tests/0 fallos, assembleDebug OK, compileDebugAndroidTestKotlin OK, paridad 319/319 claves + 5/5 plurals diff=0; tier caro solo inspeccionado sin drift — E2E focalizada 89/89, batería 227 = 225 verdes + 1 omitido + 1 flake ajeno, capturas 1280×2856; 0 hallazgos Critical/High/Medium, 3 notas Low documentales; seguridad sin hallazgos: sin secretos/PII, sin permisos ni dependencias nuevas, sin llamadas de pago)"
+      ],
       "notes": "Decisiones del usuario (2026-11-07): BottomBar de 4 pestañas en el orden Mis Recetas, Despensa, Lista de la Compra y Pinche («Recetas con mi Despensa» no es pestaña); Ajustes se queda en la top bar; «Recetas con mi Despensa» se mueve con el mismo icono a un segundo botón flotante dentro de Mis Recetas. Cambia el non-goal «bottom navigation» de separar-despensa-y-busqueda-de-recetas (decisión posterior del usuario). Quedan para la spec la permanencia de la bottom bar en los demás destinos y el comportamiento de la pestaña activa. Ampliada a 5 pestañas con «Mi perfil» al final por crear-mi-perfil (sesión 106, decisión posterior del usuario).",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "crear-mi-perfil",

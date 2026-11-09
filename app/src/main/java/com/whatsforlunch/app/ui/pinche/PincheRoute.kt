@@ -11,24 +11,24 @@ import org.koin.androidx.compose.koinViewModel
 // app viaja al prompt de la IA (D12) y «Abrir Ajustes» navega al destino Settings.
 @Composable
 fun PincheRoute(
-    onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollToTopTick: Int = 0,
     viewModel: PincheViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val language = LocalConfiguration.current.locales[0].language
+
     PincheScreen(
         uiState = uiState,
-        onBack = onBack,
         onOpenSettings = onOpenSettings,
         onInputChange = viewModel::onInputChange,
         onSend = { viewModel.send(language) },
         onQuickSuggestion = { text -> viewModel.sendQuickSuggestion(text, language) },
         onRetry = { viewModel.retry(language) },
         onSaveProposal = viewModel::saveProposal,
-        onAddMissingToShoppingList = viewModel::addMissingToShoppingList,
         onClearNotice = viewModel::clearNotice,
+        scrollToTopTick = scrollToTopTick,
         modifier = modifier,
     )
 }

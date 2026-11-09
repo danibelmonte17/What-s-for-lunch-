@@ -12,13 +12,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -35,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -97,7 +99,6 @@ private val PillShape = RoundedCornerShape(50)
 @Composable
 fun PincheScreen(
     uiState: PincheUiState,
-    onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
@@ -107,24 +108,24 @@ fun PincheScreen(
     onClearNotice: () -> Unit,
     modifier: Modifier = Modifier,
     onAddMissingToShoppingList: (String) -> Unit = {},
+    scrollToTopTick: Int = 0,
 ) {
+    // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
+    val messageListState = rememberLazyListState()
+
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) messageListState.animateScrollToItem(0)
+    }
+
     Scaffold(
         modifier = modifier.testTag(PincheTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
+            // RF-MOB5: el Pinche es destino de primer nivel y ya no muestra «Volver».
             TopAppBar(
                 title = { Text(stringResource(R.string.pinche_title)) },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -148,6 +149,7 @@ fun PincheScreen(
                 onQuickSuggestion = onQuickSuggestion,
                 onSaveProposal = onSaveProposal,
                 onAddMissingToShoppingList = onAddMissingToShoppingList,
+                listState = messageListState,
                 modifier = Modifier.weight(1f),
             )
             if (uiState.isSending) {
@@ -170,6 +172,7 @@ private fun MessageList(
     onSaveProposal: (String) -> Unit,
     onAddMissingToShoppingList: (String) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val quickSuggestions = listOf(
@@ -178,6 +181,7 @@ private fun MessageList(
         stringResource(R.string.pinche_quick_3),
     )
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxWidth().testTag(PincheTestTags.MESSAGE_LIST),
         contentPadding = PaddingValues(WarmSpacing.md),
         verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),

@@ -1,10 +1,14 @@
 package com.whatsforlunch.app
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertCountEquals
@@ -43,6 +47,9 @@ import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesViewModel
+import com.whatsforlunch.app.ui.nav.AppBottomBar
+import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
+import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.pinche.PincheScreen
 import com.whatsforlunch.app.ui.pinche.PincheTestTags
 import com.whatsforlunch.app.ui.pinche.PincheViewModel
@@ -157,7 +164,6 @@ class PincheE2ETest {
                     if (showPinche.value) {
                         PincheScreen(
                             uiState = pincheState,
-                            onBack = { showPinche.value = false },
                             onOpenSettings = {},
                             onInputChange = pincheViewModel::onInputChange,
                             onSend = { pincheViewModel.send("es") },
@@ -356,26 +362,36 @@ class PincheE2ETest {
                 LocalConfiguration provides localeContext.resources.configuration,
             ) {
                 WhatsForLunchTheme {
-                    if (showPinche.value) {
-                        PincheScreen(
-                            uiState = pincheState,
-                            onBack = { showPinche.value = false },
-                            onOpenSettings = {},
-                            onInputChange = pincheViewModel::onInputChange,
-                            onSend = { pincheViewModel.send("es") },
-                            onQuickSuggestion = { pincheViewModel.sendQuickSuggestion(it, "es") },
-                            onRetry = { pincheViewModel.retry("es") },
-                            onSaveProposal = pincheViewModel::saveProposal,
-                            onClearNotice = pincheViewModel::clearNotice,
-                        )
-                    } else {
-                        MyRecipesScreen(
-                            uiState = myRecipesState,
-                            onCreateRecipe = {},
-                            onScanPantry = {},
-                            onOpenPinche = { showPinche.value = true },
-                            onSearchQueryChanged = myRecipesViewModel::onSearchQueryChanged,
-                            onMealMomentSelected = myRecipesViewModel::onMealMomentSelected,
+                    // La barra vive fuera de las pantallas (extraída a
+                    // WhatsForLunchApp); el test la monta aquí para seguir
+                    // navegando por pestañas como lo hace la app.
+                    Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.weight(1f)) {
+                            if (showPinche.value) {
+                                PincheScreen(
+                                    uiState = pincheState,
+                                    onOpenSettings = {},
+                                    onInputChange = pincheViewModel::onInputChange,
+                                    onSend = { pincheViewModel.send("es") },
+                                    onQuickSuggestion = { pincheViewModel.sendQuickSuggestion(it, "es") },
+                                    onRetry = { pincheViewModel.retry("es") },
+                                    onSaveProposal = pincheViewModel::saveProposal,
+                                    onClearNotice = pincheViewModel::clearNotice,
+                                )
+                            } else {
+                                MyRecipesScreen(
+                                    uiState = myRecipesState,
+                                    onCreateRecipe = {},
+                                    onScanPantry = {},
+                                    onSearchQueryChanged = myRecipesViewModel::onSearchQueryChanged,
+                                    onMealMomentSelected = myRecipesViewModel::onMealMomentSelected,
+                                )
+                            }
+                        }
+                        AppBottomBar(
+                            selectedTab = if (showPinche.value) AppTab.PINCHE else AppTab.MY_RECIPES,
+                            onTabSelected = { tab -> showPinche.value = tab == AppTab.PINCHE },
+                            onReselect = {},
                         )
                     }
                 }
@@ -385,14 +401,14 @@ class PincheE2ETest {
 
         composeRule.onNodeWithTag(MyRecipesTestTags.SEARCH_FIELD).performTextInput("Arroz")
         composeRule.onNodeWithTag(MyRecipesTestTags.filterChip(MealMoment.LUNCH)).performClick()
-        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PINCHE).performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).performClick()
         dismissKeyboard()
 
         composeRule.onNodeWithTag(PincheTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Hola, soy el Pinche. Pregúntame lo que quieras de cocina.")
             .assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Volver").performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
         assertEquals("Arroz", myRecipesViewModel.uiState.value.searchQuery)
         assertEquals(MealMoment.LUNCH, myRecipesViewModel.uiState.value.mealMomentFilter)
@@ -485,7 +501,6 @@ class PincheE2ETest {
                 WhatsForLunchTheme {
                     PincheScreen(
                         uiState = state,
-                        onBack = {},
                         onOpenSettings = onOpenSettings,
                         onInputChange = viewModel::onInputChange,
                         onSend = { viewModel.send(language) },
