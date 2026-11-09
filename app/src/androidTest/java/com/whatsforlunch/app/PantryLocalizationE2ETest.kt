@@ -77,6 +77,7 @@ class PantryLocalizationE2ETest {
                     PantryScreen(
                         uiState = PantryUiState(items = listOf(PantryItem("test-id", itemName, 2))),
                         onBack = {},
+                        onScanFood = {},
                         onSaveItem = { _, _, _ -> },
                         onDeleteItem = {},
                         onErrorConsumed = {},

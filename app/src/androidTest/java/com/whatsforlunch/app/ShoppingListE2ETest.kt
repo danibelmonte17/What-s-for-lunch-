@@ -70,7 +70,6 @@ import com.whatsforlunch.app.ui.pinche.PincheViewModel
 import com.whatsforlunch.app.ui.recipedetail.RecipeDetailTestTags
 import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.recommendations.RecommendationsTestTags
-import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import com.whatsforlunch.app.ui.shoppinglist.ShoppingListScreen
 import com.whatsforlunch.app.ui.shoppinglist.ShoppingListTestTags
 import com.whatsforlunch.app.ui.shoppinglist.ShoppingListViewModel
@@ -331,16 +330,20 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithText("Para: Paella").assertIsDisplayed()
     }
 
-    // S7: Lista vacía con CTA que abre el Escáner.
+    // S7 (mover-escaneo-a-la-despensa, D2): la Lista vacía ya no ofrece escanear —
+    // sin «Escanear la Despensa» ni ningún acceso al Escáner— y queda solo
+    // «Añadir ítem» como CTA primario.
     @Test
-    fun emptyListShowsTheScanPantryCta() {
+    fun emptyListShowsNoScannerAccessAndOnlyTheAddItemCta() {
         launchFullApp()
         openShoppingList()
 
         composeRule.onNodeWithTag(ShoppingListTestTags.EMPTY).assertIsDisplayed()
         composeRule.onNodeWithText("Tu Lista de la Compra está vacía").assertIsDisplayed()
-        composeRule.onNodeWithTag(ShoppingListTestTags.EMPTY_CTA).performClick()
-        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.EMPTY_CTA).assertCountEquals(0)
+        composeRule.onAllNodesWithText("Escanear la Despensa").assertCountEquals(0)
+        composeRule.onNodeWithTag(ShoppingListTestTags.EMPTY_ADD_CTA).assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).assertIsDisplayed()
     }
 
     // S8: sin Faltantes no hay acción ni línea «Te falta: …».
@@ -1232,7 +1235,6 @@ class ShoppingListE2ETest {
                     ShoppingListScreen(
                         uiState = state,
                         onBack = {},
-                        onScanPantry = {},
                         onDeleteItem = viewModel::deleteItem,
                         onUndoDelete = viewModel::undoDelete,
                         onUndoExpired = viewModel::dismissUndo,

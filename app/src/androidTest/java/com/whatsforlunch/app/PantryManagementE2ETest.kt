@@ -5,7 +5,10 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -21,6 +24,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
+import com.whatsforlunch.app.ui.scanner.ScannerTestTags
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -122,6 +127,69 @@ class PantryManagementE2ETest {
         composeRule.onNodeWithTag(PantryTestTags.DELETE_CONFIRM).performClick()
         composeRule.onNodeWithTag(PantryTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onNodeWithText("Tomate fresco").assertDoesNotExist()
+    }
+
+    // S4 (mover-escaneo-a-la-despensa, D3): el estado vacío de la Despensa replica
+    // los dos FABs — «Escanear alimentos» y «Añadir alimento» — en ese orden.
+    @Test
+    fun emptyStateShowsScanAndAddCtas() {
+        openPantry()
+        composeRule.onNodeWithTag(PantryTestTags.SCAN_FOOD_CTA).assertIsDisplayed()
+        composeRule.onNodeWithTag(PantryTestTags.EMPTY_ADD_CTA).assertIsDisplayed()
+        composeRule.onNodeWithTag(PantryTestTags.SCAN_FOOD).assertIsDisplayed()
+        composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).assertIsDisplayed()
+
+        val scanCtaTop = composeRule.onNodeWithTag(PantryTestTags.SCAN_FOOD_CTA).getUnclippedBoundsInRoot().top
+        val addCtaTop = composeRule.onNodeWithTag(PantryTestTags.EMPTY_ADD_CTA).getUnclippedBoundsInRoot().top
+        assertTrue(scanCtaTop < addCtaTop)
+    }
+
+    // D1 (verify 3): los dos FABs se apilan con «Escanear alimentos» encima y
+    // «Añadir alimento» abajo, junto a la esquina.
+    @Test
+    fun scanFoodFabIsStackedAboveTheAddFoodFab() {
+        openPantry()
+        val scanTop = composeRule.onNodeWithTag(PantryTestTags.SCAN_FOOD).getUnclippedBoundsInRoot().top
+        val addTop = composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).getUnclippedBoundsInRoot().top
+        assertTrue(scanTop < addTop)
+    }
+
+    // S2 (verify 2): el FAB «Escanear alimentos» de la Despensa abre el Escáner.
+    @Test
+    fun scanFoodFabOpensTheScannerFromThePantry() {
+        openPantry()
+        composeRule.onNodeWithTag(PantryTestTags.SCAN_FOOD).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
+    }
+
+    // S2 (verify 2): guardar en el Escáner vuelve a la Despensa con los Alimentos
+    // y no deja la Despensa duplicada en el back stack (D5).
+    @Test
+    fun scannerSaveReturnsToThePantryWithTheSavedFoods() {
+        openPantry()
+        composeRule.onNodeWithTag(PantryTestTags.SCAN_FOOD).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_NAME).performTextInput("Tomate fresco")
+        composeRule.onNodeWithTag(ScannerTestTags.MANUAL_ADD).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(ScannerTestTags.FOOD_ITEM).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(hasTestTag(ScannerTestTags.SAVE).and(isEnabled()))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(ScannerTestTags.SAVE).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(PantryTestTags.ITEM_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
+        composeRule.onNodeWithText("Tomate fresco").assertIsDisplayed()
+
+        // D5: «Volver» desde la Despensa lleva a Mis Recetas (sin PANTRY duplicado).
+        composeRule.onNodeWithText(localized(R.string.action_back)).performClick()
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
     }
 
     private fun openPantry() {

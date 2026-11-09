@@ -69,6 +69,7 @@
     <string name="pantry_title">Despensa</string>
     <string name="pantry_open_accessibility">Despensa</string>
     <string name="pantry_add_food">Añadir alimento</string>
+    <string name="pantry_scan_food">Escanear alimentos</string>
     <string name="pantry_add_title">Añadir alimento</string>
     <string name="pantry_edit_title">Editar alimento</string>
     <string name="pantry_save_changes">Guardar cambios</string>

@@ -621,6 +621,7 @@ class ScanPantryE2ETest {
                         showPantry.value -> PantryScreen(
                             uiState = PantryUiState(items = pantryItems),
                             onBack = { showPantry.value = false },
+                            onScanFood = {},
                             onSaveItem = { _, _, _ -> },
                             onDeleteItem = {},
                             onErrorConsumed = {},

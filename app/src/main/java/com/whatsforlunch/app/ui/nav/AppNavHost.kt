@@ -125,9 +125,14 @@ fun WhatsForLunchApp(
         composable(AppRoutes.SCAN_PANTRY) {
             ScannerRoute(
                 onBack = { navController.popBackStack() },
+                // D5: `launchSingleTop` evita duplicar la Despensa en el back stack
+                // cuando el Escáner se abre desde ella (MY_RECIPES → PANTRY →
+                // SCAN_PANTRY); con la entrada desde Mis Recetas el comportamiento
+                // no cambia.
                 onSaved = {
                     navController.navigate(AppRoutes.PANTRY) {
                         popUpTo(AppRoutes.SCAN_PANTRY) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
             )
@@ -155,16 +160,21 @@ fun WhatsForLunchApp(
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )
         }
-        // RD18: la Lista de la Compra se abre desde la top bar de Mis Recetas y su
-        // estado vacío lleva al Escáner (RF-AFL6/RF-AFL7).
+        // RD18: la Lista de la Compra se abre desde la top bar de Mis Recetas. Su
+        // estado vacío ya no lleva al Escáner: el escaneo vive en la Despensa
+        // (`mover-escaneo-a-la-despensa`, D2).
         composable(AppRoutes.SHOPPING_LIST) {
             ShoppingListRoute(
                 onBack = { navController.popBackStack() },
-                onScanPantry = { navController.navigate(AppRoutes.SCAN_PANTRY) },
             )
         }
+        // La Despensa es donde se escanean los Alimentos (D1): su FAB y su estado
+        // vacío abren el Escáner.
         composable(AppRoutes.PANTRY) {
-            PantryRoute(onBack = { navController.popBackStack() })
+            PantryRoute(
+                onBack = { navController.popBackStack() },
+                onScanFood = { navController.navigate(AppRoutes.SCAN_PANTRY) },
+            )
         }
         composable(AppRoutes.SETTINGS) {
             SettingsRoute(onBack = { navController.popBackStack() })

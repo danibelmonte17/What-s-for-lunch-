@@ -10,7 +10,6 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ShoppingListRoute(
     onBack: () -> Unit,
-    onScanPantry: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ShoppingListViewModel = koinViewModel(),
 ) {
@@ -18,7 +17,6 @@ fun ShoppingListRoute(
     ShoppingListScreen(
         uiState = uiState,
         onBack = onBack,
-        onScanPantry = onScanPantry,
         onDeleteItem = viewModel::deleteItem,
         onUndoDelete = viewModel::undoDelete,
         onUndoExpired = viewModel::dismissUndo,
