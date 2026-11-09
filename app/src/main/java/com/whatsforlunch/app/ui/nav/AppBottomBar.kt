@@ -3,6 +3,7 @@ package com.whatsforlunch.app.ui.nav
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
@@ -31,12 +32,13 @@ object AppBottomBarTestTags {
     const val TAB_PANTRY = "bottom_bar_tab_pantry"
     const val TAB_SHOPPING_LIST = "bottom_bar_tab_shopping_list"
     const val TAB_PINCHE = "bottom_bar_tab_pinche"
+    const val TAB_PROFILE = "bottom_bar_tab_profile"
 }
 
 // Pestañas de la barra inferior en su orden (RF-MOB1, D2/D7/D8): las etiquetas
 // reutilizan las claves de título de cada pantalla y los iconos son los accesos
-// de la antigua top bar. La quinta pestaña («Mi perfil») la añadirá
-// `crear-mi-perfil`; aquí no se deja placeholder.
+// de la antigua top bar. La quinta pestaña («Mi perfil») la añade
+// `crear-mi-perfil` al final, tras Pinche (D4).
 enum class AppTab(
     val route: String,
     @StringRes val labelRes: Int,
@@ -67,9 +69,15 @@ enum class AppTab(
         icon = Icons.AutoMirrored.Outlined.Chat,
         testTag = AppBottomBarTestTags.TAB_PINCHE,
     ),
+    MY_PROFILE(
+        route = AppRoutes.MY_PROFILE,
+        labelRes = R.string.my_profile_title,
+        icon = Icons.Outlined.Person,
+        testTag = AppBottomBarTestTags.TAB_PROFILE,
+    ),
 }
 
-// Barra inferior de navegación común a las cuatro pantallas de pestañas (RF-MOB1,
+// Barra inferior de navegación común a las cinco pantallas de pestañas (RF-MOB1,
 // D1/D6). Tocar la pestaña activa no navega: dispara `onReselect` para que la
 // pantalla actual vuelva al inicio de su contenido (RF-MOB6), sin crear una
 // entrada nueva en el back stack.

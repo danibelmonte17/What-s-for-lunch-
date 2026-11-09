@@ -9,6 +9,8 @@ internal class TestPromptSource(
 
     override fun pincheSystemPrompt(language: String): String = render("pinche_system", language)
 
+    override fun pincheProfilePrompt(language: String): String = render("pinche_profile", language)
+
     override fun suggestionPrompt(language: String): String = render("suggestion", language)
 
     override fun suggestionAvoidPrompt(language: String): String = render("suggestion_avoid", language)

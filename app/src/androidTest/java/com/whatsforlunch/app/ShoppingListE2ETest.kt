@@ -47,16 +47,19 @@ import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.data.repository.InMemoryUserProfileRepository
 import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.data.repository.RoomShoppingListRepository
 import com.whatsforlunch.app.domain.model.Aisle
 import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStep
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
@@ -277,6 +280,14 @@ class ShoppingListE2ETest {
             InMemoryRecipeRepository(),
             ShoppingFakePincheClient(listOf(PincheReplyResult.Success(PincheReply("Prueba esto.", proposal())))),
             shoppingList,
+            // Perfil completo: sin partes pendientes la IA sí responde (RD26).
+            InMemoryUserProfileRepository(
+                UserProfile(
+                    allergies = listOf("Frutos secos"),
+                    intolerancesNone = true,
+                    dietType = DietType.OMNIVORE,
+                ),
+            ),
         )
         launchPinche(viewModel)
 
@@ -397,6 +408,7 @@ class ShoppingListE2ETest {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
             .allowMainThreadQueries()
             .build()
@@ -467,6 +479,7 @@ class ShoppingListE2ETest {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
             .allowMainThreadQueries()
             .build()
@@ -489,6 +502,7 @@ class ShoppingListE2ETest {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
                 .allowMainThreadQueries()
                 .build()
@@ -519,6 +533,7 @@ class ShoppingListE2ETest {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
                 .allowMainThreadQueries()
                 .build()
@@ -1380,7 +1395,11 @@ class ShoppingListE2ETest {
         private val results: List<PincheReplyResult>,
     ) : PincheChatClient {
         private var calls = 0
-        override suspend fun reply(turns: List<PincheTurn>, language: String): PincheReplyResult {
+        override suspend fun reply(
+            turns: List<PincheTurn>,
+            language: String,
+            profile: UserProfile,
+        ): PincheReplyResult {
             if (results.isEmpty()) return PincheReplyResult.Success(PincheReply(text = "ok"))
             return results[minOf(calls++, results.lastIndex)]
         }

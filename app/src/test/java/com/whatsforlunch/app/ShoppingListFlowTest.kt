@@ -5,11 +5,14 @@ import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.data.repository.InMemoryUserProfileRepository
 import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStep
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
@@ -65,6 +68,10 @@ class ShoppingListFlowTest {
                 PincheReplyResult.Success(PincheReply("Prueba esto.", proposal())),
             ),
             shoppingListRepository = shoppingList,
+            // Perfil completo: sin partes pendientes la IA sí responde (RD26).
+            userProfileRepository = InMemoryUserProfileRepository(
+                UserProfile(allergies = listOf("Frutos secos"), intolerancesNone = true, dietType = DietType.OMNIVORE),
+            ),
         )
 
         pinche.onInputChange("Dame una receta")
@@ -123,6 +130,10 @@ class ShoppingListFlowTest {
     private class FakePincheChatClient(
         private val result: PincheReplyResult,
     ) : PincheChatClient {
-        override suspend fun reply(turns: List<PincheTurn>, language: String): PincheReplyResult = result
+        override suspend fun reply(
+            turns: List<PincheTurn>,
+            language: String,
+            profile: UserProfile,
+        ): PincheReplyResult = result
     }
 }

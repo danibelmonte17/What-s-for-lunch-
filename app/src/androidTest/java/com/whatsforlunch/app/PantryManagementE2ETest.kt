@@ -1,5 +1,6 @@
 package com.whatsforlunch.app
 
+import android.content.res.Configuration
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -19,9 +20,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextClearance
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.data.settings.AppLocaleController
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
@@ -31,6 +34,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.GlobalContext
 
 @RunWith(AndroidJUnit4::class)
 class PantryManagementE2ETest {
@@ -188,8 +192,12 @@ class PantryManagementE2ETest {
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Tomate fresco").assertIsDisplayed()
 
-        // D5: «Volver» desde la Despensa lleva a Mis Recetas (sin PANTRY duplicado).
-        composeRule.onNodeWithText(localized(R.string.action_back)).performClick()
+        // RF-MOB4/D1: la Despensa ya no muestra «Volver» (es pestaña, `e8c5730`);
+        // el back del sistema vuelve a Mis Recetas sin dejar la Despensa
+        // duplicada en el back stack. Paso reparado en `crear-mi-perfil` (2026-11-09)
+        // por ser un resto del merge 9dacc87: la afirmación esperaba un botón
+        // retirado y fallaba en cualquier entorno.
+        Espresso.pressBack()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
     }
 
@@ -198,8 +206,17 @@ class PantryManagementE2ETest {
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
     }
 
-    private fun localized(resourceId: Int, vararg arguments: Any): String =
-        InstrumentationRegistry.getInstrumentation().targetContext.getString(resourceId, *arguments)
+    // El idioma efectivo de la app es el de AppLocaleController (Ajustes), no el
+    // del dispositivo: los textos esperados se resuelven en ese idioma para no
+    // depender del locale del AVD.
+    private fun localized(resourceId: Int, vararg arguments: Any): String {
+        val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val language = GlobalContext.get().get<AppLocaleController>().language.value
+        val context = baseContext.createConfigurationContext(
+            Configuration(baseContext.resources.configuration).apply { setLocale(language.locale) },
+        )
+        return context.getString(resourceId, *arguments)
+    }
 
     private fun addItem(name: String) {
         composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).performClick()

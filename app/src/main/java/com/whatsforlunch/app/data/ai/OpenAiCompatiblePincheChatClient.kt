@@ -3,6 +3,7 @@ package com.whatsforlunch.app.data.ai
 import android.util.Log
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
@@ -37,11 +38,15 @@ class OpenAiCompatiblePincheChatClient(
 
     private val endpoint = AiEndpoints.chatCompletions(baseUrl)
 
-    override suspend fun reply(turns: List<PincheTurn>, language: String): PincheReplyResult {
+    override suspend fun reply(
+        turns: List<PincheTurn>,
+        language: String,
+        profile: UserProfile,
+    ): PincheReplyResult {
         if (turns.isEmpty()) return PincheReplyResult.Failed
         val key = aiKeyProvider.apiKey() ?: return PincheReplyResult.MissingApiKey
         return withContext(Dispatchers.IO) {
-            runCatching { converse(turns, language, key) }
+            runCatching { converse(turns, language, profile, key) }
                 .getOrElse { exception ->
                     if (exception is CancellationException) throw exception
                     Log.w(TAG, "Turn failed: ${exception.describe()}")
@@ -53,14 +58,20 @@ class OpenAiCompatiblePincheChatClient(
     private suspend fun converse(
         turns: List<PincheTurn>,
         language: String,
+        profile: UserProfile,
         key: String,
     ): PincheReplyResult {
         val startedAt = System.nanoTime()
+        // D6 (`crear-mi-perfil`): el perfil completo viaja como bloque del system
+        // prompt, localizado y con las secciones marcadas «No tengo ninguna» como
+        // «ninguna»; sin tool `get_profile` (non-goal).
+        val systemPrompt = promptSource.pincheSystemPrompt(language) + "\n\n" +
+            renderProfilePrompt(promptSource.pincheProfilePrompt(language), profile, language)
         val messages = JSONArray()
             .put(
                 JSONObject()
                     .put("role", "system")
-                    .put("content", promptSource.pincheSystemPrompt(language)),
+                    .put("content", systemPrompt),
             )
         turns.forEach { turn ->
             messages.put(

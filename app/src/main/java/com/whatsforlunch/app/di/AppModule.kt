@@ -29,14 +29,17 @@ import com.whatsforlunch.app.data.photo.FilePhotoStore
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.data.repository.RoomShoppingListRepository
+import com.whatsforlunch.app.data.repository.RoomUserProfileRepository
 import com.whatsforlunch.app.data.settings.AppLocaleController
 import com.whatsforlunch.app.data.settings.LanguagePreferenceStore
 import com.whatsforlunch.app.data.settings.SharedPrefsLanguagePreferenceStore
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
+import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModel
 import com.whatsforlunch.app.ui.cookmode.CookModeViewModel
+import com.whatsforlunch.app.ui.myprofile.MyProfileViewModel
 import com.whatsforlunch.app.ui.pantry.PantryViewModel
 import com.whatsforlunch.app.ui.recommendations.RecommendationsViewModel
 import com.whatsforlunch.app.ui.scanner.ScannerViewModel
@@ -62,15 +65,19 @@ val appModule = module {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
             .build()
     }
     single { get<RecipeDatabase>().recipeDao() }
     single { get<RecipeDatabase>().pantryItemDao() }
     single { get<RecipeDatabase>().shoppingListDao() }
+    single { get<RecipeDatabase>().profileDao() }
     single<RecipeRepository> { RoomRecipeRepository(get(), get()) }
     single<PantryRepository> { RoomPantryRepository(get()) }
     single<ShoppingListRepository> { RoomShoppingListRepository(get(), get()) }
+    // Perfil del usuario (`crear-mi-perfil`, D1): una única fila en Room.
+    single<UserProfileRepository> { RoomUserProfileRepository(get()) }
     single<PhotoStore> { FilePhotoStore(androidContext()) }
 
     // La respuesta de los modelos generativos (con razonamiento activado) puede tardar
@@ -121,8 +128,10 @@ val appModule = module {
     viewModel { ScannerViewModel(get(), get()) }
     viewModel { RecommendationsViewModel(get(), get(), get()) }
     viewModel { AiSuggestionsViewModel(get(), get(), get(), get()) }
-    viewModel { PincheViewModel(get(), get(), get(), get()) }
+    viewModel { PincheViewModel(get(), get(), get(), get(), get()) }
     viewModel { ShoppingListViewModel(get()) }
+    // «Mi perfil» (`crear-mi-perfil`): mutaciones vía UserProfileRules.
+    viewModel { MyProfileViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank(), get()) }
     // El id de la Receta llega por ruta (recipe_detail/{recipeId}, RF-DR1).
     viewModel { parameters ->
