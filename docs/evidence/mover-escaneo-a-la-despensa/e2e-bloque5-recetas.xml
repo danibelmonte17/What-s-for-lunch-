@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.CreateRecipeE2ETest" tests="44" failures="0" errors="0" skipped="0" time="550.841" timestamp="2026-11-08T13:32:59" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="stepIngredientsDialogAssignsIngredientsToStep" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="26.633" />
+  <testcase name="formShowsPrototypeBlocksAndControls" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="7.758" />
+  <testcase name="headerHasNoSaveActionAndDockSaves" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="14.658" />
+  <testcase name="addAndRemoveIngredientRows" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="10.169" />
+  <testcase name="takePhotoWithDeniedPermissionShowsNotice" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="7.462" />
+  <testcase name="saveActionShowsOnlyItsLabel" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="7.471" />
+  <testcase name="blockingErrorsAreLocalizedInEnglish" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="8.394" />
+  <testcase name="stepIngredientsTextsAreLocalizedInEnglish" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="26.239" />
+  <testcase name="saveWithPhotoSavesRecipe" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="17.589" />
+  <testcase name="stepIngredientsControlIsHiddenWithoutIngredientRows" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="13.375" />
+  <testcase name="favoriteToggleFlipsState" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="7.67" />
+  <testcase name="editAndRemoveStepRows" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="12.37" />
+  <testcase name="generatedPhotoCanBeAcceptedOrDiscarded" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="8.191" />
+  <testcase name="generatePhotoWithoutApiKeyShowsNotice" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="7.344" />
+  <testcase name="invalidAiResponseShowsItsOwnNoticeAndKeepsManualPhotoOptions" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="6.856" />
+  <testcase name="invalidIngredientRowsAreListedAsBlockingRequirement" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="8.975" />
+  <testcase name="newFormPreselectsLunch" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="7.167" />
+  <testcase name="saveWithoutIngredientIsBlocked" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="9.587" />
+  <testcase name="generationFailureShowsNoticeAndKeepsManualOptions" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="15.181" />
+  <testcase name="saveWithoutPhotoSavesRecipe" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="17.89" />
+  <testcase name="saveIsBlockedWithoutTitle" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="10.275" />
+  <testcase name="saveIsDisabledUntilRequirementsAreMet" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="14.811" />
+  <testcase name="removingIngredientRowClearsItsStepLinks" classname="com.whatsforlunch.app.CreateRecipeE2ETest" time="45.634" />
+  <testcase name="editingKeepsStepIngredientLinks" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="11.023" />
+  <testcase name="editingHasNoHeaderSaveActionAndDockSaves" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="11.596" />
+  <testcase name="headerSaveIsAbsentWhileSaveIsDisabled" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="8.208" />
+  <testcase name="savingChangesKeepsIdAndOrigin" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="12.029" />
+  <testcase name="photolessRecipeEditsAndSavesWithoutPhoto" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="10.011" />
+  <testcase name="editingWithoutRequirementsBlocksSavingChanges" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="17.605" />
+  <testcase name="editTextsAreLocalizedInEnglish" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="9.903" />
+  <testcase name="cardEditActionIsLocalizedInEnglish" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="8.467" />
+  <testcase name="cardEditActionRequestsEditingWithRecipeId" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="10.254" />
+  <testcase name="recipeWithoutLinksCanBeLinkedWithoutNewRequirements" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="14.636" />
+  <testcase name="editingPreloadsRecipeFieldsAndSingleSaveDock" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="9.898" />
+  <testcase name="closingWithoutSavingDiscardsChanges" classname="com.whatsforlunch.app.EditRecipeE2ETest" time="12.171" />
+  <testcase name="deleteDialogAndActionAreLocalizedInEnglish" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="13.95" />
+  <testcase name="cancellingDeleteKeepsRecipe" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="10.648" />
+  <testcase name="confirmingDeleteRemovesRecipePermanentlyAndShowsEmptyState" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="11.832" />
+  <testcase name="pressingBackDismissesDialogWithoutDeletingRecipe" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="12.063" />
+  <testcase name="storageFailureShowsErrorAndKeepsRecipeVisible" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="11.777" />
+  <testcase name="recipeWithPhotoDeletesItsStoredPhotoFile" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="9.053" />
+  <testcase name="deleteActionHasAccessibleNameAndMeetsFooterSizeRequirements" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="7.753" />
+  <testcase name="confirmingRecipeAlreadyRemovedClosesDialogWithoutError" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="10.01" />
+  <testcase name="storageFailureMessageIsLocalizedInEnglish" classname="com.whatsforlunch.app.DeleteRecipeE2ETest" time="12.357" />
+</testsuite>

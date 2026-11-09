@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.AiSuggestionsE2ETest" tests="35" failures="0" errors="0" skipped="1" time="341.928" timestamp="2026-11-08T12:58:56" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="failureNoticeCanBeDismissed" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="5.077" />
+  <testcase name="pantryRecipesButtonOpensSelectionWithChipsAndPantryPreselected" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="4.914" />
+  <testcase name="suggestionsAreListedWithClientMatchIngredientsAndSteps" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="4.149" />
+  <testcase name="acceptingTheSameSuggestionTwiceDoesNotDuplicateTheRecipe" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="3.172" />
+  <testcase name="emptyAnswerShowsEmptyStateWithRetry" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="4.476" />
+  <testcase name="discardingKeepsTheCardWithDisabledActionsAndSavesNothing" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="4.658" />
+  <testcase name="acceptingAndDiscardingAreLocalizedInEnglish" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="45.189" />
+  <testcase name="missingApiKeyAsksToConfigureItAndOpensSettings" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="9.597" />
+  <testcase name="failureNoticeIsLocalizedInEnglish" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="9.147" />
+  <testcase name="acceptingSavesTheSuggestionAsARecipeVisibleInMyRecipes" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="8.487" />
+  <testcase name="mixedStatesCoexistAndANewListStartsEverySuggestionAsProposed" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="10.993" />
+  <testcase name="onlyExistingRecipesAboveSixtyPercentAreSentToThePrompt" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="8.282" />
+  <testcase name="suggestionsScreenIsLocalizedInEnglish" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="6.018" />
+  <testcase name="requestIsDisabledWhenEveryFoodIsDeselected" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="10.441" />
+  <testcase name="failureShowsNoticeAndRetryListsSuggestions" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="7.032" />
+  <testcase name="optionalIngredientsDoNotChangeTheMatch" classname="com.whatsforlunch.app.AiSuggestionsE2ETest" time="9.287" />
+  <testcase name="firstLaunchFollowsEnglishSystemLanguage" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="9.012" />
+  <testcase name="firstLaunchFallsBackToSpanishForOtherSystemLanguages" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="6.6" />
+  <testcase name="voiceLocaleFollowsAppLanguage" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="11.086" />
+  <testcase name="switchingToEnglishUpdatesAllScreensWithoutRestart" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="7.278" />
+  <testcase name="aiSuggestionRequestUsesEnglishWhenAppIsInEnglish" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="9.847" />
+  <testcase name="selectionSurvivesAppRestart" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="9.151" />
+  <testcase name="aiSuggestionRequestUsesSpanishWhenAppIsInSpanish" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="9.111" />
+  <testcase name="switchingBackToSpanishRestoresAllTexts" classname="com.whatsforlunch.app.LanguageSwitchE2ETest" time="9.755" />
+  <testcase name="createRecipeOpensFormAndReturns" classname="com.whatsforlunch.app.MyRecipesLocalizationE2ETest" time="9.528" />
+  <testcase name="spanishEmptyStateShowsSpanishTexts" classname="com.whatsforlunch.app.MyRecipesLocalizationE2ETest" time="8.343" />
+  <testcase name="scanPantryOpensProvisionalScannerAndReturns" classname="com.whatsforlunch.app.MyRecipesLocalizationE2ETest" time="10.481" />
+  <testcase name="englishDestinationsShowEnglishTexts" classname="com.whatsforlunch.app.MyRecipesLocalizationE2ETest" time="9.993" />
+  <testcase name="unsupportedLocaleFallsBackToSpanish" classname="com.whatsforlunch.app.MyRecipesLocalizationE2ETest" time="8.494" />
+  <testcase name="englishEmptyStateShowsEnglishTexts" classname="com.whatsforlunch.app.MyRecipesLocalizationE2ETest" time="9.123" />
+  <testcase name="savedKeyMarksConfiguredAndNeverRevealsTheKeyWhenReturning" classname="com.whatsforlunch.app.SettingsE2ETest" time="10.031" />
+  <testcase name="buildProvidedKeyShowsConfiguredNoteAndHidesDelete" classname="com.whatsforlunch.app.SettingsE2ETest" time="9.103">
+    <skipped />
+  </testcase>
+  <testcase name="settingsOpensFromMyRecipesAndShowsPrivacyNotice" classname="com.whatsforlunch.app.SettingsE2ETest" time="9.438" />
+  <testcase name="deletingTheKeyAsksToConfigureItAgainForAiFeatures" classname="com.whatsforlunch.app.SettingsE2ETest" time="21.532" />
+  <testcase name="settingsAndPrivacyNoticeAreLocalizedInEnglish" classname="com.whatsforlunch.app.SettingsE2ETest" time="9.437" />
+</testsuite>

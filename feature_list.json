@@ -900,9 +900,17 @@
         "E2E: abrir la Despensa y comprobar que «Escanear alimentos» abre el Escáner y que, tras guardar los Alimentos, se vuelve a la Despensa con ellos en el listado",
         "E2E: comprobar el orden de los elementos de ambas pantallas y sus textos en español e inglés"
       ],
-      "evidence": [],
+      "evidence": [
+        "Validación independiente (feature-validator con subagente, 2026-11-09): veredicto accept; informe en docs/validations/mover-escaneo-a-la-despensa.md (tier barato re-ejecutado: init.ps1 exit 0, lintDebug --rerun-tasks 0 errores/49 warnings, testDebugUnitTest --rerun-tasks 42 suites/305 tests/0 fallos, assembleDebug OK, paridad 323/323+5/5; tier caro inspeccionado: focalizada 61/61, batería 224/0/0/1 reconciliada en 7 XMLs, 3 capturas PNG 1280×2856 y dumps verify3; 0 hallazgos Critical/High/Medium, seguridad sin hallazgos)",
+        "Autoverificación (feature-implementer, 2026-11-08/09): informe en docs/evidence/mover-escaneo-a-la-despensa/informe.md con gates, E2E, batería y comprobación manual de verify 3 (orden y textos es/en, D1–D3)",
+        "E2E focalizada (2026-11-09, emulador Pixel_10_Pro): ShoppingListE2ETest + PantryManagementE2ETest + ScanPantryE2ETest = 61 tests / 0 fallos / 0 omitidos (verify 1 y verify 2); XML en docs/evidence/mover-escaneo-a-la-despensa/e2e-focalizada.xml",
+        "Batería E2E completa por bloques (reconciliada con el inventario de 224 @Test en 25 ficheros/27 clases): 224 tests / 0 fallos / 0 errores / 1 omitido (SettingsE2ETest Assume por ausencia de AI_API_KEY en local.properties); 7 XMLs en docs/evidence/mover-escaneo-a-la-despensa/",
+        "Gates: lintDebug 0 errores/49 warnings (línea base), testDebugUnitTest 42 suites/305 tests/0 fallos, assembleDebug OK; paridad es/en 323/323 claves + 5/5 plurales (nueva línea base con pantry_scan_food)",
+        "Comprobación manual verify 3 (orden y textos es/en, D1–D3) con adb/uiautomator: Lista vacía solo con «Añadir ítem», Despensa vacía con «Escanear alimentos» primero y Despensa con alimento con los FABs apilados («Escanear alimentos» encima)",
+        "3 capturas 1280×2856 es-ES: lista-compra-vacia-es.png, despensa-vacia-es.png y despensa-con-alimento-es.png (más dumps verify3-*.xml) en docs/evidence/mover-escaneo-a-la-despensa/"
+      ],
       "notes": "Decisiones del usuario (2026-11-07): la entrada al Escáner en la Despensa es un segundo FAB junto a «Añadir alimento»; los accesos al Escáner de Mis Recetas (FAB de cámara y botón del estado vacío «Escanear la Despensa») se mantienen sin cambios; el reordenado se limita a lo necesario en la Lista de la Compra y la Despensa, sin tocar la top bar de Mis Recetas. Quedan para la spec: el orden exacto de los dos FABs de la Despensa, el contenido final del estado vacío de la Lista (hoy «Escanear la Despensa» + «Añadir ítem») y la coordinación con mover-opciones-a-bottom-bar si esa feature se implementa antes.",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "eliminar-estado-de-borrador-y-filtrar-favoritos",

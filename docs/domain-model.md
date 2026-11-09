@@ -176,7 +176,7 @@ Transiciones prohibidas: ninguna Receta se elimina sin confirmación (RD04); nin
 | Receta creada por la IA o legada de la v3 | Pasos sin vínculos; se pueden asignar editando (RD21) |
 | Referencia huérfana al cargar (id de Ingrediente inexistente) | Se descarta sin error (RD21) |
 | Escalar Raciones | Sin efecto sobre los vínculos: no contienen cantidades (RD21) |
-| Lista de la Compra vacía | Estado vacío con CTA para escanear la Despensa y «Añadir ítem» (RD19) |
+| Lista de la Compra vacía | Estado vacío solo con «Añadir ítem» (RD19); el acceso al Escáner vive en la Despensa (D2 de `mover-escaneo-a-la-despensa`) |
 | Alta manual con un nombre que ya está en la Lista | Upsert por nombre normalizado: se edita el ítem existente reemplazando cantidad, unidad y Pasillo y conservando nombre, fuentes y badge (RD19); nunca se crea una fila duplicada |
 | Nombre vacío o solo espacios al guardar un ítem a mano | Error «Escribe un nombre» en el diálogo, que sigue abierto; no se guarda nada (RD19) |
 | Cantidad manual no numérica, 0 o negativa | Error «Escribe una cantidad válida» en el diálogo, que sigue abierto; no se guarda nada (RD19) |
