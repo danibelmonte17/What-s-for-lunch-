@@ -1,0 +1,5 @@
+User profile set in "My profile": always respect their restrictions in your answers and in any recipe proposal.
+Diet type: {DIET_TYPE}
+Allergies: {ALLERGIES}
+Intolerances or medical conditions that limit the diet: {INTOLERANCES}
+Never propose ingredients listed as allergies or intolerances and adapt the recipe to the diet type.

@@ -215,7 +215,7 @@
     <string name="settings_language_spanish">Español</string>
     <string name="settings_language_english">English</string>
     <string name="settings_privacy_title">Privacidad y datos</string>
-    <string name="settings_privacy_notice" tools:ignore="Typos">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner se envían a DevExpert Inference únicamente para analizarlas, no se almacenan en el dispositivo y el proveedor no las retiene. Puedes controlar el gasto en tu panel de DevExpert Inference. Con «Voz» activa en el Modo Cocina, el micrófono capta tus comandos de voz y el servicio de voz del sistema los procesa para reconocerlos (puede usar la red según el proveedor del dispositivo); la app no guarda audio ni transcripciones y la voz no funciona en segundo plano.</string>
+    <string name="settings_privacy_notice" tools:ignore="Typos">Tu API key se guarda cifrada en este dispositivo y solo se usa para llamar a DevExpert Inference desde él. Las fotos del Escáner se envían a DevExpert Inference únicamente para analizarlas, no se almacenan en el dispositivo y el proveedor no las retiene. Puedes controlar el gasto en tu panel de DevExpert Inference. Con «Voz» activa en el Modo Cocina, el micrófono capta tus comandos de voz y el servicio de voz del sistema los procesa para reconocerlos (puede usar la red según el proveedor del dispositivo); la app no guarda audio ni transcripciones y la voz no funciona en segundo plano. Tus restricciones dietéticas y tu tipo de alimentación (datos de salud) se envían al proveedor de IA cuando chateas con el Pinche.</string>
 
     <!-- Escáner de la Despensa -->
     <string name="scanner_title">Escáner de la Despensa</string>
@@ -356,4 +356,24 @@
     <string name="recommendations_add_missing">Añadir faltantes de %1$s a la Lista de la Compra</string>
     <string name="pinche_add_missing">Añadir faltantes a la Lista de la Compra</string>
     <string name="pinche_added_missing">Añadido a la Lista de la Compra</string>
+    <string name="pinche_profile_request">Para responder necesito tu perfil: %1$s. Complétalo en «Mi perfil».</string>
+    <string name="pinche_profile_open">Abrir Mi perfil</string>
+
+    <!-- Mi perfil (crear-mi-perfil) -->
+    <string name="my_profile_title">Mi perfil</string>
+    <string name="my_profile_allergies_title">Alergias</string>
+    <string name="my_profile_allergies_hint">Ej. Frutos secos</string>
+    <string name="my_profile_intolerances_title">Intolerancias o enfermedades que limitan la dieta</string>
+    <string name="my_profile_intolerances_hint">Ej. Diabetes</string>
+    <string name="my_profile_diet_title">Tipo de alimentación</string>
+    <string name="my_profile_diet_omnivore">Omnívora</string>
+    <string name="my_profile_diet_pescetarian">Pescetariana</string>
+    <string name="my_profile_diet_vegetarian">Vegetariana</string>
+    <string name="my_profile_diet_vegan">Vegana</string>
+    <string name="my_profile_diet_ketogenic">Cetogénica</string>
+    <string name="my_profile_add">Añadir</string>
+    <string name="my_profile_edit">Editar</string>
+    <string name="my_profile_edit_done">Listo</string>
+    <string name="my_profile_none">No tengo ninguna</string>
+    <string name="my_profile_remove_chip">Eliminar «%1$s»</string>
 </resources>

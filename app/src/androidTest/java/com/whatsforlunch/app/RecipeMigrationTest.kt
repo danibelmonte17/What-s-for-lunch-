@@ -9,6 +9,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
+import com.whatsforlunch.app.data.repository.RoomUserProfileRepository
+import com.whatsforlunch.app.domain.model.DietType
+import com.whatsforlunch.app.domain.model.UserProfile
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -42,6 +46,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
             .allowMainThreadQueries()
             .build()
@@ -119,6 +124,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_2_3,
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
             )
             .allowMainThreadQueries()
             .build()
@@ -148,6 +154,153 @@ class RecipeMigrationTest {
             room.close()
             context.deleteDatabase(name)
         }
+    }
+
+    // `crear-mi-perfil` (D1/RD25): una base v5 gana las tablas del perfil
+    // (`profile` y `profile_restrictions`) sin tocar los datos existentes, y el
+    // perfil se escribe y se lee con su orden de alta tras la migración.
+    @Test
+    fun migrationFromV5CreatesProfileTablesAndKeepsRecipeData() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "recipe-migration-5-6.db"
+        context.deleteDatabase(name)
+        createLegacyV5Database(context, name)
+
+        val room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
+            )
+            .allowMainThreadQueries()
+            .build()
+        try {
+            // Esquema exacto de las tablas nuevas.
+            val profileColumns = buildList {
+                val cursor = room.query("PRAGMA table_info(`profile`)", null)
+                while (cursor.moveToNext()) add(cursor.getString(1))
+                cursor.close()
+            }
+            assertEquals(listOf("id", "dietType", "allergiesNone", "intolerancesNone"), profileColumns)
+            val restrictionColumns = buildList {
+                val cursor = room.query("PRAGMA table_info(`profile_restrictions`)", null)
+                while (cursor.moveToNext()) add(cursor.getString(1))
+                cursor.close()
+            }
+            assertEquals(listOf("id", "section", "value"), restrictionColumns)
+
+            // Los datos de la v5 siguen intactos.
+            val recipeCursor = room.query("SELECT title FROM recipes", null)
+            assertTrue(recipeCursor.moveToFirst())
+            assertEquals("Tortilla", recipeCursor.getString(0))
+            recipeCursor.close()
+
+            // Escritura y lectura del perfil sobre la base migrada (RD25/D1).
+            val repository = RoomUserProfileRepository(room.profileDao())
+            runBlocking {
+                assertEquals(UserProfile.empty, repository.observeProfile().first())
+
+                repository.save(
+                    UserProfile(
+                        allergies = listOf("Frutos secos", "Marisco"),
+                        intolerances = listOf("Diabetes"),
+                        dietType = DietType.VEGAN,
+                    ),
+                )
+                val loaded = repository.observeProfile().first()
+                assertEquals(listOf("Frutos secos", "Marisco"), loaded.allergies)
+                assertEquals(listOf("Diabetes"), loaded.intolerances)
+                assertEquals(DietType.VEGAN, loaded.dietType)
+            }
+        } finally {
+            room.close()
+            context.deleteDatabase(name)
+        }
+    }
+
+    // Esquema exacto de Room v5: como v4 pero `recipes` sin `status` (MIGRATION_4_5).
+    private fun createLegacyV5Database(context: android.content.Context, name: String) {
+        val helper = FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(name)
+                .callback(object : SupportSQLiteOpenHelper.Callback(5) {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        createV5Schema(db)
+                        db.execSQL("PRAGMA user_version = 5")
+                    }
+
+                    override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+                })
+                .build(),
+        )
+        val db = helper.writableDatabase
+        db.execSQL(
+            "INSERT INTO recipes VALUES " +
+                "('mig5-1', 'Tortilla', '', 'LUNCH', 10, 15, 'EASY', 4, NULL, NULL, 1, 'USER')",
+        )
+        db.execSQL("INSERT INTO ingredients VALUES (1, 'mig5-1', 'Patata', 700.0, 'g', 0, 0, 'mig5-1-ingredient-0')")
+        db.execSQL("INSERT INTO steps VALUES (1, 'mig5-1', 'Pochar', 5, 0, 'mig5-1-ingredient-0')")
+        db.close()
+        helper.close()
+    }
+
+    private fun createV5Schema(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recipes` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, " +
+                "`story` TEXT NOT NULL, `mealMoment` TEXT NOT NULL, `prepMinutes` INTEGER NOT NULL, " +
+                "`cookMinutes` INTEGER NOT NULL, `difficulty` TEXT NOT NULL, " +
+                "`baseServings` INTEGER NOT NULL, `caloriesPerServing` INTEGER, `photoPath` TEXT, " +
+                "`favorite` INTEGER NOT NULL, `origin` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ingredients` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` TEXT NOT NULL, `name` TEXT NOT NULL, `quantity` REAL NOT NULL, " +
+                "`unit` TEXT NOT NULL, `optional` INTEGER NOT NULL, `position` INTEGER NOT NULL, " +
+                "`domainId` TEXT NOT NULL, " +
+                "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_ingredients_recipeId` ON `ingredients` (`recipeId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `steps` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` TEXT NOT NULL, `text` TEXT NOT NULL, `timerMinutes` INTEGER, " +
+                "`position` INTEGER NOT NULL, `ingredientIds` TEXT NOT NULL, " +
+                "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_steps_recipeId` ON `steps` (`recipeId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `pantry_items` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                "`normalizedName` TEXT NOT NULL, `quantity` REAL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_pantry_items_normalizedName` " +
+                "ON `pantry_items` (`normalizedName`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_items` " +
+                "(`id` TEXT NOT NULL, `name` TEXT NOT NULL, `normalizedName` TEXT NOT NULL, " +
+                "`quantity` REAL, `unit` TEXT NOT NULL, `aisle` TEXT, " +
+                "`completed` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_shopping_items_normalizedName` " +
+                "ON `shopping_items` (`normalizedName`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_item_sources` " +
+                "(`itemId` TEXT NOT NULL, `sourceKey` TEXT NOT NULL, `sourceTitle` TEXT NOT NULL, " +
+                "PRIMARY KEY(`itemId`, `sourceKey`), " +
+                "FOREIGN KEY(`itemId`) REFERENCES `shopping_items`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_shopping_item_sources_itemId` " +
+                "ON `shopping_item_sources` (`itemId`)",
+        )
     }
 
     // Esquema exacto de Room v4: como v3 pero con `domainId` en Ingredientes y

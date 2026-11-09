@@ -5,14 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.whatsforlunch.app.data.ai.PincheChatClient
 import com.whatsforlunch.app.data.ai.PincheChatProtocol
 import com.whatsforlunch.app.data.ai.PincheReplyResult
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheProposal
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.pinche.PincheTurn
+import com.whatsforlunch.app.domain.profile.PendingProfilePart
+import com.whatsforlunch.app.domain.profile.UserProfileRules
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
+import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
@@ -33,7 +37,9 @@ enum class PincheNotice {
 }
 
 // Mensaje en memoria de la conversación (D2). Una respuesta del asistente puede
-// llevar como máximo una Propuesta válida (D7) y su estado de guardado (D9).
+// llevar como máximo una Propuesta válida (D7) y su estado de guardado (D9). Con
+// `profileRequest` el asistente pide las partes del perfil que faltan antes de
+// responder (`crear-mi-perfil`, RD26/D5): no viaja al modelo (texto en blanco).
 data class PincheMessage(
     val id: String = UUID.randomUUID().toString(),
     val author: PincheAuthor,
@@ -42,6 +48,8 @@ data class PincheMessage(
     val proposalState: PincheProposalState = PincheProposalState.PROPOSED,
     // RF-AFL4: estado en memoria de la Ficha, como «Guardada en Mis Recetas».
     val addedToList: Boolean = false,
+    // Partes del perfil pendientes de este mensaje de petición (vacío en el resto).
+    val profileRequest: List<PendingProfilePart> = emptyList(),
 )
 
 data class PincheUiState(
@@ -59,12 +67,17 @@ data class PincheUiState(
  * una tanda al puerto con los últimos 20 turnos. La Ficha se calcula al recibir la
  * respuesta con un snapshot de la Despensa (D8) y guardar crea un Borrador con id
  * estable mediante upsert (RD16). Los fallos nunca congelan la pantalla.
+ *
+ * Con el perfil del usuario incompleto el envío no llega al modelo: se añade un
+ * mensaje del asistente que pide solo las partes pendientes (RD26/D5) y la
+ * llamada se retoma cuando el perfil está completo.
  */
 class PincheViewModel(
     private val pantryRepository: PantryRepository,
     private val recipeRepository: RecipeRepository,
     private val pincheChatClient: PincheChatClient,
     private val shoppingListRepository: ShoppingListRepository,
+    private val userProfileRepository: UserProfileRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PincheUiState())
@@ -186,6 +199,23 @@ class PincheViewModel(
 
     private fun runRequest(language: String) {
         viewModelScope.launch {
+            val profile = currentProfile()
+            // RD26/D5 (`crear-mi-perfil`): con partes del perfil pendientes el
+            // Pinche **no llama a la IA**: pide solo lo que falta y no responde a
+            // la pregunta hasta que el perfil esté completo.
+            val pending = UserProfileRules.pendingParts(profile)
+            if (pending.isNotEmpty()) {
+                _uiState.value = _uiState.value.copy(
+                    messages = _uiState.value.messages + PincheMessage(
+                        author = PincheAuthor.ASSISTANT,
+                        text = "",
+                        profileRequest = pending,
+                    ),
+                    isSending = false,
+                    notice = null,
+                )
+                return@launch
+            }
             val turns = _uiState.value.messages
                 .filter { it.text.isNotBlank() }
                 .map { message ->
@@ -196,7 +226,7 @@ class PincheViewModel(
                 }
                 .takeLast(MAX_CONTEXT_MESSAGES)
             val result = try {
-                pincheChatClient.reply(turns, language)
+                pincheChatClient.reply(turns, language, profile)
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
@@ -216,6 +246,10 @@ class PincheViewModel(
             }
         }
     }
+
+    /** Perfil vigente; si la lectura falla se asume vacío (todo pendiente). */
+    private suspend fun currentProfile(): UserProfile =
+        runCatching { userProfileRepository.observeProfile().first() }.getOrDefault(UserProfile.empty)
 
     private suspend fun onSuccess(text: String, proposal: RecipeSuggestion?) {
         if (text.isBlank() && proposal == null) {

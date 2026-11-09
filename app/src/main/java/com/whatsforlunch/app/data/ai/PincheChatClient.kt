@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.data.ai
 
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 
@@ -13,8 +14,9 @@ sealed interface PincheReplyResult {
 }
 
 // Puerto de conversación del Pinche (RD17). Recibe solo los turnos que el usuario y
-// el asistente ya intercambiaron en memoria y el idioma de la app (D12); el cliente
-// decide cuándo ejecutar las dos funciones de solo lectura.
+// el asistente ya intercambiaron en memoria, el idioma de la app (D12) y el perfil
+// completo del usuario (`crear-mi-perfil`, D6: viaja en el system prompt); el
+// cliente decide cuándo ejecutar las dos funciones de solo lectura.
 interface PincheChatClient {
-    suspend fun reply(turns: List<PincheTurn>, language: String): PincheReplyResult
+    suspend fun reply(turns: List<PincheTurn>, language: String, profile: UserProfile): PincheReplyResult
 }

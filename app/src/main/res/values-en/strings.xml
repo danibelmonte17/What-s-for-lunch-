@@ -215,7 +215,7 @@
     <string name="settings_language_spanish">Español</string>
     <string name="settings_language_english">English</string>
     <string name="settings_privacy_title">Privacy and data</string>
-    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos are sent to DevExpert Inference only for analysis, are not stored on the device and are not retained by the provider. You can control spending in your DevExpert Inference dashboard. With “Voice” on in Cooking Mode, the microphone captures your voice commands and the device speech service processes them to recognize them (it may use the network depending on the device provider); the app stores no audio or transcripts and voice does not work in the background.</string>
+    <string name="settings_privacy_notice">Your API key is stored encrypted on this device and is only used to call DevExpert Inference from it. Scanner photos are sent to DevExpert Inference only for analysis, are not stored on the device and are not retained by the provider. You can control spending in your DevExpert Inference dashboard. With “Voice” on in Cooking Mode, the microphone captures your voice commands and the device speech service processes them to recognize them (it may use the network depending on the device provider); the app stores no audio or transcripts and voice does not work in the background. Your dietary restrictions and diet type (health data) are sent to the AI provider when you chat with the Pinche.</string>
 
     <!-- Pantry scanner -->
     <string name="scanner_title">Pantry Scanner</string>
@@ -356,4 +356,24 @@
     <string name="recommendations_add_missing">Add %1$s missing ingredients to the Shopping List</string>
     <string name="pinche_add_missing">Add missing items to the Shopping List</string>
     <string name="pinche_added_missing">Added to the Shopping List</string>
+    <string name="pinche_profile_request">To answer I need your profile: %1$s. Complete it in “My profile”.</string>
+    <string name="pinche_profile_open">Open My profile</string>
+
+    <!-- My profile (crear-mi-perfil) -->
+    <string name="my_profile_title">My profile</string>
+    <string name="my_profile_allergies_title">Allergies</string>
+    <string name="my_profile_allergies_hint">e.g. Tree nuts</string>
+    <string name="my_profile_intolerances_title">Intolerances or medical conditions that limit your diet</string>
+    <string name="my_profile_intolerances_hint">e.g. Diabetes</string>
+    <string name="my_profile_diet_title">Diet type</string>
+    <string name="my_profile_diet_omnivore">Omnivore</string>
+    <string name="my_profile_diet_pescetarian">Pescetarian</string>
+    <string name="my_profile_diet_vegetarian">Vegetarian</string>
+    <string name="my_profile_diet_vegan">Vegan</string>
+    <string name="my_profile_diet_ketogenic">Ketogenic</string>
+    <string name="my_profile_add">Add</string>
+    <string name="my_profile_edit">Edit</string>
+    <string name="my_profile_edit_done">Done</string>
+    <string name="my_profile_none">I don\'t have any</string>
+    <string name="my_profile_remove_chip">Remove “%1$s”</string>
 </resources>
