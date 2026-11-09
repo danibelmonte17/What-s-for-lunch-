@@ -23,6 +23,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import com.whatsforlunch.app.ui.scanner.ScannerTestTags
 import org.junit.Assert.assertTrue
@@ -43,7 +44,7 @@ class PantryManagementE2ETest {
 
     @Test
     fun opensPantryFromMyRecipesAndShowsEmptyState() {
-        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY).assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).assertIsDisplayed().performClick()
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithTag(PantryTestTags.EMPTY_TITLE).assertIsDisplayed()
         composeRule.onNodeWithTag(PantryTestTags.EMPTY_MESSAGE).assertIsDisplayed()
@@ -193,7 +194,7 @@ class PantryManagementE2ETest {
     }
 
     private fun openPantry() {
-        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY).performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).performClick()
         composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
     }
 

@@ -66,7 +66,6 @@
 
     <!-- Pantry -->
     <string name="pantry_title">Pantry</string>
-    <string name="pantry_open_accessibility">Pantry</string>
     <string name="pantry_add_food">Add food</string>
     <string name="pantry_scan_food">Scan foods</string>
     <string name="pantry_add_title">Add food</string>
@@ -282,7 +281,6 @@
     <string name="ai_suggestions_state_discarded">Discarded</string>
     <string name="ai_suggestions_accepted_notice">Saved to My Recipes</string>
     <string name="pinche_title">Pinche</string>
-    <string name="pinche_open_accessibility">Open the Pinche</string>
     <string name="pinche_you">You</string>
     <string name="pinche_greeting">Hi, I’m the Pinche. Ask me anything about cooking.</string>
     <string name="pinche_quick_1">What can I cook with what I have?</string>
@@ -307,7 +305,6 @@
     <string name="pinche_timer_minutes">%1$d min</string>
     <string name="pinche_notice_dismiss">Dismiss notice</string>
     <string name="pinche_message_accessibility">Message from %1$s</string>
-    <string name="action_open_shopping_list">Shopping List</string>
     <string name="shopping_list_title">Shopping List</string>
     <string name="shopping_list_item_line">%1$s (%2$s)</string>
     <string name="shopping_list_item_deleted">Item removed</string>

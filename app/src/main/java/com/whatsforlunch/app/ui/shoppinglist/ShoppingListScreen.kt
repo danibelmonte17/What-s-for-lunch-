@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -93,7 +94,6 @@ import java.util.Locale
 // Identificadores estables para las pruebas instrumentadas (E2E) de la Lista.
 object ShoppingListTestTags {
     const val SCREEN = "shopping_list_screen"
-    const val BACK = "shopping_list_back"
     const val TITLE = "shopping_list_title"
     const val LIST = "shopping_list_items"
     const val ITEM = "shopping_list_item"
@@ -151,7 +151,6 @@ private const val COMPLETED_ROW_ALPHA = 0.6f
 @Composable
 fun ShoppingListScreen(
     uiState: ShoppingListUiState,
-    onBack: () -> Unit,
     onDeleteItem: (String) -> Unit,
     onUndoDelete: () -> Unit,
     onUndoExpired: () -> Unit,
@@ -163,12 +162,15 @@ fun ShoppingListScreen(
     onSetGroupMode: (ShoppingGroupMode) -> Unit,
     onClearCompleted: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollToTopTick: Int = 0,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.shopping_list_item_deleted)
     val completedRemovedMessage = stringResource(R.string.shopping_list_items_removed)
     val undoLabel = stringResource(R.string.shopping_list_undo)
     val pendingUndo = uiState.pendingUndo
+    // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
+    val itemListState = rememberLazyListState()
 
     LaunchedEffect(pendingUndo) {
         if (pendingUndo == null) return@LaunchedEffect
@@ -182,27 +184,24 @@ fun ShoppingListScreen(
             onUndoExpired()
         }
     }
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) itemListState.animateScrollToItem(0)
+    }
 
     Scaffold(
         modifier = modifier.testTag(ShoppingListTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
+            // RF-MOB5: la Lista de la Compra es destino de primer nivel y ya no
+            // muestra «Volver»; conserva sus acciones propias.
             TopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.shopping_list_title),
                         modifier = Modifier.testTag(ShoppingListTestTags.TITLE),
                     )
-                },
-                navigationIcon = {
-                    TextButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .heightIn(min = 48.dp)
-                            .testTag(ShoppingListTestTags.BACK),
-                    ) {
-                        Text(stringResource(R.string.action_back))
-                    }
                 },
                 actions = {
                     // RF-AGL7 (D7): «Limpiar comprados» solo aparece cuando hay
@@ -228,6 +227,7 @@ fun ShoppingListScreen(
                 ),
             )
         },
+
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onAddItem,
@@ -275,6 +275,7 @@ fun ShoppingListScreen(
                         .padding(top = WarmSpacing.md),
                 )
                 LazyColumn(
+                    state = itemListState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = WarmSpacing.md)

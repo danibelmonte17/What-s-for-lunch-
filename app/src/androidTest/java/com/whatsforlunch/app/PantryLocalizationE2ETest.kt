@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -32,7 +33,7 @@ class PantryLocalizationE2ETest {
     @Test
     fun pantryCopyIsLocalizedAndRowActionsMeetTouchTargetRequirement() {
         setPantry(Locale.ENGLISH, "Tomato")
-        composeRule.onNodeWithText("Pantry").assertIsDisplayed()
+        composeRule.onNodeWithTag(PantryTestTags.TOP_BAR_TITLE).assertTextEquals("Pantry")
         composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).assertIsDisplayed()
         val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
         val editAction = composeRule.onNodeWithTag(PantryTestTags.editItem("test-id"))
@@ -76,7 +77,6 @@ class PantryLocalizationE2ETest {
                 WhatsForLunchTheme {
                     PantryScreen(
                         uiState = PantryUiState(items = listOf(PantryItem("test-id", itemName, 2))),
-                        onBack = {},
                         onScanFood = {},
                         onSaveItem = { _, _, _ -> },
                         onDeleteItem = {},

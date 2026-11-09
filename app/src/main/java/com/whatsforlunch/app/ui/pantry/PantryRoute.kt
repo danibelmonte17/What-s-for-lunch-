@@ -7,18 +7,18 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun PantryRoute(
-    onBack: () -> Unit,
     onScanFood: () -> Unit,
+    scrollToTopTick: Int = 0,
     viewModel: PantryViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     PantryScreen(
         uiState = uiState,
-        onBack = onBack,
         onScanFood = onScanFood,
         onSaveItem = viewModel::saveItem,
         onDeleteItem = viewModel::deleteItem,
         onErrorConsumed = viewModel::clearError,
         onSaveCompletedConsumed = viewModel::clearSaveCompleted,
+        scrollToTopTick = scrollToTopTick,
     )
 }

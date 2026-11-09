@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -59,10 +60,10 @@ import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
-import com.whatsforlunch.app.ui.theme.warmShadow
 
 object PantryTestTags {
     const val SCREEN = "pantry_screen"
+    const val TOP_BAR_TITLE = "pantry_top_bar_title"
     const val EMPTY_TITLE = "pantry_empty_title"
     const val EMPTY_MESSAGE = "pantry_empty_message"
     const val ADD_ITEM = "pantry_add_item"
@@ -98,13 +99,13 @@ object PantryTestTags {
 @Composable
 fun PantryScreen(
     uiState: PantryUiState,
-    onBack: () -> Unit,
     onScanFood: () -> Unit,
     onSaveItem: (String?, String, Int) -> Unit,
     onDeleteItem: (String) -> Unit,
     onErrorConsumed: () -> Unit,
     onSaveCompletedConsumed: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollToTopTick: Int = 0,
 ) {
     var itemToEdit by remember { mutableStateOf<PantryItem?>(null) }
     var itemToDelete by remember { mutableStateOf<PantryItem?>(null) }
@@ -112,6 +113,8 @@ fun PantryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val deleteErrorMessage = stringResource(R.string.pantry_delete_error)
     val saveErrorMessage = stringResource(R.string.pantry_save_error)
+    // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
+    val itemListState = rememberLazyListState()
 
     LaunchedEffect(uiState.saveError) {
         if (uiState.saveError == PantrySaveError.DeleteFailed || uiState.saveError == PantrySaveError.SaveFailed) {
@@ -132,18 +135,24 @@ fun PantryScreen(
             onSaveCompletedConsumed()
         }
     }
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) itemListState.animateScrollToItem(0)
+    }
 
     Scaffold(
         modifier = modifier.testTag(PantryTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
+            // RF-MOB5: la Despensa es destino de primer nivel y ya no muestra «Volver».
             TopAppBar(
-                title = { Text(stringResource(R.string.pantry_title)) },
-                navigationIcon = {
-                    TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.action_back))
-                    }
+                title = {
+                    Text(
+                        stringResource(R.string.pantry_title),
+                        modifier = Modifier.testTag(PantryTestTags.TOP_BAR_TITLE),
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -220,6 +229,7 @@ fun PantryScreen(
             }
         } else {
             LazyColumn(
+                state = itemListState,
                 modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = WarmSpacing.md)
                     .testTag(PantryTestTags.ITEM_LIST),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = WarmSpacing.md),
@@ -276,10 +286,10 @@ private fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () ->
     Surface(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        modifier = Modifier.fillMaxWidth().warmShadow(shape).testTag(PantryTestTags.ITEM_CARD),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm).testTag(PantryTestTags.ITEM_CARD),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.sm, bottom = WarmSpacing.sm),
+            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {

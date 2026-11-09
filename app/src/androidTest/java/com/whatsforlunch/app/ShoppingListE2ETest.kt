@@ -63,6 +63,7 @@ import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
 import com.whatsforlunch.app.ui.pinche.PincheScreen
 import com.whatsforlunch.app.ui.pinche.PincheTestTags
@@ -1093,7 +1094,7 @@ class ShoppingListE2ETest {
         composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).performClick()
         composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_RECIPE).assertIsOn()
 
-        composeRule.onNodeWithTag(ShoppingListTestTags.BACK).performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(MyRecipesTestTags.SCREEN).fetchSemanticsNodes().isNotEmpty()
         }
@@ -1202,7 +1203,7 @@ class ShoppingListE2ETest {
     }
 
     private fun openShoppingList() {
-        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_SHOPPING_LIST).performClick()
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST).performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(ShoppingListTestTags.SCREEN)
                 .fetchSemanticsNodes().isNotEmpty()
@@ -1234,7 +1235,6 @@ class ShoppingListE2ETest {
                 WhatsForLunchTheme {
                     ShoppingListScreen(
                         uiState = state,
-                        onBack = {},
                         onDeleteItem = viewModel::deleteItem,
                         onUndoDelete = viewModel::undoDelete,
                         onUndoExpired = viewModel::dismissUndo,
@@ -1268,7 +1268,6 @@ class ShoppingListE2ETest {
                 WhatsForLunchTheme {
                     PincheScreen(
                         uiState = state,
-                        onBack = {},
                         onOpenSettings = {},
                         onInputChange = viewModel::onInputChange,
                         onSend = { viewModel.send("es") },
