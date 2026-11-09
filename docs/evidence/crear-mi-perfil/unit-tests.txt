@@ -1,0 +1,15 @@
+testDebugUnitTest — 2026-11-09 (feature crear-mi-perfil)
+=========================================================
+Resultado: 44 suites / 327 tests / 0 fallos / 0 errores (línea base: 42 suites / 305 tests)
+
+Suites nuevas y ampliadas de esta feature:
+  com.whatsforlunch.app.domain.profile.UserProfileRulesTest   tests=11 failures=0   (nueva)
+  com.whatsforlunch.app.ui.myprofile.MyProfileViewModelTest   tests=6  failures=0   (nueva)
+  com.whatsforlunch.app.ui.pinche.PincheViewModelTest         tests=17 failures=0   (13 -> 17, +4 de gating RD26)
+  com.whatsforlunch.app.data.ai.PromptAssetsTest              tests=6  failures=0   (5 -> 6, +1 bloque de perfil)
+
+Inventario de tests instrumentados (recuento propio con git grep):
+  HEAD: 231 @Test  ->  trabajo: 240 @Test  (+9: MyProfileE2ETest 7, PincheE2ETest 1, RecipeMigrationTest 1)
+  27 ficheros / 31 clases en app/src/androidTest
+
+Comandos: ./unit.ps1 (envuelve testDebugUnitTest) -> exit 0
