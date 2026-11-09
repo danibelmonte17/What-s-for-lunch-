@@ -36,7 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -56,14 +56,11 @@ import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheProposal
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
-import com.whatsforlunch.app.ui.nav.AppBottomBar
-import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
 import java.text.NumberFormat
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 // Identificadores estables de la pantalla del Pinche (E2E).
 object PincheTestTags {
@@ -110,12 +107,17 @@ fun PincheScreen(
     onSaveProposal: (String) -> Unit,
     onClearNotice: () -> Unit,
     modifier: Modifier = Modifier,
-    onTabSelected: (AppTab) -> Unit = {},
     onAddMissingToShoppingList: (String) -> Unit = {},
+    scrollToTopTick: Int = 0,
 ) {
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
     val messageListState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
+
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) messageListState.animateScrollToItem(0)
+    }
 
     Scaffold(
         modifier = modifier.testTag(PincheTestTags.SCREEN),
@@ -128,13 +130,6 @@ fun PincheScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
-            )
-        },
-        bottomBar = {
-            AppBottomBar(
-                selectedTab = AppTab.PINCHE,
-                onTabSelected = onTabSelected,
-                onReselect = { coroutineScope.launch { messageListState.animateScrollToItem(0) } },
             )
         },
     ) { innerPadding ->

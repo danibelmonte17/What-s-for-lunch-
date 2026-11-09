@@ -56,7 +56,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,8 +84,6 @@ import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import com.whatsforlunch.app.domain.shoppinglist.aisleKey
 import com.whatsforlunch.app.ui.components.SkilletIcon
-import com.whatsforlunch.app.ui.nav.AppBottomBar
-import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
@@ -94,7 +91,6 @@ import com.whatsforlunch.app.ui.theme.warmShadow
 import java.math.BigDecimal
 import java.text.DecimalFormatSymbols
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 // Identificadores estables para las pruebas instrumentadas (E2E) de la Lista.
 object ShoppingListTestTags {
@@ -168,7 +164,7 @@ fun ShoppingListScreen(
     onSetGroupMode: (ShoppingGroupMode) -> Unit,
     onClearCompleted: () -> Unit,
     modifier: Modifier = Modifier,
-    onTabSelected: (AppTab) -> Unit = {},
+    scrollToTopTick: Int = 0,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.shopping_list_item_deleted)
@@ -177,7 +173,6 @@ fun ShoppingListScreen(
     val pendingUndo = uiState.pendingUndo
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
     val itemListState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(pendingUndo) {
         if (pendingUndo == null) return@LaunchedEffect
@@ -190,6 +185,11 @@ fun ShoppingListScreen(
         } else {
             onUndoExpired()
         }
+    }
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) itemListState.animateScrollToItem(0)
     }
 
     Scaffold(
@@ -229,13 +229,7 @@ fun ShoppingListScreen(
                 ),
             )
         },
-        bottomBar = {
-            AppBottomBar(
-                selectedTab = AppTab.SHOPPING_LIST,
-                onTabSelected = onTabSelected,
-                onReselect = { coroutineScope.launch { itemListState.animateScrollToItem(0) } },
-            )
-        },
+
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onAddItem,

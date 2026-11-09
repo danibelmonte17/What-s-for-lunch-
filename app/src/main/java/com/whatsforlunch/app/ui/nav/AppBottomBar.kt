@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -69,8 +70,9 @@ enum class AppTab(
 }
 
 // Barra inferior de navegación común a las cuatro pantallas de pestañas (RF-MOB1,
-// D1/D6). Tocar la pestaña activa no navega: vuelve al inicio de esa pantalla
-// mediante `onReselect` (RF-MOB6), sin crear una entrada nueva en el back stack.
+// D1/D6). Tocar la pestaña activa no navega: dispara `onReselect` para que la
+// pantalla actual vuelva al inicio de su contenido (RF-MOB6), sin crear una
+// entrada nueva en el back stack.
 @Composable
 fun AppBottomBar(
     selectedTab: AppTab,
@@ -102,11 +104,14 @@ fun AppBottomBar(
                     )
                 },
                 alwaysShowLabel = true,
+                // RF-MOB6: la pestaña activa solo tinta icono y texto en el
+                // color primary; sin fondo ni indicador pastilla.
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     selectedTextColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = Color.Transparent,
                 ),
                 modifier = Modifier.testTag(tab.testTag),
             )

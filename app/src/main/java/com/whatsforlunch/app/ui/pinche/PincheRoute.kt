@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.whatsforlunch.app.ui.nav.AppTab
 import org.koin.androidx.compose.koinViewModel
 
 // Une el ViewModel (MVVM + StateFlow) con la pantalla sin estado. El idioma de la
@@ -14,11 +13,12 @@ import org.koin.androidx.compose.koinViewModel
 fun PincheRoute(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    onTabSelected: (AppTab) -> Unit = {},
+    scrollToTopTick: Int = 0,
     viewModel: PincheViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val language = LocalConfiguration.current.locales[0].language
+
     PincheScreen(
         uiState = uiState,
         onOpenSettings = onOpenSettings,
@@ -27,9 +27,8 @@ fun PincheRoute(
         onQuickSuggestion = { text -> viewModel.sendQuickSuggestion(text, language) },
         onRetry = { viewModel.retry(language) },
         onSaveProposal = viewModel::saveProposal,
-        onAddMissingToShoppingList = viewModel::addMissingToShoppingList,
         onClearNotice = viewModel::clearNotice,
-        onTabSelected = onTabSelected,
+        scrollToTopTick = scrollToTopTick,
         modifier = modifier,
     )
 }

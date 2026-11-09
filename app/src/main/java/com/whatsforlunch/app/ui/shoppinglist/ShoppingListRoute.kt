@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.whatsforlunch.app.ui.nav.AppTab
 import org.koin.androidx.compose.koinViewModel
 
 // Une el ViewModel (MVVM + StateFlow) con la pantalla sin estado.
@@ -12,7 +11,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ShoppingListRoute(
     onScanPantry: () -> Unit,
     modifier: Modifier = Modifier,
-    onTabSelected: (AppTab) -> Unit = {},
+    scrollToTopTick: Int = 0,
     viewModel: ShoppingListViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -29,7 +28,7 @@ fun ShoppingListRoute(
         onToggleCompleted = viewModel::toggleCompleted,
         onSetGroupMode = viewModel::setGroupMode,
         onClearCompleted = viewModel::clearCompleted,
-        onTabSelected = onTabSelected,
+        scrollToTopTick = scrollToTopTick,
         modifier = modifier,
     )
 }

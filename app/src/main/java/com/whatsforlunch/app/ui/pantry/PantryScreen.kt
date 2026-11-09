@@ -44,7 +44,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,12 +56,8 @@ import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
-import com.whatsforlunch.app.ui.nav.AppBottomBar
-import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
-import com.whatsforlunch.app.ui.theme.warmShadow
-import kotlinx.coroutines.launch
 
 object PantryTestTags {
     const val SCREEN = "pantry_screen"
@@ -104,7 +99,7 @@ fun PantryScreen(
     onErrorConsumed: () -> Unit,
     onSaveCompletedConsumed: () -> Unit,
     modifier: Modifier = Modifier,
-    onTabSelected: (AppTab) -> Unit = {},
+    scrollToTopTick: Int = 0,
 ) {
     var itemToEdit by remember { mutableStateOf<PantryItem?>(null) }
     var itemToDelete by remember { mutableStateOf<PantryItem?>(null) }
@@ -114,7 +109,6 @@ fun PantryScreen(
     val saveErrorMessage = stringResource(R.string.pantry_save_error)
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
     val itemListState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.saveError) {
         if (uiState.saveError == PantrySaveError.DeleteFailed || uiState.saveError == PantrySaveError.SaveFailed) {
@@ -135,6 +129,11 @@ fun PantryScreen(
             onSaveCompletedConsumed()
         }
     }
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) itemListState.animateScrollToItem(0)
+    }
 
     Scaffold(
         modifier = modifier.testTag(PantryTestTags.SCREEN),
@@ -153,13 +152,6 @@ fun PantryScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
-            )
-        },
-        bottomBar = {
-            AppBottomBar(
-                selectedTab = AppTab.PANTRY,
-                onTabSelected = onTabSelected,
-                onReselect = { coroutineScope.launch { itemListState.animateScrollToItem(0) } },
             )
         },
         floatingActionButton = {
@@ -265,10 +257,10 @@ private fun PantryItemCard(item: PantryItem, onEdit: () -> Unit, onDelete: () ->
     Surface(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        modifier = Modifier.fillMaxWidth().warmShadow(shape).testTag(PantryTestTags.ITEM_CARD),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = WarmSpacing.md, vertical = WarmSpacing.sm).testTag(PantryTestTags.ITEM_CARD),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs, top = WarmSpacing.sm, bottom = WarmSpacing.sm),
+            modifier = Modifier.fillMaxWidth().padding(start = WarmSpacing.md, end = WarmSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {

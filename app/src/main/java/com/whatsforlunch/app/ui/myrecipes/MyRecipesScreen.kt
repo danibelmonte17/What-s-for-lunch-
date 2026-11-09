@@ -63,7 +63,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -93,12 +92,9 @@ import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.MomentBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
-import com.whatsforlunch.app.ui.nav.AppBottomBar
-import com.whatsforlunch.app.ui.nav.AppTab
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
-import kotlinx.coroutines.launch
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
 object MyRecipesTestTags {
@@ -158,7 +154,7 @@ fun MyRecipesScreen(
     onOpenRecipe: (String) -> Unit = {},
     onOpenPantryRecipes: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
-    onTabSelected: (AppTab) -> Unit = {},
+    scrollToTopTick: Int = 0,
     onSearchQueryChanged: (String) -> Unit = {},
     onMealMomentSelected: (MealMoment?) -> Unit = {},
     onFavoriteFilterToggle: () -> Unit = {},
@@ -171,13 +167,17 @@ fun MyRecipesScreen(
     val deleteErrorMessage = stringResource(R.string.my_recipes_delete_error)
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
     val recipeListState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.deleteError) {
         if (uiState.deleteError) {
             snackbarHostState.showSnackbar(deleteErrorMessage)
             onDeleteErrorConsumed()
         }
+    }
+    // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
+    // valor inicial no desplaza nada.
+    LaunchedEffect(scrollToTopTick) {
+        if (scrollToTopTick > 0) recipeListState.animateScrollToItem(0)
     }
 
     Scaffold(
@@ -209,13 +209,6 @@ fun MyRecipesScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
-            )
-        },
-        bottomBar = {
-            AppBottomBar(
-                selectedTab = AppTab.MY_RECIPES,
-                onTabSelected = onTabSelected,
-                onReselect = { coroutineScope.launch { recipeListState.animateScrollToItem(0) } },
             )
         },
         floatingActionButton = {
