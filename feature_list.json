@@ -993,6 +993,33 @@
       "evidence": [],
       "notes": "Decisiones del usuario (2026-11-08): (D1) reloj = TimePicker de Material 3 en modo entrada, usado igual en Tiempo de preparación y en el temporizador de Pasos; (D2) «Detalles de cocina» en dos bloques —fila Tiempo+Raciones y Nivel en horizontal debajo—; (D3) tiempo de cocción eliminado en profundidad (modelo/Room con migración/Detalle/tarjetas/IA); (D4) unidades con desplegable en el formulario y en la Lista de la Compra, enum reutilizado para mostrar y unidades legadas fuera del enum como texto; (D5) se elimina el concepto de ingrediente opcional completo (el checkbox de la fila era «Opcional», no un check de preselección). Quedan para la spec: versión y test de migración de Room, límites y formato del reloj como duración (24 h, «sin temporizador»), qué hacer con cookMinutes y unidades llegadas de la IA y el alcance de las enmiendas en specs aceptadas. Fuera de alcance: recalcular o migrar unidades existentes, y tocar el Modo Cocina salvo por la lectura de unidades y la pérdida de la distinción obligatorio/opcional.",
       "status": "not_started"
+    },
+    {
+      "id": "rellenar-perfil-con-el-pinche",
+      "area": "funcional",
+      "title": "Rellenar Mi perfil conversando con el Pinche",
+      "user_visible_behavior": "Cuando el Pinche necesita el perfil para responder, en lugar de bloquear pide en el chat —una pregunta a la vez y solo por las partes que faltan (Alergias, Intolerancias o enfermedades, Tipo de alimentación)— y va guardando cada respuesta en «Mi perfil»; en cuanto el perfil queda completo responde a la pregunta original. Si la IA no está disponible, se muestra el mensaje actual de las partes pendientes con la acción «Abrir Mi perfil».",
+      "depends_on": [
+        "crear-mi-perfil",
+        "resolver-dudas-con-pinche"
+      ],
+      "steps": [
+        "Sustituir el bloqueo de RD26 en el Pinche: con partes pendientes se llama a la IA con el system prompt actual más las partes pendientes y la instrucción de preguntar de una en una y no recomendar hasta tener el perfil completo",
+        "Añadir una única función de escritura `save_profile` al protocolo del Pinche con las chips de Alergias e Intolerancias, sus marcas «No tengo ninguna» y el tipo de alimentación (enum), conservando intactas las dos funciones de solo lectura actuales",
+        "Ejecutar la función en la app validando con `UserProfileRules` (chip no vacía, sin duplicados por sección, exclusividad «No tengo ninguna», tipo de alimentación conocido) y persistiendo con `UserProfileRepository`, devolviendo al modelo exactamente lo guardado o el error para que se corrija",
+        "Mantener la conversación de la entrevista en los turns del contexto y responder a la pregunta original en cuanto `pendingParts` quede vacío",
+        "Conservar el mensaje estático actual de las partes pendientes con «Abrir Mi perfil» como degradación cuando falte la API key o falle la llamada",
+        "Actualizar la línea roja S08 de docs/build-brief.md (hoy «dos funciones de solo lectura» → más una función de escritura acotada al perfil) y los docs durables: RD26 en docs/domain-model.md, RK03 en docs/risks-and-open-questions.md y las specs afectadas"
+      ],
+      "verification": [
+        "E2E: con el cliente de IA simulado y el perfil vacío, enviar un mensaje al Pinche y comprobar que pregunta las partes pendientes de una en una sin recomendar nada, que con las respuestas el perfil queda guardado en «Mi perfil» y que la respuesta final respeta ese perfil",
+        "E2E: con el perfil a medio completar, comprobar que solo pide lo que sigue faltando y que las respuestas ya guardadas no se pierden",
+        "E2E: sin API key o con fallo del proveedor, comprobar que aparece el mensaje de las partes pendientes con «Abrir Mi perfil» y que desde esa pantalla se puede completar el perfil",
+        "Unit: `save_profile` aplica `UserProfileRules` (chip vacía o duplicada rechazada, exclusividad «No tengo ninguna», tipo de alimentación desconocido rechazado) y `pendingParts` deja de estar pendiente al completarse"
+      ],
+      "evidence": [],
+      "notes": "Decisión del usuario (2026-11-09): el Pinche pregunta en el chat, una respuesta a la vez, los temas del perfil que necesita rellenar antes de recomendar algo y el modelo rellena esos datos por el usuario. Nueva feature (no se reabre crear-mi-perfil): modifica su comportamiento aceptado (RD26/D8, «no se llama a la IA con el perfil incompleto») sin reescribir su spec ni su evidencia histórica; su spec y sus notas quedan enmendadas desde esta entrada. Cambia la línea roja S08 de docs/build-brief.md, que hay que actualizar en el mismo cambio. Sin cambios de esquema de Room (se reescribe la fila única del perfil). Quedan para la spec: guardado directo por el tool con resumen visible vs confirmación previa del usuario antes de persistir (datos de salud), el tope de vueltas HTTP de la entrevista (MAX_HTTP_CALLS), el idioma en que se guardan las chips de texto libre (sin traducir) y el mapeo del tipo de alimentación al enum con rechazo de valores desconocidos.",
+      "status": "not_started"
     }
   ]
 }
