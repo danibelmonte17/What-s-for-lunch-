@@ -1,5 +1,6 @@
 package com.whatsforlunch.app
 
+import android.content.res.Configuration
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -22,9 +23,11 @@ import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.photo.PhotoStore
 import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
+import com.whatsforlunch.app.data.settings.AppLocaleController
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
+import com.whatsforlunch.app.ui.myprofile.MyProfileTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import com.whatsforlunch.app.ui.pinche.PincheTestTags
@@ -39,7 +42,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 
-// verify 1–2 · RF-MOB1..RF-MOB7: la barra inferior con sus 4 pestañas y sus
+// verify 1–2 · RF-MOB1..RF-MOB7: la barra inferior con sus 5 pestañas y sus
 // destinos, la top bar de Mis Recetas solo con «Ajustes», los dos FABs apilados
 // solo con Recetas, la pestaña activa resaltada, «Volver» retirado en las
 // pantallas de pestañas y un back stack coherente (D1–D8).
@@ -54,10 +57,10 @@ class BottomBarE2ETest {
         E2eDatabase.clear()
     }
 
-    // S1 (RF-MOB1, verify 1): las 4 pestañas en orden con sus etiquetas y cada
+    // S1 (RF-MOB1, verify 1): las 5 pestañas en orden con sus etiquetas y cada
     // una abre su pantalla actual.
     @Test
-    fun bottomBarShowsFourTabsInOrderAndEachOpensItsScreen() {
+    fun bottomBarShowsFiveTabsInOrderAndEachOpensItsScreen() {
         composeRule.onNodeWithTag(AppBottomBarTestTags.BAR).assertIsDisplayed()
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES)
             .assertIsDisplayed()
@@ -71,13 +74,17 @@ class BottomBarE2ETest {
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE)
             .assertIsDisplayed()
             .assertTextEquals(localized(R.string.pinche_title))
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PROFILE)
+            .assertIsDisplayed()
+            .assertTextEquals(localized(R.string.my_profile_title))
 
-        // Orden de izquierda a derecha: Mis Recetas, Despensa, Lista y Pinche.
+        // Orden de izquierda a derecha: Mis Recetas, Despensa, Lista, Pinche y Mi perfil.
         val lefts = listOf(
             AppBottomBarTestTags.TAB_MY_RECIPES,
             AppBottomBarTestTags.TAB_PANTRY,
             AppBottomBarTestTags.TAB_SHOPPING_LIST,
             AppBottomBarTestTags.TAB_PINCHE,
+            AppBottomBarTestTags.TAB_PROFILE,
         ).map { composeRule.onNodeWithTag(it).getUnclippedBoundsInRoot().left }
         assertEquals("Las pestañas deben respetar su orden", lefts, lefts.sorted())
 
@@ -89,6 +96,10 @@ class BottomBarE2ETest {
 
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).performClick()
         composeRule.onNodeWithTag(PincheTestTags.SCREEN).assertIsDisplayed()
+
+        // `crear-mi-perfil` (D4): «Mi perfil» es la quinta pestaña, al final.
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PROFILE).performClick()
+        composeRule.onNodeWithTag(MyProfileTestTags.SCREEN).assertIsDisplayed()
 
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
@@ -210,8 +221,17 @@ class BottomBarE2ETest {
         composeRule.onAllNodesWithContentDescription(back).assertCountEquals(0)
     }
 
-    private fun localized(resourceId: Int, vararg arguments: Any): String =
-        InstrumentationRegistry.getInstrumentation().targetContext.getString(resourceId, *arguments)
+    // El idioma efectivo de la app es el de AppLocaleController (Ajustes), no el
+    // del dispositivo: las etiquetas esperadas se resuelven en ese idioma para que
+    // la aserción no dependa del locale del AVD.
+    private fun localized(resourceId: Int, vararg arguments: Any): String {
+        val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val language = GlobalContext.get().get<AppLocaleController>().language.value
+        val context = baseContext.createConfigurationContext(
+            Configuration(baseContext.resources.configuration).apply { setLocale(language.locale) },
+        )
+        return context.getString(resourceId, *arguments)
+    }
 
     private fun seedRecipe(recipe: Recipe) {
         val database = GlobalContext.get().get<RecipeDatabase>()

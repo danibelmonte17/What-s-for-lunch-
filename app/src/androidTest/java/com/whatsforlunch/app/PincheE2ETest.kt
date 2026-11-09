@@ -32,17 +32,21 @@ import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.data.repository.InMemoryUserProfileRepository
 import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
 import com.whatsforlunch.app.domain.model.RecipeStep
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.repository.RecipeRepository
+import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesScreen
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
@@ -144,6 +148,7 @@ class PincheE2ETest {
             recipes,
             FakePincheChatClient(listOf(success("Prueba esta receta.", proposal()))),
             InMemoryShoppingListRepository(),
+            completeProfileRepository(),
         )
         val myRecipesViewModel = MyRecipesViewModel(recipes, pantry)
         val showPinche = mutableStateOf(true)
@@ -346,6 +351,7 @@ class PincheE2ETest {
             recipes,
             FakePincheChatClient(listOf(success("Hola"))),
             InMemoryShoppingListRepository(),
+            completeProfileRepository(),
         )
         val showPinche = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
@@ -459,6 +465,56 @@ class PincheE2ETest {
         composeRule.onNodeWithText("Save to My Recipes").performScrollTo().assertIsDisplayed()
     }
 
+    // verify 4 (`crear-mi-perfil`, S4/RD26): con el perfil vacío el Pinche pide
+    // las tres partes pendientes sin llamar a la IA y, con el perfil completo,
+    // responde; el mensaje lleva la acción «Abrir Mi perfil» (D8).
+    @Test
+    fun emptyProfileAsksForItWithoutCallingTheAiAndAnswersOnceComplete() {
+        val client = FakePincheChatClient(listOf(success("Vegana y sin frutos secos.")))
+        val profile = InMemoryUserProfileRepository()
+        launchPinche(client = client, profile = profile)
+
+        composeRule.onNodeWithTag(PincheTestTags.COMPOSER).performTextInput("Dame una receta")
+        composeRule.onNodeWithTag(PincheTestTags.SEND).performClick()
+        dismissKeyboard()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(PincheTestTags.OPEN_PROFILE).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertEquals(0, client.calls)
+        composeRule.onNodeWithText(
+            "Para responder necesito tu perfil: Alergias, " +
+                "Intolerancias o enfermedades que limitan la dieta, Tipo de alimentación. " +
+                "Complétalo en «Mi perfil».",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(PincheTestTags.OPEN_PROFILE).assertIsDisplayed()
+        // La respuesta de la IA todavía no llegó.
+        assertTrue(
+            composeRule.onAllNodesWithTag(PincheTestTags.assistantMessage(3)).fetchSemanticsNodes().isEmpty(),
+        )
+
+        // Se completa el perfil y se vuelve a enviar: ahora sí responde la IA.
+        runBlocking {
+            profile.save(
+                UserProfile(
+                    allergies = listOf("Frutos secos"),
+                    intolerances = listOf("Diabetes"),
+                    dietType = DietType.VEGAN,
+                ),
+            )
+        }
+        composeRule.onNodeWithTag(PincheTestTags.COMPOSER).performTextInput("Dame una receta")
+        composeRule.onNodeWithTag(PincheTestTags.SEND).performClick()
+        dismissKeyboard()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(PincheTestTags.assistantMessage(3)).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        assertEquals(1, client.calls)
+        assertEquals(DietType.VEGAN, client.lastProfile?.dietType)
+        composeRule.onNodeWithText("Vegana y sin frutos secos.").assertIsDisplayed()
+    }
+
     private fun dismissKeyboard() {
         Espresso.closeSoftKeyboard()
         composeRule.waitForIdle()
@@ -470,8 +526,9 @@ class PincheE2ETest {
         client: FakePincheChatClient = FakePincheChatClient(emptyList()),
         locale: Locale = Locale("es", "ES"),
         onOpenSettings: () -> Unit = {},
+        profile: UserProfileRepository = completeProfileRepository(),
     ): PincheViewModel {
-        val viewModel = viewModel(pantry = pantry, recipes = recipes, client = client)
+        val viewModel = viewModel(pantry = pantry, recipes = recipes, client = client, profile = profile)
         launch(viewModel = viewModel, locale = locale, onOpenSettings = onOpenSettings)
         return viewModel
     }
@@ -480,7 +537,17 @@ class PincheE2ETest {
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         recipes: RecipeRepository = InMemoryRecipeRepository(),
         client: FakePincheChatClient = FakePincheChatClient(emptyList()),
-    ) = PincheViewModel(pantry, recipes, client, InMemoryShoppingListRepository())
+        profile: UserProfileRepository = completeProfileRepository(),
+    ) = PincheViewModel(pantry, recipes, client, InMemoryShoppingListRepository(), profile)
+
+    // Perfil completo para los escenarios que esperan respuesta de la IA (RD26).
+    private fun completeProfileRepository() = InMemoryUserProfileRepository(
+        UserProfile(
+            allergies = listOf("Frutos secos"),
+            intolerancesNone = true,
+            dietType = DietType.VEGAN,
+        ),
+    )
 
     private fun launch(
         viewModel: PincheViewModel,
@@ -549,9 +616,16 @@ class PincheE2ETest {
             private set
         var lastTurns: List<PincheTurn> = emptyList()
             private set
+        var lastProfile: UserProfile? = null
+            private set
 
-        override suspend fun reply(turns: List<PincheTurn>, language: String): PincheReplyResult {
+        override suspend fun reply(
+            turns: List<PincheTurn>,
+            language: String,
+            profile: UserProfile,
+        ): PincheReplyResult {
             lastTurns = turns
+            lastProfile = profile
             if (results.isEmpty()) return PincheReplyResult.Success(PincheReply(text = "ok"))
             return results[minOf(calls++, results.lastIndex)]
         }

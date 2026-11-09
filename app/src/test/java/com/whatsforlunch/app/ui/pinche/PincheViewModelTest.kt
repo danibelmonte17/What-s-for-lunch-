@@ -5,7 +5,9 @@ import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryRecipeRepository
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
+import com.whatsforlunch.app.data.repository.InMemoryUserProfileRepository
 import com.whatsforlunch.app.domain.model.Aisle
+import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
@@ -14,13 +16,16 @@ import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeOrigin
 import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.model.ShoppingListItem
+import com.whatsforlunch.app.domain.model.UserProfile
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
+import com.whatsforlunch.app.domain.profile.PendingProfilePart
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
+import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -213,6 +218,7 @@ class PincheViewModelTest {
                 listOf(success("Prueba esto.", proposal())),
             ),
             shoppingListRepository = InMemoryShoppingListRepository(),
+            userProfileRepository = completeProfileRepository(),
         )
 
         viewModel.onInputChange("Dame una receta")
@@ -303,12 +309,122 @@ class PincheViewModelTest {
         assertEquals(1, viewModel.uiState.value.messages.size)
     }
 
+    // RD26/D5 (`crear-mi-perfil`): con el perfil vacío el Pinche no llama a la IA
+    // y responde con un mensaje que pide las tres partes pendientes.
+    @Test
+    fun emptyProfileBlocksTheClientAndAsksForEveryPendingPart() = runTest {
+        val client = FakePincheChatClient(listOf(success("No debería llegar")))
+        val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
+
+        viewModel.onInputChange("Dame una receta")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        assertEquals(0, client.calls)
+        val state = viewModel.uiState.value
+        assertFalse(state.isSending)
+        assertEquals(2, state.messages.size)
+        assertEquals(PincheAuthor.USER, state.messages[0].author)
+        val request = state.messages[1]
+        assertEquals(PincheAuthor.ASSISTANT, request.author)
+        assertEquals("", request.text)
+        assertEquals(
+            listOf(
+                PendingProfilePart.ALLERGIES,
+                PendingProfilePart.INTOLERANCES,
+                PendingProfilePart.DIET_TYPE,
+            ),
+            request.profileRequest,
+        )
+    }
+
+    // D5: si solo faltan partes, el Pinche pide exactamente esas partes.
+    @Test
+    fun onlyMissingPartsAreRequested() = runTest {
+        val client = FakePincheChatClient(listOf(success("ok")))
+        val viewModel = viewModel(
+            client = client,
+            profile = InMemoryUserProfileRepository(UserProfile(allergies = listOf("Frutos secos"))),
+        )
+
+        viewModel.onInputChange("¿Qué ceno?")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        assertEquals(0, client.calls)
+        assertEquals(
+            listOf(PendingProfilePart.INTOLERANCES, PendingProfilePart.DIET_TYPE),
+            viewModel.uiState.value.messages.last().profileRequest,
+        )
+    }
+
+    // D5: con el perfil completo la llamada lleva el perfil en el puerto.
+    @Test
+    fun completeProfileIsSentToTheClient() = runTest {
+        val client = FakePincheChatClient(listOf(success("Vegana y sin frutos secos.")))
+        val profile = InMemoryUserProfileRepository(
+            UserProfile(
+                allergies = listOf("Frutos secos"),
+                intolerances = listOf("Diabetes"),
+                dietType = DietType.VEGAN,
+            ),
+        )
+        val viewModel = viewModel(client = client, profile = profile)
+
+        viewModel.onInputChange("Dame una receta")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        assertEquals(1, client.calls)
+        assertEquals(
+            UserProfile(allergies = listOf("Frutos secos"), intolerances = listOf("Diabetes"), dietType = DietType.VEGAN),
+            client.lastProfile,
+        )
+        assertEquals("Vegana y sin frutos secos.", viewModel.uiState.value.messages.last().text)
+        assertTrue(viewModel.uiState.value.messages.last().profileRequest.isEmpty())
+    }
+
+    // D5: el mensaje de petición no es turno del modelo (texto en blanco).
+    @Test
+    fun profileRequestMessagesNeverTravelToTheModel() = runTest {
+        val client = FakePincheChatClient(listOf(success("ok"), success("ok")))
+        val profile = InMemoryUserProfileRepository()
+        val viewModel = viewModel(client = client, profile = profile)
+
+        viewModel.onInputChange("Primera pregunta")
+        viewModel.send("es")
+        advanceUntilIdle()
+        // Se completa el perfil y se vuelve a enviar.
+        profile.save(
+            UserProfile(allergies = listOf("Frutos secos"), intolerancesNone = true, dietType = DietType.OMNIVORE),
+        )
+        viewModel.onInputChange("Segunda pregunta")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        assertEquals(1, client.calls)
+        // Solo los mensajes del usuario; la petición del perfil (texto en blanco) queda fuera.
+        assertEquals(listOf("Primera pregunta", "Segunda pregunta"), client.lastTurns.map { it.text })
+        // usuario + petición + usuario + respuesta
+        assertEquals(4, viewModel.uiState.value.messages.size)
+    }
+
     private fun viewModel(
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         recipes: RecipeRepository = InMemoryRecipeRepository(),
         client: FakePincheChatClient = FakePincheChatClient(emptyList()),
         shoppingList: ShoppingListRepository = InMemoryShoppingListRepository(),
-    ) = PincheViewModel(pantry, recipes, client, shoppingList)
+        profile: UserProfileRepository = completeProfileRepository(),
+    ) = PincheViewModel(pantry, recipes, client, shoppingList, profile)
+
+    /** Perfil completo para los tests que sí esperan respuesta de la IA (RD26). */
+    private fun completeProfileRepository() = InMemoryUserProfileRepository(
+        UserProfile(
+            allergies = listOf("Frutos secos"),
+            intolerancesNone = true,
+            dietType = DietType.VEGAN,
+        ),
+    )
 
     private fun pantryWith(vararg items: PantryItem): InMemoryPantryRepository =
         InMemoryPantryRepository().apply {
@@ -342,9 +458,16 @@ class PincheViewModelTest {
             private set
         var lastTurns: List<PincheTurn> = emptyList()
             private set
+        var lastProfile: UserProfile? = null
+            private set
 
-        override suspend fun reply(turns: List<PincheTurn>, language: String): PincheReplyResult {
+        override suspend fun reply(
+            turns: List<PincheTurn>,
+            language: String,
+            profile: UserProfile,
+        ): PincheReplyResult {
             lastTurns = turns
+            lastProfile = profile
             if (results.isEmpty()) return PincheReplyResult.Success(PincheReply(text = "ok"))
             return results[minOf(calls++, results.lastIndex)]
         }

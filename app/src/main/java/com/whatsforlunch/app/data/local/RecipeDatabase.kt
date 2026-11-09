@@ -11,7 +11,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // añade los ids estables de Ingrediente (`domainId`) y los vínculos
 // Paso→Ingrediente (`ingredientIds`, RD21) sin tocar los datos existentes. La
 // versión 5 elimina la columna `status` de `recipes` (las Recetas ya no tienen
-// estado Borrador/Publicada) recreando la tabla y conservando los datos.
+// estado Borrador/Publicada) recreando la tabla y conservando los datos. La
+// versión 6 añade el perfil del usuario (`profile` y `profile_restrictions`,
+// `crear-mi-perfil`, D1) sin tocar las tablas existentes.
 @Database(
     entities = [
         RecipeEntity::class,
@@ -20,8 +22,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PantryItemEntity::class,
         ShoppingListItemEntity::class,
         ShoppingItemSourceEntity::class,
+        ProfileEntity::class,
+        ProfileRestrictionEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class RecipeDatabase : RoomDatabase() {
@@ -30,6 +34,8 @@ abstract class RecipeDatabase : RoomDatabase() {
     abstract fun pantryItemDao(): PantryItemDao
 
     abstract fun shoppingListDao(): ShoppingListDao
+
+    abstract fun profileDao(): ProfileDao
 
     companion object {
         /** Adds pantry storage without touching existing recipe tables or data. */
@@ -115,6 +121,26 @@ abstract class RecipeDatabase : RoomDatabase() {
                 )
                 db.execSQL("DROP TABLE `recipes`")
                 db.execSQL("ALTER TABLE `recipes_new` RENAME TO `recipes`")
+            }
+        }
+
+        /**
+         * Adds the user profile tables (`profile` single row + `profile_restrictions`
+         * chips in insertion order) on top of v5 (`crear-mi-perfil`, D1/RD25),
+         * without touching existing recipe, pantry or shopping tables.
+         */
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `profile` " +
+                        "(`id` TEXT NOT NULL, `dietType` TEXT, `allergiesNone` INTEGER NOT NULL, " +
+                        "`intolerancesNone` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `profile_restrictions` " +
+                        "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `section` TEXT NOT NULL, " +
+                        "`value` TEXT NOT NULL)",
+                )
             }
         }
     }

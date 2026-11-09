@@ -877,9 +877,16 @@
         "E2E: con el perfil vacío, enviar un mensaje al Pinche y comprobar que primero pide las restricciones y el tipo de alimentación y no responde hasta completarlos; tras hacerlo, su respuesta respeta el perfil",
         "Unit: el prompt del Pinche incorpora las restricciones y el tipo de alimentación del perfil y el flujo bloqueante solo se activa con el perfil vacío"
       ],
-      "evidence": [],
+      "evidence": [
+        "Validación independiente (feature-validator con subagente, 2026-11-09): veredicto accept; informe en docs/validations/crear-mi-perfil.md (tier barato re-ejecutado: init.ps1 exit 0 con ANDROID_SERIAL=emulator-5554, lintDebug --rerun-tasks 0 errores/48 warnings idénticos a la evidencia, testDebugUnitTest --rerun-tasks 44 suites/327 tests/0 fallos, assembleDebug + compileDebugAndroidTestKotlin OK, paridad 338/338+5/5, inventario 240 @Test/27 ficheros; tier caro inspeccionado: focalizada 27/27 corroborada, batería 240 = inventario con 1 flake ajeno SettingsE2ETest + 1 omitido Assume parseada del log, 3 capturas PNG 1280×2856 revisadas; 0 hallazgos Critical/High/Medium, seguridad sin hallazgos; nota D1 (technical-discovery «Datos que salen del dispositivo» sin mencionar el perfil) cerrada al persistir)",
+        "Autoverificación (feature-implementer, 2026-11-09): informe en docs/evidence/crear-mi-perfil/informe.md — init.ps1 exit 0, lintDebug 0 errores/48 warnings (ninguno apunta al diff), testDebugUnitTest 44 suites/327 tests/0 fallos, assembleDebug + assembleDebugAndroidTest OK, paridad es/en 338/338 claves + 5/5 plurales",
+        "E2E focalizada (verify 1–5): MyProfileE2ETest 7/7 + BottomBarE2ETest 5/5 + PincheE2ETest 12/12 + RecipeMigrationTest 3/3 (incluye la migración v5→v6) = 27 tests / 0 fallos / 0 omitidos en Pixel_10_Pro API 37",
+        "Batería completa (am instrument sobre emulator-5556 API 37): numtests=240 (= inventario @Test, 27 ficheros / 31 clases), 1 fallo — SettingsE2ETest.deletingTheKeyAsksToConfigureItAgainForAiFeatures, flake ajeno documentado en la sesión 116 y OK en aislamiento tras el run — y 1 omitido (Assume sin AI_API_KEY); log en docs/evidence/crear-mi-perfil/e2e-bateria-am-instrument.txt",
+        "Verificación manual adb/uiautomator (es-ES, 1280×2856): «Mi perfil» como 5.ª pestaña y última de la barra, chips en Alergias e Intolerancias con borrado solo en modo edición («Editar»/«Listo»), «Vegana» seleccionada como única, Pinche pide solo la sección pendiente con «Abrir Mi perfil» sin llamar a la IA y la acción navega a la pestaña, re-toque de la pestaña activa con scroll al inicio y persistencia en Room tras force-stop; 3 capturas PNG en docs/evidence/crear-mi-perfil/",
+        "Reparación de un resto del merge 9dacc87 (test ajeno, solo test): PantryManagementE2ETest pulsaba «Volver» en la Despensa, retirado por e8c5730; sustituido por Espresso.pressBack() → Mis Recetas. Detalle en docs/specs/crear-mi-perfil.md (Hallazgos de implementación)"
+      ],
       "notes": "Decisiones del usuario (2026-11-07): «Mi perfil» como nueva pestaña de la BottomBar (amplía a 5 las 4 pestañas de mover-opciones-a-bottom-bar); tres secciones —«Alergias» e «Intolerancias o enfermedades que limitan la dieta» (p. ej. diabetes) con alta por texto en chips y borrado solo tras habilitar un botón de editar, y «Tipo de alimentación» con selección única entre Omnívora, Pescetariana, Vegetariana, Vegana y Cetogénica—; opción «No tengo ninguna» en cualquiera de las secciones de restricciones; el Pinche pide restricciones y tipo de alimentación antes de responder si el perfil está vacío (flujo bloqueante). Quedan para la spec: el almacenamiento (Room vs preferencias), el valor inicial del tipo de alimentación (sin preselección u Omnívora por defecto), la exclusividad entre «No tengo ninguna» y las chips, y la posición final de la pestaña. El perfil son datos de salud que viajan al proveedor de IA al chatear con el Pinche (RK03): actualizar el aviso de privacidad y usar solo datos ficticios en la evidencia. Fuera de alcance: aplicar el perfil a Sugerencias, Recetas con mi Despensa o búsquedas (solo el Pinche), salvo decisión posterior.",
-      "status": "not_started"
+      "status": "accepted"
     },
     {
       "id": "mover-escaneo-a-la-despensa",
@@ -1026,6 +1033,33 @@
       ],
       "evidence": [],
       "notes": "De la partición de redisenar-formulario-de-receta (2026-11-09, decisión del usuario): el enum de unidades y sus desplegables (decisión D4 original) van en unificar-unidades, de la que esta feature depende. Decisiones del usuario (2026-11-08): (D1) reloj = TimePicker de Material 3 en modo entrada, usado igual en Tiempo de preparación y en el temporizador de Pasos; (D2) «Detalles de cocina» en dos bloques —fila Tiempo+Raciones y Nivel en horizontal debajo—; (D3) tiempo de cocción eliminado en profundidad (modelo/Room con migración/Detalle/tarjetas/IA); (D5) se elimina el concepto de ingrediente opcional completo (el checkbox de la fila era «Opcional», no un check de preselección). Decisiones del usuario (2026-11-09): (D6) al migrar, el tiempo de cocción se suma al de preparación (prepMinutes := preparación + cocción) para conservar el tiempo total; (D7) el reloj es duración HH:MM en 24 h (00:00–23:59; 00:00 = 0 min en preparación) y cada Paso lleva un control «Sin temporizador» (los Pasos nuevos nacen sin temporizador); (D8) el contrato de IA pierde «cm» y «o» (los parsers ya no reciben cookMinutes ni opcionalidad). Quedan para la spec la versión y el test de migración de Room y las enmiendas en specs aceptadas (patrón completo, confirmado por el usuario el 2026-11-09). Fuera de alcance: recalcular o migrar unidades existentes (unificar-unidades) y tocar el Modo Cocina salvo por la pérdida de la distinción obligatorio/opcional.",
+      "status": "not_started"
+    },
+    {
+      "id": "rellenar-perfil-con-el-pinche",
+      "area": "funcional",
+      "title": "Rellenar Mi perfil conversando con el Pinche",
+      "user_visible_behavior": "Cuando el Pinche necesita el perfil para responder, en lugar de bloquear pide en el chat —una pregunta a la vez y solo por las partes que faltan (Alergias, Intolerancias o enfermedades, Tipo de alimentación)— y va guardando cada respuesta en «Mi perfil»; en cuanto el perfil queda completo responde a la pregunta original. Si la IA no está disponible, se muestra el mensaje actual de las partes pendientes con la acción «Abrir Mi perfil».",
+      "depends_on": [
+        "crear-mi-perfil",
+        "resolver-dudas-con-pinche"
+      ],
+      "steps": [
+        "Sustituir el bloqueo de RD26 en el Pinche: con partes pendientes se llama a la IA con el system prompt actual más las partes pendientes y la instrucción de preguntar de una en una y no recomendar hasta tener el perfil completo",
+        "Añadir una única función de escritura `save_profile` al protocolo del Pinche con las chips de Alergias e Intolerancias, sus marcas «No tengo ninguna» y el tipo de alimentación (enum), conservando intactas las dos funciones de solo lectura actuales",
+        "Ejecutar la función en la app validando con `UserProfileRules` (chip no vacía, sin duplicados por sección, exclusividad «No tengo ninguna», tipo de alimentación conocido) y persistiendo con `UserProfileRepository`, devolviendo al modelo exactamente lo guardado o el error para que se corrija",
+        "Mantener la conversación de la entrevista en los turns del contexto y responder a la pregunta original en cuanto `pendingParts` quede vacío",
+        "Conservar el mensaje estático actual de las partes pendientes con «Abrir Mi perfil» como degradación cuando falte la API key o falle la llamada",
+        "Actualizar la línea roja S08 de docs/build-brief.md (hoy «dos funciones de solo lectura» → más una función de escritura acotada al perfil) y los docs durables: RD26 en docs/domain-model.md, RK03 en docs/risks-and-open-questions.md y las specs afectadas"
+      ],
+      "verification": [
+        "E2E: con el cliente de IA simulado y el perfil vacío, enviar un mensaje al Pinche y comprobar que pregunta las partes pendientes de una en una sin recomendar nada, que con las respuestas el perfil queda guardado en «Mi perfil» y que la respuesta final respeta ese perfil",
+        "E2E: con el perfil a medio completar, comprobar que solo pide lo que sigue faltando y que las respuestas ya guardadas no se pierden",
+        "E2E: sin API key o con fallo del proveedor, comprobar que aparece el mensaje de las partes pendientes con «Abrir Mi perfil» y que desde esa pantalla se puede completar el perfil",
+        "Unit: `save_profile` aplica `UserProfileRules` (chip vacía o duplicada rechazada, exclusividad «No tengo ninguna», tipo de alimentación desconocido rechazado) y `pendingParts` deja de estar pendiente al completarse"
+      ],
+      "evidence": [],
+      "notes": "Decisión del usuario (2026-11-09): el Pinche pregunta en el chat, una respuesta a la vez, los temas del perfil que necesita rellenar antes de recomendar algo y el modelo rellena esos datos por el usuario. Nueva feature (no se reabre crear-mi-perfil): modifica su comportamiento aceptado (RD26/D8, «no se llama a la IA con el perfil incompleto») sin reescribir su spec ni su evidencia histórica; su spec y sus notas quedan enmendadas desde esta entrada. Cambia la línea roja S08 de docs/build-brief.md, que hay que actualizar en el mismo cambio. Sin cambios de esquema de Room (se reescribe la fila única del perfil). Quedan para la spec: guardado directo por el tool con resumen visible vs confirmación previa del usuario antes de persistir (datos de salud), el tope de vueltas HTTP de la entrevista (MAX_HTTP_CALLS), el idioma en que se guardan las chips de texto libre (sin traducir) y el mapeo del tipo de alimentación al enum con rechazo de valores desconocidos.",
       "status": "not_started"
     }
   ]

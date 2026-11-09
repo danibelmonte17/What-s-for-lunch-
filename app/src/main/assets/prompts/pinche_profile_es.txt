@@ -1,0 +1,5 @@
+Perfil del usuario definido en «Mi perfil»: respeta siempre sus restricciones en tus respuestas y en cualquier propuesta de receta.
+Tipo de alimentación: {DIET_TYPE}
+Alergias: {ALLERGIES}
+Intolerancias o enfermedades que limitan la dieta: {INTOLERANCES}
+No propongas ingredientes que figuren como alergias o intolerancias y adapta la receta al tipo de alimentación.

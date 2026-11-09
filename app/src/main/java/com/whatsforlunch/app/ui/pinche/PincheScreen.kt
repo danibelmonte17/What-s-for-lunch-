@@ -56,6 +56,7 @@ import com.whatsforlunch.app.domain.model.RecipeStep
 import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheProposal
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
+import com.whatsforlunch.app.domain.profile.PendingProfilePart
 import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
@@ -82,6 +83,7 @@ object PincheTestTags {
     const val SAVED_LABEL = "pinche_saved_label"
     const val ADD_MISSING = "pinche_add_missing"
     const val ADDED_MISSING_LABEL = "pinche_added_missing_label"
+    const val OPEN_PROFILE = "pinche_open_profile"
 
     fun userMessage(index: Int) = "pinche_user_message_$index"
 
@@ -109,6 +111,8 @@ fun PincheScreen(
     onClearNotice: () -> Unit,
     modifier: Modifier = Modifier,
     onAddMissingToShoppingList: (String) -> Unit = {},
+    // `crear-mi-perfil` (D8): acción del mensaje que pide el perfil pendiente.
+    onOpenProfile: () -> Unit = {},
     scrollToTopTick: Int = 0,
 ) {
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
@@ -150,6 +154,7 @@ fun PincheScreen(
                 onQuickSuggestion = onQuickSuggestion,
                 onSaveProposal = onSaveProposal,
                 onAddMissingToShoppingList = onAddMissingToShoppingList,
+                onOpenProfile = onOpenProfile,
                 listState = messageListState,
                 modifier = Modifier.weight(1f),
             )
@@ -172,6 +177,7 @@ private fun MessageList(
     onQuickSuggestion: (String) -> Unit,
     onSaveProposal: (String) -> Unit,
     onAddMissingToShoppingList: (String) -> Unit,
+    onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
@@ -234,8 +240,16 @@ private fun MessageList(
                             modifier = Modifier.padding(WarmSpacing.md),
                             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
                         ) {
-                            if (message.text.isNotBlank()) {
-                                Text(
+                            when {
+                                // Mensaje de petición del perfil (RD26/D5): texto
+                                // localizado con las partes pendientes y acceso a
+                                // «Mi perfil»; nunca viaja al modelo.
+                                message.profileRequest.isNotEmpty() -> ProfileRequestContent(
+                                    pending = message.profileRequest,
+                                    onOpenProfile = onOpenProfile,
+                                )
+
+                                message.text.isNotBlank() -> Text(
                                     text = message.text,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer
@@ -269,6 +283,39 @@ private fun Greeting() {
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+// Mensaje de petición del perfil (`crear-mi-perfil`, D8): lista solo las partes
+// pendientes del perfil y ofrece la acción «Abrir Mi perfil», que navega a la
+// pestaña del perfil sin responder todavía (RD26).
+@Composable
+private fun ProfileRequestContent(
+    pending: List<PendingProfilePart>,
+    onOpenProfile: () -> Unit,
+) {
+    val names = pending.map { part -> pendingLabel(part) }.joinToString(", ")
+    Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
+        Text(
+            text = stringResource(R.string.pinche_profile_request, names),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Button(
+            onClick = onOpenProfile,
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .testTag(PincheTestTags.OPEN_PROFILE),
+        ) {
+            Text(stringResource(R.string.pinche_profile_open))
+        }
+    }
+}
+
+@Composable
+private fun pendingLabel(part: PendingProfilePart): String = when (part) {
+    PendingProfilePart.ALLERGIES -> stringResource(R.string.my_profile_allergies_title)
+    PendingProfilePart.INTOLERANCES -> stringResource(R.string.my_profile_intolerances_title)
+    PendingProfilePart.DIET_TYPE -> stringResource(R.string.my_profile_diet_title)
 }
 
 @Composable

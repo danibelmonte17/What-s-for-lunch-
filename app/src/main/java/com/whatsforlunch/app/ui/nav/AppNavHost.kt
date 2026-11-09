@@ -21,6 +21,7 @@ import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsRoute
 import com.whatsforlunch.app.ui.cookmode.CookModeRoute
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
+import com.whatsforlunch.app.ui.myprofile.MyProfileRoute
 import com.whatsforlunch.app.ui.pantry.PantryRoute
 import com.whatsforlunch.app.ui.pinche.PincheRoute
 import com.whatsforlunch.app.ui.recommendations.RecommendationsRoute
@@ -45,6 +46,7 @@ object AppRoutes {
     const val AI_SUGGESTIONS = "ai_suggestions"
     const val PINCHE = "pinche"
     const val SHOPPING_LIST = "shopping_list"
+    const val MY_PROFILE = "my_profile"
     const val RECIPE_ID_ARG = "recipeId"
     const val SERVINGS_ARG = "servings"
 
@@ -78,6 +80,7 @@ private fun routeTab(route: String?): AppTab? = when (route) {
     AppRoutes.PANTRY -> AppTab.PANTRY
     AppRoutes.SHOPPING_LIST -> AppTab.SHOPPING_LIST
     AppRoutes.PINCHE -> AppTab.PINCHE
+    AppRoutes.MY_PROFILE -> AppTab.MY_PROFILE
     else -> null
 }
 
@@ -208,10 +211,20 @@ fun WhatsForLunchApp(
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
             )
         }
-        // RF-PCH1: el Pinche es una pestaña de la barra inferior (RF-MOB1).
+        // RF-PCH1: el Pinche es una pestaña de la barra inferior (RF-MOB1). Con el
+        // perfil pendiente pide sus secciones y «Abrir Mi perfil» salta a la
+        // pestaña del perfil (`crear-mi-perfil`, D8).
         composable(AppRoutes.PINCHE) {
             PincheRoute(
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+                onOpenProfile = { navController.openTab(AppTab.MY_PROFILE) },
+                scrollToTopTick = scrollToTopTick,
+            )
+        }
+        // `crear-mi-perfil` (D4): «Mi perfil» es la quinta pestaña, al final de la
+        // barra; sus restricciones las consume el Pinche.
+        composable(AppRoutes.MY_PROFILE) {
+            MyProfileRoute(
                 scrollToTopTick = scrollToTopTick,
             )
         }
