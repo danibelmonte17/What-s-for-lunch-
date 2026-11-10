@@ -83,23 +83,34 @@ internal fun renderProfilePrompt(
     .replace(INTOLERANCES_PLACEHOLDER, sectionText(profile.intolerances, profile.intolerancesNone, language))
     .trim()
 
-private fun dietTypeName(dietType: DietType, language: String): String =
+// Vocabulario cerrado es/en del tipo de alimentación (`crear-mi-perfil` D2 y
+// `rellenar-perfil-con-el-pinche` D8): una sola fuente para el bloque de perfil y
+// para la tool `save_profile`, de modo que no pueden desincronizarse.
+private val DIET_TYPE_LABELS: Map<DietType, Pair<String, String>> = mapOf(
+    DietType.OMNIVORE to ("Omnívora" to "Omnivore"),
+    DietType.PESCETARIAN to ("Pescetariana" to "Pescetarian"),
+    DietType.VEGETARIAN to ("Vegetariana" to "Vegetarian"),
+    DietType.VEGAN to ("Vegana" to "Vegan"),
+    DietType.KETOGENIC to ("Cetogénica" to "Ketogenic"),
+)
+
+/** Los diez nombres del vocabulario, para el `enum` del JSON Schema de la tool. */
+internal val DIET_TYPE_ENUM_VALUES: List<String> =
+    DIET_TYPE_LABELS.values.flatMap { (es, en) -> listOf(es, en) }
+
+/** Vocabulario de `save_profile`: nombre en minúsculas → valor del enum (D8). */
+internal val DIET_TYPE_VOCABULARY: Map<String, DietType> = buildMap {
+    DIET_TYPE_LABELS.forEach { (dietType, names) ->
+        put(names.first.lowercase(), dietType)
+        put(names.second.lowercase(), dietType)
+    }
+}
+
+internal fun dietTypeName(dietType: DietType, language: String): String =
     if (isEnglish(language)) {
-        when (dietType) {
-            DietType.OMNIVORE -> "Omnivore"
-            DietType.PESCETARIAN -> "Pescetarian"
-            DietType.VEGETARIAN -> "Vegetarian"
-            DietType.VEGAN -> "Vegan"
-            DietType.KETOGENIC -> "Ketogenic"
-        }
+        DIET_TYPE_LABELS.getValue(dietType).second
     } else {
-        when (dietType) {
-            DietType.OMNIVORE -> "Omnívora"
-            DietType.PESCETARIAN -> "Pescetariana"
-            DietType.VEGETARIAN -> "Vegetariana"
-            DietType.VEGAN -> "Vegana"
-            DietType.KETOGENIC -> "Cetogénica"
-        }
+        DIET_TYPE_LABELS.getValue(dietType).first
     }
 
 private fun sectionText(chips: List<String>, none: Boolean, language: String): String = when {

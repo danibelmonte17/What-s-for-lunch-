@@ -20,9 +20,13 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.whatsforlunch.app.data.ai.PincheChatClient
+import com.whatsforlunch.app.data.ai.PincheReplyResult
 import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.ProfileSection
 import com.whatsforlunch.app.domain.model.UserProfile
+import com.whatsforlunch.app.domain.pinche.PincheReply
+import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.ui.myprofile.MyProfileTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
@@ -40,12 +44,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
+import org.koin.dsl.module
 
 // S1-S6 de «Mi perfil» (`crear-mi-perfil`): alta y borrado de chips en modo
 // edición (verify 1), tipo de alimentación de selección única con persistencia
-// (verify 2), «No tengo ninguna» exclusiva (verify 3), el Pinche pidiendo el
-// perfil con acceso a la pestaña (verify 4, D8) y textos es/en (verify 6).
-// Sin llamadas a la IA: el flujo bloqueante no llega al modelo (RD26).
+// (verify 2), «No tengo ninguna» exclusiva (verify 3), el Pinche con el aviso de IA
+// y el mensaje estático de partes pendientes (verify 4 enmendado,
+// `rellenar-perfil-con-el-pinche`, RD26 reescrita) y textos es/en (verify 6).
+// Sin llamadas a la IA: el verify 4 sustituye el cliente de Koin por uno simulado
+// en modo «sin key», sin red.
 @RunWith(AndroidJUnit4::class)
 class MyProfileE2ETest {
 
@@ -145,16 +152,32 @@ class MyProfileE2ETest {
         assertFalse(unmarked.allergiesNone)
     }
 
-    // verify 4 (S4/RD26/D8): con el perfil vacío el Pinche pide las tres partes
-    // pendientes sin llamar a la IA y «Abrir Mi perfil» salta a la pestaña.
+    // verify 4 enmendado (`rellenar-perfil-con-el-pinche`, RD26 reescrita): con el
+    // perfil vacío el Pinche **sí llama a la IA** —aquí con el cliente de Koin
+    // sustituido por uno simulado en modo «sin key», sin red ni llamadas de pago—
+    // y, además del aviso de siempre, muestra el mensaje estático de las tres
+    // partes pendientes con «Abrir Mi perfil» que salta a la pestaña (S5 a nivel
+    // de app completa; el bloqueo previo desapareció).
     @Test
-    fun pincheAsksForTheEmptyProfileAndTheActionOpensItsTab() {
+    fun emptyProfileShowsTheAiNoticeAndTheActionOpensItsTab() {
+        GlobalContext.get().loadModules(
+            listOf(module { single<PincheChatClient> { MissingKeyPincheChatClient() } }),
+            allowOverride = true,
+        )
         showApp(Locale("es", "ES"))
 
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).performClick()
         composeRule.onNodeWithTag(PincheTestTags.COMPOSER).performTextInput("Dame una receta")
         composeRule.onNodeWithTag(PincheTestTags.SEND).performClick()
+        dismissKeyboard()
 
+        // Aviso de siempre por la key ausente (S5)…
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(PincheTestTags.NOTICE).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Configura tu API key en Ajustes para hablar con el Pinche.")
+            .assertIsDisplayed()
+        // …y el mensaje estático de las partes pendientes (degradación, D7).
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(PincheTestTags.OPEN_PROFILE).fetchSemanticsNodes().isNotEmpty()
         }
@@ -274,5 +297,16 @@ class MyProfileE2ETest {
             }
         }
         composeRule.waitForIdle()
+    }
+
+    // Cliente simulado «sin key» para la app completa: produce el mismo aviso que
+    // una instalación sin configurar la IA, sin red ni llamadas de pago.
+    private class MissingKeyPincheChatClient : PincheChatClient {
+        override suspend fun reply(
+            turns: List<PincheTurn>,
+            language: String,
+            profile: UserProfile,
+            onContent: (String) -> Unit,
+        ): PincheReplyResult = PincheReplyResult.MissingApiKey
     }
 }

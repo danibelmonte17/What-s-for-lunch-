@@ -133,6 +133,7 @@ class ShoppingListFlowTest {
             turns: List<PincheTurn>,
             language: String,
             profile: UserProfile,
+            onContent: (String) -> Unit,
         ): PincheReplyResult = result
     }
 }
