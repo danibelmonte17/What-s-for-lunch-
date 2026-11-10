@@ -121,6 +121,8 @@ Then los textos nuevos existen en es y en y las chips se guardan literalmente en
 - `app/src/main/java/com/whatsforlunch/app/data/ai/PincheChatProtocol.kt` — modify; tool `save_profile`, parseo de argumentos (amplía `toolCalls` a `toolCalls(message, argumentsById)` o función nueva `toolCallArguments`) y builders de resultado.
 - `app/src/main/java/com/whatsforlunch/app/data/ai/PincheChatClient.kt` — modify; `PincheReplyResult.Success.profileSaved`.
 - `app/src/main/java/com/whatsforlunch/app/data/ai/OpenAiCompatiblePincheChatClient.kt` — modify; `UserProfileRepository`, ejecución de `save_profile` con caché por turno, `MAX_HTTP_CALLS = 5`.
+- `app/src/main/java/com/whatsforlunch/app/data/ai/PromptSource.kt` — modify; el vocabulario es/en del tipo de alimentación pasa a fuente única (`DIET_TYPE_VOCABULARY`/`DIET_TYPE_ENUM_VALUES`) compartida por el bloque de perfil y la tool (añadido al listar tras la validación, hallazgo F3).
+- `app/src/main/java/com/whatsforlunch/app/di/AppModule.kt` — modify; `UserProfileRepository` como 6.º argumento de `OpenAiCompatiblePincheChatClient` (añadido al listar tras la validación, hallazgo F3).
 - `app/src/main/assets/prompts/pinche_system_es.txt`, `pinche_system_en.txt` — modify; tres funciones.
 - `app/src/main/assets/prompts/pinche_profile_es.txt`, `pinche_profile_en.txt` — modify; reglas de entrevista.
 - `app/src/main/java/com/whatsforlunch/app/ui/pinche/PincheViewModel.kt` — modify; sin gate previo, mensaje `profileSaved`, guarda de Propuesta y degradación con petición estática.
@@ -160,13 +162,13 @@ Then los textos nuevos existen en es y en y las chips se guardan literalmente en
 
 ## Implementation Tasks
 
-- [ ] T1: `ProfileUpdate`/`ProfileUpdateOutcome` y `UserProfileRules.applyUpdate` (validación `invalid_chip`/`duplicate_chip`/`unknown_diet_type`/`invalid_arguments`, merge de campos omitidos) con `UserProfileRulesTest` ampliado.
-- [ ] T2: `PincheChatProtocol` con `save_profile` (toolsJson, parseo de argumentos —incluido extraer los argumentos del `tool_call`— y builders `saved`/`pending`/`error`) con `PincheChatProtocolTest` ampliado.
-- [ ] T3: `OpenAiCompatiblePincheChatClient` ejecuta `save_profile` (caché por turno, persistencia, errores sin persistir), `Success.profileSaved` y `MAX_HTTP_CALLS = 5`; tests del executor con repo InMemory.
-- [ ] T4: prompts `pinche_system_*`/`pinche_profile_*` actualizados (tres funciones + entrevista D1/D4/D6) y `PromptAssetsTest`.
-- [ ] T5: `PincheViewModel` sin gate previo + `PincheMessage.profileSaved` + guarda de Propuesta + degradación; `PincheScreen.ProfileSavedContent`; strings `pinche_profile_saved*` es/en con paridad; `PincheViewModelTest` reescrito.
-- [ ] T6: E2E — `PincheE2ETest` (S1–S5) y `MyProfileE2ETest` (verify 4 enmendado); batería sin regresión.
-- [ ] T7: docs durables (`build-brief.md` S08, `domain-model.md` RD26/RD27, `risks-and-open-questions.md`, `technical-discovery.md`, `CONTEXT.md`, `DESIGN.md`).
+- [x] T1: `ProfileUpdate`/`ProfileUpdateOutcome` y `UserProfileRules.applyUpdate` (validación `invalid_chip`/`duplicate_chip`/`unknown_diet_type`/`invalid_arguments`, merge de campos omitidos) con `UserProfileRulesTest` ampliado.
+- [x] T2: `PincheChatProtocol` con `save_profile` (toolsJson, parseo de argumentos —incluido extraer los argumentos del `tool_call`— y builders `saved`/`pending`/`error`) con `PincheChatProtocolTest` ampliado.
+- [x] T3: `OpenAiCompatiblePincheChatClient` ejecuta `save_profile` (caché por turno, persistencia, errores sin persistir), `Success.profileSaved` y `MAX_HTTP_CALLS = 5`; tests del executor con repo InMemory.
+- [x] T4: prompts `pinche_system_*`/`pinche_profile_*` actualizados (tres funciones + entrevista D1/D4/D6) y `PromptAssetsTest`.
+- [x] T5: `PincheViewModel` sin gate previo + `PincheMessage.profileSaved` + guarda de Propuesta + degradación; `PincheScreen.ProfileSavedContent`; strings `pinche_profile_saved*` es/en con paridad; `PincheViewModelTest` reescrito.
+- [x] T6: E2E — `PincheE2ETest` (S1–S5) y `MyProfileE2ETest` (verify 4 enmendado); batería sin regresión.
+- [x] T7: docs durables (`build-brief.md` S08, `domain-model.md` RD26/RD27, `risks-and-open-questions.md`, `technical-discovery.md`, `CONTEXT.md`, `DESIGN.md`).
 
 ## Verification Plan
 
@@ -206,3 +208,11 @@ Then los textos nuevos existen en es y en y las chips se guardan literalmente en
 - **D4 — Chips literales en el idioma de la conversación** (es/en), sin traducir al idioma de la interfaz.
 
 Derivadas: **D5** `save_profile` es la única tool de escritura y actualiza solo los campos que recibe (permitiendo correcciones); **D6** las reglas de entrevista viven en el bloque de perfil del system prompt y el resultado del tool incluye lo pendiente; **D7** los mensajes estáticos `profileRequest` pasan a ser solo guarda y degradación (la entrevista viaja como mensajes normales); **D8** el tipo de alimentación se parsea con el vocabulario cerrado es/en de `DietType` y lo desconocido se rechaza al modelo.
+
+## Hallazgos de implementación (2026-11-09)
+
+- **Parseo de argumentos**: para respetar la firma `parseSaveProfileArgs(json): ProfileUpdate?` y a la vez distinguir `unknown_diet_type` de `invalid_arguments`, el parseo interno devuelve `ParsedArgs(update, error)` y se exponen dos helpers: `parseSaveProfileArgs` (`null` = no usable) y `saveProfileArgsError` (código preciso cuando el primero da `null`). El cliente los combina para `saveProfileToolError`.
+- **Resultado de `save_profile`**: `saved.diet_type` se devuelve con el **nombre del enum** (`VEGAN`), lenguaje neutro coherente con `pending: ["ALLERGIES", …]`; las secciones se devuelven con los nombres de sus argumentos (`allergies`, `allergies_none`, …) y sus **valores finales**.
+- **Tests del executor**: el executor es `internal fun executeSaveProfile(arguments, state)` sobre `PincheToolTurnState` (cachés por turno + partes acumuladas) y se prueba en el fichero nuevo `app/src/test/java/com/whatsforlunch/app/data/ai/OpenAiCompatiblePincheChatClientTest.kt` con `InMemoryUserProfileRepository` (sin red).
+- **E2E**: el `FakePincheChatClient` de `PincheE2ETest` acepta un `UserProfileRepository` opcional y, cuando la respuesta declara `profileSaved`, persiste con `UserProfileRules.applyUpdate` (simula el executor real); el verify 4 de `MyProfileE2ETest` sustituye el cliente de Koin con `loadModules(..., allowOverride = true)` por uno en modo «sin key» (patrón ya usado por `CreateRecipeAppE2ETest` con `ImageGenerator`), de modo que **ninguna E2E usa el cliente real ni hace llamadas de red**.
+- **TestTag nuevo**: `PincheTestTags.PROFILE_SAVED` (`pinche_profile_saved`) para el resumen; las E2E sincronizan con el estado del ViewModel y usan `performScrollToIndex` porque el chat no hace auto-scroll.
