@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.whatsforlunch.app.ShoppingListE2ETest" tests="27" failures="0" errors="0" skipped="0" time="59.789" timestamp="2026-11-10T19:23:13" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_10_Pro(AVD) - 17" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="editingKeepsALargeQuantityUnchangedThroughTheDialog" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="5.426" />
+  <testcase name="completedRowsKeepTheirContentAndShowTheClearAction" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.277" />
+  <testcase name="emptyListShowsNoScannerAccessAndOnlyTheAddItemCta" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.308" />
+  <testcase name="manualAddShowsTheItemWithAisleLabelAndManualBadge" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="3.453" />
+  <testcase name="rowContentChangesWithTheGroupingMode" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.076" />
+  <testcase name="invalidNameOrQuantityShowsAnErrorAndKeepsTheDialogOpen" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="3.531" />
+  <testcase name="deletingAnItemShowsUndoAndRestoresIt" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.049" />
+  <testcase name="itemsAreGroupedByAisleByDefaultWithUncategorizedLast" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.104" />
+  <testcase name="multiSourceItemsAppearInEveryGroupAndCountOnce" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.339" />
+  <testcase name="completedItemsSurviveTheRoundTripAndTheModeResets" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="3.176" />
+  <testcase name="theProgressBarReflectsHalfOfTheItemsCompleted" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.178" />
+  <testcase name="recommendationCardAddsItsMissingItems" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.662" />
+  <testcase name="roomRepositoryKeepsItemsAcrossReopenAndRestoresDeletedSources" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.029" />
+  <testcase name="repeatingTheActionDoesNotDuplicateOrDoubleTheItems" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="3.317" />
+  <testcase name="editingAnItemOnlyChangesQuantityUnitAndAisle" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="2.768" />
+  <testcase name="fullMatchHidesTheAddActions" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.999" />
+  <testcase name="clearCompletedRemovesThemAndUndoRestoresThemAll" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.54" />
+  <testcase name="pincheProposalAddsMissingItemsAndBecomesDisabled" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.611" />
+  <testcase name="manualAddOfAnExistingNameEditsItWithoutCreatingANewRow" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="3.533" />
+  <testcase name="emptyStateAddCtaOpensTheDialogAndSavesTheItem" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="2.097" />
+  <testcase name="uncheckingAnItemRevertsTheProgress" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.207" />
+  <testcase name="migrationFromV2KeepsRecipesAndPantryAndCreatesShoppingTables" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="0.827" />
+  <testcase name="editingKeepsTheCompletedStateAndTheEmptyListHasNoProgressCard" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.718" />
+  <testcase name="itemsFromTwoRecipesAreGroupedUnderTheirRecipe" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="1.436" />
+  <testcase name="twoRecipesAddUpAndTheBadgeCountsSources" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="5.327" />
+  <testcase name="manualAddWithoutQuantityOrAisleUsesTheDefaults" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="2.399" />
+  <testcase name="detailAddsMissingItemsToTheShoppingListWithOrigin" classname="com.whatsforlunch.app.ShoppingListE2ETest" time="2.12" />
+</testsuite>

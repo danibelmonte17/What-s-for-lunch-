@@ -62,3 +62,27 @@ Las tres PNG tienen cabecera válida y tamaño **1280×2856**. El resumen del ch
 - Sin permisos nuevos, sin dependencias nuevas, **Room sin cambios de esquema**.
 - `RK03`/`S08`/`RK07` actualizados; sin llamadas de pago (mock local).
 - Alcance: solo los ficheros de «Expected File Changes» de la spec (+ el fichero de test del executor y los hallazgos anotados en la spec).
+
+## Enmienda (2026-11-10): respuesta en streaming y auto-scroll
+
+**Alcance**: D9–D16 de la spec — `stream: true` + lectura SSE con `PincheSseParser`, texto visible cortado con `streamingText`, parcial conservado en fallo, burbuja transitoria y lista que baja siempre al último mensaje. Sin dependencias nuevas, sin claves nuevas de `strings.xml` (paridad **340/340 + 5/5**, diff 0), sin cambios en `MAX_HTTP_CALLS`, tools, Room ni en el resto de superficies de IA.
+
+**Gates (sobre el change set completo)**
+
+| Check | Resultado |
+|---|---|
+| `lintDebug --rerun-tasks` | **0 errores / 48 warnings** (línea base; ninguno nuevo) — `lint-enmienda-2026-11-10.log` |
+| `testDebugUnitTest --rerun-tasks` | **46 suites / 366 tests / 0 fallos** (+1 suite `PincheSseParserTest`, +14 tests) — `unit-enmienda-2026-11-10.log` |
+| `assembleDebug` + `compileDebugAndroidTestKotlin` | BUILD SUCCESSFUL |
+| Paridad es/en | 345 = 340 strings + 5 plurales en cada idioma, 0 diferencias |
+| `init.ps1` | exit 0 («Entorno listo») |
+
+**E2E**
+
+- **S6 nuevo** `PincheE2ETest.streamingAnswerGrowsInABubbleAndTheListFollowsTheLastMessage` (clase **17/17**): la burbuja `pinche_streaming_message` muestra el primer fragmento, crece con el segundo (gates `CompletableDeferred`, sin carreras), la lista vuelve abajo aunque el test la suba a índice 0 (D10) y al terminar la burbuja desaparece y el último mensaje queda **visible sin arrastrar** el `LazyColumn`.
+- **Regresión focalizada**: `MyProfileE2ETest` + `ShoppingListE2ETest` + `BottomBarE2ETest` **39/39**.
+- **Batería completa** (`./e2e.ps1`, log `e2e-bateria-enmienda-2026-11-10.log`): **245 tests = inventario** (244 + S6), **2 omitidos** (`SettingsE2ETest`/`Assume`) y **1 fallo flake ajeno** `ShoppingListE2ETest.twoRecipesAddUpAndTheBadgeCountsSources` (`ComposeNotIdleException`, 60 s, en una batería lenta de 59 min). Rerun aislado **1/1** (`e2e-shoppinglist-single-rerun-enmienda-2026-11-10.xml`) y clase completa **27/27 verde** (`e2e-shoppinglist-rerun-enmienda-2026-11-10.log/.xml`) tras reiniciar el AVD, que se cayó durante el primer rerun (historial conocido). El XML de la batería se sobrescribió con los reruns: el registro íntegro está en el log.
+
+**Hueco abierto (decisión del usuario, 2026-11-10)**
+
+- **Verify manual con mock SSE local no ejecutado**: exige cambiar `AI_BASE_URL`/`AI_API_KEY` en `local.properties` (fichero con la API key real; `AGENTS.md §5` prohíbe tocar ficheros con secretos sin autorización). **Consecuencia**: `readStream()` —la lectura SSE real por HTTP— **no está probada de extremo a extremo**; la cubren los unit de `PincheSseParser`/`streamingText` y el fallback D12 (respuesta sin `text/event-stream` → se procesa como hasta hoy). Sin capturas nuevas de la enmienda (las 3 PNG existentes son de la implementación original). Pendiente de repetir cuando el usuario autorice el mock local.
