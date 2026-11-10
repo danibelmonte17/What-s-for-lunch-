@@ -25,6 +25,14 @@ sealed interface PincheReplyResult {
 // del usuario (`crear-mi-perfil`, D6: viaja en el system prompt); el cliente decide
 // cuándo ejecutar las dos funciones de solo lectura y `save_profile`
 // (`rellenar-perfil-con-el-pinche`, RD27).
+// `onContent` (enmienda D9) recibe el texto visible de la ronda en curso a medida
+// que llega del proveedor; con valor por defecto vacío para que las
+// implementaciones que no streamean no cambien de firma más allá del parámetro.
 interface PincheChatClient {
-    suspend fun reply(turns: List<PincheTurn>, language: String, profile: UserProfile): PincheReplyResult
+    suspend fun reply(
+        turns: List<PincheTurn>,
+        language: String,
+        profile: UserProfile,
+        onContent: (String) -> Unit = {},
+    ): PincheReplyResult
 }

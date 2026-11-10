@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // Avisos con acción del Pinche (RF-PCH9): key ausente, fallo del turno y fallo al
@@ -63,6 +64,9 @@ data class PincheUiState(
     val isSending: Boolean = false,
     val notice: PincheNotice? = null,
     val lastUserText: String = "",
+    // Enmienda D9 (`rellenar-perfil-con-el-pinche`): texto visible de la ronda en
+    // curso; `null` = sin burbuja transitoria. Se limpia al terminar el turno.
+    val streamingText: String? = null,
 )
 
 /**
@@ -107,6 +111,7 @@ class PincheViewModel(
             isSending = true,
             notice = null,
             lastUserText = text,
+            streamingText = null,
         )
         runRequest(language)
     }
@@ -122,7 +127,7 @@ class PincheViewModel(
     fun retry(language: String) {
         val state = _uiState.value
         if (state.isSending || state.lastUserText.isBlank()) return
-        _uiState.value = _uiState.value.copy(isSending = true, notice = null)
+        _uiState.value = _uiState.value.copy(isSending = true, notice = null, streamingText = null)
         runRequest(language)
     }
 
@@ -222,7 +227,13 @@ class PincheViewModel(
                 }
                 .takeLast(MAX_CONTEXT_MESSAGES)
             val result = try {
-                pincheChatClient.reply(turns, language, profile)
+                // D9: el texto visible de la ronda llega por `onContent` (hilo IO);
+                // en blanco = sin burbuja transitoria.
+                pincheChatClient.reply(turns, language, profile) { fragment ->
+                    _uiState.update { state ->
+                        state.copy(streamingText = fragment.ifBlank { null })
+                    }
+                }
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
@@ -240,14 +251,26 @@ class PincheViewModel(
      * Aviso de siempre (key ausente o fallo del turno, RF-PCH9) y, con partes del
      * perfil pendientes, además el mensaje estático con «Abrir Mi perfil»
      * (degradación sin IA, S5/`rellenar-perfil-con-el-pinche` D7).
+     *
+     * D11 (enmienda): si el stream se cortó a mitad, el texto recibido se
+     * **conserva** como burbuja del asistente (ya cortado con `streamingText`,
+     * sin el JSON de la Propuesta) y viaja en el contexto de un reintento.
      */
     private fun onUnavailable(notice: PincheNotice, profile: UserProfile) {
         val pending = UserProfileRules.pendingParts(profile)
+        val partial = _uiState.value.streamingText
+        var messages = _uiState.value.messages
+        if (!partial.isNullOrBlank()) {
+            messages = messages + PincheMessage(
+                author = PincheAuthor.ASSISTANT,
+                text = partial,
+            )
+        }
         _uiState.value = _uiState.value.copy(
             messages = if (pending.isEmpty()) {
-                _uiState.value.messages
+                messages
             } else {
-                _uiState.value.messages + PincheMessage(
+                messages + PincheMessage(
                     author = PincheAuthor.ASSISTANT,
                     text = "",
                     profileRequest = pending,
@@ -255,6 +278,7 @@ class PincheViewModel(
             },
             isSending = false,
             notice = notice,
+            streamingText = null,
         )
     }
 
@@ -266,7 +290,11 @@ class PincheViewModel(
         val text = result.reply.text
         val proposal = result.reply.proposal
         if (text.isBlank() && proposal == null) {
-            _uiState.value = _uiState.value.copy(isSending = false, notice = PincheNotice.FAILED)
+            _uiState.value = _uiState.value.copy(
+                isSending = false,
+                notice = PincheNotice.FAILED,
+                streamingText = null,
+            )
             return
         }
         var messages = _uiState.value.messages
@@ -303,6 +331,9 @@ class PincheViewModel(
             messages = messages,
             isSending = false,
             notice = null,
+            // D9: la burbuja transitoria desaparece al llegar el mensaje final
+            // (el resumen «He guardado…» queda antes de la respuesta, D2 intacto).
+            streamingText = null,
         )
     }
 

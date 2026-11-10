@@ -71,6 +71,7 @@ import com.whatsforlunch.app.ui.pinche.PincheTestTags
 import com.whatsforlunch.app.ui.pinche.PincheViewModel
 import com.whatsforlunch.app.ui.theme.WhatsForLunchTheme
 import java.util.Locale
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -90,6 +91,7 @@ import org.koin.core.context.GlobalContext
 // inglés y entrada desde Mis Recetas.
 // S1-S5 de `rellenar-perfil-con-el-pinche`: entrevista de perfil con resumen
 // «He guardado…», guarda determinista de Propuestas y degradación sin IA.
+// S6 (enmienda): respuesta en streaming con burbuja transitoria y auto-scroll.
 // Todo usa un cliente simulado; nunca se llama a la IA real.
 @RunWith(AndroidJUnit4::class)
 class PincheE2ETest {
@@ -730,6 +732,74 @@ class PincheE2ETest {
         assertTrue(profileOpened)
     }
 
+    // S6 (enmienda D9/D10): el texto del asistente llega en streaming en la
+    // burbuja transitoria —que va creciendo—, se sustituye por el mensaje final y
+    // la lista baja siempre al último mensaje aunque el usuario esté arriba.
+    @Test
+    fun streamingAnswerGrowsInABubbleAndTheListFollowsTheLastMessage() {
+        val gateBeforeLastFragment = CompletableDeferred<Unit>()
+        val gateBeforeResult = CompletableDeferred<Unit>()
+        val answers = (1..6).map { index ->
+            success("Respuesta de prueba número $index para llenar el chat y desplazar la lista.")
+        }
+        val viewModel = launchPinche(
+            client = FakePincheChatClient(
+                answers + listOf(success("Remueve el arroz al principio.")),
+                fragments = listOf("Remueve el arroz ", "al principio."),
+                gateBeforeLastFragment = gateBeforeLastFragment,
+                gateBeforeResult = gateBeforeResult,
+            ),
+        )
+
+        // Conversación larga para que la lista sea desplazable (D10).
+        repeat(6) { index ->
+            val number = index + 1
+            sendPincheMessage("Pregunta de prueba número $number")
+            awaitMessage(viewModel) { message -> message.text.startsWith("Respuesta de prueba número $number") }
+        }
+
+        sendPincheMessage("¿Cómo evito que el arroz se pegue?")
+
+        // 1) La burbuja transitoria aparece con el primer fragmento y se mantiene
+        //    mientras el proveedor no termina (el simulador queda a la espera).
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(PincheTestTags.STREAMING).fetchSemanticsNodes().isNotEmpty()
+        }
+        waitUntilDisplayed("Remueve el arroz")
+        composeRule.onNodeWithTag(PincheTestTags.STREAMING).assertExists()
+
+        // 2) El usuario se va arriba a leer: la lista debe volver abajo (D10).
+        composeRule.onNodeWithTag(PincheTestTags.MESSAGE_LIST).performScrollToIndex(0)
+        gateBeforeLastFragment.complete(Unit)
+
+        // 3) El segundo fragmento hace crecer la misma burbuja.
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("al principio.", substring = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        gateBeforeResult.complete(Unit)
+
+        // 4) Al terminar, la burbuja desaparece y el último mensaje queda visible
+        //    sin arrastrar la lista a mano.
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(PincheTestTags.STREAMING).fetchSemanticsNodes().isEmpty() &&
+                viewModel.uiState.value.messages.lastOrNull()?.text == "Remueve el arroz al principio."
+        }
+        waitUntilDisplayed("Remueve el arroz al principio.")
+        assertNull(viewModel.uiState.value.streamingText)
+        assertEquals(14, viewModel.uiState.value.messages.size)
+    }
+
+    /**
+     * Espera a que el nodo con ese texto esté **visible**: la lista puede seguir
+     * animándose el scroll automático cuando el mensaje llega (D10).
+     */
+    private fun waitUntilDisplayed(text: String, timeoutMs: Long = 5_000) {
+        composeRule.waitUntil(timeoutMs) {
+            runCatching { composeRule.onNodeWithText(text).assertIsDisplayed() }.isSuccess
+        }
+    }
+
     private fun dismissKeyboard() {
         Espresso.closeSoftKeyboard()
         composeRule.waitForIdle()
@@ -864,6 +934,13 @@ class PincheE2ETest {
     private class FakePincheChatClient(
         private val results: List<PincheReplyResult>,
         private val profileRepository: UserProfileRepository? = null,
+        // Enmienda D9: fragmentos (deltas) que el «proveedor» emite en streaming
+        // antes del resultado final, **acumulados** como hace el cliente real (S6).
+        // Solo se emiten en la **última** tanda (la que trae la respuesta final);
+        // los dos gates mantienen la burbuja visible para poder asertar sobre ella.
+        private val fragments: List<String> = emptyList(),
+        private val gateBeforeLastFragment: CompletableDeferred<Unit>? = null,
+        private val gateBeforeResult: CompletableDeferred<Unit>? = null,
     ) : PincheChatClient {
         var calls: Int = 0
             private set
@@ -876,13 +953,25 @@ class PincheE2ETest {
             turns: List<PincheTurn>,
             language: String,
             profile: UserProfile,
+            onContent: (String) -> Unit,
         ): PincheReplyResult {
             lastTurns = turns
             lastProfile = profile
+            val streamThisCall = fragments.isNotEmpty() && results.isNotEmpty() && calls == results.lastIndex
             val result = if (results.isEmpty()) {
                 PincheReplyResult.Success(PincheReply(text = "ok"))
             } else {
                 results[minOf(calls++, results.lastIndex)]
+            }
+            if (streamThisCall) {
+                var accumulated = ""
+                fragments.forEachIndexed { position, fragment ->
+                    if (position == fragments.lastIndex) gateBeforeLastFragment?.await()
+                    accumulated += fragment
+                    // Como el cliente real: el texto visible va recortado.
+                    onContent(accumulated.trim())
+                }
+                gateBeforeResult?.await()
             }
             // Simula la ejecución real de `save_profile` (RD27): persiste en el
             // repositorio inyectado lo que la respuesta declara haber guardado.

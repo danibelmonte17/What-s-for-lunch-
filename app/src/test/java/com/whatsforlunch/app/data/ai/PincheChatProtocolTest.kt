@@ -253,4 +253,40 @@ class PincheChatProtocolTest {
         assertNull(reply.proposal)
     }
 
+    // Enmienda D9: el texto visible durante el streaming nunca lleva el JSON de
+    // la Propuesta, para no pintarlo en la burbuja a medida que llega.
+
+    @Test
+    fun streamingTextKeepsPlainConversationText() {
+        assertEquals(
+            "Para que no se pegue, remueve al principio.",
+            PincheChatProtocol.streamingText(" Para que no se pegue, remueve al principio. "),
+        )
+    }
+
+    @Test
+    fun streamingTextCutsBeforeTheRecipeBlock() {
+        val content = "Te propongo esta receta.\n```receta\n{\"s\":[{\"t\":\"Arroz\"}]}\n```"
+
+        assertEquals("Te propongo esta receta.", PincheChatProtocol.streamingText(content))
+    }
+
+    @Test
+    fun streamingTextCutsBeforeAJsonObjectStillStreaming() {
+        val complete = "Toma esta receta. " +
+            "{\"s\":[{\"t\":\"Tortilla\",\"i\":[{\"n\":\"Huevo\"}],\"p\":[{\"t\":\"Cuaja\"}]}]}"
+        val partial = "Toma esta receta. {\"s\":[{\"t\":\"Tor"
+
+        assertEquals("Toma esta receta.", PincheChatProtocol.streamingText(complete))
+        assertEquals("Toma esta receta.", PincheChatProtocol.streamingText(partial))
+    }
+
+    @Test
+    fun streamingTextKeepsBracesThatAreNotJson() {
+        assertEquals(
+            "Ajusta {el} formato a tu gusto.",
+            PincheChatProtocol.streamingText("Ajusta {el} formato a tu gusto."),
+        )
+    }
+
 }

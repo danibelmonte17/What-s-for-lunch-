@@ -86,6 +86,8 @@ object PincheTestTags {
     const val ADDED_MISSING_LABEL = "pinche_added_missing_label"
     const val OPEN_PROFILE = "pinche_open_profile"
     const val PROFILE_SAVED = "pinche_profile_saved"
+    // Enmienda D9: burbuja transitoria con el texto que llega en streaming.
+    const val STREAMING = "pinche_streaming_message"
 
     fun userMessage(index: Int) = "pinche_user_message_$index"
 
@@ -126,6 +128,21 @@ fun PincheScreen(
         if (scrollToTopTick > 0) messageListState.animateScrollToItem(0)
     }
 
+    // D10 (enmienda `rellenar-perfil-con-el-pinche`): la lista **siempre** baja
+    // al último mensaje —animada al llegar uno nuevo e instantánea con cada
+    // fragmento de streaming, para no encolar animaciones—. Con la lista vacía
+    // (saludo) no hay nada que desplazar.
+    val hasMessages = uiState.messages.isNotEmpty()
+    LaunchedEffect(uiState.messages.size, hasMessages) {
+        if (hasMessages) messageListState.animateScrollToItem(uiState.messages.lastIndex)
+    }
+    val streamingText = uiState.streamingText
+    LaunchedEffect(streamingText) {
+        if (streamingText != null && hasMessages) {
+            messageListState.scrollToItem(uiState.messages.size)
+        }
+    }
+
     Scaffold(
         modifier = modifier.testTag(PincheTestTags.SCREEN),
         containerColor = MaterialTheme.colorScheme.surface,
@@ -160,7 +177,7 @@ fun PincheScreen(
                 listState = messageListState,
                 modifier = Modifier.weight(1f),
             )
-            if (uiState.isSending) {
+            if (uiState.isSending && uiState.streamingText == null) {
                 ThinkingRow()
             }
             Composer(
@@ -276,6 +293,37 @@ private fun MessageList(
                                 )
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // Enmienda D9: burbuja transitoria con el texto que llega en streaming;
+        // se retira al llegar el mensaje final (o se congela como mensaje propio
+        // si el stream se corta, D11).
+        val streaming = uiState.streamingText
+        if (streaming != null) {
+            item(key = "streaming") {
+                val authorLabel = stringResource(R.string.pinche_title)
+                val accessibility = stringResource(R.string.pinche_message_accessibility, authorLabel)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                ) {
+                    Surface(
+                        shape = BubbleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                        modifier = Modifier
+                            .fillMaxWidth(0.85f)
+                            .semantics { contentDescription = accessibility }
+                            .testTag(PincheTestTags.STREAMING),
+                    ) {
+                        Text(
+                            text = streaming,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(WarmSpacing.md),
+                        )
                     }
                 }
             }

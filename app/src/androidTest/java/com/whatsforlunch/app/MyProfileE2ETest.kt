@@ -306,6 +306,7 @@ class MyProfileE2ETest {
             turns: List<PincheTurn>,
             language: String,
             profile: UserProfile,
+            onContent: (String) -> Unit,
         ): PincheReplyResult = PincheReplyResult.MissingApiKey
     }
 }

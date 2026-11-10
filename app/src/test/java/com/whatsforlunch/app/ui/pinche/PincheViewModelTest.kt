@@ -398,6 +398,78 @@ class PincheViewModelTest {
         assertEquals(listOf("Frutos secos"), client.lastTurns.map { it.text })
     }
 
+    // Enmienda D9/D14: el texto del asistente llega en fragmentos que se pintan
+    // en la burbuja transitoria (en blanco = sin burbuja) hasta el mensaje final.
+    @Test
+    fun streamingFragmentsUpdateTheTransientBubbleUntilTheFinalReply() = runTest {
+        lateinit var holder: PincheViewModel
+        val seen = mutableListOf<String?>()
+        val client = FakePincheChatClient(
+            listOf(success("Remueve el arroz.")),
+            // El primer fragmento en blanco simula el reset de ronda del cliente.
+            fragments = listOf("", "Remueve", " el arroz"),
+            onFragment = { seen += holder.uiState.value.streamingText },
+        )
+        holder = viewModel(client = client)
+
+        holder.onInputChange("¿Cómo evito que se pegue?")
+        holder.send("es")
+        advanceUntilIdle()
+
+        assertEquals(listOf(null, "Remueve", "Remueve el arroz"), seen)
+        val state = holder.uiState.value
+        // La burbuja transitoria desaparece al llegar el mensaje final (D9).
+        assertNull(state.streamingText)
+        assertFalse(state.isSending)
+        assertEquals(2, state.messages.size)
+        assertEquals("Remueve el arroz.", state.messages[1].text)
+    }
+
+    // Enmienda D11: si el stream se corta a mitad, el texto recibido se conserva
+    // como burbuja del asistente, antes del mensaje estático de partes pendientes.
+    @Test
+    fun failedStreamKeepsThePartialTextAsAnAssistantBubble() = runTest {
+        val client = FakePincheChatClient(
+            listOf(PincheReplyResult.Failed),
+            fragments = listOf("Esto se corta a mitad"),
+        )
+        val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
+
+        viewModel.onInputChange("Hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(PincheNotice.FAILED, state.notice)
+        assertNull(state.streamingText)
+        assertEquals(3, state.messages.size)
+        assertEquals(PincheAuthor.ASSISTANT, state.messages[1].author)
+        assertEquals("Esto se corta a mitad", state.messages[1].text)
+        assertTrue(state.messages[2].profileRequest.isNotEmpty())
+    }
+
+    // Enmienda D11: el parcial congelado viaja en el contexto del reintento.
+    @Test
+    fun theKeptPartialTextTravelsInTheRetryContext() = runTest {
+        val client = FakePincheChatClient(
+            listOf(PincheReplyResult.Failed, success("Ahora sí.")),
+            fragments = listOf("Esto se corta"),
+        )
+        val viewModel = viewModel(client = client)
+
+        viewModel.onInputChange("Hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+        viewModel.retry("es")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.streamingText)
+        assertNull(state.notice)
+        assertEquals(listOf("Hola", "Esto se corta"), client.lastTurns.map { it.text })
+        assertEquals("Ahora sí.", state.messages.last().text)
+    }
+
     // S5/D7: sin key con partes pendientes, además del aviso se añade el mensaje
     // estático con «Abrir Mi perfil» (degradación).
     @Test
@@ -563,6 +635,11 @@ class PincheViewModelTest {
 
     private class FakePincheChatClient(
         private val results: List<PincheReplyResult>,
+        // Enmienda D9: fragmentos (deltas) que el «proveedor» emite en streaming,
+        // **acumulados** como hace el cliente real antes de llamar a `onContent`;
+        // `onFragment` deja observar el estado entre emisiones.
+        private val fragments: List<String> = emptyList(),
+        private val onFragment: (String) -> Unit = {},
     ) : PincheChatClient {
         var calls: Int = 0
             private set
@@ -575,9 +652,17 @@ class PincheViewModelTest {
             turns: List<PincheTurn>,
             language: String,
             profile: UserProfile,
+            onContent: (String) -> Unit,
         ): PincheReplyResult {
             lastTurns = turns
             lastProfile = profile
+            var accumulated = ""
+            fragments.forEach { fragment ->
+                accumulated += fragment
+                // Como el cliente real: el texto visible va recortado.
+                onContent(accumulated.trim())
+                onFragment(accumulated.trim())
+            }
             if (results.isEmpty()) return PincheReplyResult.Success(PincheReply(text = "ok"))
             return results[minOf(calls++, results.lastIndex)]
         }

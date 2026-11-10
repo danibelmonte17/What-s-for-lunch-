@@ -17,12 +17,17 @@ import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import okhttp3.RequestBody.Companion.toRequestBody
+import okio.BufferedSource
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -51,13 +56,17 @@ class OpenAiCompatiblePincheChatClient(
         turns: List<PincheTurn>,
         language: String,
         profile: UserProfile,
+        onContent: (String) -> Unit,
     ): PincheReplyResult {
         if (turns.isEmpty()) return PincheReplyResult.Failed
         val key = aiKeyProvider.apiKey() ?: return PincheReplyResult.MissingApiKey
         return withContext(Dispatchers.IO) {
-            runCatching { converse(turns, language, profile, key) }
+            runCatching { converse(turns, language, profile, key, onContent) }
                 .getOrElse { exception ->
                     if (exception is CancellationException) throw exception
+                    // La lectura SSE se corta al cancelar el coroutine (`Call.cancel`);
+                    // en ese caso hay que propagar la cancelación, no reportar fallo.
+                    if (!isActive) throw CancellationException("Pinche turn cancelled")
                     Log.w(TAG, "Turn failed: ${exception.describe()}")
                     PincheReplyResult.Failed
                 }
@@ -69,6 +78,7 @@ class OpenAiCompatiblePincheChatClient(
         language: String,
         profile: UserProfile,
         key: String,
+        onContent: (String) -> Unit,
     ): PincheReplyResult {
         val startedAt = System.nanoTime()
         // D6 (`crear-mi-perfil`): el perfil viaja como bloque del system prompt,
@@ -99,34 +109,51 @@ class OpenAiCompatiblePincheChatClient(
         while (true) {
             httpCalls++
             val callStartedAt = System.nanoTime()
+            // D14: el texto visible se reinicia al empezar cada ronda (hoy solo
+            // se pinta el contenido de la última).
+            onContent("")
             val request = Request.Builder()
                 .url(endpoint)
                 .addHeader("Authorization", "Bearer $key")
                 .post(buildBody(messages, tools))
                 .build()
-            val message = client.newCall(request).execute().use { response ->
-                val elapsed = elapsedMs(callStartedAt)
-                if (!response.isSuccessful) {
-                    Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
-                    return failed("http ${response.code}", startedAt)
+            val call = client.newCall(request)
+            // D9: si el coroutine se cancela, se cancela también la `Call` para no
+            // dejar una lectura bloqueante colgada del scope de la UI.
+            val cancellation = currentCoroutineContext()[Job]?.invokeOnCompletion { call.cancel() }
+            val message = try {
+                call.execute().use { response ->
+                    val elapsed = elapsedMs(callStartedAt)
+                    if (!response.isSuccessful) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
+                        return failed("http ${response.code}", startedAt)
+                    }
+                    val body = response.body
+                    if (body == null) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
+                        return failed("empty body", startedAt)
+                    }
+                    // D9/D12: SSE si el proveedor lo devuelve; si no, el cuerpo
+                    // completo se procesa como hasta hoy (sin emitir fragmentos).
+                    val message = if (response.isEventStream()) {
+                        readStream(body.source(), onContent)
+                    } else {
+                        val choices = JSONObject(body.string()).optJSONArray("choices")
+                        choices?.optJSONObject(0)?.optJSONObject("message")
+                    }
+                    if (message == null) {
+                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without message")
+                        return failed("missing message", startedAt)
+                    }
+                    Log.i(
+                        TAG,
+                        "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms, " +
+                            "$httpCalls calls, $executedTools tools",
+                    )
+                    message
                 }
-                val body = response.body?.string()
-                if (body == null) {
-                    Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
-                    return failed("empty body", startedAt)
-                }
-                val choices = JSONObject(body).optJSONArray("choices")
-                val message = choices?.optJSONObject(0)?.optJSONObject("message")
-                if (message == null) {
-                    Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without message")
-                    return failed("missing message", startedAt)
-                }
-                Log.i(
-                    TAG,
-                    "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms, " +
-                        "$httpCalls calls, $executedTools tools",
-                )
-                message
+            } finally {
+                cancellation?.dispose()
             }
 
             val toolCalls = PincheChatProtocol.toolCalls(message)
@@ -222,11 +249,40 @@ class OpenAiCompatiblePincheChatClient(
         val json = JSONObject()
             .put("model", MODEL)
             .put("temperature", 0)
+            // D9 (`rellenar-perfil-con-el-pinche`): la respuesta se pide en streaming
+            // y se lee como SSE; si el proveedor no lo soporta, la app cae al cuerpo
+            // completo (D12) sin cambiar el resultado.
+            .put("stream", true)
             .put("messages", messages)
             .put("tools", tools)
             .put("tool_choice", "auto")
         return json.toString().toRequestBody(JSON_MEDIA_TYPE.toMediaType())
     }
+
+    /**
+     * D9: lee el cuerpo SSE línea a línea, emite el texto visible de la ronda a
+     * medida que llega y devuelve el `message` reconstruido por `PincheSseParser`
+     * (o `null` si no llegó nada utilizable: sin `data:` o JSON ilegible).
+     */
+    private fun readStream(source: BufferedSource, onContent: (String) -> Unit): JSONObject? {
+        val parser = PincheSseParser()
+        var lastEmitted: String? = null
+        while (true) {
+            val line = source.readUtf8Line() ?: break
+            if (!line.startsWith(DATA_PREFIX)) continue
+            parser.feed(line.substring(DATA_PREFIX.length))
+            val visible = PincheChatProtocol.streamingText(parser.accumulatedText)
+            if (visible != lastEmitted) {
+                lastEmitted = visible
+                onContent(visible)
+            }
+            if (parser.finished || parser.invalid) break
+        }
+        return parser.buildMessage()
+    }
+
+    private fun Response.isEventStream(): Boolean =
+        header("Content-Type").orEmpty().contains(EVENT_STREAM_MEDIA_TYPE)
 
     private fun messageContent(message: JSONObject): String? = when (val content = message.opt("content")) {
         is String -> content
@@ -252,6 +308,9 @@ class OpenAiCompatiblePincheChatClient(
         // Stable DevExpert Inference alias for /chat/completions.
         const val MODEL = "chat"
         const val JSON_MEDIA_TYPE = "application/json; charset=utf-8"
+        // D9: cuerpo SSE de `/chat/completions` con `stream: true`.
+        const val EVENT_STREAM_MEDIA_TYPE = "text/event-stream"
+        const val DATA_PREFIX = "data:"
         // D3 (`rellenar-perfil-con-el-pinche`): 3 → 5 llamadas HTTP por turno.
         const val MAX_HTTP_CALLS = 5
         const val PANTRY_FUNCTION = "get_pantry"

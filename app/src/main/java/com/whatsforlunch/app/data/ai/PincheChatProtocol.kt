@@ -46,6 +46,9 @@ internal object PincheChatProtocol {
     private const val INTOLERANCES_NONE_FIELD = "intolerances_none"
     private const val DIET_TYPE_FIELD = "diet_type"
 
+    /** Marca de «sin corte» en `streamingText` (ningún candidato a ocultar). */
+    private const val NO_CUT = Int.MAX_VALUE
+
     fun toolsJson(): JSONArray = JSONArray()
         .put(
             JSONObject()
@@ -289,6 +292,35 @@ internal object PincheChatProtocol {
     private fun parseProposal(json: String): RecipeSuggestion? {
         val raw = RecipeSuggestionParser.parse(json) ?: return null
         return SuggestionRules.normalize(raw).firstOrNull()
+    }
+
+    /**
+     * Texto visible durante el streaming (`rellenar-perfil-con-el-pinche`, D9):
+     * devuelve el contenido **sin el JSON de la Propuesta**, cortando en el
+     * inicio del bloque cercado `receta` o en el primer `{` seguido de comillas
+     * (inicio de objeto JSON, equilibrado o aún a medio formar). Sin candidatos,
+     * devuelve el contenido entero.
+     *
+     * Caso límite aceptado en la spec: un `{"` en prosa que no llegue a ser JSON
+     * se corta aquí y `parseReply` puede devolverlo después como texto.
+     */
+    fun streamingText(content: String): String {
+        val fence = Regex("```\\s*receta\\b", RegexOption.IGNORE_CASE)
+            .find(content)?.range?.first ?: NO_CUT
+        val json = jsonStart(content) ?: NO_CUT
+        val cut = minOf(fence, json)
+        val visible = if (cut == NO_CUT) content else content.substring(0, cut)
+        return visible.trim()
+    }
+
+    /** Posición del primer `{` seguido de comillas (posible inicio de JSON). */
+    private fun jsonStart(content: String): Int? {
+        var index = content.indexOf('{')
+        while (index >= 0) {
+            if (content.substring(index + 1).trimStart().startsWith("\"")) return index
+            index = content.indexOf('{', index + 1)
+        }
+        return null
     }
 
     private fun findRecipeBlock(content: String): RecipeBlock? {
