@@ -111,7 +111,7 @@ val appModule = module {
         OpenAiCompatibleRecipeSuggester(get(), get(), get(), BuildConfig.AI_BASE_URL)
     }
     single<PincheChatClient> {
-        OpenAiCompatiblePincheChatClient(get(), get(), get(), get(), get(), BuildConfig.AI_BASE_URL)
+        OpenAiCompatiblePincheChatClient(get(), get(), get(), get(), get(), get(), BuildConfig.AI_BASE_URL)
     }
     // Chips del Escaneo sin guardar compartidos entre el Escáner y Sugerencias (D3).
     single { ScanDraftHolder() }

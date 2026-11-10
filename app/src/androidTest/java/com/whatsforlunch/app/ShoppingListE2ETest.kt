@@ -1399,6 +1399,7 @@ class ShoppingListE2ETest {
             turns: List<PincheTurn>,
             language: String,
             profile: UserProfile,
+            onContent: (String) -> Unit,
         ): PincheReplyResult {
             if (results.isEmpty()) return PincheReplyResult.Success(PincheReply(text = "ok"))
             return results[minOf(calls++, results.lastIndex)]

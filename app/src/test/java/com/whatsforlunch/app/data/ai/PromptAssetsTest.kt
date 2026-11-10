@@ -93,6 +93,57 @@ class PromptAssetsTest {
         assertTrue(noneEn.contains("Diet type: Omnivore"))
     }
 
+    // `rellenar-perfil-con-el-pinche` (D4): el system prompt describe tres
+    // funciones —las dos de lectura y `save_profile` de escritura—.
+    @Test
+    fun pincheSystemPromptsDescribeThreeFunctionsWithSaveProfile() {
+        val es = source.pincheSystemPrompt("es")
+        assertTrue(es.contains("Tienes tres funciones"))
+        assertTrue(es.contains("save_profile"))
+        assertTrue(es.contains("de escritura"))
+        val en = source.pincheSystemPrompt("en")
+        assertTrue(en.contains("You have three functions"))
+        assertTrue(en.contains("save_profile"))
+        assertTrue(en.contains("a write function"))
+    }
+
+    // D1/D6: las reglas de entrevista viven en el bloque de perfil (es/en) con el
+    // vocabulario cerrado del tipo de alimentación (D8) y las chips sin traducir.
+    @Test
+    fun profilePromptsCarryTheInterviewRulesInBothLanguages() {
+        val es = source.pincheProfilePrompt("es")
+        assertTrue(es.contains("no propongas todavía"))
+        assertTrue(es.contains("una sola parte pendiente por mensaje"))
+        assertTrue(es.contains("save_profile"))
+        assertTrue(es.contains("sin traducir"))
+        assertTrue(es.contains("Omnívora, Pescetariana, Vegetariana, Vegana o Cetogénica"))
+        assertTrue(es.contains("sin entrevistar ni guardar nada"))
+        assertTrue(es.contains("«sin declarar»"))
+        assertTrue(es.contains("«sin elegir»"))
+
+        val en = source.pincheProfilePrompt("en")
+        assertTrue(en.contains("do not propose yet"))
+        assertTrue(en.contains("one pending part per message"))
+        assertTrue(en.contains("save_profile"))
+        assertTrue(en.contains("untranslated"))
+        assertTrue(en.contains("Omnivore, Pescetarian, Vegetarian, Vegan or Ketogenic"))
+        assertTrue(en.contains("without interviewing or saving anything"))
+        assertTrue(en.contains("\"not declared\""))
+        assertTrue(en.contains("\"not chosen\""))
+    }
+
+    // El vocabulario de la tool `save_profile` es el mismo que el del bloque de
+    // perfil: no pueden desincronizarse.
+    @Test
+    fun dietVocabularyMatchesTheNamesOfTheProfilePrompt() {
+        DIET_TYPE_ENUM_VALUES.forEach { name ->
+            assertTrue("$name ausente del vocabulario", name.lowercase() in DIET_TYPE_VOCABULARY.keys)
+        }
+        assertEquals(10, DIET_TYPE_ENUM_VALUES.size)
+        assertEquals(DietType.VEGAN, DIET_TYPE_VOCABULARY["vegana"])
+        assertEquals(DietType.KETOGENIC, DIET_TYPE_VOCABULARY["ketogenic"])
+    }
+
     @Test
     fun dishPhotoPromptsFillDishAndStory() {
         assertEquals(
