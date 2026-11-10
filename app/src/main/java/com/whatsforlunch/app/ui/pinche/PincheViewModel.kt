@@ -12,12 +12,12 @@ import com.whatsforlunch.app.domain.pinche.PincheProposalRules
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.profile.PendingProfilePart
+import com.whatsforlunch.app.domain.profile.SavedProfilePart
 import com.whatsforlunch.app.domain.profile.UserProfileRules
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.domain.repository.UserProfileRepository
-import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
@@ -38,8 +38,11 @@ enum class PincheNotice {
 
 // Mensaje en memoria de la conversación (D2). Una respuesta del asistente puede
 // llevar como máximo una Propuesta válida (D7) y su estado de guardado (D9). Con
-// `profileRequest` el asistente pide las partes del perfil que faltan antes de
-// responder (`crear-mi-perfil`, RD26/D5): no viaja al modelo (texto en blanco).
+// `profileRequest` el asistente pide las partes del perfil que faltan: es el
+// mensaje estático de `crear-mi-perfil` (RD26/D8) que hoy actúa de **guarda** de
+// las Propuestas y de **degradación** sin IA (`rellenar-perfil-con-el-pinche`, D7).
+// Con `profileSaved` la app resume lo que `save_profile` persistió en el turno
+// (RD27/D2). Ninguno de los dos viaja al modelo (texto en blanco).
 data class PincheMessage(
     val id: String = UUID.randomUUID().toString(),
     val author: PincheAuthor,
@@ -48,8 +51,10 @@ data class PincheMessage(
     val proposalState: PincheProposalState = PincheProposalState.PROPOSED,
     // RF-AFL4: estado en memoria de la Ficha, como «Guardada en Mis Recetas».
     val addedToList: Boolean = false,
-    // Partes del perfil pendientes de este mensaje de petición (vacío en el resto).
+    // Partes del perfil pendientes de este mensaje estático (vacío en el resto).
     val profileRequest: List<PendingProfilePart> = emptyList(),
+    // Partes del perfil guardadas en este turno (resumen «He guardado…», D2).
+    val profileSaved: List<SavedProfilePart> = emptyList(),
 )
 
 data class PincheUiState(
@@ -68,9 +73,13 @@ data class PincheUiState(
  * respuesta con un snapshot de la Despensa (D8) y guardar crea un Borrador con id
  * estable mediante upsert (RD16). Los fallos nunca congelan la pantalla.
  *
- * Con el perfil del usuario incompleto el envío no llega al modelo: se añade un
- * mensaje del asistente que pide solo las partes pendientes (RD26/D5) y la
- * llamada se retoma cuando el perfil está completo.
+ * `rellenar-perfil-con-el-pinche` (RD26 reescrita / RD27): **el gate previo se
+ * retiró** —siempre que haya texto se llama al cliente— y la entrevista de perfil
+ * vive en el system prompt. La app añade el resumen «He guardado…» con lo que
+ * `save_profile` persistió en el turno (D2) y aplica la **guarda determinista**
+ * (D1): una respuesta con Propuesta y partes pendientes no pinta la Ficha y añade
+ * el mensaje estático con «Abrir Mi perfil»; sin key o con fallo, además del aviso,
+ * se añade ese mismo mensaje (degradación, S5).
  */
 class PincheViewModel(
     private val pantryRepository: PantryRepository,
@@ -199,23 +208,10 @@ class PincheViewModel(
 
     private fun runRequest(language: String) {
         viewModelScope.launch {
+            // RD26/RD27 (`rellenar-perfil-con-el-pinche`): el gate previo se retiró;
+            // la entrevista de perfil vive en el system prompt y la guarda de la
+            // Propuesta en `onSuccess`. Siempre que haya texto se llama al cliente.
             val profile = currentProfile()
-            // RD26/D5 (`crear-mi-perfil`): con partes del perfil pendientes el
-            // Pinche **no llama a la IA**: pide solo lo que falta y no responde a
-            // la pregunta hasta que el perfil esté completo.
-            val pending = UserProfileRules.pendingParts(profile)
-            if (pending.isNotEmpty()) {
-                _uiState.value = _uiState.value.copy(
-                    messages = _uiState.value.messages + PincheMessage(
-                        author = PincheAuthor.ASSISTANT,
-                        text = "",
-                        profileRequest = pending,
-                    ),
-                    isSending = false,
-                    notice = null,
-                )
-                return@launch
-            }
             val turns = _uiState.value.messages
                 .filter { it.text.isNotBlank() }
                 .map { message ->
@@ -233,43 +229,78 @@ class PincheViewModel(
                 PincheReplyResult.Failed
             }
             when (result) {
-                is PincheReplyResult.Success -> onSuccess(result.reply.text, result.reply.proposal)
-                PincheReplyResult.MissingApiKey -> _uiState.value = _uiState.value.copy(
-                    isSending = false,
-                    notice = PincheNotice.AI_KEY_MISSING,
-                )
-
-                PincheReplyResult.Failed -> _uiState.value = _uiState.value.copy(
-                    isSending = false,
-                    notice = PincheNotice.FAILED,
-                )
+                is PincheReplyResult.Success -> onSuccess(result)
+                PincheReplyResult.MissingApiKey -> onUnavailable(PincheNotice.AI_KEY_MISSING, profile)
+                PincheReplyResult.Failed -> onUnavailable(PincheNotice.FAILED, profile)
             }
         }
+    }
+
+    /**
+     * Aviso de siempre (key ausente o fallo del turno, RF-PCH9) y, con partes del
+     * perfil pendientes, además el mensaje estático con «Abrir Mi perfil»
+     * (degradación sin IA, S5/`rellenar-perfil-con-el-pinche` D7).
+     */
+    private fun onUnavailable(notice: PincheNotice, profile: UserProfile) {
+        val pending = UserProfileRules.pendingParts(profile)
+        _uiState.value = _uiState.value.copy(
+            messages = if (pending.isEmpty()) {
+                _uiState.value.messages
+            } else {
+                _uiState.value.messages + PincheMessage(
+                    author = PincheAuthor.ASSISTANT,
+                    text = "",
+                    profileRequest = pending,
+                )
+            },
+            isSending = false,
+            notice = notice,
+        )
     }
 
     /** Perfil vigente; si la lectura falla se asume vacío (todo pendiente). */
     private suspend fun currentProfile(): UserProfile =
         runCatching { userProfileRepository.observeProfile().first() }.getOrDefault(UserProfile.empty)
 
-    private suspend fun onSuccess(text: String, proposal: RecipeSuggestion?) {
+    private suspend fun onSuccess(result: PincheReplyResult.Success) {
+        val text = result.reply.text
+        val proposal = result.reply.proposal
         if (text.isBlank() && proposal == null) {
             _uiState.value = _uiState.value.copy(isSending = false, notice = PincheNotice.FAILED)
             return
         }
-        // D8: los Faltantes se calculan una sola vez con la Despensa del momento.
-        val pantry = runCatching { pantryRepository.observePantryItems().first() }.getOrDefault(emptyList())
-        val pincheProposal = proposal?.let { suggestion ->
-            PincheProposal(
-                recipe = suggestion,
-                missingIngredients = PincheProposalRules.missingRequired(suggestion, pantry),
+        var messages = _uiState.value.messages
+        // D2: resumen fiel con lo realmente persistido en el turno, antes de la
+        // respuesta (texto en blanco: nunca viaja al modelo).
+        result.profileSaved?.let { saved ->
+            messages = messages + PincheMessage(
+                author = PincheAuthor.ASSISTANT,
+                text = "",
+                profileSaved = saved,
             )
         }
+        // D1 (guarda determinista): con partes pendientes la Propuesta **no se
+        // pinta**; se conserva el texto y se añade el mensaje estático con la
+        // acción «Abrir Mi perfil».
+        val pending = UserProfileRules.pendingParts(currentProfile())
+        val guardedProposal = if (proposal != null && pending.isEmpty()) {
+            // D8: los Faltantes se calculan una sola vez con la Despensa del momento.
+            val pantry = runCatching { pantryRepository.observePantryItems().first() }.getOrDefault(emptyList())
+            PincheProposal(
+                recipe = proposal,
+                missingIngredients = PincheProposalRules.missingRequired(proposal, pantry),
+            )
+        } else {
+            null
+        }
+        messages = messages + PincheMessage(
+            author = PincheAuthor.ASSISTANT,
+            text = text,
+            proposal = guardedProposal,
+            profileRequest = if (proposal != null && pending.isNotEmpty()) pending else emptyList(),
+        )
         _uiState.value = _uiState.value.copy(
-            messages = _uiState.value.messages + PincheMessage(
-                author = PincheAuthor.ASSISTANT,
-                text = text,
-                proposal = pincheProposal,
-            ),
+            messages = messages,
             isSending = false,
             notice = null,
         )

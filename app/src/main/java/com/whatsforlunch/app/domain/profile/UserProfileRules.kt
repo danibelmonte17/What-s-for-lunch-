@@ -25,6 +25,8 @@ enum class PendingProfilePart {
  *   ≥1 chip o «No tengo ninguna», y el tipo de alimentación al estar elegido
  *   (sin preselección, D2). `pendingParts` lista lo que falta para que el Pinche
  *   deje de pedirlo.
+ * - **RD27 — `save_profile`**: `applyUpdate` compone estas mismas reglas para
+ *   guardar desde el chat lo que el usuario declare (solo los campos recibidos).
  */
 object UserProfileRules {
 
@@ -85,4 +87,99 @@ object UserProfileRules {
 
     /** Perfil completo = ninguna parte pendiente (D5). */
     fun isComplete(profile: UserProfile): Boolean = pendingParts(profile).isEmpty()
+
+    /**
+     * Aplica una actualización de `save_profile` al perfil (RD27): valida con estas
+     * mismas reglas y, si algo es inválido, devuelve el código de error **sin
+     * persistir nada**. Solo se modifican los campos que llegan (D5) y, por sección,
+     * la lista completa sustituye la anterior (permite correcciones). `savedParts`
+     * lista las partes escritas con su valor final, en el orden en que las pide el
+     * Pinche, para el resumen fiel del chat (D2).
+     */
+    fun applyUpdate(profile: UserProfile, update: ProfileUpdate): ProfileUpdateOutcome {
+        if (!update.hasFields()) {
+            return ProfileUpdateOutcome.Invalid(ProfileUpdateError.INVALID_ARGUMENTS)
+        }
+        var current = profile
+        val saved = mutableListOf<SavedProfilePart>()
+        sectionPatches(update).forEach { patch ->
+            when (val outcome = applySection(current, patch)) {
+                is SectionOutcome.Rejected ->
+                    return ProfileUpdateOutcome.Invalid(outcome.code)
+
+                is SectionOutcome.Applied -> {
+                    current = outcome.profile
+                    saved += outcome.part
+                }
+
+                SectionOutcome.Untouched -> Unit
+            }
+        }
+        update.dietType?.let { dietType ->
+            current = setDietType(current, dietType)
+            saved += SavedProfilePart(part = PendingProfilePart.DIET_TYPE, dietType = dietType)
+        }
+        return ProfileUpdateOutcome.Saved(current, saved)
+    }
+
+    private data class SectionPatch(
+        val part: PendingProfilePart,
+        val section: ProfileSection,
+        val chips: List<String>?,
+        val none: Boolean?,
+    )
+
+    private sealed interface SectionOutcome {
+        data class Applied(val profile: UserProfile, val part: SavedProfilePart) : SectionOutcome
+        data class Rejected(val code: String) : SectionOutcome
+        data object Untouched : SectionOutcome
+    }
+
+    private fun sectionPatches(update: ProfileUpdate): List<SectionPatch> = listOf(
+        SectionPatch(
+            part = PendingProfilePart.ALLERGIES,
+            section = ProfileSection.ALLERGY,
+            chips = update.allergies,
+            none = update.allergiesNone,
+        ),
+        SectionPatch(
+            part = PendingProfilePart.INTOLERANCES,
+            section = ProfileSection.INTOLERANCE,
+            chips = update.intolerances,
+            none = update.intolerancesNone,
+        ),
+    )
+
+    private fun applySection(profile: UserProfile, patch: SectionPatch): SectionOutcome {
+        val (part, section, chips, none) = patch
+        if (chips == null && none == null) return SectionOutcome.Untouched
+        if (chips != null) {
+            val normalized = mutableListOf<String>()
+            chips.forEach { raw ->
+                val chip = normalizeChip(raw)
+                    ?: return SectionOutcome.Rejected(ProfileUpdateError.INVALID_CHIP)
+                if (isDuplicate(normalized, chip)) {
+                    return SectionOutcome.Rejected(ProfileUpdateError.DUPLICATE_CHIP)
+                }
+                normalized += chip
+            }
+            // RD25/D3: «No tengo ninguna» es exclusiva con las chips: si llegan
+            // juntas se rechaza sin persistir (el modelo debe corregirse).
+            if (none == true && normalized.isNotEmpty()) {
+                return SectionOutcome.Rejected(ProfileUpdateError.INVALID_CHIP)
+            }
+            val updated = if (none == true) {
+                setNone(profile, section, none = true)
+            } else {
+                profile.withChips(section, normalized).withNone(section, none = false)
+            }
+            return SectionOutcome.Applied(updated, savedPart(part, updated, section))
+        }
+        // Solo la marca: marcarla limpia la sección; desmarcarla la deja pendiente.
+        val updated = setNone(profile, section, none = none == true)
+        return SectionOutcome.Applied(updated, savedPart(part, updated, section))
+    }
+
+    private fun savedPart(part: PendingProfilePart, profile: UserProfile, section: ProfileSection): SavedProfilePart =
+        SavedProfilePart(part = part, chips = profile.chips(section), none = profile.isNone(section))
 }

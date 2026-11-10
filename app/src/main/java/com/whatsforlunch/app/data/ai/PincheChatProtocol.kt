@@ -3,21 +3,28 @@ package com.whatsforlunch.app.data.ai
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.pinche.PincheReply
+import com.whatsforlunch.app.domain.profile.PendingProfilePart
+import com.whatsforlunch.app.domain.profile.ProfileUpdate
+import com.whatsforlunch.app.domain.profile.ProfileUpdateError
+import com.whatsforlunch.app.domain.profile.SavedProfilePart
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
 import com.whatsforlunch.app.domain.suggestion.SuggestionRules
 import org.json.JSONArray
 import org.json.JSONObject
 
-// Llamada a función pedida por el modelo; los argumentos se ignoran porque las dos
-// funciones del Pinche no tienen parámetros (D4).
+// Llamada a función pedida por el modelo: id, nombre y sus argumentos en crudo.
+// Las dos funciones de solo lectura no tienen parámetros y los ignoran;
+// `save_profile` los parsea con `parseSaveProfileArgs` (D8).
 internal data class PincheToolCall(
     val id: String,
     val name: String,
+    val arguments: String,
 )
 
-// Protocolo puro del Pinche (D4-D7, D11-D12): definiciones de las dos funciones de
-// solo lectura, lectura de `tool_calls`, resultados acotados y separación entre el
-// texto conversacional y la única Propuesta del bloque cercado `receta`. Sin
+// Protocolo puro del Pinche (D4-D7, D11-D12): definiciones de las tres
+// funciones —dos de solo lectura y `save_profile`, de escritura acotada al
+// perfil (RD27)—, lectura de `tool_calls`, resultados acotados y separación entre
+// el texto conversacional y la única Propuesta del bloque cercado `receta`. Sin
 // dependencias de Android, red ni UI para poder probarlo con JVM.
 internal object PincheChatProtocol {
 
@@ -30,6 +37,14 @@ internal object PincheChatProtocol {
 
     private const val PANTRY_FUNCTION = "get_pantry"
     private const val RECIPES_FUNCTION = "get_my_recipes"
+    private const val SAVE_PROFILE_FUNCTION = "save_profile"
+
+    // Campos de los argumentos de `save_profile` (RD27).
+    private const val ALLERGIES_FIELD = "allergies"
+    private const val ALLERGIES_NONE_FIELD = "allergies_none"
+    private const val INTOLERANCES_FIELD = "intolerances"
+    private const val INTOLERANCES_NONE_FIELD = "intolerances_none"
+    private const val DIET_TYPE_FIELD = "diet_type"
 
     fun toolsJson(): JSONArray = JSONArray()
         .put(
@@ -62,15 +77,54 @@ internal object PincheChatProtocol {
                         .put("parameters", emptyParameters()),
                 ),
         )
+        .put(
+            JSONObject()
+                .put("type", "function")
+                .put(
+                    "function",
+                    JSONObject()
+                        .put("name", SAVE_PROFILE_FUNCTION)
+                        .put(
+                            "description",
+                            "Write the user's Mi perfil sections from what the user just said; " +
+                                "only call it when the user states their data.",
+                        )
+                        .put("parameters", saveProfileParameters()),
+                ),
+        )
 
     private fun emptyParameters(): JSONObject = JSONObject()
         .put("type", "object")
         .put("properties", JSONObject())
         .put("additionalProperties", false)
 
+    // RD27/D5: cinco campos opcionales; el tipo de alimentación con el vocabulario
+    // cerrado es/en del bloque de perfil (D8) y sin campos extra (D5).
+    private fun saveProfileParameters(): JSONObject = JSONObject()
+        .put("type", "object")
+        .put(
+            "properties",
+            JSONObject()
+                .put("allergies", stringArrayParameter())
+                .put("allergies_none", JSONObject().put("type", "boolean"))
+                .put("intolerances", stringArrayParameter())
+                .put("intolerances_none", JSONObject().put("type", "boolean"))
+                .put(
+                    "diet_type",
+                    JSONObject()
+                        .put("type", "string")
+                        .put("enum", JSONArray(DIET_TYPE_ENUM_VALUES)),
+                ),
+        )
+        .put("additionalProperties", false)
+
+    private fun stringArrayParameter(): JSONObject = JSONObject()
+        .put("type", "array")
+        .put("items", JSONObject().put("type", "string"))
+
     /**
-     * D4: `tool_calls[].id` junto al nombre de la función. Los argumentos se ignoran
-     * porque las dos funciones no tienen parámetros.
+     * `tool_calls[].id`, nombre de la función y sus argumentos en crudo (los de
+     * lectura no tienen parámetros y se ignoran).
      */
     fun toolCalls(message: JSONObject): List<PincheToolCall> {
         val calls = message.optJSONArray("tool_calls") ?: return emptyList()
@@ -79,9 +133,107 @@ internal object PincheChatProtocol {
             val function = call.optJSONObject("function") ?: return@mapNotNull null
             val id = call.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
             val name = function.optString("name").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            PincheToolCall(id = id, name = name)
+            PincheToolCall(id = id, name = name, arguments = function.optString("arguments"))
         }
     }
+
+    /**
+     * Argumentos de `save_profile`: `null` cuando no son usables (JSON que no es
+     * objeto, tipos incorrectos o `diet_type` fuera del vocabulario cerrado, D8).
+     */
+    fun parseSaveProfileArgs(json: String): ProfileUpdate? = parseArgs(json).update
+
+    /**
+     * Código de error para `saveProfileToolError` cuando `parseSaveProfileArgs`
+     * devuelve `null`: `unknown_diet_type` si `diet_type` está presente pero no se
+     * puede mapear al enum (D8), `invalid_arguments` en el resto de casos.
+     */
+    fun saveProfileArgsError(json: String): String =
+        parseArgs(json).error ?: ProfileUpdateError.INVALID_ARGUMENTS
+
+    // Resultado interno del parseo: `update` si es usable, `error` si hay que
+    // rechazarlo (solo tiene sentido cuando `update` es null).
+    private data class ParsedArgs(val update: ProfileUpdate?, val error: String?)
+
+    /** Un campo presente con un tipo que no corresponde (→ `invalid_arguments`). */
+    private class FieldTypeError : Exception()
+
+    private fun parseArgs(json: String): ParsedArgs {
+        val invalid = ParsedArgs(null, ProfileUpdateError.INVALID_ARGUMENTS)
+        val object_ = try {
+            JSONObject(json)
+        } catch (_: Exception) {
+            return invalid
+        }
+        // `diet_type` presente pero fuera del vocabulario cerrado (D8).
+        val dietType = if (object_.has(DIET_TYPE_FIELD)) {
+            val raw = object_.opt(DIET_TYPE_FIELD) as? String
+                ?: return ParsedArgs(null, ProfileUpdateError.UNKNOWN_DIET_TYPE)
+            DIET_TYPE_VOCABULARY[raw.trim().lowercase()]
+                ?: return ParsedArgs(null, ProfileUpdateError.UNKNOWN_DIET_TYPE)
+        } else {
+            null
+        }
+        val update = try {
+            ProfileUpdate(
+                allergies = optionalStringList(object_, ALLERGIES_FIELD),
+                allergiesNone = optionalBoolean(object_, ALLERGIES_NONE_FIELD),
+                intolerances = optionalStringList(object_, INTOLERANCES_FIELD),
+                intolerancesNone = optionalBoolean(object_, INTOLERANCES_NONE_FIELD),
+                dietType = dietType,
+            )
+        } catch (_: FieldTypeError) {
+            return invalid
+        }
+        return ParsedArgs(update = update, error = null)
+    }
+
+    /** Valor ausente → `null` (campo omitido, sin tocar); tipo incorrecto → error. */
+    private fun optionalStringList(`object`: JSONObject, key: String): List<String>? {
+        if (!`object`.has(key)) return null
+        val array = `object`.optJSONArray(key) ?: throw FieldTypeError()
+        val values = mutableListOf<String>()
+        for (index in 0 until array.length()) {
+            if (array.opt(index) !is String) throw FieldTypeError()
+            values += array.getString(index)
+        }
+        return values
+    }
+
+    private fun optionalBoolean(`object`: JSONObject, key: String): Boolean? {
+        if (!`object`.has(key)) return null
+        return `object`.opt(key) as? Boolean ?: throw FieldTypeError()
+    }
+
+    // RD27/D2: lo realmente persistido (valores finales) y lo que sigue pendiente,
+    // para que el modelo sepa qué preguntar después.
+    fun saveProfileToolResult(saved: List<SavedProfilePart>, pending: List<PendingProfilePart>): String {
+        val savedJson = JSONObject()
+        saved.forEach { part ->
+            when (part.part) {
+                PendingProfilePart.ALLERGIES -> {
+                    savedJson.put(ALLERGIES_FIELD, JSONArray(part.chips))
+                    savedJson.put(ALLERGIES_NONE_FIELD, part.none)
+                }
+
+                PendingProfilePart.INTOLERANCES -> {
+                    savedJson.put(INTOLERANCES_FIELD, JSONArray(part.chips))
+                    savedJson.put(INTOLERANCES_NONE_FIELD, part.none)
+                }
+
+                PendingProfilePart.DIET_TYPE -> part.dietType?.let { dietType ->
+                    savedJson.put(DIET_TYPE_FIELD, dietType.name)
+                }
+            }
+        }
+        return JSONObject()
+            .put("saved", savedJson)
+            .put("pending", JSONArray(pending.map { it.name }))
+            .toString()
+    }
+
+    fun saveProfileToolError(code: String): String =
+        JSONObject().put("error", code).toString()
 
     // RF-PCH5/D11: solo nombre y cantidad, como máximo los primeros 100 Alimentos.
     fun pantryToolResult(items: List<PantryItem>): String {

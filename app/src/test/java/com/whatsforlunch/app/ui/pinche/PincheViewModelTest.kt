@@ -23,6 +23,7 @@ import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.pinche.PincheReply
 import com.whatsforlunch.app.domain.pinche.PincheTurn
 import com.whatsforlunch.app.domain.profile.PendingProfilePart
+import com.whatsforlunch.app.domain.profile.SavedProfilePart
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.domain.repository.UserProfileRepository
@@ -43,6 +44,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -309,53 +311,147 @@ class PincheViewModelTest {
         assertEquals(1, viewModel.uiState.value.messages.size)
     }
 
-    // RD26/D5 (`crear-mi-perfil`): con el perfil vacío el Pinche no llama a la IA
-    // y responde con un mensaje que pide las tres partes pendientes.
+    // RD26/RD27 (`rellenar-perfil-con-el-pinche`): el gate previo se retiró —con
+    // el perfil vacío también se llama a la IA— y la entrevista vive en el prompt.
     @Test
-    fun emptyProfileBlocksTheClientAndAsksForEveryPendingPart() = runTest {
-        val client = FakePincheChatClient(listOf(success("No debería llegar")))
+    fun emptyProfileStillCallsTheClientAndShowsTheAnswer() = runTest {
+        val client = FakePincheChatClient(listOf(success("¿Tienes alguna alergia?")))
         val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
 
         viewModel.onInputChange("Dame una receta")
         viewModel.send("es")
         advanceUntilIdle()
 
-        assertEquals(0, client.calls)
+        assertEquals(1, client.calls)
+        assertEquals(UserProfile.empty, client.lastProfile)
         val state = viewModel.uiState.value
         assertFalse(state.isSending)
         assertEquals(2, state.messages.size)
         assertEquals(PincheAuthor.USER, state.messages[0].author)
-        val request = state.messages[1]
-        assertEquals(PincheAuthor.ASSISTANT, request.author)
-        assertEquals("", request.text)
+        assertEquals("¿Tienes alguna alergia?", state.messages.last().text)
+        assertTrue(state.messages.last().profileRequest.isEmpty())
+        assertNull(state.messages.last().proposal)
+    }
+
+    // D1 (guarda determinista): una Propuesta con partes pendientes no se pinta;
+    // se conserva el texto y se añade el mensaje estático con «Abrir Mi perfil».
+    @Test
+    fun proposalWithPendingPartsIsNotPaintedAndAddsTheStaticRequest() = runTest {
+        val client = FakePincheChatClient(listOf(success("Te propongo esto.", proposal())))
+        val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
+
+        viewModel.onInputChange("Dame una receta")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        val message = viewModel.uiState.value.messages.last()
+        assertEquals("Te propongo esto.", message.text)
+        assertNull(message.proposal)
         assertEquals(
             listOf(
                 PendingProfilePart.ALLERGIES,
                 PendingProfilePart.INTOLERANCES,
                 PendingProfilePart.DIET_TYPE,
             ),
-            request.profileRequest,
+            message.profileRequest,
         )
     }
 
-    // D5: si solo faltan partes, el Pinche pide exactamente esas partes.
+    // Con el perfil completo la Ficha sí se pinta (el resto de tests lo cubren).
     @Test
-    fun onlyMissingPartsAreRequested() = runTest {
-        val client = FakePincheChatClient(listOf(success("ok")))
+    fun proposalWithCompleteProfileShowsTheCard() = runTest {
         val viewModel = viewModel(
-            client = client,
-            profile = InMemoryUserProfileRepository(UserProfile(allergies = listOf("Frutos secos"))),
+            client = FakePincheChatClient(listOf(success("Prueba esto.", proposal()))),
         )
 
-        viewModel.onInputChange("¿Qué ceno?")
+        viewModel.onInputChange("Dame una receta")
         viewModel.send("es")
         advanceUntilIdle()
 
-        assertEquals(0, client.calls)
-        assertEquals(
-            listOf(PendingProfilePart.INTOLERANCES, PendingProfilePart.DIET_TYPE),
-            viewModel.uiState.value.messages.last().profileRequest,
+        val message = viewModel.uiState.value.messages.last()
+        assertNotNull(message.proposal)
+        assertTrue(message.profileRequest.isEmpty())
+    }
+
+    // D2: el resumen «He guardado…» se añade antes de la respuesta con lo
+    // realmente persistido en el turno.
+    @Test
+    fun profileSavedAddsTheSummaryBeforeTheReply() = runTest {
+        val saved = listOf(SavedProfilePart(PendingProfilePart.ALLERGIES, chips = listOf("Frutos secos")))
+        val client = FakePincheChatClient(
+            listOf(success("Anotado. ¿Tienes intolerancias?", saved = saved)),
         )
+        val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
+
+        viewModel.onInputChange("Frutos secos")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(3, state.messages.size)
+        val summary = state.messages[1]
+        assertEquals(PincheAuthor.ASSISTANT, summary.author)
+        assertEquals("", summary.text)
+        assertEquals(saved, summary.profileSaved)
+        assertEquals("Anotado. ¿Tienes intolerancias?", state.messages[2].text)
+        // El resumen no viaja al modelo (texto en blanco).
+        assertEquals(listOf("Frutos secos"), client.lastTurns.map { it.text })
+    }
+
+    // S5/D7: sin key con partes pendientes, además del aviso se añade el mensaje
+    // estático con «Abrir Mi perfil» (degradación).
+    @Test
+    fun missingApiKeyWithPendingPartsAddsTheStaticRequest() = runTest {
+        val client = FakePincheChatClient(listOf(PincheReplyResult.MissingApiKey))
+        val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
+
+        viewModel.onInputChange("Hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(PincheNotice.AI_KEY_MISSING, state.notice)
+        assertEquals(2, state.messages.size)
+        assertEquals("", state.messages.last().text)
+        assertEquals(
+            listOf(
+                PendingProfilePart.ALLERGIES,
+                PendingProfilePart.INTOLERANCES,
+                PendingProfilePart.DIET_TYPE,
+            ),
+            state.messages.last().profileRequest,
+        )
+    }
+
+    // S5/D7: fallo del proveedor con partes pendientes → aviso + mensaje estático.
+    @Test
+    fun failedTurnWithPendingPartsAddsTheStaticRequest() = runTest {
+        val client = FakePincheChatClient(listOf(PincheReplyResult.Failed))
+        val viewModel = viewModel(client = client, profile = InMemoryUserProfileRepository())
+
+        viewModel.onInputChange("Hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(PincheNotice.FAILED, state.notice)
+        assertEquals(2, state.messages.size)
+        assertTrue(state.messages.last().profileRequest.isNotEmpty())
+    }
+
+    // Con el perfil completo el aviso no añade ningún mensaje extra.
+    @Test
+    fun missingApiKeyWithCompleteProfileKeepsOnlyTheNotice() = runTest {
+        val viewModel = viewModel(client = FakePincheChatClient(listOf(PincheReplyResult.MissingApiKey)))
+
+        viewModel.onInputChange("Hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(PincheNotice.AI_KEY_MISSING, state.notice)
+        assertEquals(1, state.messages.size)
+        assertTrue(state.messages.none { it.profileRequest.isNotEmpty() })
     }
 
     // D5: con el perfil completo la llamada lleva el perfil en el puerto.
@@ -384,16 +480,25 @@ class PincheViewModelTest {
         assertTrue(viewModel.uiState.value.messages.last().profileRequest.isEmpty())
     }
 
-    // D5: el mensaje de petición no es turno del modelo (texto en blanco).
+    // Los mensajes estáticos (la guarda con la Propuesta y el resumen del turno)
+    // tienen texto en blanco y nunca son turnos del modelo.
     @Test
-    fun profileRequestMessagesNeverTravelToTheModel() = runTest {
-        val client = FakePincheChatClient(listOf(success("ok"), success("ok")))
+    fun staticProfileMessagesNeverTravelToTheModel() = runTest {
+        val client = FakePincheChatClient(
+            listOf(
+                success("Te propongo esto.", proposal()),
+                success("Ahora sí."),
+            ),
+        )
         val profile = InMemoryUserProfileRepository()
         val viewModel = viewModel(client = client, profile = profile)
 
         viewModel.onInputChange("Primera pregunta")
         viewModel.send("es")
         advanceUntilIdle()
+        // La guarda añadió un mensaje estático (texto en blanco).
+        assertTrue(viewModel.uiState.value.messages.any { it.profileRequest.isNotEmpty() })
+
         // Se completa el perfil y se vuelve a enviar.
         profile.save(
             UserProfile(allergies = listOf("Frutos secos"), intolerancesNone = true, dietType = DietType.OMNIVORE),
@@ -402,11 +507,12 @@ class PincheViewModelTest {
         viewModel.send("es")
         advanceUntilIdle()
 
-        assertEquals(1, client.calls)
-        // Solo los mensajes del usuario; la petición del perfil (texto en blanco) queda fuera.
-        assertEquals(listOf("Primera pregunta", "Segunda pregunta"), client.lastTurns.map { it.text })
-        // usuario + petición + usuario + respuesta
-        assertEquals(4, viewModel.uiState.value.messages.size)
+        assertEquals(2, client.calls)
+        assertEquals(
+            listOf("Primera pregunta", "Te propongo esto.", "Segunda pregunta"),
+            client.lastTurns.map { it.text },
+        )
+        assertTrue(client.lastTurns.none { it.text.isBlank() })
     }
 
     private fun viewModel(
@@ -431,8 +537,12 @@ class PincheViewModelTest {
             runBlocking { items.forEach { savePantryItem(it) } }
         }
 
-    private fun success(text: String, proposal: RecipeSuggestion? = null): PincheReplyResult.Success =
-        PincheReplyResult.Success(PincheReply(text = text, proposal = proposal))
+    private fun success(
+        text: String,
+        proposal: RecipeSuggestion? = null,
+        saved: List<SavedProfilePart>? = null,
+    ): PincheReplyResult.Success =
+        PincheReplyResult.Success(PincheReply(text = text, proposal = proposal), profileSaved = saved)
 
     private fun proposal(): RecipeSuggestion = RecipeSuggestion(
         title = "Arroz con tomate",

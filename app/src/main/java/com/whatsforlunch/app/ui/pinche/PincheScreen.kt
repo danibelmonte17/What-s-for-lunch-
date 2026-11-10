@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
+import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.model.RecipeStep
@@ -57,6 +58,7 @@ import com.whatsforlunch.app.domain.pinche.PincheAuthor
 import com.whatsforlunch.app.domain.pinche.PincheProposal
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.profile.PendingProfilePart
+import com.whatsforlunch.app.domain.profile.SavedProfilePart
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -83,6 +85,7 @@ object PincheTestTags {
     const val ADD_MISSING = "pinche_add_missing"
     const val ADDED_MISSING_LABEL = "pinche_added_missing_label"
     const val OPEN_PROFILE = "pinche_open_profile"
+    const val PROFILE_SAVED = "pinche_profile_saved"
 
     fun userMessage(index: Int) = "pinche_user_message_$index"
 
@@ -239,20 +242,26 @@ private fun MessageList(
                             modifier = Modifier.padding(WarmSpacing.md),
                             verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
                         ) {
-                            when {
-                                // Mensaje de petición del perfil (RD26/D5): texto
-                                // localizado con las partes pendientes y acceso a
-                                // «Mi perfil»; nunca viaja al modelo.
-                                message.profileRequest.isNotEmpty() -> ProfileRequestContent(
-                                    pending = message.profileRequest,
-                                    onOpenProfile = onOpenProfile,
-                                )
-
-                                message.text.isNotBlank() -> Text(
+                            if (message.text.isNotBlank()) {
+                                Text(
                                     text = message.text,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer
                                     else MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                            if (message.profileSaved.isNotEmpty()) {
+                                // Resumen «He guardado…» (RD27/D2): solo las partes
+                                // escritas en el turno; nunca viaja al modelo.
+                                ProfileSavedContent(saved = message.profileSaved)
+                            }
+                            if (message.profileRequest.isNotEmpty()) {
+                                // Mensaje estático de partes pendientes (RD26/D8):
+                                // guarda de la Propuesta y degradación sin IA (D7);
+                                // nunca viaja al modelo.
+                                ProfileRequestContent(
+                                    pending = message.profileRequest,
+                                    onOpenProfile = onOpenProfile,
                                 )
                             }
                             message.proposal?.let { proposal ->
@@ -284,9 +293,11 @@ private fun Greeting() {
     )
 }
 
-// Mensaje de petición del perfil (`crear-mi-perfil`, D8): lista solo las partes
-// pendientes del perfil y ofrece la acción «Abrir Mi perfil», que navega a la
-// pestaña del perfil sin responder todavía (RD26).
+// Mensaje estático de partes del perfil pendientes (`crear-mi-perfil` D8): lista
+// solo lo pendiente y ofrece la acción «Abrir Mi perfil». Tras
+// `rellenar-perfil-con-el-pinche` (D7) ya no interrumpe el envío: actúa como
+// **guarda** de una Propuesta con perfil incompleto (D1) y como **degradación**
+// cuando falta la IA (S5), y no viaja al modelo.
 @Composable
 private fun ProfileRequestContent(
     pending: List<PendingProfilePart>,
@@ -308,6 +319,44 @@ private fun ProfileRequestContent(
             Text(stringResource(R.string.pinche_profile_open))
         }
     }
+}
+
+// Resumen del guardado en el chat (`rellenar-perfil-con-el-pinche`, D2): lista
+// solo las partes escritas en el turno con su valor final, compuesto con las
+// etiquetas de «Mi perfil» y los valores literales; nunca viaja al modelo.
+@Composable
+private fun ProfileSavedContent(saved: List<SavedProfilePart>) {
+    // `map` (inline) antes de `joinToString` para poder invocar composables.
+    val summary = saved.map { part -> savedPartLine(part) }.joinToString(", ")
+    Text(
+        text = stringResource(R.string.pinche_profile_saved, summary),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.testTag(PincheTestTags.PROFILE_SAVED),
+    )
+}
+
+@Composable
+private fun savedPartLine(part: SavedProfilePart): String {
+    val title = when (part.part) {
+        PendingProfilePart.ALLERGIES -> stringResource(R.string.my_profile_allergies_title)
+        PendingProfilePart.INTOLERANCES -> stringResource(R.string.my_profile_intolerances_title)
+        PendingProfilePart.DIET_TYPE -> stringResource(R.string.my_profile_diet_title)
+    }
+    val value = when {
+        part.none -> stringResource(R.string.pinche_profile_saved_none)
+        part.dietType != null -> stringResource(dietLabel(part.dietType))
+        else -> part.chips.joinToString(", ")
+    }
+    return "$title: $value"
+}
+
+private fun dietLabel(dietType: DietType): Int = when (dietType) {
+    DietType.OMNIVORE -> R.string.my_profile_diet_omnivore
+    DietType.PESCETARIAN -> R.string.my_profile_diet_pescetarian
+    DietType.VEGETARIAN -> R.string.my_profile_diet_vegetarian
+    DietType.VEGAN -> R.string.my_profile_diet_vegan
+    DietType.KETOGENIC -> R.string.my_profile_diet_ketogenic
 }
 
 @Composable

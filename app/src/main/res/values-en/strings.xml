@@ -358,6 +358,8 @@
     <string name="pinche_added_missing">Added to the Shopping List</string>
     <string name="pinche_profile_request">To answer I need your profile: %1$s. Complete it in “My profile”.</string>
     <string name="pinche_profile_open">Open My profile</string>
+    <string name="pinche_profile_saved">Saved in “My profile”: %1$s</string>
+    <string name="pinche_profile_saved_none">none</string>
 
     <!-- My profile (crear-mi-perfil) -->
     <string name="my_profile_title">My profile</string>
