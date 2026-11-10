@@ -140,3 +140,118 @@ No se re-ejecutó ningún check caro (sin `connectedDebugAndroidTest`, sin `e2e.
 **Checks re-ejecutados (tier barato)**: `init.ps1` exit 0 · `lintDebug --rerun-tasks` 0 errores/48 warnings · `testDebugUnitTest --rerun-tasks` 45 suites/352 tests/0 fallos · `assembleDebug` + `compileDebugAndroidTestKotlin` BUILD SUCCESSFUL · paridad es/en 340/340 + 5/5 · inventario E2E 244 `@Test`/27 ficheros.
 
 **Solo inspeccionados (tier caro)**: E2E focalizada 23/23 + regresión 32/32 (corroboradas por la batería), batería `am instrument` `numtests=244` / `Tests run: 244, Failures: 1` (único fallo `SettingsE2ETest.deletingTheKeyAsksToConfigureItAgainForAiFeatures`, ajeno al diff; 1 omitido `Assume` sin `AI_API_KEY`) reconciliada 1:1 con el inventario por clase, y verify manual con 3 PNG 1280×2856 abiertos y revisados (mock local, sin llamadas de pago).
+
+---
+
+## §11 Enmienda: streaming y auto-scroll (2026-11-10)
+
+- **Alcance de esta sección**: enmienda de la spec - decisiones **D9-D16**, escenarios **S8-S10**, tareas **T8-T11**, «Hallazgos de implementación de la enmienda» y «Checklist de la enmienda» - revisada además por coherencia con S1-S7 (aceptados en la sesión 122), non-goals, arquitectura, alcance, docs durables, seguridad y handoff.
+- **Spec/contrato**: `docs/specs/rellenar-perfil-con-el-pinche.md` (enmendada 2026-11-10).
+- **Change set revisado**: `git diff 6d9448b..HEAD` - `576c925` (feat) + `a8835fe` (docs), antes `7a7cdc4` (docs): 26 ficheros, +1416/-41. Fuentes: `data/ai/PincheChatClient.kt`, `OpenAiCompatiblePincheChatClient.kt`, `PincheChatProtocol.kt`, **nuevo** `PincheSseParser.kt`, `ui/pinche/PincheViewModel.kt`, `PincheScreen.kt`; tests (unit: `PincheSseParserTest.kt` nuevo, `PincheChatProtocolTest.kt`, `PincheViewModelTest.kt`, `ShoppingListFlowTest.kt`; androidTest: `PincheE2ETest.kt`, `MyProfileE2ETest.kt`, `ShoppingListE2ETest.kt`); docs/harness (`docs/specs/`, `docs/technical-discovery.md`, `DESIGN.md`, `PROGRESS.md`, `docs/progress-history.md`, `feature_list.json`, `docs/evidence/rellenar-perfil-con-el-pinche/`).
+- **Validador**: `feature-validator` en sesión independiente; no participó en la implementación y solo escribe este informe (el acceptance lo persiste el orquestador).
+- **Estado en `feature_list.json` al entrar**: `passing` (autoverificación de la enmienda; no es aceptación).
+
+### VEREDICTO: accept
+
+**0 Critical / 0 High / 0 Medium; 3 hallazgos Low (L1-L3) y 6 notas (N7-N12)**; ninguno bloquea la aceptación, por lo que no hay Implementation Repair Brief. El hueco del verify manual con mock SSE local (decisión del usuario 2026-11-10) se valora con ese marco y no como novedad: `readStream()` se juzgó **por inspección de código** (§11.4) y el fallback D12 está bien implementado; su falta de ejecución automatizada queda como L1 (recomendación no bloqueante).
+
+### §11.1 Checks re-ejecutados (tier barato)
+
+| # | Check | Comando | Resultado (recuento propio) |
+|---|---|---|---|
+| 1 | Arranque | `./init.ps1` (con `ANDROID_SERIAL=emulator-5554`) | **exit 0**, «Entorno listo» (`installDebug` BUILD SUCCESSFUL, `monkey` inyectado, app en primer plano) |
+| 2 | Lint | `.\gradlew.bat lintDebug --rerun-tasks` | **BUILD SUCCESSFUL - 0 errores / 48 warnings** (desde `app/build/reports/lint-results-debug.xml`: 48 `Warning`, 0 `Error`/`Fatal`; ficheros con incidencias: `build.gradle.kts`, `AndroidManifest.xml`, `KeystoreAiKeyStore.kt`, `CameraXScanImageSource.kt`, mipmap, `strings.xml`, `libs.versions.toml` - **ningún fichero Kotlin del diff**, sin warnings nuevos sobre la línea base) |
+| 3 | Unit | `.\gradlew.bat testDebugUnitTest --rerun-tasks` | **BUILD SUCCESSFUL - 46 suites / 366 tests / 0 failures / 0 errors / 0 skipped** (suma propia de los atributos `tests=`/`failures=` de `app/build/test-results/testDebugUnitTest/*.xml`). Delta coherente con la evidencia: +1 suite `PincheSseParserTest` **7/0**, `PincheChatProtocolTest` 14 a **18/0** (+4 `streamingText`), `PincheViewModelTest` 22 a **25/0** (+3) |
+| 4 | Build | `.\gradlew.bat assembleDebug compileDebugAndroidTestKotlin` | **BUILD SUCCESSFUL** (`EXIT=0`) |
+| 5 | Paridad es/en | recuento propio de `values/strings.xml` vs `values-en/strings.xml` | **340 `<string>` + 5 `<plurals>` por idioma, diff = 0** (sin claves nuevas; la enmienda no toca `strings.xml`) |
+| 6 | Inventario E2E | recuento propio de `app/src/androidTest` | **245 `@Test`** en 25 ficheros con `@Test` (27 ficheros `.kt`, 2 helpers sin `@Test`) = «Starting 245» de la batería |
+
+### §11.2 Tier caro: una focalizada re-ejecutada + evidencia inspeccionada
+
+- **Re-ejecutada por el validador** (único check caro ejecutado): `.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.whatsforlunch.app.PincheE2ETest"` -> **17/17, 0 omitidos, 0 fallos, BUILD SUCCESSFUL in 53s** (`emulator-5554`, `Pixel_10_Pro(AVD) - 17`, API 37; sin llamadas de pago: la clase usa `FakePincheChatClient`). Corrobora el S6 y la regresión de S1-S5 sobre el árbol actual de HEAD.
+- **Batería completa (inspeccionada)** `docs/evidence/rellenar-perfil-con-el-pinche/e2e-bateria-enmienda-2026-11-10.log`, parseada por el validador: `Starting 245 tests` = inventario (244 + S6); `Tests 245/245 completed (2 skipped) (1 failed)`; **2 omitidos** = `SettingsE2ETest.savedKeyMarksConfiguredAndNeverRevealsTheKeyWhenReturning` + `SettingsE2ETest.deletingTheKeyAsksToConfigureItAgainForAiFeatures` (ambos `assumeFalse(buildKeyActive)`; ver N7); **1 fallo** = `ShoppingListE2ETest.twoRecipesAddUpAndTheBadgeCountsSources` (`ComposeNotIdleException`, 60 s); cierre `BUILD FAILED in 59m 7s` / `EXIT=1` (esperado por el flake). `PincheE2ETest` sin ninguna línea de fallo/omisión (17/17).
+- **Reruns conservados**: `e2e-shoppinglist-single-rerun-enmienda-2026-11-10.xml` -> `tests="1" failures="0"` (el test flakeado, 70 s) y `e2e-shoppinglist-rerun-enmienda-2026-11-10.xml` -> `tests="27" failures="0"` + log con `Finished 27 tests` y `BUILD SUCCESSFUL in 1m 14s`.
+- **Corrección temporal (sin deriva de código)**: fuentes finales anteriores a las 18:28 (local) < batería (log a 19:33; `BUILD FAILED in 59m 7s`) < reruns (20:04 y 20:23 locales; los `timestamp` internos de los XML están en UTC) < gates del implementador (logs 20:06) < commits `576c925`/`a8835fe` (21:39) < re-ejecuciones del validador (hoy). Batería y reruns corren sobre el mismo código que HEAD y que mis re-ejecuciones.
+- **No re-ejecutado (por defecto del tier caro)**: la batería completa (59 min), la regresión focalizada 39/39 y `e2e.ps1`; la evidencia es exacta, consistente y el flake está aislado con rerun 1/1 + clase 27/27.
+- **Pendiente documentado y aceptado**: el verify manual con mock SSE local no se ejecutó (decisión del usuario 2026-11-10: exige cambiar `AI_BASE_URL`/`AI_API_KEY` en `local.properties` - fichero con la API key real, `AGENTS.md §5` - y `usesCleartextTraffic` transitorio); por eso `readStream()` no está probada E2E por HTTP y se juzga por inspección (§11.4). Anotado en la spec, en `informe.md` y en `evidence` de `feature_list.json`.
+
+### §11.3 Cobertura de los escenarios de la enmienda (S8-S10) y checklist
+
+| Escenario | Veredicto | Evidencia |
+|---|---|---|
+| **S8** streaming visible sin JSON de la Propuesta | **pasa** | `stream: true` en `buildBody` (`OpenAiCompatiblePincheChatClient.kt:255`); emisión por fragmento con `streamingText` (`:267`-`:281`, con dedup de emisiones) y reset por ronda `onContent("")` (`:114`, D14); corte del preview en `PincheChatProtocol.streamingText` (`PincheChatProtocol.kt:307`, con `jsonStart` en `:317`) con **4 tests que afirman el comportamiento pedido**: texto plano íntegro, corte en el bloque `receta`, JSON completo y a medio formar, y `{...}` en prosa sin comillas que **no** se corta (`PincheChatProtocolTest.kt:256`-`:291`); burbuja que crece y se sustituye por el mensaje final: unit `streamingFragmentsUpdateTheTransientBubbleUntilTheFinalReply` (`PincheViewModelTest.kt:404`, asienta el contrato de emisiones y el fin de la burbuja con el resumen intacto) + E2E S6 re-ejecutada 17/17 (§11.2). El orden «He guardado...» antes de la respuesta (D2 intacto) lo siguen asentando los tests de la sesión 121, en verde en la batería y en mi re-ejecución. |
+| **S9** corte del stream + respuesta sin SSE (D11/D12) | **pasa** (con L1) | Corte: unit `failedStreamKeepsThePartialTextAsAnAssistantBubble` (`PincheViewModelTest.kt:431`: texto parcial conservado como burbuja del asistente, **después** el mensaje estático de pendientes, aviso único `FAILED`, sin burbuja transitoria) y `theKeptPartialTextTravelsInTheRetryContext` (`:453`: el parcial viaja en el contexto del reintento). En el cliente: `IOException` con el coroutine activo -> `PincheReplyResult.Failed` (`OpenAiCompatiblePincheChatClient.kt:64`-`:72`) y con el coroutine cancelado -> `CancellationException` (`:69`). Fallback D12: `isEventStream()` (`:284`-`:285`) -> cuerpo completo procesado con el código previo (`:138`-`:142`); inspección detallada en §11.4. «Sin doble aviso ni mensajes vacíos»: un único campo `notice` en el estado y el streaming en blanco se traduce en `null` (`PincheViewModel.kt:234`), por lo que no se pinta nunca una burbuja vacía. |
+| **S10** la lista baja siempre al último mensaje (D10) | **pasa** | `LaunchedEffect(uiState.messages.size, hasMessages)` -> `animateScrollToItem(lastIndex)` (`PincheScreen.kt:135`-`:138`) y `LaunchedEffect(streamingText)` -> `scrollToItem(messages.size)` instantáneo con cada fragmento (`:139`-`:144`); con la lista vacía no se hace nada (`:141`); el trigger RF-MOB6 queda intacto (`:127`-`:129`) y `BottomBarE2ETest` está en verde en la batería; la regresión focalizada 39/39 no conserva artefacto raw propio pero sus tres clases están verdes en la batería (38/39) + rerun de ShoppingList (27/27). El propio S6 ascierte la lista subida a índice 0 que vuelve abajo con el segundo fragmento y el último mensaje visible **sin arrastrar** el `LazyColumn`. El borde aceptado de D10 (con texto llegando, tocar la pestaña vuelve a bajar en el siguiente fragmento) está documentado en la spec y en `technical-discovery.md`. |
+
+**Checklist de la enmienda - cumplido**:
+
+- Sin dependencias nuevas: `app/build.gradle.kts` **no aparece en el diff** (sin MockWebServer ni librería SSE; el parser es código propio).
+- Sin claves nuevas de `strings.xml` (paridad 340/340 + 5/5, diff 0) y sin cambios en `MAX_HTTP_CALLS` (`OpenAiCompatiblePincheChatClient.kt:315`, sigue en 5), en el contrato de tools (`toolsJson` fuera del diff), en RD05/RD17 (`docs/domain-model.md` fuera del diff) ni en Room (sin ficheros de dominio/DAO en el diff).
+- El resto de superficies de IA sigue sin streaming: barrido propio de `"stream"`/`text/event-stream`/`onContent` en `app/src/main` - solo aparecen en el cliente del Pinche (los matches de `AiSuggestionsScreen.kt` son `SelectionContent`, ajenos).
+- Evidencia de la enmienda presente (`lint-`/`unit-enmienda-2026-11-10.log`, log de batería, reruns, `informe.md`) y **sin llamadas de pago**: toda la E2E usa `FakePincheChatClient` y esta validación no ha llamado a DevExpert Inference.
+- `feature_list.json` solo con `status`/`evidence` (diff inspeccionado línea a línea: +4 evidencias y `accepted` -> `passing` en esta entrada; `steps`/`verification`/`notes` intactos) y `PROGRESS.md` + sesión 124 del historial al día.
+
+### §11.4 `readStream()` y fallback D12 por inspección (hueco documentado)
+
+Como el verify manual con mock SSE local no se ejecutó (decisión del usuario, §11.2), el ramo HTTP se juzga por inspección:
+
+- **Lectura SSE**: `readStream()` (`OpenAiCompatiblePincheChatClient.kt:267`-`:281`) lee `source.readUtf8Line()` hasta EOF; solo procesa líneas con prefijo `data:` (`DATA_PREFIX`, `:313`) y el parser recorta el payload (`payload.trim()` en `PincheSseParser.kt:32`), por lo que admite `data:` con y sin espacio; las líneas de comentario (`: keep-alive`) y `event:` se ignoran.
+- **`[DONE]`**: `feed()` marca `finished` (`PincheSseParser.kt:34`-`:36`) y el bucle hace `break`; `buildMessage()` devuelve lo acumulado (con `content` y/o `tool_calls`).
+- **JSON ilegible**: marca `invalid` (`:38`-`:42`) y `buildMessage()` devuelve `null` (`:66`) -> el cliente devuelve `failed("missing message")` (`:146`): turno fallido con el aviso de siempre (RD05) y, si había texto visible, el ViewModel lo conserva como burbuja (D11).
+- **Reensamblado**: `tool_calls` por `index` con acumulación de `id`/`name`/`arguments` (`:47`-`:62`) y `message` con la forma exacta que consumen `PincheChatProtocol.toolCalls()`/`messageContent()` (`:65`-`:91`); **el bucle de rondas, `parseReply`, `executeSaveProfile` y `MAX_HTTP_CALLS = 5` no cambian** (esos tramos no aparecen en el diff salvo el reset por ronda y la rama de lectura).
+- **`Content-Type` (D12)**: `isEventStream()` (`:284`-`:285`, `contains("text/event-stream")`, insensible a mayúsculas y a parámetros como `charset`) -> si no, `JSONObject(body.string())` -> `choices[0].message` (`:138`-`:142`), que es **literalmente el código previo a la enmienda**: el resultado es idéntico al flujo sin streaming, sin emisión de fragmentos (solo el reset inicial, que deja la burbuja oculta) y sin doble aviso ni mensajes vacíos (S9). Si el proveedor ignora `stream` y devuelve JSON, la app sigue funcionando; ese es el punto de D13.
+- **Cancelación de la `Call`**: `currentCoroutineContext()[Job]?.invokeOnCompletion { call.cancel() }` (`:123`) registrado en el Job del `withContext` (se dispara también si se cancela `viewModelScope`) y dispuesto en el `finally` (`:156`) tras el `use {}`, de modo que no queda ninguna lectura colgada ni manejadores huérfanos; una `IOException` provocada por la cancelación se propaga como `CancellationException` (`:69`) y una `IOException` real (corte del stream) con el coroutine activo se convierte en `PincheReplyResult.Failed` (`:64`-`:72`).
+- **Emisión**: solo cuando el texto visible cambia (dedup `:273`-`:277`), siempre recortado con `streamingText`, de modo que por la ruta de red nunca sale el JSON de la Propuesta.
+
+Conclusión: **ambos ramos están bien implementados**. Cobertura: el parser (7 tests) y el corte (4 tests) están ejecutados en JVM y el ViewModel está testeado para emisión/parcial/reintento, pero **ningún test ejecuta el ramo HTTP** (`readStream` ni la selección por `Content-Type`) - ver L1.
+
+### §11.5 Determinismo del S6
+
+`PincheE2ETest.streamingAnswerGrowsInABubbleAndTheListFollowsTheLastMessage` (`PincheE2ETest.kt:739`-`:791`) usa **dos `CompletableDeferred`** que detienen el simulador antes del último fragmento y antes del resultado: la burbuja se aserta con el proveedor congelado (aparición con el primer fragmento, crecimiento con el segundo), el scroll a índice 0 se ejecuta antes de liberar el segundo fragmento, y la espera final combina `waitUntil` con el helper `waitUntilDisplayed()` (reintenta `assertIsDisplayed()` porque el `animateScrollToItem` sigue corriendo cuando llega el mensaje). El fake emite fragmentos **solo en la última tanda** (`:960`-`:972`), de modo que los escenarios S1-S5 previos no los reproducen; sin aserciones sobre tiempos ni sleeps. Re-ejecutado por el validador: 17/17 en verde (§11.2); también en verde en la batería.
+
+### §11.6 Hallazgos (0 Critical / 0 High / 0 Medium; 3 Low)
+
+**L1 - los ramos HTTP (`readStream` y la selección D12) no se ejecutan en ningún test** (Low)
+
+- Evidence: `OpenAiCompatiblePincheChatClientTest.kt` solo prueba `executeSaveProfile` (sin red); barrido de `src/test` y `src/androidTest` sin ninguna referencia a `event-stream`/`readStream`/interceptores; el único plan de verificación de la enmienda que tocaba HTTP era el verify manual con mock, pospuesto por decisión del usuario.
+- Why it matters: la mitad «respuesta sin SSE» de S9 y la lectura SSE real quedan cubiertas solo por inspección (§11.4) y por el camino de parseo previamente verificado a mano en la sesión 121; una regresión futura en `isEventStream()` o en el bucle de líneas rompería todas las respuestas del Pinche sin que ningún test la detecte.
+- Required change (no bloqueante, recomendación al orquestador): añadir un test JVM con **interceptor OkHttp falso** (cliente con `addInterceptor` que devuelva una `Response` sintética con cuerpo `Buffer`: sin dependencias nuevas, sin secretos, sin emulador y sin tocar `local.properties`) que cubra (a) JSON con `Content-Type: application/json` -> resultado idéntico al flujo sin streaming y sin emisión de fragmentos (D12), (b) cuerpo SSE `data: ...` + `data: [DONE]` -> `onContent` con el texto visible y `message` reconstruido, y (c) `IOException` a mitad del stream -> `Failed` con el parcial ya emitido. Alternativa: repetir el verify manual con mock SSE cuando el usuario lo autorice (pendiente ya anotado en la spec, `informe.md` y `feature_list.json`).
+- Verification after fix: `.\gradlew.bat testDebugUnitTest` en verde con los tests nuevos (366 + N).
+
+**L2 - la redacción de la evidencia sobre D12 puede leerse como cobertura de tests** (Low)
+
+- Evidence: `feature_list.json` (evidence de la enmienda) y `docs/evidence/rellenar-perfil-con-el-pinche/informe.md:88`: «la cubren los unit de `PincheSseParser`/`streamingText` y el fallback D12 (respuesta sin `text/event-stream` -> se procesa como hasta hoy)».
+- Why it matters: en realidad los unit cubren el parser y el corte; el fallback D12 queda cubierto por implementación e inspección, no por ningún test. Una validación futura podría dar por ejecutado algo que no lo está.
+- Required change: matizar la frase a «los unit cubren el parser y el corte; el fallback D12 queda cubierto por implementación e inspección del validador, pendiente de ejecución (L1)» en `informe.md` y en `evidence` de `feature_list.json`.
+
+**L3 - los fakes de test no aplican `streamingText` como afirma el hallazgo de la spec** (Low)
+
+- Evidence: la spec («Hallazgos de implementación de la enmienda») dice «los fakes de test acumulan los deltas y **recortan como el cliente real**», pero `PincheViewModelTest.kt:663` y `PincheE2ETest.kt:972` hacen `onContent(accumulated.trim())` sin llamar a `PincheChatProtocol.streamingText`.
+- Why it matters: equivalente para los inputs probados (los fragmentos no llevan JSON), pero la afirmación sobreestima la fidelidad del fake; un test futuro que emita fragmentos con `{"` no se cortará como el cliente real.
+- Required change: o bien aplicar `PincheChatProtocol.streamingText(accumulated)` en los dos fakes, o ajustar la frase del hallazgo a «acumulan y normalizan los espacios; el corte lo hace el cliente real».
+
+### §11.7 Seguridad y privacidad (checklist acotada al diff)
+
+**Sin hallazgos.**
+
+1. **Secretos**: barrido propio sobre `git diff 6d9448b..HEAD` (`sk-...`, `AI_API_KEY=`, `Bearer`) = **0 coincidencias**; el único valor real `sk-...` del entorno está en `local.properties` (gitignored, verificado con `git check-ignore`) y en el `BuildConfig` generado bajo `app/build/` (ignorado por git): **no se ha tocado en esta validación**, no entra en el diff ni en la evidencia, y ningún fichero con secretos queda modificado (`git status` limpio tras mis re-ejecuciones).
+2. **Privacidad/PII**: la enmienda no añade capturas (documentado); la evidencia existente usa solo datos ficticios («Frutos secos», «Diabetes», «Vegana»); el streaming es presentación y no cambia qué datos salen del dispositivo (RK03 intacta).
+3. **Superficie externa**: sin permisos nuevos, sin dependencias, sin cambios de manifiesto ni de Gradle (fuera del diff), sin `usesCleartextTraffic`; ninguna llamada de pago a DevExpert Inference en toda la validación (E2E con fakes).
+4. **Robustez del flujo de escritura**: `save_profile` sigue acotada y validada por `UserProfileRules` antes de persistir (sin cambios en el diff); los errores siguen sin persistir nada. El log del cliente sigue sin imprimir la clave ni el contenido de la conversación (solo código HTTP, duración, nº de rondas y tools).
+
+### §11.8 Docs durables, harness y handoff
+
+- **`Durable Documentation Impact` de la enmienda cumplido**: `docs/technical-discovery.md` (nota «Streaming (D9-D16)» en el contrato del Pinche, con fallback, D11 y auto-scroll; sección de verificación actualizada), `DESIGN.md` (fila del Pinche con la burbuja en streaming y el auto-scroll; fila «Carga» con el indicador «Pensando...» hasta el primer fragmento), spec enmendada (Goal/Non-Goals, S8-S10, research, Technical Approach 7-11, delta de Expected File Changes, T8-T11, planes de verificación/evidencia, checklist, D9-D16 y hallazgos, incluido el hueco del verify manual). `docs/domain-model.md`, `docs/build-brief.md` y `CONTEXT.md` **no tocados**: la enmienda los declara not needed y no contradicen el comportamiento (RD17/RD26/RD27 sin cambios por la enmienda). `ARCHITECTURE.md`/`CONSTRAINTS.md`/`AGENTS.md` intactos.
+- **Alcance**: todos los ficheros del diff están en «Expected File Changes» (delta de la enmienda) o son docs/harness permitidos; sin trabajo adyacente (barrido de streaming solo en el Pinche) y los cambios de los 5 fakes son solo de firma.
+- **`feature_list.json`**: modificado solo en `evidence` (+4 líneas) y `status` (`accepted` -> `passing`) de esta entrada; el resto de campos y features intactos; JSON válido.
+- **Handoff**: `PROGRESS.md` (cabecera con la enmienda, gates, E2E y hueco) y sesión 124 de `docs/progress-history.md` coherentes con la evidencia y con este informe; evidencia localizable en `docs/evidence/rellenar-perfil-con-el-pinche/`; sin procesos ni ficheros temporales dejados por el validador (los artefactos de mis re-ejecuciones viven en `app/build/`, ignorado).
+
+---
+
+**Checks re-ejecutados por este validador (tier barato)**: `init.ps1` exit 0 (con `ANDROID_SERIAL=emulator-5554`) · `lintDebug --rerun-tasks` 0 errores / 48 warnings · `testDebugUnitTest --rerun-tasks` 46 suites / 366 tests / 0 fallos · `assembleDebug` + `compileDebugAndroidTestKotlin` BUILD SUCCESSFUL · paridad es/en 340/340 + 5/5 · inventario E2E 245 `@Test`.
+
+**Re-ejecutada (tier caro, focalizada)**: `connectedDebugAndroidTest` clase `com.whatsforlunch.app.PincheE2ETest` -> **17/17, 0 omitidos, 0 fallos** (emulator-5554, Pixel_10_Pro API 37, sin llamadas de pago).
+
+**Solo inspeccionadas**: batería `e2e-bateria-enmienda-2026-11-10.log` (245 arrancados = inventario, 2 omitidos `Assume`, 1 fallo flake ajeno con rerun aislado 1/1 y clase 27/27), regresión focalizada 39/39 (corroborada por la batería + rerun), gates del implementador (logs de la evidencia) y el verify manual con mock SSE local (pendiente documentado, decisión del usuario 2026-11-10).
+
+**Estado recomendado**: `rellenar-perfil-con-el-pinche` -> `accepted` (orquestador); el validador no ha modificado `feature_list.json` ni `PROGRESS.md`.
