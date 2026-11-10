@@ -19,17 +19,18 @@ import org.junit.Test
 class ShoppingListRulesTest {
 
     @Test
-    fun missingRequiredKeepsOnlyAbsentRequiredIngredientsInRecipeOrder() {
+    fun missingRequiredKeepsOnlyAbsentIngredientsInRecipeOrder() {
+        // D5: todos los Ingredientes cuentan (sin distinción obligatorio/opcional).
         val ingredients = listOf(
             RecipeIngredient(id = "1", name = "Arroz", quantity = 200.0, unit = "g"),
             RecipeIngredient(id = "2", name = "Azafrán", quantity = 1.0, unit = "g"),
             RecipeIngredient(id = "3", name = "Mariscos", quantity = 300.0, unit = "g"),
-            RecipeIngredient(id = "4", name = "Limón", optional = true),
+            RecipeIngredient(id = "4", name = "Limón"),
         )
         val pantry = listOf(PantryItem("p1", "arroz"))
 
         assertEquals(
-            listOf("Azafrán", "Mariscos"),
+            listOf("Azafrán", "Mariscos", "Limón"),
             ShoppingListRules.missingRequiredIngredients(ingredients, pantry).map { it.name },
         )
     }

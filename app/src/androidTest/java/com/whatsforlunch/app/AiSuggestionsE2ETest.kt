@@ -350,17 +350,17 @@ class AiSuggestionsE2ETest {
         assertEquals(listOf("Chicle", "Mint"), holder.items.value.map { it.name })
     }
 
-    // S8: los opcionales no alteran la Coincidencia (RD10).
+    // S8: todos los Ingredientes cuentan en la Coincidencia (D5: sin opcionalidad) y
+    // no aparece ninguna píldora «Opcional».
     @Test
-    fun optionalIngredientsDoNotChangeTheMatch() {
+    fun allIngredientsCountForTheMatchAndNoOptionalPillIsShown() {
         val suggester = FakeRecipeSuggester(
             listOf(
                 RecipeSuggestionsResult.Success(
                     listOf(
                         suggestion(
                             title = "Tarta de manzana",
-                            required = listOf("Manzana", "Harina"),
-                            optional = listOf("Canela"),
+                            required = listOf("Manzana", "Harina", "Canela"),
                         ),
                     ),
                 ),
@@ -378,9 +378,9 @@ class AiSuggestionsE2ETest {
         }
 
         composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionMatch(0)).assertIsDisplayed()
-        composeRule.onNodeWithText("50%").assertIsDisplayed()
-        composeRule.onNodeWithText("1 de 2 ingredientes disponibles").assertIsDisplayed()
-        composeRule.onNodeWithText("Opcional").assertIsDisplayed()
+        composeRule.onNodeWithText("33%").assertIsDisplayed()
+        composeRule.onNodeWithText("1 de 3 ingredientes disponibles").assertIsDisplayed()
+        composeRule.onNodeWithText("Opcional").assertDoesNotExist()
     }
 
     // S1 (verify 1 de `aceptar-sugerencia-de-receta`): aceptar guarda la propuesta como
@@ -734,24 +734,21 @@ class AiSuggestionsE2ETest {
     private fun suggestion(
         title: String,
         required: List<String> = listOf("Manzana"),
-        optional: List<String> = emptyList(),
         steps: List<RecipeStep> = listOf(RecipeStep(text = "Cocina la receta")),
     ) = RecipeSuggestion(
         title = title,
         story = "Una receta propuesta por la IA",
         mealMoment = MealMoment.LUNCH,
         prepMinutes = 10,
-        cookMinutes = 20,
         difficulty = Difficulty.EASY,
         baseServings = 4,
         caloriesPerServing = 320,
-        ingredients = (required + optional).mapIndexed { index, name ->
+        ingredients = required.mapIndexed { index, name ->
             RecipeIngredient(
                 id = "$index",
                 name = name,
                 quantity = 1.0,
                 unit = "ud",
-                optional = name in optional,
             )
         },
         steps = steps,

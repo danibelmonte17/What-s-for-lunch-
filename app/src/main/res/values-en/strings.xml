@@ -10,7 +10,6 @@
 
     <!-- Recipe Detail -->
     <string name="recipe_detail_metric_time">Total time</string>
-    <string name="recipe_detail_metric_time_breakdown">%1$d min prep · %2$d min cooking</string>
     <string name="recipe_detail_metric_difficulty">Difficulty</string>
     <string name="recipe_detail_metric_calories">Calories per serving</string>
     <string name="recipe_detail_metric_servings">Base servings</string>
@@ -23,7 +22,6 @@
     <string name="recipe_detail_ingredients_title">Ingredients</string>
     <string name="recipe_detail_ingredients_count">%1$d of %2$d</string>
     <string name="recipe_detail_ingredients_empty">No ingredients</string>
-    <string name="recipe_detail_ingredient_optional">Optional</string>
     <string name="recipe_detail_steps_title">Steps</string>
     <string name="recipe_detail_steps_count">%1$d Steps</string>
     <string name="recipe_detail_steps_empty">No steps</string>
@@ -138,13 +136,10 @@
     <string name="create_recipe_required_badge">Required</string>
     <string name="create_recipe_title_placeholder">e.g. Grandma\'s lentils, Creamy rice…</string>
     <string name="create_recipe_story_placeholder">Tell us the secret of your version, its texture or the perfect occasion…</string>
-    <string name="create_recipe_metrics_time">Time</string>
-    <string name="create_recipe_metrics_time_unit">min</string>
+    <string name="create_recipe_prep_time_label">Preparation time</string>
     <string name="create_recipe_metrics_difficulty">Level</string>
     <string name="create_recipe_metrics_servings">Servings</string>
     <string name="create_recipe_metrics_servings_unit">serv</string>
-    <string name="create_recipe_prep_short_label">Preparation</string>
-    <string name="create_recipe_cook_short_label">Cooking</string>
     <string name="create_recipe_photo_section">Photo</string>
     <string name="create_recipe_photo_preview">Recipe photo</string>
     <string name="create_recipe_photo_none">No photo (optional)</string>
@@ -167,14 +162,16 @@
     <string name="create_recipe_ingredient_name">Name</string>
     <string name="create_recipe_ingredient_quantity">Quantity</string>
     <string name="create_recipe_ingredient_unit">Unit</string>
-    <string name="create_recipe_ingredient_optional">Optional</string>
     <string name="create_recipe_ingredient_invalid">Check the name or the quantity (greater than 0)</string>
     <string name="create_recipe_remove">Remove</string>
     <string name="create_recipe_steps_title">Cooking Steps</string>
     <string name="create_recipe_add_step">Add New Step</string>
     <string name="create_recipe_step_number">Step %1$d</string>
     <string name="create_recipe_step_text">Step text</string>
-    <string name="create_recipe_step_timer">Timer (min, optional)</string>
+    <string name="create_recipe_step_timer">Timer</string>
+    <string name="create_recipe_step_no_timer">No timer</string>
+    <string name="time_picker_confirm">OK</string>
+    <string name="time_picker_cancel">Cancel</string>
     <string name="create_recipe_step_invalid">The step needs text</string>
     <string name="create_recipe_step_ingredients">Ingredients for this step</string>
     <string name="create_recipe_step_ingredients_none">No ingredients</string>
@@ -306,7 +303,6 @@
     <string name="pinche_proposal_ingredients">Ingredients</string>
     <string name="pinche_proposal_steps">Steps</string>
     <string name="pinche_proposal_missing">You’re missing</string>
-    <string name="pinche_proposal_optional">Optional</string>
     <string name="pinche_save">Save to My Recipes</string>
     <string name="pinche_saved">Saved to My Recipes</string>
     <string name="pinche_save_failed">The recipe couldn’t be saved. Please try again.</string>

@@ -43,7 +43,8 @@ object SuggestionRules {
 
     /**
      * D2: la Coincidencia se calcula con `calculateMatch` sobre los ingredientes
-     * obligatorios de la propuesta contra los Alimentos seleccionados (RD01/RD10).
+     * de la propuesta contra los Alimentos seleccionados (RD01/RD10; desde
+     * `redisenar-formulario-de-receta` todos los Ingredientes cuentan).
      * Se conserva el orden de la respuesta de la IA (D7).
      */
     fun suggestionMatches(
@@ -61,7 +62,6 @@ object SuggestionRules {
                 story = suggestion.story,
                 mealMoment = suggestion.mealMoment,
                 prepMinutes = suggestion.prepMinutes,
-                cookMinutes = suggestion.cookMinutes,
                 difficulty = suggestion.difficulty,
                 baseServings = suggestion.baseServings,
                 caloriesPerServing = suggestion.caloriesPerServing,
@@ -87,7 +87,6 @@ object SuggestionRules {
                 // D2 (unificar-unidades): la unidad de la IA se normaliza al enum
                 // cerrado; la vacía o desconocida cae a «ud».
                 unit = IngredientUnit.normalize(ingredient.unit),
-                optional = ingredient.optional ?: false,
             )
         }
         val steps = raw.steps.mapNotNull { step ->
@@ -102,7 +101,6 @@ object SuggestionRules {
             story = cleanText(raw.story),
             mealMoment = parseMealMoment(raw.mealMoment),
             prepMinutes = nonNegativeMinutes(raw.prepMinutes) ?: 0,
-            cookMinutes = nonNegativeMinutes(raw.cookMinutes) ?: 0,
             difficulty = parseDifficulty(raw.difficulty),
             baseServings = baseServings(raw.baseServings),
             caloriesPerServing = calories(raw.calories),

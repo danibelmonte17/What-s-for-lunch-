@@ -168,7 +168,19 @@ class EditRecipeE2ETest {
     // distintivo de estado y sin «Guardar» de cabecera (RF-13).
     @Test
     fun editingPreloadsRecipeFieldsAndSingleSaveDock() {
-        launchEditor(repositoryWith(seededRecipe(photoPath = editPhotoFile("editar-precarga.png"))), SEEDED_ID)
+        launchEditor(
+            repositoryWith(
+                seededRecipe(photoPath = editPhotoFile("editar-precarga.png")).copy(
+                    // Un segundo Paso sin temporizador para precargar «Sin temporizador»
+                    // (D7/D10) junto al Paso con temporizador.
+                    steps = listOf(
+                        RecipeStep(id = "$SEEDED_ID-s0", text = "Pochar la cebolla", timerMinutes = 5),
+                        RecipeStep(id = "$SEEDED_ID-s1", text = "Dejar reposar"),
+                    ),
+                ),
+            ),
+            SEEDED_ID,
+        )
 
         composeRule.onNodeWithText(editorText(R.string.create_recipe_edit_title)).assertIsDisplayed()
         composeRule.onAllNodesWithTag("create_recipe_status_badge").assertCountEquals(0)
@@ -180,8 +192,9 @@ class EditRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.STORY_FIELD).performScrollTo()
             .assertTextContains("Huevos, patata y cebolla")
         composeRule.onNodeWithTag(CreateRecipeTestTags.MOMENT_DINNER).performScrollTo().assertIsSelected()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.PREP_MINUTES_FIELD).performScrollTo().assertTextContains("10")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.COOK_MINUTES_FIELD).performScrollTo().assertTextContains("15")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PREP_MINUTES_FIELD).performScrollTo().assertTextContains("00:10")
+        // verify 1: el tiempo de cocción ya no existe (D3): ningún campo de cocción.
+        composeRule.onAllNodesWithTag("create_recipe_cook_minutes").assertCountEquals(0)
         composeRule.onNodeWithTag(CreateRecipeTestTags.DIFFICULTY_EASY).performScrollTo().assertIsSelected()
         composeRule.onNodeWithTag(CreateRecipeTestTags.SERVINGS_VALUE).performScrollTo().assertTextContains("2")
         composeRule.onNodeWithTag(CreateRecipeTestTags.CALORIES_FIELD).performScrollTo().assertTextContains("250")
@@ -189,9 +202,13 @@ class EditRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientName(0)).performScrollTo().assertTextContains("Patata")
         composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientQuantity(0)).assertTextContains("700")
         composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(0)).assertTextContains("g")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientOptional(0)).assertIsOn()
+        // D5: sin casilla de opcional en la fila de Ingrediente.
+        composeRule.onAllNodesWithTag("create_recipe_ingredient_optional_0").assertCountEquals(0)
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(0)).performScrollTo().assertTextContains("Pochar la cebolla")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("5")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("00:05")
+        // D7/D10: un Paso sin temporizador precarga «Sin temporizador».
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(1)).performScrollTo()
+            .assertTextContains(editorText(R.string.create_recipe_step_no_timer))
         composeRule.onNodeWithTag(CreateRecipeTestTags.FAVORITE_TOGGLE).performScrollTo().assertIsOn()
 
         composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).assertIsDisplayed()
@@ -512,7 +529,6 @@ class EditRecipeE2ETest {
             story = "Huevos, patata y cebolla",
             mealMoment = MealMoment.DINNER,
             prepMinutes = 10,
-            cookMinutes = 15,
             difficulty = Difficulty.EASY,
             baseServings = 2,
             caloriesPerServing = 250,
@@ -520,7 +536,7 @@ class EditRecipeE2ETest {
             favorite = true,
             origin = origin,
             ingredients = listOf(
-                RecipeIngredient(id = "$SEEDED_ID-i0", name = "Patata", quantity = 700.0, unit = "g", optional = true),
+                RecipeIngredient(id = "$SEEDED_ID-i0", name = "Patata", quantity = 700.0, unit = "g"),
             ),
             steps = listOf(RecipeStep(id = "$SEEDED_ID-s0", text = "Pochar la cebolla", timerMinutes = 5)),
         )
@@ -533,7 +549,6 @@ class EditRecipeE2ETest {
             story = "Huevos, patata y cebolla",
             mealMoment = MealMoment.DINNER,
             prepMinutes = 10,
-            cookMinutes = 15,
             difficulty = Difficulty.EASY,
             baseServings = 2,
             photoPath = null,
@@ -593,7 +608,6 @@ class EditRecipeAppE2ETest {
                     story = "Huevos, patata y cebolla",
                     mealMoment = MealMoment.LUNCH,
                     prepMinutes = 10,
-                    cookMinutes = 15,
                     difficulty = Difficulty.EASY,
                     baseServings = 4,
                     photoPath = editPhotoFile("editar-app-e2e.png"),

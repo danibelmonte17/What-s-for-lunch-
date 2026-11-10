@@ -18,7 +18,7 @@ class CookModeRulesTest {
             ingredients = listOf(
                 RecipeIngredient(id = "egg", name = "Huevos", quantity = 4.0, unit = "uds"),
                 RecipeIngredient(id = "potato", name = "Patatas", quantity = 700.0, unit = "g"),
-                RecipeIngredient(id = "oil", name = "Aceite", quantity = 0.25, unit = "l", optional = true),
+                RecipeIngredient(id = "oil", name = "Aceite", quantity = 0.25, unit = "l"),
             ),
             steps = listOf(
                 // El vínculo declara Patatas antes que Huevos; la fila sale en el
@@ -33,7 +33,7 @@ class CookModeRulesTest {
         assertEquals(listOf("egg", "potato"), rows.map { it.id })
         assertEquals(2.0, rows.first { it.id == "egg" }.quantity, 0.0001)
         assertEquals(350.0, rows.first { it.id == "potato" }.quantity, 0.0001)
-        // La identidad del Ingrediente se conserva (nombre, unidad, opcionalidad).
+        // La identidad del Ingrediente se conserva (nombre y unidad).
         assertEquals("Patatas", rows.first { it.id == "potato" }.name)
         assertEquals("g", rows.first { it.id == "potato" }.unit)
     }

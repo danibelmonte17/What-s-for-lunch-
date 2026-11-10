@@ -21,9 +21,10 @@ import kotlin.math.roundToInt
 object ShoppingListRules {
 
     /**
-     * RD15: ingredientes obligatorios ausentes de la Despensa, sin duplicados
-     * (primera aparición) y en el orden de la receta. La comparación usa
-     * `normalizeName`.
+     * RD15: Ingredientes ausentes de la Despensa, sin duplicados (primera
+     * aparición) y en el orden de la receta. La comparación usa `normalizeName`.
+     * Desde `redisenar-formulario-de-receta` todos los Ingredientes cuentan:
+     * ya no hay obligatorios y opcionales.
      */
     fun missingRequiredIngredients(
         ingredients: List<RecipeIngredient>,
@@ -32,7 +33,6 @@ object ShoppingListRules {
         val available = pantryItems.mapTo(mutableSetOf()) { normalizeName(it.name) }
         val seen = mutableSetOf<String>()
         return ingredients
-            .filter { !it.optional }
             .filter { ingredient ->
                 val normalized = normalizeName(ingredient.name)
                 normalized.isNotBlank() && normalized !in available && seen.add(normalized)

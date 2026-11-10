@@ -56,17 +56,13 @@ class CompatibleRecipesTest {
     }
 
     @Test
-    fun recipesWithoutRequiredIngredientsNeverEnter() {
-        val onlyOptional = Recipe(
-            id = "optional",
-            title = "Solo opcionales",
-            ingredients = listOf(RecipeIngredient(id = "1", name = "Sal", optional = true)),
-        )
+    fun recipesWithoutIngredientsNeverEnter() {
+        // D12: sin Ingredientes no hay Coincidencia (antes, recetas «solo opcionales»).
         val withoutIngredients = Recipe(id = "empty", title = "Vacía")
 
         assertEquals(
             emptyList<CompatibleRecipe>(),
-            compatibleRecipes(listOf(onlyOptional, withoutIngredients), pantryFor(onlyOptional to 1)),
+            compatibleRecipes(listOf(withoutIngredients), pantryFor(withoutIngredients to 1)),
         )
     }
 

@@ -167,7 +167,6 @@ class PincheViewModel(
         val missingNames = proposal.missingIngredients.mapTo(mutableSetOf(), ::normalizeName)
         val seen = mutableSetOf<String>()
         val ingredients = proposal.recipe.ingredients
-            .filter { !it.optional }
             .filter { ingredient ->
                 val normalized = normalizeName(ingredient.name)
                 normalized in missingNames && seen.add(normalized)

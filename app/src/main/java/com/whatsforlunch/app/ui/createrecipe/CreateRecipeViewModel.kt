@@ -38,27 +38,30 @@ enum class CreateRecipeNotice {
 
 // Fila editable de Ingrediente en el formulario (RF-5, RF-6, RF-8). `id` es el id
 // estable del Ingrediente (RD21): el de la Receta editada o uno nuevo al añadir la
-// fila, y lo referencian los vínculos de los Pasos.
+// fila, y lo referencian los vínculos de los Pasos. Desde
+// `redisenar-formulario-de-receta` ya no hay casilla de opcional: todos los
+// Ingredientes cuentan (D5).
 data class IngredientFieldUiState(
     val key: Long,
     val id: String = "",
     val name: String = "",
     val quantity: String = "",
     val unit: String = "",
-    val optional: Boolean = false,
 ) {
     val isValid: Boolean
         get() = name.isNotBlank() && (quantity.toDoubleOrNull() ?: 0.0) > 0.0
 }
 
-// Fila editable de Paso en el formulario (RF-9, RF-10, RF-12). `ingredientIds`
-// (RD21) son los ids de los Ingredientes de la Receta que usa el Paso (N:M y
-// opcional), en el orden de ingredientes de la Receta (D7).
+// Fila editable de Paso en el formulario (RF-9, RF-10, RF-12). `timerMinutes` es la
+// duración en minutos del temporizador (null = «Sin temporizador», D7/D10: los Pasos
+// nuevos nacen sin temporizador y 0 equivale a null). `ingredientIds` (RD21) son los
+// ids de los Ingredientes de la Receta que usa el Paso (N:M y opcional), en el orden
+// de ingredientes de la Receta (D7).
 data class StepFieldUiState(
     val key: Long,
     val id: String = "",
     val text: String = "",
-    val timerMinutes: String = "",
+    val timerMinutes: Int? = null,
     val ingredientIds: List<String> = emptyList(),
 ) {
     val isValid: Boolean
@@ -71,8 +74,9 @@ data class CreateRecipeUiState(
     val title: String = "",
     val story: String = "",
     val mealMoment: MealMoment = MealMoment.LUNCH,
-    val prepMinutes: String = "0",
-    val cookMinutes: String = "0",
+    // Duración de preparación en minutos (D1/D7): 00:00-23:59 con el reloj; el
+    // tiempo de cocción ya no existe (D3).
+    val prepMinutes: Int = 0,
     val difficulty: Difficulty = Difficulty.MEDIUM,
     val baseServings: Int = 4,
     val caloriesPerServing: String = "",
@@ -148,9 +152,10 @@ class CreateRecipeViewModel(
 
     fun onMealMomentChange(moment: MealMoment) = mutate { it.copy(mealMoment = moment) }
 
-    fun onPrepMinutesChange(value: String) = mutate { it.copy(prepMinutes = value) }
-
-    fun onCookMinutesChange(value: String) = mutate { it.copy(cookMinutes = value) }
+    // D1/D7: la duración llega del reloj en minutos (00:00-23:59); 00:00 = 0 min.
+    fun onPrepMinutesChange(minutes: Int) = mutate {
+        it.copy(prepMinutes = minutes.coerceIn(0, RecipeValidation.MAX_DURATION_MINUTES))
+    }
 
     fun onDifficultyChange(difficulty: Difficulty) = mutate { it.copy(difficulty = difficulty) }
 
@@ -184,8 +189,6 @@ class CreateRecipeViewModel(
 
     fun onIngredientUnitChange(key: Long, value: String) = updateIngredient(key) { it.copy(unit = value) }
 
-    fun onIngredientOptionalChange(key: Long, value: Boolean) = updateIngredient(key) { it.copy(optional = value) }
-
     // D6: quitar un Ingrediente elimina también sus vínculos de todos los Pasos.
     fun onRemoveIngredient(key: Long) = mutate { state ->
         val removed = state.ingredients.firstOrNull { it.key == key }
@@ -212,7 +215,11 @@ class CreateRecipeViewModel(
 
     fun onStepTextChange(key: Long, value: String) = updateStep(key) { it.copy(text = value) }
 
-    fun onStepTimerChange(key: Long, value: String) = updateStep(key) { it.copy(timerMinutes = value) }
+    // D7: el temporizador del Paso se fija con el reloj (minutos, 1..1439) o se
+    // limpia con «Sin temporizador» (null = sin temporizador, D10).
+    fun onStepTimerChange(key: Long, minutes: Int?) = updateStep(key) {
+        it.copy(timerMinutes = minutes?.coerceIn(1, RecipeValidation.MAX_DURATION_MINUTES))
+    }
 
     // RF-VPI2: añade o quita un Ingrediente de los vínculos de un Paso (N:M).
     fun onStepIngredientToggle(stepKey: Long, ingredientId: String) = mutate { state ->
@@ -315,8 +322,7 @@ class CreateRecipeViewModel(
             title = state.title.trim(),
             story = state.story.trim(),
             mealMoment = state.mealMoment,
-            prepMinutes = state.prepMinutes.toIntOrNull()?.coerceAtLeast(0) ?: 0,
-            cookMinutes = state.cookMinutes.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+            prepMinutes = state.prepMinutes.coerceIn(0, RecipeValidation.MAX_DURATION_MINUTES),
             difficulty = state.difficulty,
             baseServings = state.baseServings.coerceIn(
                 RecipeValidation.MIN_BASE_SERVINGS,
@@ -332,14 +338,14 @@ class CreateRecipeViewModel(
                     name = row.name.trim(),
                     quantity = row.quantity.toDoubleOrNull() ?: 0.0,
                     unit = row.unit.trim(),
-                    optional = row.optional,
                 )
             },
             steps = state.steps.mapIndexed { index, row ->
                 RecipeStep(
                     id = row.id.ifBlank { "$id-step-$index" },
                     text = row.text.trim(),
-                    timerMinutes = row.timerMinutes.toIntOrNull()?.takeIf { it >= 0 },
+                    // D10: un temporizador 0 es «Sin temporizador» (null).
+                    timerMinutes = row.timerMinutes?.takeIf { it >= 1 },
                     ingredientIds = orderStepLinks(row.ingredientIds, state.ingredients),
                 )
             },
@@ -362,15 +368,13 @@ class CreateRecipeViewModel(
                 name = ingredient.name,
                 quantity = formatQuantity(ingredient.quantity),
                 unit = ingredient.unit,
-                optional = ingredient.optional,
             )
         }
         return CreateRecipeUiState(
             title = recipe.title,
             story = recipe.story,
             mealMoment = recipe.mealMoment,
-            prepMinutes = recipe.prepMinutes.toString(),
-            cookMinutes = recipe.cookMinutes.toString(),
+            prepMinutes = recipe.prepMinutes.coerceIn(0, RecipeValidation.MAX_DURATION_MINUTES),
             difficulty = recipe.difficulty,
             baseServings = recipe.baseServings.coerceIn(
                 RecipeValidation.MIN_BASE_SERVINGS,
@@ -385,7 +389,8 @@ class CreateRecipeViewModel(
                     key = nextKey(),
                     id = step.id.ifBlank { "${recipe.id}-step-$index" },
                     text = step.text,
-                    timerMinutes = step.timerMinutes?.toString() ?: "",
+                    // D10: un temporizador legado 0 se precarga como «Sin temporizador».
+                    timerMinutes = step.timerMinutes?.takeIf { it >= 1 },
                     ingredientIds = orderStepLinks(step.ingredientIds, ingredientRows),
                 )
             },

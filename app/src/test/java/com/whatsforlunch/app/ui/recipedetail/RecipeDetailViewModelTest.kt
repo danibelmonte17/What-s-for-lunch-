@@ -55,7 +55,7 @@ class RecipeDetailViewModelTest {
     }
 
     @Test
-    fun detailShowsMatchPercentageFromRequiredIngredients() = runTest {
+    fun detailShowsMatchPercentageFromAllIngredients() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val viewModelStore = ViewModelStore()
         try {
@@ -67,7 +67,7 @@ class RecipeDetailViewModelTest {
                     ingredients = listOf(
                         RecipeIngredient(id = "chicken", name = "Pollo"),
                         RecipeIngredient(id = "rice", name = "Arroz"),
-                        RecipeIngredient(id = "lemon", name = "Limón", optional = true),
+                        RecipeIngredient(id = "lemon", name = "Limón"),
                     ),
                 ),
             )
@@ -84,7 +84,8 @@ class RecipeDetailViewModelTest {
             assertTrue(state is RecipeDetailUiState.Detail)
             state as RecipeDetailUiState.Detail
             assertEquals("pollo-arroz", state.recipe.id)
-            assertEquals(50, state.match?.percentage)
+            // D5: todos los Ingredientes cuentan (sin opcionalidad): 1 de 3.
+            assertEquals(33, state.match?.percentage)
         } finally {
            viewModelStore.clear()
             runCurrent()
@@ -132,19 +133,15 @@ class RecipeDetailViewModelTest {
     }
 
     @Test
-    fun recipeWithoutRequiredIngredientsHasNoMatch() = runTest {
+    fun recipeWithoutIngredientsHasNoMatch() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val viewModelStore = ViewModelStore()
         try {
             val recipes = InMemoryRecipeRepository()
-            recipes.saveRecipe(
-                recipe(
-                    id = "optional-only",
-                    ingredients = listOf(RecipeIngredient(id = "salt", name = "Sal", optional = true)),
-                ),
-            )
+            // D12: sin Ingredientes no hay Coincidencia (antes, «solo opcionales»).
+            recipes.saveRecipe(recipe(id = "empty", ingredients = emptyList()))
 
-            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), InMemoryShoppingListRepository(), "optional-only")
+            val viewModel = RecipeDetailViewModel(recipes, InMemoryPantryRepository(), InMemoryShoppingListRepository(), "empty")
             viewModelStore.put("detail", viewModel)
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiState.collect { }

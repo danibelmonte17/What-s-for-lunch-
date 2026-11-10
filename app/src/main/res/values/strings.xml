@@ -11,7 +11,6 @@
 
     <!-- Detalle de Receta -->
     <string name="recipe_detail_metric_time">Tiempo total</string>
-    <string name="recipe_detail_metric_time_breakdown">%1$d min preparación · %2$d min cocción</string>
     <string name="recipe_detail_metric_difficulty">Dificultad</string>
     <string name="recipe_detail_metric_calories">Calorías por porción</string>
     <string name="recipe_detail_metric_servings">Raciones base</string>
@@ -24,7 +23,6 @@
     <string name="recipe_detail_ingredients_title">Ingredientes</string>
     <string name="recipe_detail_ingredients_count">%1$d de %2$d</string>
     <string name="recipe_detail_ingredients_empty">Sin ingredientes</string>
-    <string name="recipe_detail_ingredient_optional">Opcional</string>
     <string name="recipe_detail_steps_title">Pasos</string>
     <string name="recipe_detail_steps_count">%1$d Pasos</string>
     <string name="recipe_detail_steps_empty">Sin pasos</string>
@@ -139,13 +137,10 @@
     <string name="create_recipe_required_badge">Obligatorio</string>
     <string name="create_recipe_title_placeholder">Ej. Lentejas de la abuela, Arroz meloso...</string>
     <string name="create_recipe_story_placeholder">Cuéntanos el secreto de tu versión, su textura o para qué ocasión es perfecta...</string>
-    <string name="create_recipe_metrics_time">Tiempo</string>
-    <string name="create_recipe_metrics_time_unit">min</string>
+    <string name="create_recipe_prep_time_label">Tiempo de preparación</string>
     <string name="create_recipe_metrics_difficulty">Nivel</string>
     <string name="create_recipe_metrics_servings">Raciones</string>
     <string name="create_recipe_metrics_servings_unit">pers</string>
-    <string name="create_recipe_prep_short_label">Preparación</string>
-    <string name="create_recipe_cook_short_label">Cocción</string>
     <string name="create_recipe_photo_section">Foto</string>
     <string name="create_recipe_photo_preview">Foto de la receta</string>
     <string name="create_recipe_photo_none">Sin foto (opcional)</string>
@@ -168,14 +163,16 @@
     <string name="create_recipe_ingredient_name">Nombre</string>
     <string name="create_recipe_ingredient_quantity">Cantidad</string>
     <string name="create_recipe_ingredient_unit">Unidad</string>
-    <string name="create_recipe_ingredient_optional">Opcional</string>
     <string name="create_recipe_ingredient_invalid">Revisa el nombre o la cantidad (mayor que 0)</string>
     <string name="create_recipe_remove">Eliminar</string>
     <string name="create_recipe_steps_title">Pasos de Elaboración</string>
     <string name="create_recipe_add_step">Añadir Nuevo Paso</string>
     <string name="create_recipe_step_number">Paso %1$d</string>
     <string name="create_recipe_step_text">Texto del paso</string>
-    <string name="create_recipe_step_timer">Temporizador (min, opcional)</string>
+    <string name="create_recipe_step_timer">Temporizador</string>
+    <string name="create_recipe_step_no_timer">Sin temporizador</string>
+    <string name="time_picker_confirm">Aceptar</string>
+    <string name="time_picker_cancel">Cancelar</string>
     <string name="create_recipe_step_invalid">El paso necesita texto</string>
     <string name="create_recipe_step_ingredients">Ingredientes de este paso</string>
     <string name="create_recipe_step_ingredients_none">Sin ingredientes</string>
@@ -306,7 +303,6 @@
     <string name="pinche_proposal_ingredients">Ingredientes</string>
     <string name="pinche_proposal_steps">Pasos</string>
     <string name="pinche_proposal_missing">Te faltan</string>
-    <string name="pinche_proposal_optional">Opcional</string>
     <string name="pinche_save">Guardar en Mis Recetas</string>
     <string name="pinche_saved">Guardada en Mis Recetas</string>
     <string name="pinche_save_failed">No se pudo guardar la receta. Inténtalo de nuevo.</string>

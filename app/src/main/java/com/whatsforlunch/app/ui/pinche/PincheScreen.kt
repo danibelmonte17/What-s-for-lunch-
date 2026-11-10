@@ -507,7 +507,7 @@ private fun ProposalCard(
                         stringResource(recipe.mealMoment.labelRes()),
                         stringResource(
                             R.string.my_recipes_card_time,
-                            recipe.prepMinutes + recipe.cookMinutes,
+                            recipe.prepMinutes,
                         ),
                         stringResource(R.string.my_recipes_card_servings, recipe.baseServings),
                     ).joinToString(" · "),
@@ -598,20 +598,6 @@ private fun IngredientsSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                if (ingredient.optional) {
-                    Surface(
-                        shape = PillShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.pinche_proposal_optional),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-                        )
-                    }
-                }
             }
         }
     }

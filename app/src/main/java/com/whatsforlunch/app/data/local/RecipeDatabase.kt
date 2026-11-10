@@ -13,7 +13,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // versión 5 elimina la columna `status` de `recipes` (las Recetas ya no tienen
 // estado Borrador/Publicada) recreando la tabla y conservando los datos. La
 // versión 6 añade el perfil del usuario (`profile` y `profile_restrictions`,
-// `crear-mi-perfil`, D1) sin tocar las tablas existentes.
+// `crear-mi-perfil`, D1) sin tocar las tablas existentes. La versión 7 elimina
+// `cookMinutes` de `recipes` (D3) sumándolo a `prepMinutes` (D6) y `optional` de
+// `ingredients` (D5: todos los Ingredientes cuentan), y normaliza los
+// temporizadores de Paso a `NULL` cuando son 0 (D10).
 @Database(
     entities = [
         RecipeEntity::class,
@@ -25,7 +28,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProfileEntity::class,
         ProfileRestrictionEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class RecipeDatabase : RoomDatabase() {
@@ -141,6 +144,60 @@ abstract class RecipeDatabase : RoomDatabase() {
                         "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `section` TEXT NOT NULL, " +
                         "`value` TEXT NOT NULL)",
                 )
+            }
+        }
+
+        /**
+         * Drops `recipes.cookMinutes` (folding it into `prepMinutes`, D6) and
+         * `ingredients.optional` (all ingredients count now, D5) on top of v6,
+         * and normalizes zero step timers to "no timer" (D10). Both tables are
+         * recreated and the data copied, like MIGRATION_4_5. The folded prep
+         * time is capped at 23:59 h (1439 min, D9): the duration clock cannot
+         * represent more.
+         */
+        val MIGRATION_6_7: Migration = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `recipes_new` " +
+                        "(`id` TEXT NOT NULL, `title` TEXT NOT NULL, `story` TEXT NOT NULL, " +
+                        "`mealMoment` TEXT NOT NULL, `prepMinutes` INTEGER NOT NULL, " +
+                        "`difficulty` TEXT NOT NULL, " +
+                        "`baseServings` INTEGER NOT NULL, `caloriesPerServing` INTEGER, " +
+                        "`photoPath` TEXT, `favorite` INTEGER NOT NULL, `origin` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "INSERT INTO `recipes_new` (`id`, `title`, `story`, `mealMoment`, `prepMinutes`, " +
+                        "`difficulty`, `baseServings`, `caloriesPerServing`, " +
+                        "`photoPath`, `favorite`, `origin`) " +
+                        "SELECT `id`, `title`, `story`, `mealMoment`, " +
+                        "MIN(`prepMinutes` + `cookMinutes`, 1439), " +
+                        "`difficulty`, `baseServings`, `caloriesPerServing`, `photoPath`, `favorite`, " +
+                        "`origin` FROM `recipes`",
+                )
+                db.execSQL("DROP TABLE `recipes`")
+                db.execSQL("ALTER TABLE `recipes_new` RENAME TO `recipes`")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `ingredients_new` " +
+                        "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recipeId` TEXT NOT NULL, " +
+                        "`name` TEXT NOT NULL, `quantity` REAL NOT NULL, `unit` TEXT NOT NULL, " +
+                        "`position` INTEGER NOT NULL, `domainId` TEXT NOT NULL, " +
+                        "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                )
+                db.execSQL(
+                    "INSERT INTO `ingredients_new` (`id`, `recipeId`, `name`, `quantity`, `unit`, " +
+                        "`position`, `domainId`) " +
+                        "SELECT `id`, `recipeId`, `name`, `quantity`, `unit`, `position`, `domainId` " +
+                        "FROM `ingredients`",
+                )
+                db.execSQL("DROP TABLE `ingredients`")
+                db.execSQL("ALTER TABLE `ingredients_new` RENAME TO `ingredients`")
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_ingredients_recipeId` " +
+                        "ON `ingredients` (`recipeId`)",
+                )
+                db.execSQL("UPDATE `steps` SET `timerMinutes` = NULL WHERE `timerMinutes` = 0")
             }
         }
     }

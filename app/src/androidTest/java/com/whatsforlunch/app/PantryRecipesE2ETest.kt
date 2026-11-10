@@ -110,9 +110,10 @@ class PantryRecipesE2ETest {
             .assertTextEquals("17 de 20 ingredientes en la Despensa")
     }
 
-    // S8: 84 % y las Recetas sin obligatorios quedan fuera (RF-MRC1, RF-MRC4 intactos).
+    // S8: 84 % y las Recetas sin Ingredientes quedan fuera (RF-MRC1, RF-MRC4 intactos;
+    // D12: sin Ingredientes no hay Coincidencia).
     @Test
-    fun recipesBelowThresholdAndWithoutRequiredIngredientsAreNotListed() {
+    fun recipesBelowThresholdAndWithoutIngredientsAreNotListed() {
         val recipes = InMemoryRecipeRepository()
         val pantry = InMemoryPantryRepository()
         val eightyFour = recipe(id = "eighty-four", title = "Pasta", required = 19)
@@ -120,9 +121,9 @@ class PantryRecipesE2ETest {
             recipes.saveRecipe(eightyFour)
             recipes.saveRecipe(
                 Recipe(
-                    id = "optional-only",
-                    title = "Solo opcionales",
-                    ingredients = listOf(RecipeIngredient(id = "salt", name = "Sal", optional = true)),
+                    id = "empty",
+                    title = "Sin ingredientes",
+                    ingredients = emptyList(),
                 ),
             )
             addPantry(pantry, eightyFour, 16)
@@ -132,7 +133,7 @@ class PantryRecipesE2ETest {
         launchRecommendations(recipes, pantry)
 
         composeRule.onNodeWithTag(RecommendationsTestTags.card("eighty-four")).assertDoesNotExist()
-        composeRule.onNodeWithTag(RecommendationsTestTags.card("optional-only")).assertDoesNotExist()
+        composeRule.onNodeWithTag(RecommendationsTestTags.card("empty")).assertDoesNotExist()
         composeRule.onNodeWithTag(RecommendationsTestTags.EMPTY).assertIsDisplayed()
     }
 

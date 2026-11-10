@@ -13,7 +13,6 @@ data class RecipeSuggestion(
     val story: String,
     val mealMoment: MealMoment,
     val prepMinutes: Int,
-    val cookMinutes: Int,
     val difficulty: Difficulty,
     val baseServings: Int,
     val caloriesPerServing: Int?,
@@ -41,7 +40,6 @@ data class RawRecipeSuggestion(
     val story: String? = null,
     val mealMoment: String? = null,
     val prepMinutes: Double? = null,
-    val cookMinutes: Double? = null,
     val difficulty: String? = null,
     val baseServings: Double? = null,
     val calories: Double? = null,
@@ -53,7 +51,6 @@ data class RawRecipeIngredient(
     val name: String? = null,
     val quantity: Double? = null,
     val unit: String? = null,
-    val optional: Boolean? = null,
 )
 
 data class RawRecipeStep(

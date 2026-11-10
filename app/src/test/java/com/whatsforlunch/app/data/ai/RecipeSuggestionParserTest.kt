@@ -7,6 +7,8 @@ import org.junit.Test
 
 class RecipeSuggestionParserTest {
 
+    // El contrato ya no tiene «cm» (cocción) ni «o» (opcionalidad, D8): las claves
+    // legadas que sigan llegando se ignoran sin romper el parseo.
     private val compact = """
         {"s":[
           {"t":"Tarta de manzana","st":"Clásica","mm":"DESSERT","pm":10,"cm":20,"df":"EASY","bs":4,"kcal":320,
@@ -24,7 +26,6 @@ class RecipeSuggestionParserTest {
         assertEquals("Clásica", proposal?.story)
         assertEquals("DESSERT", proposal?.mealMoment)
         assertEquals(10.0, proposal?.prepMinutes)
-        assertEquals(20.0, proposal?.cookMinutes)
         assertEquals("EASY", proposal?.difficulty)
         assertEquals(4.0, proposal?.baseServings)
         assertEquals(320.0, proposal?.calories)
@@ -73,8 +74,6 @@ class RecipeSuggestionParserTest {
         val proposal = proposals?.single()
         assertNull(proposal?.title)
         assertNull(proposal?.ingredients?.single()?.quantity)
-        assertNull(proposal?.ingredients?.single()?.optional)
-        assertFalse(proposal?.ingredients?.single()?.optional ?: false)
         assertEquals(-3.0, proposal?.steps?.single()?.timerMinutes)
     }
 }

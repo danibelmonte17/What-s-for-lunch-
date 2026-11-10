@@ -557,20 +557,6 @@ private fun IngredientsSection(ingredients: List<RecipeIngredient>, locale: Loca
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                if (ingredient.optional) {
-                    Surface(
-                        shape = PillShape,
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ) {
-                        Text(
-                            stringResource(R.string.recipe_detail_ingredient_optional),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-                        )
-                    }
-                }
             }
         }
     }

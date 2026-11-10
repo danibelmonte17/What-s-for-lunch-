@@ -24,7 +24,6 @@ data class IngredientEntity(
     val name: String,
     val quantity: Double,
     val unit: String,
-    val optional: Boolean,
     val position: Int,
     // Id estable del Ingrediente en el dominio (RD21); lo referencian los vínculos
     // de los Pasos (`StepEntity.ingredientIds`). Sin defaultValue declarado para

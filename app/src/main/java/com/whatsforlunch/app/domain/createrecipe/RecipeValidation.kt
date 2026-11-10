@@ -26,9 +26,13 @@ object RecipeValidation {
 
     fun isValidQuantity(quantity: Double): Boolean = quantity > 0.0
 
-    fun isValidMinutes(minutes: Int): Boolean = minutes >= 0
+    // Duración del reloj (D7): 00:00-23:59 en minutos. Para el temporizador de
+    // un Paso, 0 y null equivalen a «Sin temporizador» (D10).
+    const val MAX_DURATION_MINUTES = 23 * 60 + 59
 
-    fun isValidTimerMinutes(minutes: Int?): Boolean = minutes == null || minutes >= 0
+    fun isValidMinutes(minutes: Int): Boolean = minutes in 0..MAX_DURATION_MINUTES
+
+    fun isValidTimerMinutes(minutes: Int?): Boolean = minutes == null || minutes in 1..MAX_DURATION_MINUTES
 
     fun isValidCalories(calories: Int?): Boolean = calories == null || calories >= 0
 

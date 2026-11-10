@@ -261,7 +261,6 @@ private fun RecipeDetailContent(
         RecipeHero(recipe = recipe, match = match)
         MetricsGrid(
             prepMinutes = recipe.prepMinutes,
-            cookMinutes = recipe.cookMinutes,
             difficulty = recipe.difficulty,
             caloriesPerServing = recipe.caloriesPerServing,
             baseServings = recipe.baseServings,
@@ -481,12 +480,12 @@ private fun RecipeHero(recipe: Recipe, match: RecipeMatch?) {
     }
 }
 
-// RF-DR4: métricas 2×2 —Tiempo total con desglose, Dificultad, Calorías por
-// porción («—» si es null) y Raciones base— sin precios (P12, ⚠ S02).
+// RF-DR4: métricas 2×2 —Tiempo total (la preparación; el tiempo de cocción ya no
+// existe, D3, sin desglose), Dificultad, Calorías por porción («—» si es null) y
+// Raciones base— sin precios (P12, ⚠ S02).
 @Composable
 private fun MetricsGrid(
     prepMinutes: Int,
-    cookMinutes: Int,
     difficulty: Difficulty,
     caloriesPerServing: Int?,
     baseServings: Int,
@@ -503,12 +502,7 @@ private fun MetricsGrid(
                 icon = Icons.Outlined.Schedule,
                 iconTint = MaterialTheme.colorScheme.tertiary,
                 label = stringResource(R.string.recipe_detail_metric_time),
-                value = stringResource(R.string.my_recipes_card_time, prepMinutes + cookMinutes),
-                sublabel = stringResource(
-                    R.string.recipe_detail_metric_time_breakdown,
-                    prepMinutes,
-                    cookMinutes,
-                ),
+                value = stringResource(R.string.my_recipes_card_time, prepMinutes),
                 testTag = RecipeDetailTestTags.TOTAL_TIME,
                 modifier = Modifier.weight(1f),
             )
@@ -684,9 +678,8 @@ private fun IngredientChecklist(
             )
         }
 
-        // D6: primero los obligatorios en su orden de modelo y luego los opcionales.
+        // Orden de modelo (sin distinción obligatorio/opcional desde D5).
         ingredients
-            .sortedBy { it.optional }
             .forEach { ingredient ->
                 IngredientRow(
                     ingredient = ingredient,
@@ -774,24 +767,6 @@ private fun IngredientRow(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (ingredient.optional) {
-                    Surface(
-                        shape = PillShape,
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = WarmSpacing.xs),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.recipe_detail_ingredient_optional),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(
-                                horizontal = WarmSpacing.sm,
-                                vertical = 2.dp,
-                            ),
-                        )
-                    }
-                }
             }
         }
     }
@@ -818,7 +793,7 @@ internal fun ingredientLine(
 
 // Identidad estable de la fila para el marcado local del checklist (D3, D5):
 // nunca incluye la cantidad, que cambia al escalar las raciones.
-private fun RecipeIngredient.key(): String = id.ifBlank { "$name-$unit-$optional" }
+private fun RecipeIngredient.key(): String = id.ifBlank { "$name-$unit" }
 
 // RF-DR6: pasos resumidos con número de paso, texto completo y chip «N min» cuando
 // el Paso tiene temporizador; cabecera con el número de pasos.

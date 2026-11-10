@@ -158,7 +158,8 @@ class PincheViewModelTest {
         advanceUntilIdle()
 
         val proposal = viewModel.uiState.value.messages.last().proposal
-        assertEquals(listOf("Harina"), proposal?.missingIngredients)
+        // D5: todos los Ingredientes cuentan como Faltantes (sin opcionalidad).
+        assertEquals(listOf("Harina", "Albahaca"), proposal?.missingIngredients)
     }
 
     @Test
@@ -225,7 +226,7 @@ class PincheViewModelTest {
         viewModel.send("es")
         runBlocking { pantry.savePantryItem(PantryItem("2", "Harina", 1)) }
 
-        assertEquals(listOf("Harina"), viewModel.uiState.value.messages.last().proposal?.missingIngredients)
+        assertEquals(listOf("Harina", "Albahaca"), viewModel.uiState.value.messages.last().proposal?.missingIngredients)
     }
 
     // RF-AFL4/D8/D9: la Ficha aporta las cantidades base con la clave de fuente de
@@ -248,8 +249,10 @@ class PincheViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.messages.last().addedToList)
-        val item = shoppingList.observeItems().first().single()
-        assertEquals("Harina", item.name)
+        val items = shoppingList.observeItems().first()
+        // D5: los dos Ingredientes ausentes entran en la Lista (sin opcionalidad).
+        assertEquals(listOf("Harina", "Albahaca"), items.map { it.name })
+        val item = items.first { it.name == "Harina" }
         assertEquals(1.0, item.quantity!!, 0.0001)
         assertEquals("ud", item.unit)
         assertEquals(
@@ -259,7 +262,7 @@ class PincheViewModelTest {
 
         viewModel.addMissingToShoppingList(message.id)
         advanceUntilIdle()
-        assertEquals(1, shoppingList.observeItems().first().size)
+        assertEquals(2, shoppingList.observeItems().first().size)
     }
 
     @Test
@@ -438,15 +441,14 @@ class PincheViewModelTest {
         title = "Arroz con tomate",
         story = "Una receta sencilla",
         mealMoment = MealMoment.LUNCH,
-        prepMinutes = 10,
-        cookMinutes = 20,
+        prepMinutes = 30,
         difficulty = Difficulty.EASY,
         baseServings = 4,
         caloriesPerServing = 320,
         ingredients = listOf(
             RecipeIngredient(id = "0", name = "Tomate", quantity = 1.0, unit = "ud"),
             RecipeIngredient(id = "1", name = "Harina", quantity = 1.0, unit = "ud"),
-            RecipeIngredient(id = "2", name = "Albahaca", quantity = 1.0, unit = "ud", optional = true),
+            RecipeIngredient(id = "2", name = "Albahaca", quantity = 1.0, unit = "ud"),
         ),
         steps = listOf(RecipeStep(text = "Cocina la receta", timerMinutes = 5)),
     )

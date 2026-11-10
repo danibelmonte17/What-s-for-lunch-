@@ -8,7 +8,6 @@ data class Recipe(
     val story: String = "",
     val mealMoment: MealMoment = MealMoment.LUNCH,
     val prepMinutes: Int = 0,
-    val cookMinutes: Int = 0,
     val difficulty: Difficulty = Difficulty.MEDIUM,
     val baseServings: Int = 4,
     val caloriesPerServing: Int? = null,

@@ -908,8 +908,8 @@ private fun EditRecipeButton(onClick: () -> Unit) {
     }
 }
 
-// RF-18: fila de metadatos con el tiempo total (preparación + cocción), la
-// dificultad y las raciones, cada uno con su icono. Siempre visible.
+// RF-18: fila de metadatos con el tiempo total (la preparación; la cocción ya no
+// existe, D3), la dificultad y las raciones, cada uno con su icono. Siempre visible.
 @Composable
 private fun MetadataRow(recipe: Recipe) {
     Row(
@@ -921,7 +921,7 @@ private fun MetadataRow(recipe: Recipe) {
             iconTint = MaterialTheme.colorScheme.tertiary,
             text = stringResource(
                 R.string.my_recipes_card_time,
-                recipe.prepMinutes + recipe.cookMinutes,
+                recipe.prepMinutes,
             ),
             testTag = MyRecipesTestTags.RECIPE_TIME,
         )
