@@ -59,6 +59,7 @@ import com.whatsforlunch.app.domain.pinche.PincheProposal
 import com.whatsforlunch.app.domain.pinche.PincheProposalState
 import com.whatsforlunch.app.domain.profile.PendingProfilePart
 import com.whatsforlunch.app.domain.profile.SavedProfilePart
+import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -603,7 +604,7 @@ private fun ProposalCard(
                         stringResource(recipe.mealMoment.labelRes()),
                         stringResource(
                             R.string.my_recipes_card_time,
-                            recipe.prepMinutes + recipe.cookMinutes,
+                            recipe.prepMinutes,
                         ),
                         stringResource(R.string.my_recipes_card_servings, recipe.baseServings),
                     ).joinToString(" · "),
@@ -689,25 +690,11 @@ private fun IngredientsSection(
         ingredients.forEach { ingredient ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = ingredientLine(ingredient, locale),
+                    text = ingredientLine(ingredient, locale, unit = unitLabel(ingredient.unit)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                if (ingredient.optional) {
-                    Surface(
-                        shape = PillShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.pinche_proposal_optional),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = WarmSpacing.sm, vertical = 2.dp),
-                        )
-                    }
-                }
             }
         }
     }
@@ -793,13 +780,15 @@ private fun MissingSection(missing: List<String>) {
     }
 }
 
-private fun ingredientLine(ingredient: RecipeIngredient, locale: Locale): String {
+// `unit` llega presentado con `unitLabel` (unificar-unidades, D4): los códigos
+// del enum con sus textos es/en y la unidad legada como texto.
+private fun ingredientLine(ingredient: RecipeIngredient, locale: Locale, unit: String = ingredient.unit): String {
     val quantity = if (ingredient.quantity > 0.0) {
         NumberFormat.getNumberInstance(locale).format(ingredient.quantity)
     } else {
         ""
     }
-    return listOf(quantity, ingredient.unit, ingredient.name)
+    return listOf(quantity, unit, ingredient.name)
         .filter { it.isNotBlank() }
         .joinToString(" ")
 }

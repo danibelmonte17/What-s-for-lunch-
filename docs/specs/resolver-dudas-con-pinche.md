@@ -351,3 +351,19 @@ Detalle verificable con `uiautomator` y captura:
 - [ ] No se añadió trabajo de otras features: sin Lista de la Compra ni Faltantes→ÍtemLista, sin Modo Cocina, sin voz/micrófono, sin persistencia ni migraciones de Room, sin `/images/generations`, sin tocar `calculateMatch`, `MatchBadge`, RD01/RD02/RD10/RD13 ni `SuggestionAcceptance`/`SuggestionRules`.
 - [ ] Sin llamadas reales de pago en la verificación automática (solo `FakePincheChatClient` y fakes) y sin API keys reales en ficheros, logs ni evidencia (`⚠ S05`, `RK01`); `RK03` actualizado con los datos que salen del dispositivo.
 - [ ] `docs/risks-and-open-questions.md` registra el cierre de `Q-resolver-dudas-con-pinche-16` y el resultado de `S08`.
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. La Propuesta del Pinche normaliza la unidad al enum en dos puntos: en `SuggestionRules.normalizeOne` al parsear la respuesta (compartido con las Sugerencias) y al materializar la Receta en `PincheProposalRules.proposalToRecipe` (D2: vacía o desconocida → «ud»); la Ficha muestra la unidad con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). Esto **modifica puntualmente** el alcance «sin tocar … `SuggestionRules`» del checklist de arriba, por decisión posterior del usuario; los Faltantes (RD15), el id estable (RD16) y el resto del flujo quedan intactos.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisiones posteriores del usuario (D3/D5/D8 de `docs/specs/redisenar-formulario-de-receta.md`): la Ficha pierde las **píldoras «Opcional»**, los **Faltantes de la Propuesta son todos los Ingredientes ausentes** de la Despensa (RD15 enmendada) y la Receta guardada se materializa **sin `cookMinutes` ni opcionalidad** (la metadatalínea muestra solo la preparación; el contrato de la IA pierde «cm»/«o»). El resto de esta spec (function calling de solo lectura, Propuesta con id estable, guardado sin duplicar) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

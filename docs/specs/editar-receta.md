@@ -232,3 +232,19 @@ Implementar el ajuste (botón primario compacto con etiqueta «Editar»/«Edit»
 ### Siguiente acción
 
 Sincronizar la spec con el tamaño compacto ya implementado (commit `873b625`) y revalidar la feature; la alineación de «Eliminar» con estas medidas se documenta en `docs/specs/eliminar-receta.md`.
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad de los Ingredientes deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. Al editar, la unidad precargada se muestra en un desplegable compartido: los códigos del enum con sus textos es/en y, si es legada (fuera de la lista, incluida la vacía), como **opción extra seleccionada** que se conserva salvo que se elija otra. El resto de esta spec (precarga, guardado, ids estables) queda intacto.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisiones posteriores del usuario (D1/D3/D5/D7/D10 de `docs/specs/redisenar-formulario-de-receta.md`): al editar, la precarga ya no muestra campo de Cocción ni casilla «Opcional»; el **Tiempo de preparación** se precarga en el reloj (HH:MM, duración 24 h) y el temporizador de cada Paso como HH:MM o **«Sin temporizador»** (los 0 legados se normalizan a «Sin temporizador»). `cookMinutes` y `optional` no existen: Room v7 (`MIGRATION_6_7`) suma la cocción legada a la preparación al migrar. El resto de esta spec (precarga del resto de campos, guardado único, conservación del estado de favorito) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

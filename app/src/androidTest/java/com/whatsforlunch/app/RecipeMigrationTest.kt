@@ -47,6 +47,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
+                RecipeDatabase.MIGRATION_6_7,
             )
             .allowMainThreadQueries()
             .build()
@@ -125,6 +126,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
+                RecipeDatabase.MIGRATION_6_7,
             )
             .allowMainThreadQueries()
             .build()
@@ -173,6 +175,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
+                RecipeDatabase.MIGRATION_6_7,
             )
             .allowMainThreadQueries()
             .build()
@@ -218,6 +221,133 @@ class RecipeMigrationTest {
             room.close()
             context.deleteDatabase(name)
         }
+    }
+
+    // `redisenar-formulario-de-receta` (D3/D5/D6/D9/D10): una base v6 migra a v7
+    // sin `recipes.cookMinutes` (sumado a `prepMinutes`, con tope 23:59 h) ni
+    // `ingredients.optional` (todos los Ingredientes cuentan) y con los
+    // temporizadores de Paso 0 normalizados a NULL («Sin temporizador»).
+    @Test
+    fun migrationFromV6FoldsCookMinutesAndDropsOptionalColumn() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "recipe-migration-6-7.db"
+        context.deleteDatabase(name)
+        createLegacyV6Database(context, name)
+
+        val room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
+                RecipeDatabase.MIGRATION_6_7,
+            )
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val recipeColumns = buildList {
+                val cursor = room.query("PRAGMA table_info(`recipes`)", null)
+                while (cursor.moveToNext()) add(cursor.getString(1))
+                cursor.close()
+            }
+            assertTrue("cookMinutes" !in recipeColumns)
+            assertTrue("prepMinutes" in recipeColumns)
+            val ingredientColumns = buildList {
+                val cursor = room.query("PRAGMA table_info(`ingredients`)", null)
+                while (cursor.moveToNext()) add(cursor.getString(1))
+                cursor.close()
+            }
+            assertTrue("optional" !in ingredientColumns)
+
+            // D6: la cocción se suma a la preparación; D9: el tope es 23:59 h (1439).
+            val prepCursor = room.query(
+                "SELECT id, prepMinutes FROM recipes ORDER BY id",
+                null,
+            )
+            val prep = buildList {
+                while (prepCursor.moveToNext()) add(prepCursor.getString(0) to prepCursor.getInt(1))
+            }
+            prepCursor.close()
+            assertEquals(listOf("mig6-1" to 75, "mig6-2" to 1439), prep)
+
+            // D10: los temporizadores 0 pasan a NULL; los positivos se conservan.
+            val timerCursor = room.query(
+                "SELECT timerMinutes FROM steps ORDER BY id",
+                null,
+            )
+            val timers = buildList {
+                while (timerCursor.moveToNext()) {
+                    add(if (timerCursor.isNull(0)) null else timerCursor.getInt(0))
+                }
+            }
+            timerCursor.close()
+            assertEquals(listOf<Int?>(null, 5), timers)
+
+            // Lectura y escritura tras la migración sobre las tablas recreadas.
+            val repository = RoomRecipeRepository(room.recipeDao(), MigrationPhotoStore())
+            runBlocking {
+                val migrated = repository.getRecipe("mig6-1")!!
+                assertEquals(75, migrated.prepMinutes)
+                assertEquals(listOf("Patata"), migrated.ingredients.map { it.name })
+                assertEquals(listOf<Int?>(null), migrated.steps.map { it.timerMinutes })
+
+                repository.saveRecipe(migrated.copy(prepMinutes = 80))
+                assertEquals(80, repository.getRecipe("mig6-1")!!.prepMinutes)
+            }
+        } finally {
+            room.close()
+            context.deleteDatabase(name)
+        }
+    }
+    // Esquema exacto de Room v6: como v5 más `profile` y `profile_restrictions`
+    // (MIGRATION_5_6), con `recipes.cookMinutes` e `ingredients.optional` aún.
+    private fun createLegacyV6Database(context: android.content.Context, name: String) {
+        val helper = FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(name)
+                .callback(object : SupportSQLiteOpenHelper.Callback(6) {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        createV6Schema(db)
+                        db.execSQL("PRAGMA user_version = 6")
+                    }
+
+                    override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+                })
+                .build(),
+        )
+        val db = helper.writableDatabase
+        // prep 30 + cocción 45 = 75 (D6); un Ingrediente «opcional» que pasa a
+        // obligatorio (D5) y un Paso con temporizador 0 que queda «Sin temporizador».
+        db.execSQL(
+            "INSERT INTO recipes VALUES " +
+                "('mig6-1', 'Tortilla', '', 'LUNCH', 30, 45, 'EASY', 4, NULL, NULL, 1, 'USER')",
+        )
+        db.execSQL("INSERT INTO ingredients VALUES (1, 'mig6-1', 'Patata', 700.0, 'g', 1, 0, 'mig6-1-ingredient-0')")
+        db.execSQL("INSERT INTO steps VALUES (1, 'mig6-1', 'Pochar', 0, 0, 'mig6-1-ingredient-0')")
+        // Suma por encima de 23:59 h: se recorta a 1439 min (D9).
+        db.execSQL(
+            "INSERT INTO recipes VALUES " +
+                "('mig6-2', 'Estofado', '', 'DINNER', 1000, 900, 'HARD', 6, NULL, NULL, 0, 'USER')",
+        )
+        db.execSQL("INSERT INTO ingredients VALUES (2, 'mig6-2', 'Carne', 500.0, 'g', 0, 0, 'mig6-2-ingredient-0')")
+        db.execSQL("INSERT INTO steps VALUES (2, 'mig6-2', 'Estofar', 5, 0, '')")
+        db.close()
+        helper.close()
+    }
+
+    private fun createV6Schema(db: SupportSQLiteDatabase) {
+        createV5Schema(db)
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `profile` " +
+                "(`id` TEXT NOT NULL, `dietType` TEXT, `allergiesNone` INTEGER NOT NULL, " +
+                "`intolerancesNone` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `profile_restrictions` " +
+                "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `section` TEXT NOT NULL, " +
+                "`value` TEXT NOT NULL)",
+        )
     }
 
     // Esquema exacto de Room v5: como v4 pero `recipes` sin `status` (MIGRATION_4_5).

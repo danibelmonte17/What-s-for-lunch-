@@ -241,3 +241,11 @@ Cada fase deja `lint` y `unit` en verde antes de pasar a la siguiente.
 - [ ] ¿RD18 intacta (idempotencia y suma por fuente de los Faltantes) y Room sin migración (v3, `aisle` solo se usa)?
 - [ ] ¿Paridad es/en, testTags/contratos estables y los 10 E2E previos de la Lista en verde?
 - [ ] ¿`init`, `lint` y `unit` en verde, `assembleDebug` sin errores y evidencia + `feature_list.json` actualizados?
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad del ítem deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. El diálogo de alta/edición sustituye el campo de texto por un desplegable compartido (`ui/components/UnitDropdown.kt`) con los cinco valores del enum y **«ud» preseleccionado en los ítems nuevos**; al editar, una unidad legada (incluida la vacía, rotulada «(sin unidad)») entra como **opción extra** y se conserva si no se elige otra. La validación de RD19 no se endurece: la unidad sigue siendo opcional en el guardado manual y los valores legados siguen válidos. El tag `UNIT_FIELD` se conserva en el desplegable.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*

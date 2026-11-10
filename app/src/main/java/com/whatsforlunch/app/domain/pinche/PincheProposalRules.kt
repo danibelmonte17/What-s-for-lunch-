@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.domain.pinche
 
+import com.whatsforlunch.app.domain.model.IngredientUnit
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.model.RecipeOrigin
@@ -11,8 +12,9 @@ import java.util.UUID
 /**
  * Reglas puras de la Propuesta del Pinche (RF-PCH7, RF-PCH8; RD15, RD16).
  *
- * Los Faltantes son solo los ingredientes obligatorios cuyo nombre normalizado no
- * está en la Despensa, sin duplicados y en el orden de la receta (RD15). Guardar la
+ * Los Faltantes son los ingredientes cuyo nombre normalizado no está en la
+ * Despensa, sin duplicados y en el orden de la receta (RD15; desde
+ * `redisenar-formulario-de-receta` todos los Ingredientes cuentan). Guardar la
  * Propuesta crea una Receta sin foto con `origen = SUGGESTION` y un id estable
  * derivado del título, de modo que dos guardados reescriben la misma Receta (RD16).
  * Sin dependencias de Android ni de la UI.
@@ -20,7 +22,7 @@ import java.util.UUID
 object PincheProposalRules {
 
     /**
-     * RD15/D8: nombres de los ingredientes obligatorios ausentes de la Despensa, en
+     * RD15/D8: nombres de los ingredientes ausentes de la Despensa, en
      * orden de la receta y sin duplicados. La comparación usa `normalizeName`.
      */
     fun missingRequired(
@@ -49,7 +51,6 @@ object PincheProposalRules {
             story = proposal.story,
             mealMoment = proposal.mealMoment,
             prepMinutes = proposal.prepMinutes,
-            cookMinutes = proposal.cookMinutes,
             difficulty = proposal.difficulty,
             baseServings = proposal.baseServings,
             caloriesPerServing = proposal.caloriesPerServing,
@@ -57,7 +58,13 @@ object PincheProposalRules {
             favorite = false,
             origin = RecipeOrigin.SUGGESTION,
             ingredients = proposal.ingredients.mapIndexed { index, ingredient ->
-                ingredient.copy(id = "$id-ingredient-$index")
+                // D2 (unificar-unidades): al materializar la Propuesta la unidad queda
+                // garantizada en el enum cerrado (idempotente con la normalización de
+                // SuggestionRules en la que ya entró al parsear la respuesta).
+                ingredient.copy(
+                    id = "$id-ingredient-$index",
+                    unit = IngredientUnit.normalize(ingredient.unit),
+                )
             },
             steps = proposal.steps.mapIndexed { index, step ->
                 step.copy(id = "$id-step-$index")

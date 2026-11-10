@@ -81,8 +81,9 @@ class RecipeDetailE2ETest {
         E2eDatabase.clear()
     }
 
-    // S1: Receta con foto, 2 obligatorios + 1 opcional y 2 Pasos (uno con
-    // temporizador) → métricas con desglose, checklist con «Opcional» y chips.
+    // S1: Receta con foto, 3 Ingredientes (sin opcionalidad desde D5) y 2 Pasos (uno
+    // con temporizador) → métricas sin desglose de cocción (D3), checklist sin
+    // píldora «Opcional» y chips.
     @Test
     fun fullRecipeShowsMetricsChecklistAndSteps() {
         val recipes = InMemoryRecipeRepository()
@@ -95,14 +96,13 @@ class RecipeDetailE2ETest {
                     title = "Tortilla de patatas",
                     story = "La receta de la abuela.",
                     prepMinutes = 15,
-                    cookMinutes = 30,
                     baseServings = 4,
                     caloriesPerServing = 450,
                     photoPath = photoFile.absolutePath,
                     ingredients = listOf(
                         RecipeIngredient(id = "egg", name = "Huevos", quantity = 4.0, unit = "uds"),
                         RecipeIngredient(id = "potato", name = "Patatas", quantity = 0.5, unit = "kg"),
-                        RecipeIngredient(id = "oil", name = "Aceite", quantity = 0.25, unit = "l", optional = true),
+                        RecipeIngredient(id = "oil", name = "Aceite", quantity = 0.25, unit = "l"),
                     ),
                     steps = listOf(
                         RecipeStep(id = "s1", text = "Corta las patatas", timerMinutes = 10),
@@ -118,10 +118,10 @@ class RecipeDetailE2ETest {
         composeRule.onNodeWithText("Tortilla de patatas").assertIsDisplayed()
         composeRule.onNodeWithText("La receta de la abuela.").assertIsDisplayed()
 
-        // RF-DR4: métricas con tiempo total, desglose, dificultad, calorías y raciones.
+        // RF-DR4: métricas con tiempo total (solo preparación, sin desglose de
+        // cocción, D3), dificultad, calorías y raciones.
         composeRule.onNodeWithTag(RecipeDetailTestTags.TOTAL_TIME).assertIsDisplayed()
-        composeRule.onNodeWithText("45 min").assertIsDisplayed()
-        composeRule.onNodeWithText("15 min preparación · 30 min cocción").assertIsDisplayed()
+        composeRule.onNodeWithText("15 min").assertIsDisplayed()
         composeRule.onNodeWithTag(RecipeDetailTestTags.DIFFICULTY).assertIsDisplayed()
         composeRule.onNodeWithText("Media").assertIsDisplayed()
         composeRule.onNodeWithTag(RecipeDetailTestTags.CALORIES).assertIsDisplayed()
@@ -130,7 +130,8 @@ class RecipeDetailE2ETest {
         composeRule.onAllNodesWithText("4").assertCountEquals(2)
         composeRule.onNodeWithTag(RecipeDetailTestTags.SERVINGS_VALUE).assertTextEquals("4")
 
-        // RF-DR5: checklist con contador, cantidades en español y píldora «Opcional».
+        // RF-DR5: checklist con contador y cantidades en español; sin píldora
+        // «Opcional» (D5).
         composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(RecipeDetailTestTags.INGREDIENTS_COUNT)
             .performScrollTo()
@@ -139,7 +140,7 @@ class RecipeDetailE2ETest {
         composeRule.onNodeWithText("4 uds Huevos").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("0,5 kg Patatas").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("0,25 l Aceite").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Opcional").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Opcional").assertDoesNotExist()
         composeRule.onAllNodesWithTag(RecipeDetailTestTags.INGREDIENT_ROW).assertCountEquals(3)
 
         // RF-DR6: dos pasos con su chip de temporizador.

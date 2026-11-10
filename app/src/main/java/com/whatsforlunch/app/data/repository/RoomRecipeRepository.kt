@@ -58,7 +58,6 @@ private fun com.whatsforlunch.app.data.local.RecipeWithDetails.toDomain(): Recip
             name = it.name,
             quantity = it.quantity,
             unit = it.unit,
-            optional = it.optional,
         )
     }
     // D5: al cargar se descartan, sin error, las referencias huérfanas de los
@@ -70,7 +69,6 @@ private fun com.whatsforlunch.app.data.local.RecipeWithDetails.toDomain(): Recip
         story = recipe.story,
         mealMoment = enumOrDefault(recipe.mealMoment, MealMoment.LUNCH),
         prepMinutes = recipe.prepMinutes,
-        cookMinutes = recipe.cookMinutes,
         difficulty = enumOrDefault(recipe.difficulty, Difficulty.MEDIUM),
         baseServings = recipe.baseServings,
         caloriesPerServing = recipe.caloriesPerServing,
@@ -95,7 +93,6 @@ private fun Recipe.toEntity(): RecipeEntity = RecipeEntity(
     story = story,
     mealMoment = mealMoment.name,
     prepMinutes = prepMinutes,
-    cookMinutes = cookMinutes,
     difficulty = difficulty.name,
     baseServings = baseServings,
     caloriesPerServing = caloriesPerServing,
@@ -115,7 +112,6 @@ private fun RecipeIngredient.toEntity(recipeId: String, position: Int): Ingredie
     name = name,
     quantity = quantity,
     unit = unit,
-    optional = optional,
     position = position,
     domainId = stableIngredientId(recipeId, id, position),
 )

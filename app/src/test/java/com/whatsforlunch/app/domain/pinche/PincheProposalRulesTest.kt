@@ -18,33 +18,31 @@ import org.junit.Test
 class PincheProposalRulesTest {
 
     @Test
-    fun missingRequiredKeepsOnlyAbsentRequiredIngredientsInRecipeOrder() {
-        val proposal = proposal(
-            required = listOf("Tomate", "Harina", "Albahaca"),
-            optional = listOf("Queso"),
-        )
+    fun missingRequiredKeepsOnlyAbsentIngredientsInRecipeOrder() {
+        // D5: todos los Ingredientes cuentan (sin distinción obligatorio/opcional).
+        val proposal = proposal(listOf("Tomate", "Harina", "Albahaca", "Queso"))
         val pantry = listOf(PantryItem("1", "tomate", 3))
 
         assertEquals(
-            listOf("Harina", "Albahaca"),
+            listOf("Harina", "Albahaca", "Queso"),
             PincheProposalRules.missingRequired(proposal, pantry),
         )
     }
 
     @Test
     fun missingRequiredNormalizesAccentsCaseAndSpacesAndAvoidsDuplicates() {
-        val proposal = proposal(required = listOf("Tomate", "TOMATE", "Harina", "Harina"))
+        val proposal = proposal(listOf("Tomate", "TOMATE", "Harina", "Harina"))
         val pantry = listOf(PantryItem("1", "  Tomaté  ", 1))
 
         assertEquals(listOf("Harina"), PincheProposalRules.missingRequired(proposal, pantry))
     }
 
     @Test
-    fun emptyPantryMakesEveryRequiredIngredientMissing() {
-        val proposal = proposal(required = listOf("Tomate", "Harina"), optional = listOf("Albahaca"))
+    fun emptyPantryMakesEveryIngredientMissing() {
+        val proposal = proposal(listOf("Tomate", "Harina", "Albahaca"))
 
         assertEquals(
-            listOf("Tomate", "Harina"),
+            listOf("Tomate", "Harina", "Albahaca"),
             PincheProposalRules.missingRequired(proposal, emptyList()),
         )
     }
@@ -60,7 +58,7 @@ class PincheProposalRulesTest {
 
     @Test
     fun proposalToRecipeBuildsARecipeWithSuggestionOriginAndNoPhoto() {
-        val suggestion = proposal(required = listOf("Tomate", "Harina"), optional = listOf("Albahaca"))
+        val suggestion = proposal(listOf("Tomate", "Harina", "Albahaca"))
         val recipe = PincheProposalRules.proposalToRecipe(suggestion)
         val id = PincheProposalRules.proposalRecipeId(suggestion.title)
 
@@ -75,7 +73,7 @@ class PincheProposalRulesTest {
 
     @Test
     fun savingTheSameProposalTwiceProducesTheSameId() {
-        val suggestion = proposal(required = listOf("Tomate"))
+        val suggestion = proposal(listOf("Tomate"))
 
         assertEquals(
             PincheProposalRules.proposalToRecipe(suggestion).id,
@@ -83,25 +81,36 @@ class PincheProposalRulesTest {
         )
     }
 
-    private fun proposal(
-        required: List<String> = listOf("Tomate"),
-        optional: List<String> = emptyList(),
-    ): RecipeSuggestion = RecipeSuggestion(
+    // D2 (unificar-unidades): al materializar la Propuesta la unidad queda
+    // garantizada en el enum cerrado (lo vacío y lo desconocido caen a «ud»).
+    @Test
+    fun proposalToRecipeNormalizesUnitsToTheClosedEnum() {
+        val base = proposal(listOf("Tomate", "Harina"))
+        val suggestion = base.copy(
+            ingredients = base.ingredients.mapIndexed { index, ingredient ->
+                ingredient.copy(unit = if (index == 0) "gramos" else "")
+            },
+        )
+
+        val recipe = PincheProposalRules.proposalToRecipe(suggestion)
+
+        assertEquals(listOf("ud", "ud"), recipe.ingredients.map { it.unit })
+    }
+
+    private fun proposal(ingredients: List<String> = listOf("Tomate")): RecipeSuggestion = RecipeSuggestion(
         title = "Arroz con tomate",
         story = "Una receta sencilla",
         mealMoment = MealMoment.LUNCH,
         prepMinutes = 10,
-        cookMinutes = 20,
         difficulty = Difficulty.EASY,
         baseServings = 4,
         caloriesPerServing = 320,
-        ingredients = (required + optional).mapIndexed { index, name ->
+        ingredients = ingredients.mapIndexed { index, name ->
             RecipeIngredient(
                 id = "$index",
                 name = name,
                 quantity = 1.0,
                 unit = "ud",
-                optional = name in optional,
             )
         },
         steps = listOf(RecipeStep(text = "Cocina la receta", timerMinutes = 5)),

@@ -36,10 +36,23 @@ class RecipeValidationTest {
     }
 
     @Test
-    fun timesMustBeNonNegativeMinutes() {
+    fun timesAreDurationMinutesWithinZeroToTwentyThreeFiftyNine() {
+        // D7: el reloj es duración HH:MM en 24 h (00:00-23:59 en minutos).
         assertFalse(RecipeValidation.isValidMinutes(-1))
         assertTrue(RecipeValidation.isValidMinutes(0))
         assertTrue(RecipeValidation.isValidMinutes(35))
+        assertTrue(RecipeValidation.isValidMinutes(RecipeValidation.MAX_DURATION_MINUTES))
+        assertFalse(RecipeValidation.isValidMinutes(RecipeValidation.MAX_DURATION_MINUTES + 1))
+    }
+
+    @Test
+    fun stepTimerIsNullOrPositiveMinutesUpToTwentyThreeFiftyNine() {
+        // D10: null = «Sin temporizador»; 0 equivale a null y no es un temporizador válido.
+        assertTrue(RecipeValidation.isValidTimerMinutes(null))
+        assertFalse(RecipeValidation.isValidTimerMinutes(0))
+        assertTrue(RecipeValidation.isValidTimerMinutes(1))
+        assertTrue(RecipeValidation.isValidTimerMinutes(RecipeValidation.MAX_DURATION_MINUTES))
+        assertFalse(RecipeValidation.isValidTimerMinutes(RecipeValidation.MAX_DURATION_MINUTES + 1))
     }
 
     @Test

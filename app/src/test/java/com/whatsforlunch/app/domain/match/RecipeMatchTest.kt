@@ -11,18 +11,18 @@ import org.junit.Test
 class RecipeMatchTest {
 
     @Test
-    fun calculatesPresenceOnlyFromRequiredIngredients() {
+    fun countsAllIngredientsWithoutOptionalDistinction() {
         val recipe = recipe(
             RecipeIngredient(id = "chicken", name = "Pollo"),
             RecipeIngredient(id = "rice", name = "Arroz"),
-            RecipeIngredient(id = "lemon", name = "Limón", optional = true),
+            RecipeIngredient(id = "lemon", name = "Limón"),
         )
 
         val result = calculateMatch(recipe, listOf(item("Pollo"), item("Limón", quantity = 0)))
 
-        assertEquals(50, result?.percentage)
-        assertEquals(1, result?.availableRequired)
-        assertEquals(2, result?.totalRequired)
+        assertEquals(67, result?.percentage)
+        assertEquals(2, result?.availableRequired)
+        assertEquals(3, result?.totalRequired)
     }
 
     @Test
@@ -57,10 +57,11 @@ class RecipeMatchTest {
     }
 
     @Test
-    fun recipeWithoutRequiredIngredientsHasNoMatch() {
-        val recipe = recipe(RecipeIngredient(id = "1", name = "Sal", optional = true))
+    fun recipeWithoutIngredientsHasNoMatch() {
+        // D12: sin Ingredientes no hay Coincidencia (antes, recetas «solo opcionales»).
+        val recipe = recipe(RecipeIngredient(id = "1", name = "Sal"))
 
-        assertNull(calculateMatch(recipe, listOf(item("Sal"))))
+        assertEquals(100, calculateMatch(recipe, listOf(item("Sal")))?.percentage)
         assertNull(calculateMatch(recipe(), emptyList()))
     }
 

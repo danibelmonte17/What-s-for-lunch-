@@ -40,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -76,6 +77,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.Aisle
+import com.whatsforlunch.app.domain.model.IngredientUnit
 import com.whatsforlunch.app.domain.model.ShoppingListItem
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroup
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroupMode
@@ -83,6 +85,8 @@ import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import com.whatsforlunch.app.domain.shoppinglist.aisleKey
 import com.whatsforlunch.app.ui.components.SkilletIcon
+import com.whatsforlunch.app.ui.components.UnitDropdown
+import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.recipedetail.formatQuantity
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
@@ -321,7 +325,10 @@ private fun ShoppingItemRow(
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val quantity = item.quantity?.takeIf { it > 0.0 }?.let { formatQuantity(it, locale) }
-    val detail = listOfNotNull(quantity, item.unit.takeIf { it.isNotBlank() })
+    // Unidad presentada con el vocabulario cerrado (D4): los códigos del enum con
+    // sus textos es/en y la legada como texto; la vacía se omite (RD19).
+    val unit = unitLabel(item.unit)
+    val detail = listOfNotNull(quantity, unit.takeIf { it.isNotBlank() })
         .joinToString(" ")
     val line = if (detail.isBlank()) {
         item.name
@@ -737,7 +744,11 @@ private fun ShoppingItemDialog(
     var quantityText by remember(item?.id) {
         mutableStateOf(item?.quantity?.let { formatEditableQuantity(it, locale) }.orEmpty())
     }
-    var unit by remember(item?.id) { mutableStateOf(item?.unit.orEmpty()) }
+    // D1: los ítems nuevos nacen con «ud»; una unidad legada (incluida la vacía)
+    // se conserva tal cual y entra como opción extra del desplegable (D5).
+    var unit by remember(item?.id) {
+        mutableStateOf(item?.unit ?: IngredientUnit.UD.code)
+    }
     var aisle by remember(item?.id) { mutableStateOf(item?.aisle) }
     var showError by remember(item?.id) { mutableStateOf(false) }
 
@@ -803,14 +814,17 @@ private fun ShoppingItemDialog(
                         modifier = Modifier.testTag(ShoppingListTestTags.QUANTITY_ERROR),
                     )
                 }
-                OutlinedTextField(
+                // Unidad de lista cerrada (unificar-unidades, D1): desplegable con
+                // «ud» preseleccionado en ítems nuevos y la legada como opción extra.
+                // Se conserva la estética M3 de los campos vecinos del diálogo.
+                UnitDropdown(
                     value = unit,
                     onValueChange = { unit = it },
+                    testTag = ShoppingListTestTags.UNIT_FIELD,
                     label = { Text(stringResource(R.string.shopping_list_unit_label)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(ShoppingListTestTags.UNIT_FIELD),
+                    shape = RoundedCornerShape(WarmRadius.sm),
+                    colors = OutlinedTextFieldDefaults.colors(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
                     text = stringResource(R.string.shopping_list_aisle_label),

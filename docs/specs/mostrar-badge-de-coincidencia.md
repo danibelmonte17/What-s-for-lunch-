@@ -261,3 +261,11 @@ Especificación del badge (verificable por `uiautomator` y captura; sin exigir m
 - [ ] Cobertura E2E persistente añadida y suite completa en verde.
 - [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente.
 - [ ] No se añadió comportamiento de producto ni trabajo de otras features (en particular: sin umbral 85 %, sin ordenación por Coincidencia, sin carrusel del Escáner).
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisión posterior del usuario (D5 de `docs/specs/redisenar-formulario-de-receta.md`): desaparece el concepto de ingrediente opcional, así que la **Coincidencia se calcula sobre todos los Ingredientes** (RD01/RD10 enmendadas: ya no hay obligatorios y opcionales) y una Receta **sin Ingredientes no tiene badge** (como antes las «solo opcionales»). El cálculo del porcentaje, el umbral 85 %, el badge «100% Match» y sus colores quedan intactos.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

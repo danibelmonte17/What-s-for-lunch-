@@ -66,6 +66,7 @@ val appModule = module {
                 RecipeDatabase.MIGRATION_3_4,
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
+                RecipeDatabase.MIGRATION_6_7,
             )
             .build()
     }

@@ -53,7 +53,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -85,9 +84,16 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.createrecipe.RecipeRequirement
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
+import com.whatsforlunch.app.ui.components.DurationPickerDialog
+import com.whatsforlunch.app.ui.components.UnitDropdown
+import com.whatsforlunch.app.ui.components.formatDurationMinutes
+import com.whatsforlunch.app.ui.components.unitLabel
+import com.whatsforlunch.app.ui.theme.FieldShape
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
+import com.whatsforlunch.app.ui.theme.warmFieldColors
 import com.whatsforlunch.app.ui.theme.warmShadow
+import com.whatsforlunch.app.ui.theme.whiteFieldColors
 
 // Identificadores estables para las pruebas instrumentadas (E2E).
 object CreateRecipeTestTags {
@@ -95,7 +101,6 @@ object CreateRecipeTestTags {
     const val TITLE_FIELD = "create_recipe_title"
     const val STORY_FIELD = "create_recipe_story"
     const val PREP_MINUTES_FIELD = "create_recipe_prep_minutes"
-    const val COOK_MINUTES_FIELD = "create_recipe_cook_minutes"
     const val CALORIES_FIELD = "create_recipe_calories"
     const val SERVINGS_VALUE = "create_recipe_servings_value"
     const val SERVINGS_DECREASE = "create_recipe_servings_decrease"
@@ -140,13 +145,14 @@ object CreateRecipeTestTags {
 
     fun ingredientUnit(index: Int) = "create_recipe_ingredient_unit_$index"
 
-    fun ingredientOptional(index: Int) = "create_recipe_ingredient_optional_$index"
-
     fun removeIngredient(index: Int) = "create_recipe_remove_ingredient_$index"
 
     fun stepText(index: Int) = "create_recipe_step_text_$index"
 
     fun stepTimer(index: Int) = "create_recipe_step_timer_$index"
+
+    // Control «Sin temporizador» de la fila de Paso (D7): limpia el temporizador.
+    fun stepNoTimer(index: Int) = "create_recipe_step_no_timer_$index"
 
     fun removeStep(index: Int) = "create_recipe_remove_step_$index"
 
@@ -170,8 +176,7 @@ class CreateRecipeActions(
     val onTitleChange: (String) -> Unit = {},
     val onStoryChange: (String) -> Unit = {},
     val onMealMomentChange: (MealMoment) -> Unit = {},
-    val onPrepMinutesChange: (String) -> Unit = {},
-    val onCookMinutesChange: (String) -> Unit = {},
+    val onPrepMinutesChange: (Int) -> Unit = {},
     val onDifficultyChange: (Difficulty) -> Unit = {},
     val onCaloriesChange: (String) -> Unit = {},
     val onServingsChange: (Int) -> Unit = {},
@@ -180,11 +185,10 @@ class CreateRecipeActions(
     val onIngredientNameChange: (Long, String) -> Unit = { _, _ -> },
     val onIngredientQuantityChange: (Long, String) -> Unit = { _, _ -> },
     val onIngredientUnitChange: (Long, String) -> Unit = { _, _ -> },
-    val onIngredientOptionalChange: (Long, Boolean) -> Unit = { _, _ -> },
     val onRemoveIngredient: (Long) -> Unit = {},
     val onAddStep: () -> Unit = {},
     val onStepTextChange: (Long, String) -> Unit = { _, _ -> },
-    val onStepTimerChange: (Long, String) -> Unit = { _, _ -> },
+    val onStepTimerChange: (Long, Int?) -> Unit = { _, _ -> },
     val onStepIngredientToggle: (Long, String) -> Unit = { _, _ -> },
     val onRemoveStep: (Long) -> Unit = {},
     val onPickPhotoFromGallery: () -> Unit = {},
@@ -195,10 +199,10 @@ class CreateRecipeActions(
     val onDismissNotice: () -> Unit = {},
 )
 
-// Formas del sistema visual: 1rem en secciones, 0.75rem en campos y píldora en
+// Formas del sistema visual: 1rem en secciones, 0.75rem en campos (FieldShape
+// compartido en ui/theme/Field.kt con el desplegable de unidades) y píldora en
 // chips y badges (RF-13).
 private val SectionShape: Shape = RoundedCornerShape(WarmRadius.lg)
-private val FieldShape: Shape = RoundedCornerShape(WarmRadius.md)
 private val PillShape: Shape = RoundedCornerShape(50)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -549,7 +553,9 @@ private fun BasicInfoSection(uiState: CreateRecipeUiState, actions: CreateRecipe
     }
 }
 
-// RF-5: rejilla de tres bloques (tiempo, dificultad y raciones) con icono y control.
+// D2: «Detalles de cocina» en dos bloques —fila con el reloj de Tiempo de
+// preparación y el contador de Raciones, y debajo el Nivel con sus chips en
+// horizontal—. El tiempo de cocción ya no existe (D3).
 @Composable
 private fun MetricsGrid(uiState: CreateRecipeUiState, actions: CreateRecipeActions) {
     Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm)) {
@@ -558,72 +564,64 @@ private fun MetricsGrid(uiState: CreateRecipeUiState, actions: CreateRecipeActio
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(CreateRecipeTestTags.METRICS_GRID),
-            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                .testTag(CreateRecipeTestTags.METRICS_GRID)
         ) {
-            TimeMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
-            DifficultyMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
-            ServingsMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
+            PrepTimeMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
+            ServingsMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
+            DifficultyMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
+// D1/D7: el Tiempo de preparación se elige con el reloj de duración de Material 3
+// en modo entrada (HH:MM, 24 h); 00:00 = 0 min. El campo muestra la duración y
+// abre el mismo reloj que el temporizador de los Pasos.
 @Composable
-private fun TimeMetricBlock(
+private fun PrepTimeMetricBlock(
     uiState: CreateRecipeUiState,
     actions: CreateRecipeActions,
     modifier: Modifier = Modifier,
 ) {
+    var showPicker by remember { mutableStateOf(false) }
     MetricBlock(
-        label = R.string.create_recipe_metrics_time,
+        label = R.string.create_recipe_prep_time_label,
         icon = Icons.Outlined.Timer,
         iconTint = MaterialTheme.colorScheme.primary,
         testTag = CreateRecipeTestTags.METRICS_TIME,
         modifier = modifier,
     ) {
-        Text(
-            text = stringResource(R.string.create_recipe_prep_short_label),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = uiState.prepMinutes,
-            onValueChange = actions.onPrepMinutesChange,
-            placeholder = { Text(text = "0") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        Spacer(Modifier.height(4.dp))
+        Surface(
             shape = FieldShape,
-            colors = warmFieldColors(),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
+                .clickable { showPicker = true }
                 .testTag(CreateRecipeTestTags.PREP_MINUTES_FIELD),
-        )
-        Text(
-            text = stringResource(R.string.create_recipe_cook_short_label),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = uiState.cookMinutes,
-            onValueChange = actions.onCookMinutesChange,
-            placeholder = { Text(text = "0") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            shape = FieldShape,
-            colors = warmFieldColors(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .testTag(CreateRecipeTestTags.COOK_MINUTES_FIELD),
-        )
-        Text(
-            text = stringResource(R.string.create_recipe_metrics_time_unit),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(WarmSpacing.sm)) {
+                Text(
+                    text = formatDurationMinutes(uiState.prepMinutes),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
+        }
+    }
+    if (showPicker) {
+        DurationPickerDialog(
+            title = stringResource(R.string.create_recipe_prep_time_label),
+            initialMinutes = uiState.prepMinutes,
+            onConfirm = { minutes ->
+                showPicker = false
+                actions.onPrepMinutesChange(minutes)
+            },
+            onDismiss = { showPicker = false },
         )
     }
 }
@@ -641,14 +639,26 @@ private fun DifficultyMetricBlock(
         testTag = CreateRecipeTestTags.METRICS_DIFFICULTY,
         modifier = modifier,
     ) {
-        Difficulty.entries.forEach { difficulty ->
-            SelectionChip(
-                selected = uiState.difficulty == difficulty,
-                onClick = { actions.onDifficultyChange(difficulty) },
-                label = stringResource(difficulty.labelRes()),
-                testTag = difficulty.testTag(),
-            )
+        // D2: los chips de Nivel en horizontal (scrollable si no caben).
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Spacer(Modifier.width(8.dp))
+            Difficulty.entries.forEach { difficulty ->
+                SelectionChip(
+                    selected = uiState.difficulty == difficulty,
+                    onClick = { actions.onDifficultyChange(difficulty) },
+                    label = stringResource(difficulty.labelRes()),
+                    testTag = difficulty.testTag(),
+                )
+                Spacer(Modifier.width(8.dp))
+            }
         }
+        Spacer(Modifier.height(4.dp))
     }
 }
 
@@ -668,29 +678,35 @@ private fun ServingsMetricBlock(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                text = uiState.baseServings.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.testTag(CreateRecipeTestTags.SERVINGS_VALUE),
-            )
-            Text(
-                text = stringResource(R.string.create_recipe_metrics_servings_unit),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             StepperButton(
                 symbol = stringResource(R.string.create_recipe_servings_decrease),
                 testTag = CreateRecipeTestTags.SERVINGS_DECREASE,
                 onClick = { actions.onServingsChange(uiState.baseServings - 1) },
             )
+
+            Spacer(Modifier.width(16.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = uiState.baseServings.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.testTag(CreateRecipeTestTags.SERVINGS_VALUE),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = stringResource(R.string.create_recipe_metrics_servings_unit),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Spacer(Modifier.width(16.dp))
+
             StepperButton(
                 symbol = stringResource(R.string.create_recipe_servings_increase),
                 testTag = CreateRecipeTestTags.SERVINGS_INCREASE,
@@ -726,13 +742,13 @@ private fun MetricBlock(
                     imageVector = icon,
                     contentDescription = stringResource(label),
                     tint = iconTint,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(15.dp),
                 )
                 Spacer(modifier = Modifier.width(WarmSpacing.xs))
                 Text(
                     text = stringResource(label),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             content()
@@ -774,6 +790,7 @@ private fun SelectionChip(
         onClick = onClick,
         label = {
             Text(
+                modifier = Modifier.padding(horizontal = 16.dp),
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
@@ -819,7 +836,6 @@ private fun IngredientsSection(uiState: CreateRecipeUiState, actions: CreateReci
 
 @Composable
 private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: CreateRecipeActions) {
-    val optionalLabel = stringResource(R.string.create_recipe_ingredient_optional)
     val quantityLabel = stringResource(R.string.create_recipe_ingredient_quantity)
     Column(verticalArrangement = Arrangement.spacedBy(WarmSpacing.xs)) {
         Row(
@@ -841,7 +857,7 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
                 shape = FieldShape,
                 colors = warmFieldColors(),
                 modifier = Modifier
-                    .weight(1.5f)
+                    .weight(1.2f)
                     .heightIn(min = 48.dp)
                     .testTag(CreateRecipeTestTags.ingredientName(index)),
             )
@@ -859,25 +875,15 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
                     .semantics { contentDescription = quantityLabel }
                     .testTag(CreateRecipeTestTags.ingredientQuantity(index)),
             )
-            OutlinedTextField(
+            // Unidad de lista cerrada (unificar-unidades, D1): desplegable con los
+            // cinco valores del enum; una unidad legada entra como opción extra. El
+            // peso 1.1 deja la etiqueta «Unidad» y valores legados de una línea.
+            UnitDropdown(
                 value = row.unit,
                 onValueChange = { actions.onIngredientUnitChange(row.key, it) },
-                placeholder = { Text(text = stringResource(R.string.create_recipe_ingredient_unit)) },
-                singleLine = true,
-                shape = FieldShape,
-                colors = warmFieldColors(),
-                modifier = Modifier
-                    .weight(0.8f)
-                    .heightIn(min = 48.dp)
-                    .testTag(CreateRecipeTestTags.ingredientUnit(index)),
-            )
-            Checkbox(
-                checked = row.optional,
-                onCheckedChange = { actions.onIngredientOptionalChange(row.key, it) },
-                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary),
-                modifier = Modifier
-                    .semantics { contentDescription = optionalLabel }
-                    .testTag(CreateRecipeTestTags.ingredientOptional(index)),
+                testTag = CreateRecipeTestTags.ingredientUnit(index),
+                label = { Text(text = stringResource(R.string.create_recipe_ingredient_unit)) },
+                modifier = Modifier.weight(1.1f),
             )
             IconButton(
                 onClick = { actions.onRemoveIngredient(row.key) },
@@ -934,6 +940,7 @@ private fun StepRow(
 ) {
     val stepLabel = stringResource(R.string.create_recipe_step_number, index + 1)
     var showIngredientsDialog by remember(row.key) { mutableStateOf(false) }
+    var showTimerPicker by remember(row.key) { mutableStateOf(false) }
     Surface(
         shape = FieldShape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -968,7 +975,7 @@ private fun StepRow(
                     placeholder = { Text(text = stringResource(R.string.create_recipe_step_text)) },
                     minLines = 2,
                     shape = FieldShape,
-                    colors = warmFieldColors(),
+                    colors = whiteFieldColors(),
                     modifier = Modifier
                         .weight(1f)
                         .testTag(CreateRecipeTestTags.stepText(index)),
@@ -978,19 +985,36 @@ private fun StepRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
             ) {
-                OutlinedTextField(
-                    value = row.timerMinutes,
-                    onValueChange = { actions.onStepTimerChange(row.key, it) },
-                    placeholder = { Text(text = stringResource(R.string.create_recipe_step_timer)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                // D7: el temporizador se fija con el mismo reloj de duración del
+                // formulario (HH:MM, modo entrada); muestra la duración o «Sin
+                // temporizador» (D10: los Pasos nuevos nacen sin temporizador).
+                Surface(
                     shape = FieldShape,
-                    colors = warmFieldColors(),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 48.dp)
+                        .clickable { showTimerPicker = true }
                         .testTag(CreateRecipeTestTags.stepTimer(index)),
-                )
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(WarmSpacing.sm)) {
+                        Text(
+                            text = row.timerMinutes?.let { formatDurationMinutes(it) }
+                                ?: stringResource(R.string.create_recipe_step_no_timer),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
+                }
+                TextButton(
+                    onClick = { actions.onStepTimerChange(row.key, null) },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(CreateRecipeTestTags.stepNoTimer(index)),
+                ) {
+                    Text(text = stringResource(R.string.create_recipe_step_no_timer))
+                }
                 IconButton(
                     onClick = { actions.onRemoveStep(row.key) },
                     modifier = Modifier.testTag(CreateRecipeTestTags.removeStep(index)),
@@ -1026,6 +1050,18 @@ private fun StepRow(
             ingredients = ingredients,
             onToggle = { actions.onStepIngredientToggle(row.key, it) },
             onDismiss = { showIngredientsDialog = false },
+        )
+    }
+    if (showTimerPicker) {
+        DurationPickerDialog(
+            title = stringResource(R.string.create_recipe_step_timer),
+            initialMinutes = row.timerMinutes ?: 0,
+            onConfirm = { minutes ->
+                showTimerPicker = false
+                // D10: 00:00 en el reloj del temporizador equivale a «Sin temporizador».
+                actions.onStepTimerChange(row.key, minutes.takeIf { it > 0 })
+            },
+            onDismiss = { showTimerPicker = false },
         )
     }
 }
@@ -1083,9 +1119,10 @@ private fun stepIngredientsSummary(count: Int): String =
         pluralStringResource(R.plurals.create_recipe_step_ingredients_count, count, count)
     }
 
-// Etiqueta de una opción del diálogo: «nombre (cantidad unidad)» (RF-VPI2).
-private fun ingredientOptionLabel(ingredient: IngredientFieldUiState): String {
-    val details = listOf(ingredient.quantity, ingredient.unit)
+// Etiqueta de una opción del diálogo: «nombre (cantidad unidad)» (RF-VPI2); la
+// unidad llega presentada con `unitLabel` (unificar-unidades, D4).
+private fun ingredientOptionLabel(ingredient: IngredientFieldUiState, unit: String): String {
+    val details = listOf(ingredient.quantity, unit)
         .filter { it.isNotBlank() }
         .joinToString(" ")
     return if (details.isEmpty()) ingredient.name else "${ingredient.name} ($details)"
@@ -1138,7 +1175,7 @@ private fun StepIngredientsDialog(
                                 ),
                             )
                             Text(
-                                text = ingredientOptionLabel(ingredient),
+                                text = ingredientOptionLabel(ingredient, unitLabel(ingredient.unit)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
@@ -1345,19 +1382,8 @@ private fun AddRowButton(onClick: () -> Unit, label: Int, testTag: String) {
     }
 }
 
-// Campos rellenos en surface-container-low con anillo de foco primary (RF-10, RF-12).
-@Composable
-private fun warmFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    focusedBorderColor = MaterialTheme.colorScheme.primary,
-    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    errorBorderColor = MaterialTheme.colorScheme.error,
-    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-    cursorColor = MaterialTheme.colorScheme.primary,
-)
+// Campos rellenos: warmFieldColors vive en ui/theme/Field.kt (compartido con el
+// desplegable de unidades).
 
 @Composable
 private fun rememberBitmap(path: String?): ImageBitmap? = remember(path) {

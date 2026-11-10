@@ -12,7 +12,6 @@ data class RecipeEntity(
     val story: String,
     val mealMoment: String,
     val prepMinutes: Int,
-    val cookMinutes: Int,
     val difficulty: String,
     val baseServings: Int,
     val caloriesPerServing: Int?,

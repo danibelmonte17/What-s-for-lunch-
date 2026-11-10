@@ -17,6 +17,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -46,6 +47,8 @@ import com.whatsforlunch.app.domain.myrecipes.MyRecipesState
 import com.whatsforlunch.app.domain.model.Difficulty
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.Recipe
+import com.whatsforlunch.app.ui.components.DurationPickerTestTags
+import com.whatsforlunch.app.ui.components.optionTag
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeScreen
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeTestTags
 import com.whatsforlunch.app.ui.createrecipe.CreateRecipeViewModel
@@ -155,9 +158,27 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientQuantity(index)).performScrollTo().performTextInput(quantity)
     }
 
+    // Fija una duración HH:MM con el reloj de Material 3 en modo entrada (D1/D7):
+    // abre el diálogo, teclea horas y minutos y confirma.
+    private fun setDurationViaClock(tag: String, hours: String, minutes: String) {
+        composeRule.onNodeWithTag(tag).performScrollTo().performClick()
+        composeRule.onNodeWithTag(DurationPickerTestTags.DIALOG).assertIsDisplayed()
+        val inDialog = hasAnyAncestor(hasTestTag(DurationPickerTestTags.DIALOG))
+        composeRule.onAllNodes(hasSetTextAction() and inDialog)[0].performTextReplacement(hours)
+        composeRule.onAllNodes(hasSetTextAction() and inDialog)[1].performTextReplacement(minutes)
+        composeRule.onNodeWithTag(DurationPickerTestTags.CONFIRM).performClick()
+    }
+
     private fun addValidStep(index: Int = 0, text: String = "Pochar la cebolla") {
         composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_STEP).performScrollTo().performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(index)).performScrollTo().performTextInput(text)
+    }
+
+    // Abre el desplegable de unidad de la fila de Ingrediente y elige una opción
+    // del enum cerrado (unificar-unidades, D1).
+    private fun selectUnit(index: Int, option: String) {
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(index)).performScrollTo().performClick()
+        composeRule.onNodeWithTag(optionTag(CreateRecipeTestTags.ingredientUnit(index), option)).performClick()
     }
 
     @Test
@@ -183,6 +204,27 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_INGREDIENT).performScrollTo().assertIsDisplayed()
     }
 
+    // unificar-unidades · verify 1 (S1): la unidad se elige con el desplegable de
+    // lista cerrada (g, ml, ud) y las filas nuevas nacen con «ud» (D1); el valor
+    // guardado en la Receta es el del enum.
+    @Test
+    fun unitDropdownSavesClosedListUnitsWithUdAsTheNewRowDefault() {
+        val repository = launchForm()
+        typeTitle("Con unidades")
+        addValidIngredient(index = 0, name = "Harina", quantity = "200")
+        selectUnit(index = 0, option = "g")
+        addValidIngredient(index = 1, name = "Leche", quantity = "150")
+        selectUnit(index = 1, option = "ml")
+        addValidIngredient(index = 2, name = "Huevo", quantity = "2")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.ingredientUnit(2)).performScrollTo()
+            .assertTextContains("ud")
+        addValidStep()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
+
+        val saved = runBlocking { repository.observeRecipes().first() }.single()
+        assertEquals(listOf("g", "ml", "ud"), saved.ingredients.map { it.unit })
+    }
+
     // RF-10 y RF-11: modificar y eliminar cualquier Paso existente.
     @Test
     fun editAndRemoveStepRows() {
@@ -191,15 +233,47 @@ class CreateRecipeE2ETest {
         addValidStep(index = 1, text = "Añadir el huevo")
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(1)).performScrollTo()
             .performTextReplacement("Batir el huevo")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(1)).performScrollTo().performTextInput("5")
+        setDurationViaClock(CreateRecipeTestTags.stepTimer(1), hours = "0", minutes = "5")
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(1)).assertTextContains("Batir el huevo")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(1)).assertTextContains("5")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(1)).assertTextContains("00:05")
         composeRule.onNodeWithTag(CreateRecipeTestTags.removeStep(0)).performScrollTo().performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepText(0)).performScrollTo().assertTextContains("Batir el huevo")
-        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("5")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("00:05")
         composeRule.onNodeWithTag(CreateRecipeTestTags.removeStep(0)).performScrollTo().performClick()
         composeRule.onAllNodesWithTag(CreateRecipeTestTags.stepText(0)).assertCountEquals(0)
         composeRule.onNodeWithTag(CreateRecipeTestTags.ADD_STEP).performScrollTo().assertIsDisplayed()
+    }
+
+    // verify 1 y verify 3 (D1/D3/D7/D10): el tiempo de preparación se teclea con el
+    // reloj en modo entrada (1 h 05) y sobrevive al guardar; el temporizador del Paso
+    // se fija con el mismo reloj, «Sin temporizador» lo limpia y los Pasos nuevos
+    // nacen sin temporizador; ningún campo de cocción en el formulario (D3).
+    @Test
+    fun prepTimeClockAndStepTimerSurviveSavingAndCookFieldIsGone() {
+        val repository = launchForm()
+        composeRule.onAllNodesWithTag("create_recipe_cook_minutes").assertCountEquals(0)
+        typeTitle("Con relojes")
+        addValidIngredient()
+        addValidStep(index = 0, text = "Pochar la cebolla")
+        addValidStep(index = 1, text = "Batir el huevo")
+        // Los Pasos nuevos nacen «Sin temporizador» (D7/D10).
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(1)).performScrollTo()
+            .assertTextContains(formText(R.string.create_recipe_step_no_timer))
+
+        setDurationViaClock(CreateRecipeTestTags.PREP_MINUTES_FIELD, hours = "1", minutes = "5")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PREP_MINUTES_FIELD).assertTextContains("01:05")
+        setDurationViaClock(CreateRecipeTestTags.stepTimer(0), hours = "0", minutes = "5")
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0)).assertTextContains("00:05")
+        // «Sin temporizador» limpia el temporizador del Paso (D7).
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepNoTimer(0)).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.stepTimer(0))
+            .assertTextContains(formText(R.string.create_recipe_step_no_timer))
+        setDurationViaClock(CreateRecipeTestTags.stepTimer(0), hours = "0", minutes = "5")
+
+        composeRule.onNodeWithTag(CreateRecipeTestTags.SAVE).performClick()
+        val saved = runBlocking { repository.observeRecipes().first() }.single()
+        assertEquals(65, saved.prepMinutes)
+        assertEquals(listOf(5, null), saved.steps.map { it.timerMinutes })
     }
 
     // S2/RF-EBF3: sin obligatorios «Guardar» está deshabilitado, se lista el requisito
@@ -412,8 +486,14 @@ class CreateRecipeE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.MOMENT_DESSERT).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.METRICS_GRID).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.METRICS_TIME).assertIsDisplayed()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.METRICS_DIFFICULTY).assertIsDisplayed()
-        composeRule.onNodeWithTag(CreateRecipeTestTags.METRICS_SERVINGS).assertIsDisplayed()
+        // D1/D2: el reloj de Tiempo de preparación en modo entrada (duración HH:MM).
+        composeRule.onNodeWithTag(CreateRecipeTestTags.PREP_MINUTES_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithText("00:00").assertIsDisplayed()
+        // D3: ningún campo de cocción.
+        composeRule.onAllNodesWithTag("create_recipe_cook_minutes").assertCountEquals(0)
+        // D2: el Nivel va en horizontal debajo de la fila Tiempo+Raciones.
+        composeRule.onNodeWithTag(CreateRecipeTestTags.METRICS_DIFFICULTY).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CreateRecipeTestTags.METRICS_SERVINGS).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.SERVINGS_DECREASE).assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.SERVINGS_INCREASE).assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.INGREDIENTS_SECTION).performScrollTo().assertIsDisplayed()
@@ -448,8 +528,10 @@ class CreateRecipeE2ETest {
 
         // «Cancelar» descarta la selección sin tocar la Receta.
         openStepIngredientsDialog(0)
-        composeRule.onNodeWithText("Patatas (700)").assertIsDisplayed()
-        composeRule.onNodeWithText("Huevo (2)").assertIsDisplayed()
+        // D1 (unificar-unidades): las filas nuevas llevan «ud», así que la etiqueta
+        // de la opción la incluye.
+        composeRule.onNodeWithText("Patatas (700 ud)").assertIsDisplayed()
+        composeRule.onNodeWithText("Huevo (2 ud)").assertIsDisplayed()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOff()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.stepIngredientOption(0)).assertIsOn()
@@ -552,7 +634,8 @@ class CreateRecipeE2ETest {
             composeRule.onAllNodesWithText("Cancel")
                 .filter(hasTestTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL))
                 .assertCountEquals(1)
-            composeRule.onNodeWithText("Potatoes (700)").assertIsDisplayed()
+            // D1 (unificar-unidades): la fila nueva lleva «ud», también en inglés.
+            composeRule.onNodeWithText("Potatoes (700 ud)").assertIsDisplayed()
             composeRule.onNodeWithTag(CreateRecipeTestTags.STEP_INGREDIENTS_CANCEL).performClick()
 
             linkStepIngredient(stepIndex = 0, ingredientIndex = 0)
@@ -700,14 +783,13 @@ class MyRecipesCardsE2ETest {
         story = "Huevos camperos y patata agria",
         mealMoment = MealMoment.LUNCH,
         prepMinutes = 10,
-        cookMinutes = 15,
         difficulty = Difficulty.EASY,
         baseServings = 4,
         photoPath = photoPath,
     )
 
     // RF-17, RF-18, RF-19 y RF-20: portada con badge de momento, título, metadatos
-    // (tiempo total = preparación + cocción, dificultad y raciones). Sin píldora de
+    // (tiempo total = preparación, dificultad y raciones). Sin píldora de
     // estado (RF-EBF6/S7).
     @Test
     fun cardWithPhotoShowsCoverBadgeAndMetadata() {
@@ -721,7 +803,9 @@ class MyRecipesCardsE2ETest {
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_TITLE).assertIsDisplayed()
         composeRule.onNodeWithText("Tortilla Española").assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_TIME).assertIsDisplayed()
-        composeRule.onNodeWithText(cardText(R.string.my_recipes_card_time, 25)).assertIsDisplayed()
+        // D11 (redisenar-formulario-de-receta): la tarjeta muestra solo la
+        // preparación (sin cocción); el fixture tiene prepMinutes = 10.
+        composeRule.onNodeWithText(cardText(R.string.my_recipes_card_time, 10)).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_DIFFICULTY).assertIsDisplayed()
         composeRule.onNodeWithText(cardText(R.string.difficulty_easy)).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_SERVINGS).assertIsDisplayed()
@@ -740,7 +824,8 @@ class MyRecipesCardsE2ETest {
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_MOMENT).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_TITLE).assertIsDisplayed()
         composeRule.onNodeWithTag(MyRecipesTestTags.RECIPE_TIME).assertIsDisplayed()
-        composeRule.onNodeWithText(cardText(R.string.my_recipes_card_time, 25)).assertIsDisplayed()
+        // D11 (redisenar-formulario-de-receta): solo la preparación, sin cocción.
+        composeRule.onNodeWithText(cardText(R.string.my_recipes_card_time, 10)).assertIsDisplayed()
         composeRule.onAllNodesWithTag("my_recipes_card_status").assertCountEquals(0)
     }
 }

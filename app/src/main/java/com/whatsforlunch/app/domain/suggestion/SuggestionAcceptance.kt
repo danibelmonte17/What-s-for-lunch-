@@ -50,7 +50,6 @@ object SuggestionAcceptance {
             story = suggestion.story,
             mealMoment = suggestion.mealMoment,
             prepMinutes = suggestion.prepMinutes,
-            cookMinutes = suggestion.cookMinutes,
             difficulty = suggestion.difficulty,
             baseServings = suggestion.baseServings,
             caloriesPerServing = suggestion.caloriesPerServing,
@@ -69,7 +68,7 @@ object SuggestionAcceptance {
     /**
      * RF-ASR6 / D2: Recetas de Mis Recetas cuya Coincidencia con los Alimentos
      * seleccionados supera estrictamente [minPercent] (misma base redondeada que
-     * RD02). Las Recetas sin requisitos obligatorios no tienen Coincidencia (RD01) y
+     * RD02). Las Recetas sin ingredientes no tienen Coincidencia (RD01) y
      * quedan fuera. No modifica `calculateMatch` (RD01/RD10).
      */
     fun recipesToAvoid(

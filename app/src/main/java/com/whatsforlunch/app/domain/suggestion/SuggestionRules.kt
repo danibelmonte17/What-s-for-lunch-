@@ -2,6 +2,7 @@ package com.whatsforlunch.app.domain.suggestion
 
 import com.whatsforlunch.app.domain.match.calculateMatch
 import com.whatsforlunch.app.domain.model.Difficulty
+import com.whatsforlunch.app.domain.model.IngredientUnit
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.Recipe
@@ -42,7 +43,8 @@ object SuggestionRules {
 
     /**
      * D2: la Coincidencia se calcula con `calculateMatch` sobre los ingredientes
-     * obligatorios de la propuesta contra los Alimentos seleccionados (RD01/RD10).
+     * de la propuesta contra los Alimentos seleccionados (RD01/RD10; desde
+     * `redisenar-formulario-de-receta` todos los Ingredientes cuentan).
      * Se conserva el orden de la respuesta de la IA (D7).
      */
     fun suggestionMatches(
@@ -60,7 +62,6 @@ object SuggestionRules {
                 story = suggestion.story,
                 mealMoment = suggestion.mealMoment,
                 prepMinutes = suggestion.prepMinutes,
-                cookMinutes = suggestion.cookMinutes,
                 difficulty = suggestion.difficulty,
                 baseServings = suggestion.baseServings,
                 caloriesPerServing = suggestion.caloriesPerServing,
@@ -83,8 +84,9 @@ object SuggestionRules {
                 // D8: una cantidad no numérica o ≤ 0 queda en 1; el ingrediente nunca
                 // se descarta por su cantidad.
                 quantity = positiveOrNull(ingredient.quantity) ?: DEFAULT_INGREDIENT_QUANTITY,
-                unit = ingredient.unit?.trim().orEmpty(),
-                optional = ingredient.optional ?: false,
+                // D2 (unificar-unidades): la unidad de la IA se normaliza al enum
+                // cerrado; la vacía o desconocida cae a «ud».
+                unit = IngredientUnit.normalize(ingredient.unit),
             )
         }
         val steps = raw.steps.mapNotNull { step ->
@@ -99,7 +101,6 @@ object SuggestionRules {
             story = cleanText(raw.story),
             mealMoment = parseMealMoment(raw.mealMoment),
             prepMinutes = nonNegativeMinutes(raw.prepMinutes) ?: 0,
-            cookMinutes = nonNegativeMinutes(raw.cookMinutes) ?: 0,
             difficulty = parseDifficulty(raw.difficulty),
             baseServings = baseServings(raw.baseServings),
             caloriesPerServing = calories(raw.calories),

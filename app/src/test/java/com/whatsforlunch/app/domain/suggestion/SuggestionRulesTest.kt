@@ -17,11 +17,9 @@ class SuggestionRulesTest {
         assertEquals("Clásica", suggestion.story)
         assertEquals(MealMoment.DESSERT, suggestion.mealMoment)
         assertEquals(10, suggestion.prepMinutes)
-        assertEquals(20, suggestion.cookMinutes)
         assertEquals(Difficulty.EASY, suggestion.difficulty)
         assertEquals(4, suggestion.baseServings)
         assertEquals(320, suggestion.caloriesPerServing)
-        assertTrue(suggestion.ingredients.first().optional.not())
     }
 
     @Test
@@ -65,7 +63,6 @@ class SuggestionRulesTest {
                     mealMoment = "BRUNCH",
                     difficulty = "EXTREME",
                     prepMinutes = -5.0,
-                    cookMinutes = null,
                     baseServings = 30.0,
                     calories = 0.0,
                     steps = listOf(
@@ -79,7 +76,6 @@ class SuggestionRulesTest {
         assertEquals(MealMoment.LUNCH, suggestion.mealMoment)
         assertEquals(Difficulty.MEDIUM, suggestion.difficulty)
         assertEquals(0, suggestion.prepMinutes)
-        assertEquals(0, suggestion.cookMinutes)
         assertEquals(4, suggestion.baseServings)
         assertNull(suggestion.caloriesPerServing)
         assertEquals(listOf("Paso"), suggestion.steps.map { it.text })
@@ -91,6 +87,27 @@ class SuggestionRulesTest {
         val suggestion = SuggestionRules.normalize(listOf(proposal(baseServings = 12.0))).single()
 
         assertEquals(12, suggestion.baseServings)
+    }
+
+    // D2 (unificar-unidades): la unidad que llega de la IA se normaliza al enum
+    // cerrado; la vacía o desconocida cae a «ud».
+    @Test
+    fun aiUnitsAreNormalizedToTheClosedEnum() {
+        val suggestion = SuggestionRules.normalize(
+            listOf(
+                proposal(
+                    ingredients = listOf(
+                        RawRecipeIngredient(name = "Harina", quantity = 200.0, unit = "gramos"),
+                        RawRecipeIngredient(name = "Leche", quantity = 1.0, unit = " ML "),
+                        RawRecipeIngredient(name = "Huevo", quantity = 2.0, unit = ""),
+                        RawRecipeIngredient(name = "Sal", quantity = 1.0, unit = null),
+                        RawRecipeIngredient(name = "Azúcar", quantity = 1.0, unit = "kg"),
+                    ),
+                ),
+            ),
+        ).single()
+
+        assertEquals(listOf("ud", "ml", "ud", "ud", "kg"), suggestion.ingredients.map { it.unit })
     }
 
     @Test
@@ -115,14 +132,14 @@ class SuggestionRulesTest {
     }
 
     @Test
-    fun matchCountsOnlyRequiredIngredientsAgainstSelectedFoods() {
+    fun matchCountsAllIngredientsAgainstSelectedFoods() {
         val suggestion = SuggestionRules.normalize(
             listOf(
                 proposal(
                     ingredients = listOf(
                         RawRecipeIngredient(name = "Manzana"),
                         RawRecipeIngredient(name = "Nata"),
-                        RawRecipeIngredient(name = "Canela", optional = true),
+                        RawRecipeIngredient(name = "Canela"),
                     ),
                 ),
             ),
@@ -134,15 +151,15 @@ class SuggestionRulesTest {
         )
 
         val match = matches.single().match
-        assertEquals(50, match?.percentage)
+        assertEquals(33, match?.percentage)
         assertEquals(1, match?.availableRequired)
-        assertEquals(2, match?.totalRequired)
+        assertEquals(3, match?.totalRequired)
     }
 
     @Test
-    fun proposalWithoutRequiredIngredientsHasNoBadge() {
+    fun proposalWithASingleIngredientHasFullBadge() {
         val suggestion = SuggestionRules.normalize(
-            listOf(proposal(ingredients = listOf(RawRecipeIngredient(name = "Sal", optional = true)))),
+            listOf(proposal(ingredients = listOf(RawRecipeIngredient(name = "Sal")))),
         ).single()
 
         val matches = SuggestionRules.suggestionMatches(
@@ -150,7 +167,7 @@ class SuggestionRulesTest {
             availableFoods = listOf(SuggestableFood("Sal")),
         )
 
-        assertNull(matches.single().match)
+        assertEquals(100, matches.single().match?.percentage)
     }
 
     private fun proposal(
@@ -158,13 +175,12 @@ class SuggestionRulesTest {
         story: String = "Clásica",
         mealMoment: String = "DESSERT",
         prepMinutes: Double? = 10.0,
-        cookMinutes: Double? = 20.0,
         difficulty: String = "EASY",
         baseServings: Double? = 4.0,
         calories: Double? = 320.0,
         ingredients: List<RawRecipeIngredient> = listOf(
-            RawRecipeIngredient(name = "Manzana", quantity = 3.0, unit = "ud", optional = false),
-            RawRecipeIngredient(name = "Nata", quantity = 200.0, unit = "ml", optional = false),
+            RawRecipeIngredient(name = "Manzana", quantity = 3.0, unit = "ud"),
+            RawRecipeIngredient(name = "Nata", quantity = 200.0, unit = "ml"),
         ),
         steps: List<RawRecipeStep> = listOf(RawRecipeStep(text = "Pela las manzanas", timerMinutes = 10.0)),
     ) = RawRecipeSuggestion(
@@ -172,7 +188,6 @@ class SuggestionRulesTest {
         story = story,
         mealMoment = mealMoment,
         prepMinutes = prepMinutes,
-        cookMinutes = cookMinutes,
         difficulty = difficulty,
         baseServings = baseServings,
         calories = calories,

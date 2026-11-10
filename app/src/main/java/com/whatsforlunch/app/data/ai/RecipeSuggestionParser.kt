@@ -27,7 +27,6 @@ internal object RecipeSuggestionParser {
         story = text(value, "st"),
         mealMoment = text(value, "mm"),
         prepMinutes = number(value, "pm"),
-        cookMinutes = number(value, "cm"),
         difficulty = text(value, "df"),
         baseServings = number(value, "bs"),
         calories = number(value, "kcal"),
@@ -43,8 +42,6 @@ internal object RecipeSuggestionParser {
                 name = text(item, "n"),
                 quantity = number(item, "q"),
                 unit = text(item, "u"),
-                // D8: un `o` distinto de booleano se normaliza a false.
-                optional = item.opt("o") as? Boolean,
             )
         }
     }

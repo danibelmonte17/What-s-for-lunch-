@@ -243,3 +243,11 @@ Then los textos del Modo Cocina, el drawer y los botones cambian con el idioma (
 - [ ] `feature_list.json` solo cambia `status`/`evidence`; `PROGRESS.md` al día; docs durables actualizadas (RD22, `DESIGN.md`, `docs/technical-discovery.md`, `Q-cocinar-paso-a-paso-1..3`).
 - [ ] Sin comportamiento ajeno ni trabajo de `gestionar-temporizador-de-paso` ni `controlar-cocina-con-voz` añadido.
 - [ ] Seguridad: sin secretos, sin permisos nuevos, sin red; sin datos nuevos persistidos.
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. El drawer «Ingredientes para este paso» del Modo Cocina compone la unidad con `unitLabel` (código del enum → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual; vacía → se omite), igual que el checklist del Detalle. El escalado RD03, los vínculos RD21 y el resto de la pantalla quedan intactos.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*

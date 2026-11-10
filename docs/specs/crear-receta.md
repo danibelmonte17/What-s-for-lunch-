@@ -217,3 +217,19 @@ Retrabajar la spec (A RETRABAJAR): unificar en el hallazgo 1 si las filas/Pasos 
 
 ### Siguiente acción
 Continuar (APTA): la spec pasa a `ready` y `crear-receta` queda lista para implementación; los 7 menores quedan como observaciones sin bloqueo.
+
+---
+
+## Enmienda — `unificar-unidades` (2026-11-09)
+
+Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad de los Ingredientes deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. En el formulario, la fila de Ingrediente elige la unidad con un desplegable compartido (`ui/components/UnitDropdown.kt`) con los cinco valores del enum y **«ud» por defecto en las filas nuevas**; una unidad legada fuera de la lista entra como opción extra al editar y se conserva salvo que se elija otra. Los códigos visibles son iguales en es/en (claves `unit_ud`…`unit_l`). El resto de esta spec (obligatorios, foto, Pasos, guardado) queda intacto.
+
+*Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisiones posteriores del usuario (D1/D2/D3/D5/D7 de `docs/specs/redisenar-formulario-de-receta.md`): «Detalles de cocina» se rehace en **dos bloques** —fila con el reloj de **Tiempo de preparación** (TimePicker de Material 3 en modo entrada, duración HH:MM en 24 h) y el contador de Raciones, y el Nivel con sus chips en horizontal debajo— y **desaparece el campo de Cocción** (`cookMinutes` sale del modelo y de Room v7 con `MIGRATION_6_7`, que suma la cocción a la preparación). La fila de Ingrediente pierde la **casilla «Opcional»**: todos los Ingredientes cuentan. La fila de Paso escribe su texto en **caja de fondo blanco** y su temporizador se fija con **el mismo reloj** más un control **«Sin temporizador»** (los Pasos nuevos nacen sin temporizador; 0 equivale a sin temporizador). El resto de esta spec (obligatorios de guardado, foto siempre opcional, unidades del enum, vínculos de Pasos) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

@@ -44,7 +44,7 @@ class MatchBadgeE2ETest {
     val composeRule = createComposeRule()
 
     @Test
-    fun showsRequiredIngredientPercentageAndReactsToPantryChanges() {
+    fun showsIngredientPercentageAndReactsToPantryChanges() {
         val recipes = InMemoryRecipeRepository()
         val pantry = InMemoryPantryRepository()
         runBlocking {
@@ -55,7 +55,6 @@ class MatchBadgeE2ETest {
                     ingredients = listOf(
                         RecipeIngredient(id = "chicken", name = "Pollo"),
                         RecipeIngredient(id = "rice", name = "Arroz"),
-                        RecipeIngredient(id = "lemon", name = "Limón", optional = true),
                     ),
                 ),
             )
@@ -67,14 +66,14 @@ class MatchBadgeE2ETest {
                 ),
             )
             recipes.saveRecipe(
+                // D12: sin Ingredientes no hay Coincidencia y no se pinta badge.
                 recipe(
-                    id = "optional-only",
-                    title = "Sal opcional",
-                    ingredients = listOf(RecipeIngredient(id = "salt", name = "Sal", optional = true)),
+                    id = "empty",
+                    title = "Sin ingredientes",
+                    ingredients = emptyList(),
                 ),
             )
             assertEquals(PantrySaveResult.Saved, pantry.savePantryItem(PantryItem("chicken", "Pollo")))
-            assertEquals(PantrySaveResult.Saved, pantry.savePantryItem(PantryItem("lemon", "Limón")))
             assertEquals(PantrySaveResult.Saved, pantry.savePantryItem(PantryItem("tomato", "tomate fresco")))
         }
 

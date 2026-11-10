@@ -109,7 +109,7 @@ class CreateRecipeViewModelTest {
         assertEquals(listOf(emptyList<String>(), emptyList()), stepLinks(viewModel))
     }
 
-    // D6: renombrar un Ingrediente o cambiar su cantidad/unidad/opcionalidad conserva
+    // D6: renombrar un Ingrediente o cambiar su cantidad/unidad conserva
     // sus vínculos (son por id estable).
     @Test
     fun editingIngredientKeepsItsStepLinks() = runTest {
@@ -123,7 +123,6 @@ class CreateRecipeViewModelTest {
         viewModel.onIngredientNameChange(ingredient.key, "Patatas viejas")
         viewModel.onIngredientQuantityChange(ingredient.key, "300")
         viewModel.onIngredientUnitChange(ingredient.key, "g")
-        viewModel.onIngredientOptionalChange(ingredient.key, true)
 
         assertEquals(listOf(ingredient.id), stepLinks(viewModel).single())
     }

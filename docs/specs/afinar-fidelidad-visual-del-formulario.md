@@ -201,3 +201,11 @@ Hallazgos del intento 1 resueltos: badge sin foto fijado en RF-22, caso límite 
 ### Siguiente acción
 
 Continuar (APTA): la spec pasa a `ready` y queda lista para implementación.
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisión posterior del usuario (D1/D2/D3/D5 de `docs/specs/redisenar-formulario-de-receta.md`): el rediseño de «Detalles de cocina» **diverge a propósito del prototipo** —dos bloques (fila con el reloj de Tiempo de preparación y Raciones, Nivel en horizontal debajo) en lugar de los tres bloques con campos de minutos, sin campo de Cocción y sin casilla «Opcional» en la fila de Ingrediente—, y la fila de Paso cambia su temporizador por el reloj con «Sin temporizador». La fidelidad del resto del formulario (portada, básicos, secciones, dock de guardado único) se mantiene.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

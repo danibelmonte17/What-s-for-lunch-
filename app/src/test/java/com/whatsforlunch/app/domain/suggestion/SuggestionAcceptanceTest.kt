@@ -31,7 +31,7 @@ class SuggestionAcceptanceTest {
             title = "Tarta de manzana",
             ingredients = listOf(
                 RecipeIngredient(id = "sugerencia-0", name = "Manzana", quantity = 3.0, unit = "ud"),
-                RecipeIngredient(id = "generado-1", name = "Canela", quantity = 0.5, unit = "cdta", optional = true),
+                RecipeIngredient(id = "generado-1", name = "Canela", quantity = 0.5, unit = "cdta"),
             ),
             steps = listOf(
                 RecipeStep(id = "paso-0", text = "Pela las manzanas", timerMinutes = 10),
@@ -50,14 +50,13 @@ class SuggestionAcceptanceTest {
         assertEquals(suggestion.story, recipe.story)
         assertEquals(suggestion.mealMoment, recipe.mealMoment)
         assertEquals(suggestion.prepMinutes, recipe.prepMinutes)
-        assertEquals(suggestion.cookMinutes, recipe.cookMinutes)
         assertEquals(suggestion.difficulty, recipe.difficulty)
         assertEquals(suggestion.baseServings, recipe.baseServings)
         assertEquals(suggestion.caloriesPerServing, recipe.caloriesPerServing)
         assertEquals(listOf("$id-ingredient-0", "$id-ingredient-1"), recipe.ingredients.map { it.id })
         assertEquals(listOf("$id-step-0", "$id-step-1"), recipe.steps.map { it.id })
         assertEquals(0.5, recipe.ingredients[1].quantity, 0.0)
-        assertTrue(recipe.ingredients[1].optional)
+        assertEquals("cdta", recipe.ingredients[1].unit)
         assertEquals(10, recipe.steps[0].timerMinutes)
         assertNull(recipe.steps[1].timerMinutes)
     }
@@ -86,15 +85,12 @@ class SuggestionAcceptanceTest {
     }
 
     @Test
-    fun recipeWithoutRequiredIngredientsIsNotSentToThePrompt() {
+    fun recipeWithoutIngredientsIsNotSentToThePrompt() {
+        // D12: sin Ingredientes no hay Coincidencia y la Receta queda fuera.
         val foods = listOf(SuggestableFood("Manzana"))
-        val onlyOptional = recipe(
-            title = "Adorno",
-            required = emptyList(),
-            optional = listOf("Manzana"),
-        )
+        val withoutIngredients = recipe(title = "Vacía", required = emptyList())
 
-        assertTrue(SuggestionAcceptance.recipesToAvoid(foods, listOf(onlyOptional)).isEmpty())
+        assertTrue(SuggestionAcceptance.recipesToAvoid(foods, listOf(withoutIngredients)).isEmpty())
     }
 
     @Test
@@ -111,7 +107,6 @@ class SuggestionAcceptanceTest {
         story = "Una receta propuesta por la IA",
         mealMoment = MealMoment.DESSERT,
         prepMinutes = 10,
-        cookMinutes = 20,
         difficulty = Difficulty.EASY,
         baseServings = 4,
         caloriesPerServing = 320,
@@ -122,12 +117,11 @@ class SuggestionAcceptanceTest {
     private fun recipe(
         title: String,
         required: List<String>,
-        optional: List<String> = emptyList(),
     ) = Recipe(
         id = title,
         title = title,
-        ingredients = (required + optional).map { name ->
-            RecipeIngredient(name = name, quantity = 1.0, optional = name in optional)
+        ingredients = required.map { name ->
+            RecipeIngredient(name = name, quantity = 1.0)
         },
         steps = listOf(RecipeStep(text = "Cocina")),
     )
