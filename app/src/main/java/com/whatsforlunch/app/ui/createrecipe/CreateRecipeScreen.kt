@@ -564,16 +564,15 @@ private fun MetricsGrid(uiState: CreateRecipeUiState, actions: CreateRecipeActio
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(CreateRecipeTestTags.METRICS_GRID),
-            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+                .testTag(CreateRecipeTestTags.METRICS_GRID)
         ) {
-            PrepTimeMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
-            ServingsMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.weight(1f))
+            PrepTimeMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
+            ServingsMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
+            DifficultyMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
         }
-        DifficultyMetricBlock(uiState = uiState, actions = actions, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -594,6 +593,7 @@ private fun PrepTimeMetricBlock(
         testTag = CreateRecipeTestTags.METRICS_TIME,
         modifier = modifier,
     ) {
+        Spacer(Modifier.height(4.dp))
         Surface(
             shape = FieldShape,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -606,7 +606,7 @@ private fun PrepTimeMetricBlock(
             Box(modifier = Modifier.fillMaxWidth().padding(WarmSpacing.sm)) {
                 Text(
                     text = formatDurationMinutes(uiState.prepMinutes),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.align(Alignment.Center),
                 )
@@ -640,12 +640,14 @@ private fun DifficultyMetricBlock(
         modifier = modifier,
     ) {
         // D2: los chips de Nivel en horizontal (scrollable si no caben).
+        Spacer(Modifier.height(4.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            horizontalArrangement = Arrangement.Center,
         ) {
+            Spacer(Modifier.width(8.dp))
             Difficulty.entries.forEach { difficulty ->
                 SelectionChip(
                     selected = uiState.difficulty == difficulty,
@@ -653,8 +655,10 @@ private fun DifficultyMetricBlock(
                     label = stringResource(difficulty.labelRes()),
                     testTag = difficulty.testTag(),
                 )
+                Spacer(Modifier.width(8.dp))
             }
         }
+        Spacer(Modifier.height(4.dp))
     }
 }
 
@@ -674,29 +678,35 @@ private fun ServingsMetricBlock(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                text = uiState.baseServings.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.testTag(CreateRecipeTestTags.SERVINGS_VALUE),
-            )
-            Text(
-                text = stringResource(R.string.create_recipe_metrics_servings_unit),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             StepperButton(
                 symbol = stringResource(R.string.create_recipe_servings_decrease),
                 testTag = CreateRecipeTestTags.SERVINGS_DECREASE,
                 onClick = { actions.onServingsChange(uiState.baseServings - 1) },
             )
+
+            Spacer(Modifier.width(16.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = uiState.baseServings.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.testTag(CreateRecipeTestTags.SERVINGS_VALUE),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = stringResource(R.string.create_recipe_metrics_servings_unit),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Spacer(Modifier.width(16.dp))
+
             StepperButton(
                 symbol = stringResource(R.string.create_recipe_servings_increase),
                 testTag = CreateRecipeTestTags.SERVINGS_INCREASE,
@@ -732,13 +742,13 @@ private fun MetricBlock(
                     imageVector = icon,
                     contentDescription = stringResource(label),
                     tint = iconTint,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(15.dp),
                 )
                 Spacer(modifier = Modifier.width(WarmSpacing.xs))
                 Text(
                     text = stringResource(label),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             content()
@@ -780,6 +790,7 @@ private fun SelectionChip(
         onClick = onClick,
         label = {
             Text(
+                modifier = Modifier.padding(horizontal = 16.dp),
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
