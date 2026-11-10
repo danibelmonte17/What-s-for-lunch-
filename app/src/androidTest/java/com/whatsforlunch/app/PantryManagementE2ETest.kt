@@ -25,10 +25,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.data.settings.AppLocaleController
+import com.whatsforlunch.app.domain.model.PantryItem
+import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.pantry.PantryTestTags
 import com.whatsforlunch.app.ui.scanner.ScannerTestTags
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -100,21 +103,41 @@ class PantryManagementE2ETest {
     @Test
     fun stepperEnforcesIntegerBoundsAndZeroSavesWithoutQuantity() {
         openPantry()
+        // Nuevo ítem: arranque en 0 con «−» deshabilitado y sin campo de texto de
+        // cantidad (solo el nombre tiene SetText).
         composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).performClick()
         composeRule.onNodeWithTag(PantryTestTags.SAVE_ITEM).assertIsNotEnabled()
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_STEPPER).assertIsDisplayed()
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("0")
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_DECREMENT).assertIsNotEnabled()
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(1)
+        composeRule.onNodeWithTag(PantryTestTags.CANCEL_EDIT).performClick()
 
-        repeat(99) { composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).performClick() }
+        // Tope superior sin recorrer todo el rango: se parte de 98 (sembrado en
+        // Room) y se sube un solo paso hasta el máximo.
+        runBlocking {
+            GlobalContext.get().get<PantryRepository>()
+                .savePantryItem(PantryItem(id = "harina-98", name = "Harina", quantity = 98))
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(PantryTestTags.ITEM_CARD).fetchSemanticsNodes().size == 1
+        }
+        composeRule.onNodeWithTag(PantryTestTags.editItem("harina-98")).performClick()
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("98")
+        composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).performClick()
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_VALUE).assertTextEquals("99")
         composeRule.onNodeWithTag(PantryTestTags.QUANTITY_INCREMENT).assertIsNotEnabled()
-
         composeRule.onNodeWithTag(PantryTestTags.CANCEL_EDIT).performClick()
-        addItem("Harina")
+
+        // Guardar 0 no deja línea de cantidad en la fila (la sembrada sí la tiene).
+        composeRule.onNodeWithTag(PantryTestTags.ADD_ITEM).performClick()
+        composeRule.onNodeWithTag(PantryTestTags.NAME_FIELD).performTextInput("Azúcar")
+        composeRule.onNodeWithTag(PantryTestTags.SAVE_ITEM).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Azúcar").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onAllNodesWithText(localized(R.string.pantry_quantity_value, 0)).assertCountEquals(0)
-        composeRule.onAllNodesWithTag(PantryTestTags.ITEM_CARD).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(PantryTestTags.ITEM_CARD).assertCountEquals(2)
     }
 
     @Test

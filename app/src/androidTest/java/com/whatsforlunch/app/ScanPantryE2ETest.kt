@@ -236,25 +236,32 @@ class ScanPantryE2ETest {
 
     @Test
     fun quantityStepperHasBoundsAndNoEditableQuantityField() {
+        // Los límites se prueban desde cerca de cada tope (98 y 1) en lugar de
+        // recorrer el rango entero con ~197 toques.
         launchScanner(
             analyzerResults = listOf(
-                ScanAnalysisResult.Success(listOf(AnalyzedFood("Plátano", 1.0))),
+                ScanAnalysisResult.Success(
+                    listOf(AnalyzedFood("Plátano", 98.0), AnalyzedFood("Pera", 1.0)),
+                ),
             ),
         )
         captureAndWait()
-        val id = viewModel.uiState.value.items.single().id
+        val upperId = viewModel.uiState.value.items.first().id
+        val lowerId = viewModel.uiState.value.items.last().id
 
-        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(id)).assertTextEquals("1")
-        repeat(98) { composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(id)).performClick() }
-        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(id)).assertTextEquals("99")
-        composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(id)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(upperId)).assertTextEquals("98")
+        composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(upperId)).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(upperId)).assertTextEquals("99")
+        composeRule.onNodeWithTag(ScannerTestTags.quantityIncrement(upperId)).assertIsNotEnabled()
         assertFalse(
-            composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(id))
+            composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(upperId))
                 .fetchSemanticsNode().config.contains(SemanticsActions.SetText),
         )
-        repeat(99) { composeRule.onNodeWithTag(ScannerTestTags.quantityDecrement(id)).performClick() }
-        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(id)).assertTextEquals("0")
-        composeRule.onNodeWithTag(ScannerTestTags.quantityDecrement(id)).assertIsNotEnabled()
+
+        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(lowerId)).assertTextEquals("1")
+        composeRule.onNodeWithTag(ScannerTestTags.quantityDecrement(lowerId)).performClick()
+        composeRule.onNodeWithTag(ScannerTestTags.itemQuantity(lowerId)).assertTextEquals("0")
+        composeRule.onNodeWithTag(ScannerTestTags.quantityDecrement(lowerId)).assertIsNotEnabled()
     }
 
     @Test
