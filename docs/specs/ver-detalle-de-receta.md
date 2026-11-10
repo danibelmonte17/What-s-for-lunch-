@@ -273,3 +273,11 @@ Contrato visual (verificable por `uiautomator` y captura):
 Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. El checklist del Detalle compone la unidad con `unitLabel` (código del enum → clave `unit_ud`…`unit_l` en es/en; unidad legada → texto tal cual; vacía → se omite, RD19). Sin conversiones ni migración de unidades y sin cambios en el escalado RD03 ni en el resto del Detalle.
 
 *Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisiones posteriores del usuario (D3/D5 de `docs/specs/redisenar-formulario-de-receta.md`): el **desglose «N min preparación · N min cocción» desaparece** (RF-DR4) —la métrica de Tiempo muestra solo la preparación con el formato «N min» actual— y el checklist pierde la **píldora «Opcional»** (RF-DR5) y el orden obligatorios-primero: los Ingredientes salen en su orden de modelo, todos iguales. El resto de esta spec (hero, métricas, checklist con contador, pasos resumidos y CTA de Modo Cocina) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

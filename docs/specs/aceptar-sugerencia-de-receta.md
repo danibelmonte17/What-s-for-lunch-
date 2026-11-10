@@ -283,3 +283,11 @@ Especificación verificable por `uiautomator` y captura (sin exigir muestreo de 
 Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. Al aceptar la Sugerencia, la Receta se guarda con las unidades ya **normalizadas al enum** (D2: la vacía o desconocida → «ud»), garantizado en `SuggestionRules.normalizeOne`; las tarjetas presentan la unidad con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). El resto del flujo de aceptación (id estable, origen, obligatorios D11) queda intacto.
 
 *Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisiones posteriores del usuario (D3/D5/D8 de `docs/specs/redisenar-formulario-de-receta.md`): la Receta aceptada se materializa **sin `cookMinutes` ni opcionalidad** —todos los Ingredientes guardados cuentan y el tiempo es solo el de preparación (la cocción ya no llega de la IA, contrato sin «cm»/«o»)—; su unidad normalizada al enum se mantiene (enmienda de `unificar-unidades`). El resto de esta spec (id estable, upsert sin duplicados, descarte, prompt anti-duplicados) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

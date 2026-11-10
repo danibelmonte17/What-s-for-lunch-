@@ -34,10 +34,10 @@ La rebanada que prueba el valor de punta a punta: **el usuario escanea lo que ti
 - **Escáner de la Despensa** — alta manual y captura con la cámara; la IA analiza la foto y propone Alimentos con cantidad como chips editables que se guardan en la Despensa. Solo llena la Despensa: las Recetas compatibles viven en su propia pantalla.
 - **Recetas con mi Despensa** — lista las Recetas compatibles (RD02) con su badge y desglose, y da paso a las Sugerencias de IA.
 - **Sugerencias de recetas por IA** — la IA propone Recetas compatibles con lo escaneado; al aceptar una, se guarda en Mis Recetas.
-- **Detalle de Receta** — métricas (tiempo total, dificultad, calorías por porción), escalador de Raciones (1-12) con recálculo de cantidades, checklist de ingredientes (obligatorios/opcionales), pasos resumidos y CTA de Modo Cocina.
+- **Detalle de Receta** — métricas (tiempo total, dificultad, calorías por porción), escalador de Raciones (1-12) con recálculo de cantidades, checklist de ingredientes, pasos resumidos y CTA de Modo Cocina.
 - **Modo Cocina** — paso a paso manos libres, alto contraste legible a distancia, barra de avance, temporizador con alarma y `+1 min`, locución de instrucciones, comandos de voz y drawer con los ingredientes del Paso activo.
 - **Pinche** — asistente conversacional con chips de sugerencias y burbujas. Responde dudas de cocina y propone recetas **sin depender de la Despensa**; la propuesta se muestra en una Ficha con sus ingredientes, pasos y Faltantes, y desde ella se guarda o se descarta. La app expone al modelo dos funciones de **solo lectura** (Despensa y Mis Recetas) para que pida contexto cuando lo necesita. Conversación solo en memoria. Dictado por voz y envío de Faltantes a la Lista de la Compra quedan para sus features (ver «Qué NO construimos»).
-- **Formulario de Receta** — creación/edición con foto, metadatos, ingredientes con unidades y opcionalidad, Pasos con temporizador, y guardado único sin estados (guardar + marcar favorito).
+- **Formulario de Receta** — creación/edición con foto, metadatos (tiempo de preparación con reloj y sin tiempo de cocción), ingredientes con unidades, Pasos con temporizador, y guardado único sin estados (guardar + marcar favorito).
 - **Lista de la Compra** — alta de ítems manuales o por voz, detección de faltantes tras escaneos o visualización de recetas, agrupación por Pasillo o por Receta, badge de Origen y progreso con checkboxes.
 - **Interfaz en español e inglés**.
 

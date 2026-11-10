@@ -287,3 +287,11 @@ Cada fase deja `lint` y `unit` en verde antes de pasar a la siguiente.
 Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad pasa de texto libre a **lista cerrada (ud, g, kg, ml, l)**. Los Faltantes siguen aportando a la Lista la unidad de la Receta tal cual (enum o legada, **sin conversiones ni recálculo**), y la fila de la Lista la presenta con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). RD15, RD18 y el resto del flujo quedan intactos.
 
 *Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisión posterior del usuario (D5 de `docs/specs/redisenar-formulario-de-receta.md`): desaparece el concepto de ingrediente opcional, así que los **Faltantes son todos los Ingredientes ausentes** de la Despensa (RD15 enmendada) —los que antes eran opcionales también entran en la Lista con su Origen—. El resto de esta spec (RD09/RD18, idempotencia, unidades sin convertir) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*

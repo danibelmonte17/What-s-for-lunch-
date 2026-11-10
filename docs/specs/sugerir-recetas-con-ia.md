@@ -351,3 +351,11 @@ Especificación verificable por `uiautomator` y captura (sin exigir muestreo de 
 Decisión posterior del usuario (D1–D5 de `docs/specs/unificar-unidades.md`): la unidad deja de ser texto libre y pasa a **lista cerrada (ud, g, kg, ml, l)**. Al normalizar la respuesta de la IA, `SuggestionRules.normalizeOne` normaliza la unidad al enum (**D2**: la vacía o desconocida queda en «ud»); el contrato JSON compacto **no cambia de claves** (solo cambia el resultado normalizado de `u`). Las tarjetas presentan la unidad con `unitLabel` (código → clave `unit_ud`…`unit_l` en es/en; legada → texto tal cual). Lo demás (`calculateMatch`, `MatchBadge`, RD13) queda intacto.
 
 *Enmienda añadida al final por `unificar-unidades`, sin reescribir la historia ni las evidencias históricas de esta spec.*
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisiones posteriores del usuario (D3/D5/D8 de `docs/specs/redisenar-formulario-de-receta.md`): el contrato JSON de la IA **pierde «cm» (cocción) y «o» (opcionalidad)** —los parsers las ignoran si llegan como claves desconocidas—; las tarjetas dejan de mostrar la píldora «Opcional» y la **Coincidencia cuenta todos los Ingredientes** (RD10 enmendada: sin obligatorios/opcionales). El resto de esta spec (selección de Alimentos, contrato con `t/st/mm/pm/df/bs/kcal/i/p`, normalización, MatchBadge) queda intacto.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*
