@@ -41,7 +41,7 @@ object AppBottomBarTestTags {
 // `crear-mi-perfil` al final, tras Pinche (D4).
 enum class AppTab(
     val route: String,
-    @StringRes val labelRes: Int,
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector,
     val testTag: String,
 ) {

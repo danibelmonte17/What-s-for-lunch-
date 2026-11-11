@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">What\'s for Lunch?</string>
     <string name="my_recipes_title">My recipe book</string>
     <string name="my_recipes_tab_label">Recipe book</string>
@@ -24,7 +24,9 @@
     <string name="recipe_detail_ingredients_count">%1$d of %2$d</string>
     <string name="recipe_detail_ingredients_empty">No ingredients</string>
     <string name="recipe_detail_steps_title">Steps</string>
-    <string name="recipe_detail_steps_count">%1$d Steps</string>
+    <!-- «%d + sustantivo»: tools:ignore documenta que el singular/plural no se trata
+         en el MVP; la conversión a <plurals> queda pendiente (decisión 2026-11-11). -->
+    <string name="recipe_detail_steps_count" tools:ignore="PluralsCandidate">%1$d Steps</string>
     <string name="recipe_detail_steps_empty">No steps</string>
     <string name="recipe_detail_start_cooking">Start Cooking Mode</string>
     <string name="recipe_detail_not_found">Recipe not found</string>
@@ -89,7 +91,7 @@
 
     <!-- My recipe book: cards -->
     <string name="my_recipes_card_time">%1$d min</string>
-    <string name="my_recipes_card_servings">%1$d servings</string>
+    <string name="my_recipes_card_servings" tools:ignore="PluralsCandidate">%1$d servings</string>
     <string name="my_recipes_card_match">%1$d%%</string>
     <string name="my_recipes_card_match_full">100% Match</string>
     <string name="my_recipes_card_match_content_description">Pantry match: %1$d%%</string>
@@ -185,8 +187,8 @@
     <string name="create_recipe_step_ingredients_cancel">Cancel</string>
     <string name="create_recipe_favorite">Mark as Favorite</string>
     <string name="create_recipe_favorite_subtitle">Quick access in your library</string>
-    <string name="create_recipe_ingredients_count">%1$d items</string>
-    <string name="create_recipe_steps_count">%1$d steps defined</string>
+    <string name="create_recipe_ingredients_count" tools:ignore="PluralsCandidate">%1$d items</string>
+    <string name="create_recipe_steps_count" tools:ignore="PluralsCandidate">%1$d steps defined</string>
     <string name="create_recipe_save">Save</string>
     <string name="create_recipe_save_changes">Save changes</string>
     <string name="create_recipe_save_blocked">Cannot save yet:</string>
@@ -226,7 +228,6 @@
 
     <!-- Pantry scanner -->
     <string name="scanner_title">Pantry Scanner</string>
-    <string name="scanner_camera_preview">Camera preview</string>
     <string name="scanner_camera_loading">Preparing camera…</string>
     <string name="scanner_open_camera">Scan with the camera</string>
     <string name="scanner_close_camera">Hide scanner</string>
@@ -246,7 +247,6 @@
     <string name="scanner_name_invalid">Enter a food name.</string>
     <string name="scanner_manual_name">Food name</string>
     <string name="scanner_add_food">Add food</string>
-    <string name="scanner_add_food_confirm">Add</string>
     <string name="scanner_remove_food">Remove food</string>
     <string name="scanner_item_name">Name</string>
     <string name="scanner_save">Save to Pantry</string>
@@ -260,7 +260,7 @@
     <string name="scanner_cancel">Cancel</string>
     <string name="recommendations_title">Recipes with my Pantry</string>
     <string name="recommendations_section_title">Compatible Recipes</string>
-    <string name="recommendations_ingredients">%1$d of %2$d ingredients in the Pantry</string>
+    <string name="recommendations_ingredients" tools:ignore="PluralsCandidate">%1$d of %2$d ingredients in the Pantry</string>
     <string name="recommendations_empty">No recipes match your Pantry yet.</string>
     <string name="recommendations_suggest_ai">Suggest a recipe with AI</string>
     <string name="recommendations_card_accessibility">Compatible recipe: %1$s, %2$d%% match</string>
@@ -277,7 +277,7 @@
     <string name="ai_suggestions_retry">Try again</string>
     <string name="ai_suggestions_key_missing">Set your API key in Settings to ask for AI suggestions.</string>
     <string name="ai_suggestions_open_settings">Open Settings</string>
-    <string name="ai_suggestions_card_ingredients">%1$d of %2$d ingredients available</string>
+    <string name="ai_suggestions_card_ingredients" tools:ignore="PluralsCandidate">%1$d of %2$d ingredients available</string>
     <string name="ai_suggestions_card_accessibility">Suggestion: %1$s</string>
     <string name="ai_suggestions_selection_item_accessibility">Select %1$s</string>
     <string name="ai_suggestions_ingredients_header">Ingredients</string>

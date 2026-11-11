@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import androidx.core.content.edit
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -24,15 +25,15 @@ class KeystoreAiKeyStore(context: Context) : AiKeyStore {
         return runCatching { decrypt(stored) }.getOrNull()?.takeIf { it.isNotEmpty() }
     }
 
-    // Escritura síncrona (commit) a propósito: la key debe quedar persistida antes de
-    // que la UI confirme el guardado o el borrado (lint ApplySharedPref asumido).
+    // Escritura síncrona (edit(commit = true)) a propósito: la key debe quedar
+    // persistida antes de que la UI confirme el guardado o el borrado.
     override fun save(key: String) {
         val encrypted = encrypt(key)
-        preferences.edit().putString(KEY_API_KEY, encrypted).commit()
+        preferences.edit(commit = true) { putString(KEY_API_KEY, encrypted) }
     }
 
     override fun clear() {
-        preferences.edit().remove(KEY_API_KEY).commit()
+        preferences.edit(commit = true) { remove(KEY_API_KEY) }
     }
 
     private fun encrypt(value: String): String {

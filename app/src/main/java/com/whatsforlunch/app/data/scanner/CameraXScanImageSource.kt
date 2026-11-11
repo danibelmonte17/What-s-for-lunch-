@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import androidx.core.graphics.scale
 import android.util.Size
 import android.view.Surface
 import androidx.camera.core.CameraSelector
@@ -111,11 +112,10 @@ class CameraXScanImageSource(
         val longestSide = maxOf(source.width, source.height)
         val scaled = if (longestSide > MAX_SIDE) {
             val factor = MAX_SIDE.toFloat() / longestSide
-            Bitmap.createScaledBitmap(
-                source,
+            source.scale(
                 (source.width * factor).roundToInt().coerceAtLeast(1),
                 (source.height * factor).roundToInt().coerceAtLeast(1),
-                true,
+                filter = true,
             )
         } else {
             source
