@@ -153,6 +153,38 @@ class ScannerViewModelTest {
     }
 
     @Test
+    fun pickedGalleryImageIsAnalyzedWithoutCameraPermission() = runTest {
+        val viewModel = scannerViewModel(
+            results = listOf(
+                ScanAnalysisResult.Success(listOf(AnalyzedFood("Tomate", 2.0))),
+            ),
+        )
+
+        // Sin abrir la cámara ni pedir permiso: basta la foto de la galería.
+        viewModel.analyzePickedImage(byteArrayOf(1, 2, 3), "es")
+        advanceUntilIdle()
+
+        assertEquals(listOf("Tomate"), viewModel.uiState.value.items.map { it.name })
+        assertFalse(viewModel.uiState.value.isAnalyzing)
+        assertFalse(viewModel.uiState.value.isScannerExpanded)
+        assertFalse(viewModel.uiState.value.cameraPermissionGranted)
+        assertNull(viewModel.uiState.value.notice)
+    }
+
+    @Test
+    fun unreadablePickedGalleryImageIsReportedAsAnalysisFailure() = runTest {
+        val viewModel = scannerViewModel()
+
+        viewModel.analyzePickedImage(null, "es")
+        advanceUntilIdle()
+
+        assertEquals(ScannerNotice.ANALYSIS_FAILED, viewModel.uiState.value.notice)
+        assertTrue(viewModel.uiState.value.manualMode)
+        assertFalse(viewModel.uiState.value.isAnalyzing)
+        assertTrue(viewModel.uiState.value.items.isEmpty())
+    }
+
+    @Test
     fun failedOrEmptyCaptureIsReportedAsAnalysisFailure() = runTest {
         val viewModel = scannerViewModel()
         grantCamera(viewModel)

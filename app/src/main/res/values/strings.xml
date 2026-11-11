@@ -7,6 +7,7 @@
     <string name="my_recipes_empty_message">Comienza a guardar tus recetas favoritas o descubre qué cocinar hoy según lo que tengas en casa.</string>
     <string name="action_create_recipe">Crear una receta</string>
     <string name="action_scan_pantry">Escanear despensa con IA</string>
+    <string name="action_pick_from_gallery">Elegir foto de la galería</string>
     <string name="action_back">Volver</string>
     <string name="action_dismiss">Cerrar</string>
 

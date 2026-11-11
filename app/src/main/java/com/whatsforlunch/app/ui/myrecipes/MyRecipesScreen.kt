@@ -94,6 +94,7 @@ import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.ui.components.MatchBadge
 import com.whatsforlunch.app.ui.components.MomentBadge
 import com.whatsforlunch.app.ui.components.SkilletIcon
+import com.whatsforlunch.app.ui.components.longPressToGallery
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import com.whatsforlunch.app.ui.theme.warmShadow
@@ -154,6 +155,7 @@ fun MyRecipesScreen(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     modifier: Modifier = Modifier,
+    onScanPantryFromGallery: () -> Unit = {},
     onEditRecipe: (String) -> Unit = {},
     onOpenRecipe: (String) -> Unit = {},
     onOpenPantryRecipes: () -> Unit = {},
@@ -238,7 +240,10 @@ fun MyRecipesScreen(
                     }
                     FloatingActionButton(
                         onClick = onScanPantry,
-                        modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB),
+                        modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB)
+                            // Pulsación larga: en vez de abrir la cámara, elige una
+                            // foto de la galería y la analiza con la IA.
+                            .longPressToGallery(onGalleryRequested = onScanPantryFromGallery),
                         shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -256,6 +261,7 @@ fun MyRecipesScreen(
             MyRecipesState.Empty -> EmptyMyRecipes(
                 onCreateRecipe = onCreateRecipe,
                 onScanPantry = onScanPantry,
+                onScanPantryFromGallery = onScanPantryFromGallery,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -330,6 +336,7 @@ private fun EmptyMyRecipes(
     onCreateRecipe: () -> Unit,
     onScanPantry: () -> Unit,
     modifier: Modifier = Modifier,
+    onScanPantryFromGallery: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.padding(horizontal = WarmSpacing.lg),
@@ -407,6 +414,9 @@ private fun EmptyMyRecipes(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
+                        // Pulsación larga: en vez de abrir la cámara, elige una
+                        // foto de la galería y la analiza con la IA.
+                        .longPressToGallery(onGalleryRequested = onScanPantryFromGallery)
                         .testTag(MyRecipesTestTags.SCAN_PANTRY),
                 ) {
                     Icon(
