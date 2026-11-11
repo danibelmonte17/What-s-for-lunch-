@@ -128,11 +128,10 @@ class OpenAiCompatiblePincheChatClient(
                         Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
                         return failed("http ${response.code}", startedAt)
                     }
+                    // En OkHttp 5 `Response.body` es no-nulable: el chequeo de
+                    // cuerpo nulo era código muerto (un cuerpo vacío lo captura
+                    // el `runCatching` de `reply`).
                     val body = response.body
-                    if (body == null) {
-                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
-                        return failed("empty body", startedAt)
-                    }
                     // D9/D12: SSE si el proveedor lo devuelve; si no, el cuerpo
                     // completo se procesa como hasta hoy (sin emitir fragmentos).
                     val message = if (response.isEventStream()) {
