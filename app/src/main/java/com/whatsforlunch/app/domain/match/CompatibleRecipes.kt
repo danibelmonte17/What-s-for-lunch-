@@ -13,7 +13,7 @@ data class CompatibleRecipe(
     val match: RecipeMatch,
 )
 
-// Recetas de Mis Recetas que alcanzan el umbral de RD02, ordenadas por Coincidencia
+// Recetas de Mi recetario que alcanzan el umbral de RD02, ordenadas por Coincidencia
 // descendente, título normalizado ascendente e id (RF-MRC2). Sin filtrar por estado
 // (D4) y sin obligatorios no entran (RF-MRC4, calculateMatch → null).
 fun compatibleRecipes(

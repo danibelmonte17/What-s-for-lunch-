@@ -87,8 +87,8 @@ import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 
 // S1-S10 del Pinche: texto conversacional, Ficha con Faltantes, guardado como
-// Receta en Mis Recetas (sin foto y sin distintivo de estado), fallos visibles,
-// inglés y entrada desde Mis Recetas.
+// Receta en Mi recetario (sin foto y sin distintivo de estado), fallos visibles,
+// inglés y entrada desde Mi recetario.
 // S1-S5 de `rellenar-perfil-con-el-pinche`: entrevista de perfil con resumen
 // «He guardado…», guarda determinista de Propuestas y degradación sin IA.
 // S6 (enmienda): respuesta en streaming con burbuja transitoria y auto-scroll.
@@ -161,7 +161,7 @@ class PincheE2ETest {
         )
     }
 
-    // S3 (verify 2): guardar crea una Receta visible en Mis Recetas y un segundo
+    // S3 (verify 2): guardar crea una Receta visible en Mi recetario y un segundo
     // guardado no duplica la Receta.
     @Test
     fun savingTheProposalCreatesARecipeInMyRecipesWithoutDuplicates() {
@@ -352,7 +352,7 @@ class PincheE2ETest {
         assertEquals(2, client.calls)
     }
 
-    // S8 (entrada): desde Mis Recetas se abre el Pinche y al volver se conservan
+    // S8 (entrada): desde Mi recetario se abre el Pinche y al volver se conservan
     // búsqueda y filtro.
     @Test
     fun pincheOpensFromMyRecipesAndKeepsSearchAndFilterOnBack() {
@@ -486,7 +486,7 @@ class PincheE2ETest {
         }
         composeRule.onNodeWithText("Pinche proposal").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Ingredients").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Save to My Recipes").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Save to My recipe book").performScrollTo().assertIsDisplayed()
     }
 
     // S1 (`rellenar-perfil-con-el-pinche`, verify 1): entrevista de una en una

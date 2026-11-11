@@ -2,7 +2,7 @@ package com.whatsforlunch.app.domain.myrecipes
 
 import com.whatsforlunch.app.domain.model.Recipe
 
-// Estado de la pantalla Mis Recetas derivado de las Recetas existentes.
+// Estado de la pantalla Mi recetario derivado de las Recetas existentes.
 // Regla de negocio sin dependencias de UI: una colección vacía produce el
 // estado vacío (docs/domain-model.md, caso «Colección de Recetas vacía»).
 enum class MyRecipesState {

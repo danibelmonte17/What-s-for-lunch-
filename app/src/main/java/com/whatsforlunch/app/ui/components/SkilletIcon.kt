@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 // Icono de sartén compartido (uxdocs/DESIGN.md): lo usa el badge de momento
-// «Almuerzo» en Mis Recetas y la CTA «Empezar Modo Cocina» del Detalle de Receta.
+// «Almuerzo» en Mi recetario y la CTA «Empezar Modo Cocina» del Detalle de Receta.
 val SkilletIcon: ImageVector = ImageVector.Builder(
     name = "Skillet",
     defaultWidth = 24.dp,

@@ -50,7 +50,7 @@ data class PincheMessage(
     val text: String,
     val proposal: PincheProposal? = null,
     val proposalState: PincheProposalState = PincheProposalState.PROPOSED,
-    // RF-AFL4: estado en memoria de la Ficha, como «Guardada en Mis Recetas».
+    // RF-AFL4: estado en memoria de la Ficha, como «Guardada en Mi recetario».
     val addedToList: Boolean = false,
     // Partes del perfil pendientes de este mensaje estático (vacío en el resto).
     val profileRequest: List<PendingProfilePart> = emptyList(),

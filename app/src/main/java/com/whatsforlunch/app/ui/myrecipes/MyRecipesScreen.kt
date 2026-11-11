@@ -26,7 +26,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook as MenuBookFilled
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.BakeryDining
 import androidx.compose.material.icons.outlined.Edit
@@ -102,6 +104,8 @@ object MyRecipesTestTags {
     const val TOP_BAR_TITLE = "my_recipes_top_bar_title"
     const val EMPTY_TITLE = "my_recipes_empty_title"
     const val EMPTY_MESSAGE = "my_recipes_empty_message"
+    const val EMPTY_ICON_CONTAINER = "my_recipes_empty_icon_container"
+    const val EMPTY_ICON = "my_recipes_empty_icon"
     const val CREATE_RECIPE = "action_create_recipe"
     const val SCAN_PANTRY = "action_scan_pantry"
     const val SCAN_PANTRY_FAB = "action_scan_pantry_fab"
@@ -184,8 +188,9 @@ fun MyRecipesScreen(
         modifier = modifier.testTag(MyRecipesTestTags.SCREEN),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            // RF-MOB2: la top bar solo conserva «Ajustes»; el resto de accesos vive
-            // en la barra inferior y en los botones flotantes.
+            // RF-MOB2: la top bar conserva el título de la pantalla («Mi recetario»)
+            // y «Ajustes»; el resto de accesos vive en la barra inferior y en los
+            // botones flotantes.
             TopAppBar(
                 title = {
                     Text(
@@ -331,41 +336,89 @@ private fun EmptyMyRecipes(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = stringResource(R.string.my_recipes_empty_title),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.testTag(MyRecipesTestTags.EMPTY_TITLE),
-        )
-        Text(
-            text = stringResource(R.string.my_recipes_empty_message),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(top = WarmSpacing.sm)
-                .testTag(MyRecipesTestTags.EMPTY_MESSAGE),
-        )
-        Button(
-            onClick = onCreateRecipe,
+        Surface(
+            shape = RoundedCornerShape(WarmRadius.md),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = WarmSpacing.xl)
-                .heightIn(min = 52.dp)
-                .testTag(MyRecipesTestTags.CREATE_RECIPE),
+                .warmShadow(shape = RoundedCornerShape(WarmRadius.md)),
         ) {
-            Text(text = stringResource(R.string.action_create_recipe))
-        }
-        FilledTonalButton(
-            onClick = onScanPantry,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = WarmSpacing.md)
-                .heightIn(min = 48.dp)
-                .testTag(MyRecipesTestTags.SCAN_PANTRY),
-        ) {
-            Text(text = stringResource(R.string.action_scan_pantry))
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .testTag(MyRecipesTestTags.EMPTY_ICON_CONTAINER),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.MenuBookFilled,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .testTag(MyRecipesTestTags.EMPTY_ICON),
+                        )
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.my_recipes_empty_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag(MyRecipesTestTags.EMPTY_TITLE),
+                )
+                Text(
+                    text = stringResource(R.string.my_recipes_empty_message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(MyRecipesTestTags.EMPTY_MESSAGE),
+                )
+                Button(
+                    onClick = onCreateRecipe,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .testTag(MyRecipesTestTags.CREATE_RECIPE),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                    Text(text = stringResource(R.string.action_create_recipe))
+                }
+                FilledTonalButton(
+                    onClick = onScanPantry,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .testTag(MyRecipesTestTags.SCAN_PANTRY),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PhotoCamera,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(WarmSpacing.xs))
+                    Text(text = stringResource(R.string.action_scan_pantry))
+                }
+            }
         }
     }
 }

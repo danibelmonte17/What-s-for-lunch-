@@ -682,7 +682,7 @@ private class FakeGeneratedImageGenerator : ImageGenerator {
 }
 
 // verify 2 · S1: la app real guarda una Receta con el botón único y la muestra en
-// Mis Recetas sin ningún distintivo de estado. La foto llega por «Generar con IA»
+// Mi recetario sin ningún distintivo de estado. La foto llega por «Generar con IA»
 // con el ImageGenerator sustituido en Koin, para no depender de pantallas del sistema.
 @RunWith(AndroidJUnit4::class)
 class CreateRecipeAppE2ETest {
@@ -732,7 +732,7 @@ class CreateRecipeAppE2ETest {
     }
 }
 
-// RF-17 a RF-20 y RF-22 (fidelidad visual): tarjetas de Mis Recetas con portada y
+// RF-17 a RF-20 y RF-22 (fidelidad visual): tarjetas de Mi recetario con portada y
 // badge de momento superpuesto, título, metadatos con iconos y badge junto al título
 // cuando la Receta no tiene foto. Sin píldora de estado (RF-EBF6).
 @RunWith(AndroidJUnit4::class)

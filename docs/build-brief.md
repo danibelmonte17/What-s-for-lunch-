@@ -30,13 +30,13 @@ Uso personal (1-5 usuarios): personas que cocinan en casa, con poco tiempo para 
 
 La rebanada que prueba el valor de punta a punta: **el usuario escanea lo que tiene en casa, obtiene Recetas compatibles, acepta una y cocina guiado, sin salir de la app y sin red salvo la IA**. El comportamiento más arriesgado (detección de alimentos on-device + sugerencias por IA real) queda dentro del MVP en lugar de posponerse (`P4`, `RK02`).
 
-- **Mis Recetas (CRUD)** — vista de entrada de la app; buscador, filtro por Momento culinario, tarjetas con badge de Coincidencia, alta, edición y borrado de Recetas.
+- **Mi recetario (CRUD)** — vista de entrada de la app; buscador, filtro por Momento culinario, tarjetas con badge de Coincidencia, alta, edición y borrado de Recetas.
 - **Escáner de la Despensa** — alta manual y captura con la cámara; la IA analiza la foto y propone Alimentos con cantidad como chips editables que se guardan en la Despensa. Solo llena la Despensa: las Recetas compatibles viven en su propia pantalla.
 - **Recetas con mi Despensa** — lista las Recetas compatibles (RD02) con su badge y desglose, y da paso a las Sugerencias de IA.
-- **Sugerencias de recetas por IA** — la IA propone Recetas compatibles con lo escaneado; al aceptar una, se guarda en Mis Recetas.
+- **Sugerencias de recetas por IA** — la IA propone Recetas compatibles con lo escaneado; al aceptar una, se guarda en Mi recetario.
 - **Detalle de Receta** — métricas (tiempo total, dificultad, calorías por porción), escalador de Raciones (1-12) con recálculo de cantidades, checklist de ingredientes, pasos resumidos y CTA de Modo Cocina.
 - **Modo Cocina** — paso a paso manos libres, alto contraste legible a distancia, barra de avance, temporizador con alarma y `+1 min`, locución de instrucciones, comandos de voz y drawer con los ingredientes del Paso activo.
-- **Pinche** — asistente conversacional con chips de sugerencias y burbujas. Responde dudas de cocina y propone recetas **sin depender de la Despensa**; la propuesta se muestra en una Ficha con sus ingredientes, pasos y Faltantes, y desde ella se guarda o se descarta. La app expone al modelo **tres funciones**: dos de **solo lectura** (Despensa y Mis Recetas) para que pida contexto cuando lo necesita y **`save_profile`, de escritura acotada al perfil**, con la que el Pinche rellena «Mi perfil» en el chat antes de proponer (`rellenar-perfil-con-el-pinche`). Conversación solo en memoria. Dictado por voz y envío de Faltantes a la Lista de la Compra quedan para sus features (ver «Qué NO construimos»).
+- **Pinche** — asistente conversacional con chips de sugerencias y burbujas. Responde dudas de cocina y propone recetas **sin depender de la Despensa**; la propuesta se muestra en una Ficha con sus ingredientes, pasos y Faltantes, y desde ella se guarda o se descarta. La app expone al modelo **tres funciones**: dos de **solo lectura** (Despensa y Mi recetario) para que pida contexto cuando lo necesita y **`save_profile`, de escritura acotada al perfil**, con la que el Pinche rellena «Mi perfil» en el chat antes de proponer (`rellenar-perfil-con-el-pinche`). Conversación solo en memoria. Dictado por voz y envío de Faltantes a la Lista de la Compra quedan para sus features (ver «Qué NO construimos»).
 - **Formulario de Receta** — creación/edición con foto, metadatos (tiempo de preparación con reloj y sin tiempo de cocción), ingredientes con unidades, Pasos con temporizador, y guardado único sin estados (guardar + marcar favorito).
 - **Lista de la Compra** — alta de ítems manuales o por voz, detección de faltantes tras escaneos o visualización de recetas, agrupación por Pasillo o por Receta, badge de Origen y progreso con checkboxes.
 - **Interfaz en español e inglés**.
@@ -54,7 +54,7 @@ El desglose por sesiones de implementación vive en `feature_list.json`; este do
 - **Precios y coste estimado por receta** — la app no muestra precios en ninguna vista (`P12`, `⚠ S02`).
 - **Tablet, escritorio y PWA web** — el MVP es solo Android (`P20`).
 - **Publicación en Play Store** — distribución por APK instalada a mano (`P28`).
-- **Catálogo compartido entre usuarios** — las Recetas aceptadas van solo a Mis Recetas del usuario (`P32`).
+- **Catálogo compartido entre usuarios** — las Recetas aceptadas van solo a Mi recetario del usuario (`P32`).
 - **Dictado por voz en el Pinche** — llega con la voz del Modo Cocina y la Lista de la Compra (`⚠ S04`); esta versión del Pinche es solo texto.
 - **Enviar los Faltantes del Pinche a la Lista de la Compra** — la Ficha solo los muestra; el alta llega con `anadir-faltantes-a-la-lista`.
 - **Historial de conversación entre sesiones** — la conversación del Pinche vive solo en memoria mientras dura la pantalla.
@@ -72,7 +72,7 @@ El desglose por sesiones de implementación vive en `feature_list.json`; este do
 - Solo Android (plataforma móvil), un solo repositorio (`P20`, `P24`).
 - Sin backend en el MVP; datos duraderos en el dispositivo (`P31`, `P33`).
 - IA real desde el MVP: detección de alimentos en el propio dispositivo y asistente/sugerencias vía un proveedor de IA externo (`P4`); las tecnologías concretas en `docs/technical-discovery.md`.
-- El Pinche usa **function calling**: la app expone dos funciones de solo lectura (Despensa y Mis Recetas) y, desde `rellenar-perfil-con-el-pinche`, una tercera de escritura **`save_profile`, acotada al perfil** —el único dato que el modelo puede escribir en el dispositivo—, y el modelo decide cuándo pedirlas (`⚠ S08`). Si el proveedor no las admite, la app falla de forma visible con «Reintentar» y no cambia en silencio los datos que salen del dispositivo.
+- El Pinche usa **function calling**: la app expone dos funciones de solo lectura (Despensa y Mi recetario) y, desde `rellenar-perfil-con-el-pinche`, una tercera de escritura **`save_profile`, acotada al perfil** —el único dato que el modelo puede escribir en el dispositivo—, y el modelo decide cuándo pedirlas (`⚠ S08`). Si el proveedor no las admite, la app falla de forma visible con «Reintentar» y no cambia en silencio los datos que salen del dispositivo.
 - RGPD: las fotos de escaneo no se almacenan y el proveedor de IA no retiene datos (`P27`).
 - La API key de IA la introduce el usuario en Ajustes; nunca se guarda en el repositorio (`⚠ S05`).
 - Interfaz en español e inglés; documentación en español y código en inglés (`P19`, `P25`).

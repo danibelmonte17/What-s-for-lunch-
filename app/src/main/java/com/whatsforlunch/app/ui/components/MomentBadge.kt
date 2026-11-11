@@ -16,7 +16,7 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.MealMoment
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 
-// Badge de Momento culinario en píldora compartido: la tarjeta de Mis Recetas lo
+// Badge de Momento culinario en píldora compartido: la tarjeta de Mi recetario lo
 // superpone a la portada (o lo muestra junto al título sin foto) y el hero del
 // Detalle de Receta lo reutiliza con la misma semántica (RF-DR3). El testTag lo
 // aporta cada pantalla.

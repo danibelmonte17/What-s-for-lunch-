@@ -60,7 +60,7 @@ private class FailingDeleteRecipeRepository(
     }
 }
 
-// Escenarios del borrado en Mis Recetas: confirmación, cancelación, descarte, error,
+// Escenarios del borrado en Mi recetario: confirmación, cancelación, descarte, error,
 // localización y accesibilidad (Parte B, T6).
 @RunWith(AndroidJUnit4::class)
 class DeleteRecipeE2ETest {

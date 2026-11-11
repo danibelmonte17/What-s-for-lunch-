@@ -74,7 +74,7 @@ internal object PincheChatProtocol {
                         .put("name", RECIPES_FUNCTION)
                         .put(
                             "description",
-                            "Read My Recipes: titles, meal moments and ingredient names. " +
+                            "Read My recipe book: titles, meal moments and ingredient names. " +
                                 "Call it only when you need to know what the user already cooks.",
                         )
                         .put("parameters", emptyParameters()),

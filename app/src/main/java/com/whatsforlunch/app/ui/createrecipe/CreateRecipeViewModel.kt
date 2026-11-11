@@ -94,7 +94,7 @@ data class CreateRecipeUiState(
     val saved: Boolean = false,
     // Modo edición: id de la Receta abierta (null = alta) (RF-5, RF-6, RF-9, RF-10).
     val recipeId: String? = null,
-    // RF-18: el id recibido no corresponde a ninguna Receta; se vuelve a Mis Recetas.
+    // RF-18: el id recibido no corresponde a ninguna Receta; se vuelve a Mi recetario.
     val recipeMissing: Boolean = false,
 )
 
@@ -132,7 +132,7 @@ class CreateRecipeViewModel(
 
     // RF-1, RF-2: abre el formulario en modo edición precargando los datos de la
     // Receta; RF-18: si el id no corresponde a ninguna Receta, avisa para volver a
-    // Mis Recetas sin abrir el formulario. Idempotente: no recarga la misma Receta.
+    // Mi recetario sin abrir el formulario. Idempotente: no recarga la misma Receta.
     fun loadRecipe(id: String?) {
         if (id == null || id == _uiState.value.recipeId) return
         viewModelScope.launch {

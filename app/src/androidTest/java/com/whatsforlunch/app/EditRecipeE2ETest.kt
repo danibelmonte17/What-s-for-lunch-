@@ -372,7 +372,7 @@ class EditRecipeE2ETest {
         assertEquals("Save changes", editorText(R.string.create_recipe_save_changes))
     }
 
-    // RF-4: la tarjeta de Mis Recetas ofrece «Editar receta» como botón primario
+    // RF-4: la tarjeta de Mi recetario ofrece «Editar receta» como botón primario
     // compacto (icono `edit` de 18 dp + etiqueta «Editar»; excepción de diseño
     // aprobada por el usuario el 2026-10-19) y avisa con el id de la Receta.
     @Test
@@ -557,7 +557,7 @@ class EditRecipeE2ETest {
 }
 
 // RF-18: si el id no corresponde a ninguna Receta, el formulario no se abre y se vuelve
-// a Mis Recetas. Se monta la Route real (ViewModel y repositorio de Koin) sobre una base
+// a Mi recetario. Se monta la Route real (ViewModel y repositorio de Koin) sobre una base
 // de datos vacía.
 @RunWith(AndroidJUnit4::class)
 class EditRecipeRouteE2ETest {

@@ -43,7 +43,7 @@ import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 
 // verify 1–2 · RF-MOB1..RF-MOB7: la barra inferior con sus 5 pestañas y sus
-// destinos, la top bar de Mis Recetas solo con «Ajustes», los dos FABs apilados
+// destinos, la top bar de Mi recetario solo con «Ajustes», los dos FABs apilados
 // solo con Recetas, la pestaña activa resaltada, «Volver» retirado en las
 // pantallas de pestañas y un back stack coherente (D1–D8).
 @RunWith(AndroidJUnit4::class)
@@ -64,7 +64,7 @@ class BottomBarE2ETest {
         composeRule.onNodeWithTag(AppBottomBarTestTags.BAR).assertIsDisplayed()
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES)
             .assertIsDisplayed()
-            .assertTextEquals(localized(R.string.my_recipes_title))
+            .assertTextEquals(localized(R.string.my_recipes_tab_label))
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY)
             .assertIsDisplayed()
             .assertTextEquals(localized(R.string.pantry_title))
@@ -78,7 +78,7 @@ class BottomBarE2ETest {
             .assertIsDisplayed()
             .assertTextEquals(localized(R.string.my_profile_title))
 
-        // Orden de izquierda a derecha: Mis Recetas, Despensa, Lista, Pinche y Mi perfil.
+        // Orden de izquierda a derecha: Mi recetario, Despensa, Lista, Pinche y Mi perfil.
         val lefts = listOf(
             AppBottomBarTestTags.TAB_MY_RECIPES,
             AppBottomBarTestTags.TAB_PANTRY,
@@ -130,7 +130,7 @@ class BottomBarE2ETest {
 
     // S4 (RF-MOB4, RF-MOB5, RF-MOB6): la pestaña activa está resaltada, «Volver»
     // ya no aparece, tocar la pestaña activa vuelve al inicio de la pantalla sin
-    // resetearla y el back del sistema vuelve a Mis Recetas (D1).
+    // resetearla y el back del sistema vuelve a Mi recetario (D1).
     @Test
     fun activeTabIsHighlightedBackIsRemovedAndTheBackStackStaysCoherent() {
         repeat(20) { index -> seedPantry("Alimento %02d".format(index + 1)) }
@@ -167,10 +167,10 @@ class BottomBarE2ETest {
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).assertIsSelected()
         assertNoBackButton()
 
-        // RF-MOB4 (D1): el back del sistema vuelve a Mis Recetas…
+        // RF-MOB4 (D1): el back del sistema vuelve a Mi recetario…
         Espresso.pressBack()
         composeRule.onNodeWithTag(MyRecipesTestTags.SCREEN).assertIsDisplayed()
-        // …y desde Mis Recetas el back sale de la app. El destroy llega tras la
+        // …y desde Mi recetario el back sale de la app. El destroy llega tras la
         // animación de salida, así que se espera de forma acotada antes de exigirlo.
         Espresso.pressBackUnconditionally()
         val destroyDeadline = System.currentTimeMillis() + 5_000

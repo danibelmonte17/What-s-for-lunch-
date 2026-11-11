@@ -385,7 +385,7 @@ class AiSuggestionsE2ETest {
 
     // S1 (verify 1 de `aceptar-sugerencia-de-receta`): aceptar guarda la propuesta como
     // Receta con origen Sugerencia (RD07), muestra el aviso y la Receta aparece en
-    // Mis Recetas sin foto y sin distintivo de estado (S5).
+    // Mi recetario sin foto y sin distintivo de estado (S5).
     @Test
     fun acceptingSavesTheSuggestionAsARecipeVisibleInMyRecipes() {
         val pantry = pantryWith(
@@ -453,7 +453,7 @@ class AiSuggestionsE2ETest {
             .assertIsEnabled()
             .performClick()
 
-        composeRule.onNodeWithText("Guardada en Mis Recetas").assertIsDisplayed()
+        composeRule.onNodeWithText("Guardada en Mi recetario").assertIsDisplayed()
         composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionState(0)).assertIsDisplayed()
         composeRule.onNodeWithText("Aceptada").assertIsDisplayed()
         composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).assertIsNotEnabled()
@@ -675,7 +675,7 @@ class AiSuggestionsE2ETest {
 
         composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).performClick()
 
-        composeRule.onNodeWithText("Saved to My Recipes").assertIsDisplayed()
+        composeRule.onNodeWithText("Saved to My recipe book").assertIsDisplayed()
         composeRule.onNodeWithText("Accepted").assertIsDisplayed()
         composeRule.onNodeWithTag(AiSuggestionsTestTags.suggestionAccept(0)).assertIsNotEnabled()
     }

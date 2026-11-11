@@ -99,9 +99,9 @@ class LanguageSwitchE2ETest {
             .performScrollTo().assertIsNotSelected()
         composeRule.onNodeWithText("Privacy and data").performScrollTo().assertIsDisplayed()
 
-        // El back stack sobrevive al cambio: Mis Recetas vuelve en inglés.
+        // El back stack sobrevive al cambio: Mi recetario vuelve en inglés.
         composeRule.onNodeWithText("Back").performClick()
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My Recipes")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My recipe book")
     }
 
     // S2: volver a español restaura todos los textos al momento, incluidos los de
@@ -123,7 +123,7 @@ class LanguageSwitchE2ETest {
             .performScrollTo().assertIsSelected()
 
         composeRule.onNodeWithText("Volver").performClick()
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mis Recetas")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mi recetario")
     }
 
     // S3: la elección persiste en el dispositivo (D1): un controller nuevo sobre las
@@ -143,7 +143,7 @@ class LanguageSwitchE2ETest {
         assertEquals(AppLanguage.ENGLISH, restarted.language.value)
 
         showAppWithNavigation(restarted)
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My Recipes")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My recipe book")
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_SETTINGS).performClick()
         composeRule.onNodeWithText("Language").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(SettingsTestTags.LANGUAGE_OPTION_EN)
@@ -156,7 +156,7 @@ class LanguageSwitchE2ETest {
     fun firstLaunchFollowsEnglishSystemLanguage() {
         showAppWithNavigation(appController(systemLocale = Locale.US))
 
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My Recipes")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My recipe book")
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_SETTINGS).performClick()
         composeRule.onNodeWithText("Language").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(SettingsTestTags.LANGUAGE_OPTION_EN)
@@ -168,7 +168,7 @@ class LanguageSwitchE2ETest {
     fun firstLaunchFallsBackToSpanishForOtherSystemLanguages() {
         showAppWithNavigation(appController(systemLocale = Locale.FRANCE))
 
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mis Recetas")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mi recetario")
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_SETTINGS).performClick()
         composeRule.onNodeWithText("Idioma").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(SettingsTestTags.LANGUAGE_OPTION_ES)
@@ -276,7 +276,7 @@ class LanguageSwitchE2ETest {
         assertEquals(expected, suggester.lastLanguage)
     }
 
-    // App real con navegación mínima (Mis Recetas ↔ Ajustes) bajo el host de idioma:
+    // App real con navegación mínima (Mi recetario ↔ Ajustes) bajo el host de idioma:
     // las Routes reales derivan textos, prompts y formatos de LocalConfiguration.
     private fun showAppWithNavigation(controller: AppLocaleController) {
         val myRecipesViewModel =

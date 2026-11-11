@@ -30,7 +30,7 @@ import com.whatsforlunch.app.ui.scanner.ScannerRoute
 import com.whatsforlunch.app.ui.settings.SettingsRoute
 import com.whatsforlunch.app.ui.shoppinglist.ShoppingListRoute
 
-// Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18). El formulario
+// Rutas de navegación. Mi recetario es el destino inicial (RF-4, P18). El formulario
 // de Receta acepta un id opcional: null = alta, con id = edición (RF-1). El Detalle
 // de Receta abre por id desde la tarjeta (RF-DR1) y su CTA abre el Modo Cocina real
 // con el id de la Receta y las Raciones elegidas (RF-CPP5, RD22).
@@ -63,7 +63,7 @@ object AppRoutes {
 
 // RF-MOB4 (D5): la navegación por pestañas deja el back stack [my_recipes, pestaña
 // actual]; `popUpTo` descarta la pestaña anterior y `launchSingleTop` evita
-// duplicar entradas (back repetido nunca apila otra Mis Recetas). Mis Recetas
+// duplicar entradas (back repetido nunca apila otra Mi recetario). Mi recetario
 // vuelve a su entrada existente y conserva búsqueda, momento y «Favoritas».
 private fun NavHostController.openTab(tab: AppTab) {
     navigate(tab.route) {
@@ -183,12 +183,12 @@ fun WhatsForLunchApp(
                 onBack = { navController.popBackStack() },
                 // D5: `launchSingleTop` evita duplicar la Despensa en el back stack
                 // cuando el Escáner se abre desde ella (MY_RECIPES → PANTRY →
-                // SCAN_PANTRY); con la entrada desde Mis Recetas el comportamiento
+                // SCAN_PANTRY); con la entrada desde Mi recetario el comportamiento
                 // no cambia.
                 onSaved = {
                     // RF-MOB4 (D5): tras guardar se aterriza en la pestaña Despensa
                     // con el back stack [my_recipes, pantry]; el Escáner no queda en
-                    // la pila y el back vuelve a Mis Recetas. `openTab` aplica
+                    // la pila y el back vuelve a Mi recetario. `openTab` aplica
                     // `launchSingleTop`, así que la Despensa no se duplica al
                     // escanear desde ella (`mover-escaneo-a-la-despensa`, D5).
                     navController.openTab(AppTab.PANTRY)

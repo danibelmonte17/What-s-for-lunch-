@@ -217,7 +217,7 @@ class PantryManagementE2ETest {
         composeRule.onNodeWithText("Tomate fresco").assertIsDisplayed()
 
         // RF-MOB4/D1: la Despensa ya no muestra «Volver» (es pestaña, `e8c5730`);
-        // el back del sistema vuelve a Mis Recetas sin dejar la Despensa
+        // el back del sistema vuelve a Mi recetario sin dejar la Despensa
         // duplicada en el back stack. Paso reparado en `crear-mi-perfil` (2026-11-09)
         // por ser un resto del merge 9dacc87: la afirmación esperaba un botón
         // retirado y fallaba en cualquier entorno.

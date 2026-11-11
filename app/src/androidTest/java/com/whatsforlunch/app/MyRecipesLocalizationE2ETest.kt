@@ -76,31 +76,31 @@ class MyRecipesLocalizationE2ETest {
     @Test
     fun spanishEmptyStateShowsSpanishTexts() {
         showApp(Locale("es", "ES"))
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mis Recetas")
-        composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
-        composeRule.onNodeWithText("Crea tu primera receta o escanea la Despensa para empezar.")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mi recetario")
+        composeRule.onNodeWithText("Tu recetario está vacío").assertIsDisplayed()
+        composeRule.onNodeWithText("Comienza a guardar tus recetas favoritas o descubre qué cocinar hoy según lo que tengas en casa.")
             .assertIsDisplayed()
-        composeRule.onNodeWithText("Crear receta").assertIsDisplayed()
-        composeRule.onNodeWithText("Escanear la Despensa").assertIsDisplayed()
+        composeRule.onNodeWithText("Crear una receta").assertIsDisplayed()
+        composeRule.onNodeWithText("Escanear despensa con IA").assertIsDisplayed()
     }
 
     @Test
     fun englishEmptyStateShowsEnglishTexts() {
         showApp(Locale.ENGLISH)
-        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My Recipes")
-        composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
-        composeRule.onNodeWithText("Create your first recipe or scan your Pantry to get started.")
+        composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("My recipe book")
+        composeRule.onNodeWithText("Your recipe book is empty").assertIsDisplayed()
+        composeRule.onNodeWithText("Start saving your favorite recipes or discover what to cook today with what you have at home.")
             .assertIsDisplayed()
-        composeRule.onNodeWithText("Create recipe").assertIsDisplayed()
-        composeRule.onNodeWithText("Scan your Pantry").assertIsDisplayed()
+        composeRule.onNodeWithText("Create a recipe").assertIsDisplayed()
+        composeRule.onNodeWithText("Scan your Pantry with AI").assertIsDisplayed()
     }
 
     @Test
     fun unsupportedLocaleFallsBackToSpanish() {
         showApp(Locale("fr", "FR"))
-        composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
-        composeRule.onNodeWithText("Crear receta").assertIsDisplayed()
-        composeRule.onNodeWithText("Escanear la Despensa").assertIsDisplayed()
+        composeRule.onNodeWithText("Tu recetario está vacío").assertIsDisplayed()
+        composeRule.onNodeWithText("Crear una receta").assertIsDisplayed()
+        composeRule.onNodeWithText("Escanear despensa con IA").assertIsDisplayed()
     }
 
     @Test
@@ -111,7 +111,7 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithText("Crear receta").assertIsDisplayed()
         composeRule.onNodeWithText("Volver").performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
-        composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
+        composeRule.onNodeWithText("Tu recetario está vacío").assertIsDisplayed()
     }
 
     @Test
@@ -129,7 +129,7 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithTag(ScannerTestTags.CAMERA_PREVIEW).assertIsDisplayed()
         composeRule.onNodeWithText("Volver").performClick()
         composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
-        composeRule.onNodeWithText("Todavía no tienes recetas").assertIsDisplayed()
+        composeRule.onNodeWithText("Tu recetario está vacío").assertIsDisplayed()
     }
 
     @Test
@@ -139,7 +139,7 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithTag(CreateRecipeTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Create recipe").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()
-        composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
+        composeRule.onNodeWithText("Your recipe book is empty").assertIsDisplayed()
 
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
@@ -147,7 +147,7 @@ class MyRecipesLocalizationE2ETest {
         composeRule.onNodeWithText("Food name").assertIsDisplayed()
         composeRule.onNodeWithText("Scan with the camera").assertIsDisplayed()
         composeRule.onNodeWithText("Back").performClick()
-        composeRule.onNodeWithText("No recipes yet").assertIsDisplayed()
+        composeRule.onNodeWithText("Your recipe book is empty").assertIsDisplayed()
     }
 
     // S3 (RF-MOB1, RF-MOB3, verify 3): las etiquetas de la barra inferior y los
@@ -156,24 +156,24 @@ class MyRecipesLocalizationE2ETest {
     fun spanishBottomBarAndFabsShowSpanishTexts() {
         seedRecipe()
         showApp(Locale("es", "ES"))
-        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("Mis Recetas")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("Recetario")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).assertTextEquals("Despensa")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST).assertTextEquals("Lista de la Compra")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).assertTextEquals("Pinche")
         composeRule.onNodeWithContentDescription("Recetas con mi Despensa").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Escanear la Despensa").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Escanear despensa con IA").assertIsDisplayed()
     }
 
     @Test
     fun englishBottomBarAndFabsShowEnglishTexts() {
         seedRecipe()
         showApp(Locale.ENGLISH)
-        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("My Recipes")
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("Recipe book")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).assertTextEquals("Pantry")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST).assertTextEquals("Shopping List")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).assertTextEquals("Pinche")
         composeRule.onNodeWithContentDescription("Recipes with my Pantry").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Scan your Pantry").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Scan your Pantry with AI").assertIsDisplayed()
     }
 
     // Los FABs solo se muestran con Recetas (D3), así que S3 siembra una antes de

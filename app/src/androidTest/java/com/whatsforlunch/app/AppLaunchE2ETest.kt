@@ -12,7 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// verify 1 · RF-1, RF-4, RF-5: la app real abre en Mis Recetas con su estado vacío.
+// verify 1 · RF-1, RF-4, RF-5: la app real abre en Mi recetario con su estado vacío.
 // Las aserciones usan testTags para ser independientes del idioma del dispositivo.
 @RunWith(AndroidJUnit4::class)
 class AppLaunchE2ETest {

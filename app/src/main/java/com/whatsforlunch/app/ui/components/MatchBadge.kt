@@ -19,7 +19,7 @@ import com.whatsforlunch.app.domain.match.RecipeMatch
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 
 // Badge de Coincidencia compartido (D5 de ver-detalle-de-receta): componente único
-// reutilizado por la tarjeta de Mis Recetas y por el hero del Detalle, con la misma
+// reutilizado por la tarjeta de Mi recetario y por el hero del Detalle, con la misma
 // semántica de mostrar-badge-de-coincidencia (RD01/RD02/RD10, RF-MB6). El testTag lo
 // aporta cada pantalla para conservar sus aserciones.
 private val BadgeShape: Shape = RoundedCornerShape(50)

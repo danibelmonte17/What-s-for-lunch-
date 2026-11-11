@@ -1,11 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Español: idioma por defecto. Si el dispositivo no es es ni en, se muestra este. -->
     <string name="app_name">What\'s for Lunch?</string>
-    <string name="my_recipes_title">Mis Recetas</string>
-    <string name="my_recipes_empty_title">Todavía no tienes recetas</string>
-    <string name="my_recipes_empty_message">Crea tu primera receta o escanea la Despensa para empezar.</string>
-    <string name="action_create_recipe">Crear receta</string>
-    <string name="action_scan_pantry">Escanear la Despensa</string>
+    <string name="my_recipes_title">Mi recetario</string>
+    <string name="my_recipes_tab_label">Recetario</string>
+    <string name="my_recipes_empty_title">Tu recetario está vacío</string>
+    <string name="my_recipes_empty_message">Comienza a guardar tus recetas favoritas o descubre qué cocinar hoy según lo que tengas en casa.</string>
+    <string name="action_create_recipe">Crear una receta</string>
+    <string name="action_scan_pantry">Escanear despensa con IA</string>
     <string name="action_back">Volver</string>
     <string name="action_dismiss">Cerrar</string>
 
@@ -87,7 +88,7 @@
     <string name="pantry_empty_title">Tu Despensa está vacía</string>
     <string name="pantry_empty_message">Añade los alimentos que tienes en casa.</string>
 
-    <!-- Mis Recetas: tarjetas -->
+    <!-- Mi recetario: tarjetas -->
     <string name="my_recipes_card_time">%1$d min</string>
     <string name="my_recipes_card_servings">%1$d porciones</string>
     <string name="my_recipes_card_match">%1$d%%</string>
@@ -285,7 +286,7 @@
     <string name="ai_suggestions_discard">Descartar</string>
     <string name="ai_suggestions_state_accepted">Aceptada</string>
     <string name="ai_suggestions_state_discarded">Descartada</string>
-    <string name="ai_suggestions_accepted_notice">Guardada en Mis Recetas</string>
+    <string name="ai_suggestions_accepted_notice">Guardada en Mi recetario</string>
     <string name="pinche_title">Pinche</string>
     <string name="pinche_you">Tú</string>
     <string name="pinche_greeting">Hola, soy el Pinche. Pregúntame lo que quieras de cocina.</string>
@@ -303,8 +304,8 @@
     <string name="pinche_proposal_ingredients">Ingredientes</string>
     <string name="pinche_proposal_steps">Pasos</string>
     <string name="pinche_proposal_missing">Te faltan</string>
-    <string name="pinche_save">Guardar en Mis Recetas</string>
-    <string name="pinche_saved">Guardada en Mis Recetas</string>
+    <string name="pinche_save">Guardar en Mi recetario</string>
+    <string name="pinche_saved">Guardada en Mi recetario</string>
     <string name="pinche_save_failed">No se pudo guardar la receta. Inténtalo de nuevo.</string>
     <string name="pinche_shopping_list_failed">No se pudieron añadir los faltantes a la Lista de la Compra. Inténtalo de nuevo.</string>
     <string name="pinche_timer_minutes">%1$d min</string>

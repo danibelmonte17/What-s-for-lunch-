@@ -278,7 +278,7 @@ class RecipeDetailE2ETest {
     }
 
     // S2 (RF-DR1): tap en el cuerpo de la tarjeta → Detalle; «Volver» regresa a
-    // Mis Recetas con la búsqueda conservada. Navegación completa con la app real.
+    // Mi recetario con la búsqueda conservada. Navegación completa con la app real.
     @Test
     fun tappingCardBodyOpensDetailAndBackKeepsSearch() {
         seedRoomRecipe(

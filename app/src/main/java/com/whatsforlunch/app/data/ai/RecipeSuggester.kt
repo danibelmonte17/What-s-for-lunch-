@@ -13,7 +13,7 @@ sealed interface RecipeSuggestionsResult {
 }
 
 // Receta que el prompt debe evitar por parecerse demasiado a lo que el usuario ya
-// tiene en Mis Recetas (D2 de aceptar-sugerencia-de-receta): solo título e
+// tiene en Mi recetario (D2 de aceptar-sugerencia-de-receta): solo título e
 // Ingredientes salen del dispositivo, nunca la Receta completa.
 data class RecipeAvoidance(
     val title: String,

@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-// Estado visible de Mis Recetas: el estado de la colección, las Recetas guardadas,
+// Estado visible de Mi recetario: el estado de la colección, las Recetas guardadas,
 // la búsqueda/filtro activos (momento y Favoritas) y el aviso de error de borrado.
 data class MyRecipesUiState(
     val state: MyRecipesState = MyRecipesState.Empty,
@@ -141,7 +141,7 @@ class MyRecipesViewModel(
     }
 }
 
-// Filtros activos de Mis Recetas agrupados para combinarlos en un solo flujo.
+// Filtros activos de Mi recetario agrupados para combinarlos en un solo flujo.
 private data class FilterState(
     val currentQuery: String,
     val appliedQuery: String,

@@ -1,10 +1,11 @@
 <resources>
     <string name="app_name">What\'s for Lunch?</string>
-    <string name="my_recipes_title">My Recipes</string>
-    <string name="my_recipes_empty_title">No recipes yet</string>
-    <string name="my_recipes_empty_message">Create your first recipe or scan your Pantry to get started.</string>
-    <string name="action_create_recipe">Create recipe</string>
-    <string name="action_scan_pantry">Scan your Pantry</string>
+    <string name="my_recipes_title">My recipe book</string>
+    <string name="my_recipes_tab_label">Recipe book</string>
+    <string name="my_recipes_empty_title">Your recipe book is empty</string>
+    <string name="my_recipes_empty_message">Start saving your favorite recipes or discover what to cook today with what you have at home.</string>
+    <string name="action_create_recipe">Create a recipe</string>
+    <string name="action_scan_pantry">Scan your Pantry with AI</string>
     <string name="action_back">Back</string>
     <string name="action_dismiss">Dismiss</string>
 
@@ -86,7 +87,7 @@
     <string name="pantry_empty_title">Your Pantry is empty</string>
     <string name="pantry_empty_message">Add the foods you have at home.</string>
 
-    <!-- My Recipes: cards -->
+    <!-- My recipe book: cards -->
     <string name="my_recipes_card_time">%1$d min</string>
     <string name="my_recipes_card_servings">%1$d servings</string>
     <string name="my_recipes_card_match">%1$d%%</string>
@@ -285,7 +286,7 @@
     <string name="ai_suggestions_discard">Discard</string>
     <string name="ai_suggestions_state_accepted">Accepted</string>
     <string name="ai_suggestions_state_discarded">Discarded</string>
-    <string name="ai_suggestions_accepted_notice">Saved to My Recipes</string>
+    <string name="ai_suggestions_accepted_notice">Saved to My recipe book</string>
     <string name="pinche_title">Pinche</string>
     <string name="pinche_you">You</string>
     <string name="pinche_greeting">Hi, I’m the Pinche. Ask me anything about cooking.</string>
@@ -303,8 +304,8 @@
     <string name="pinche_proposal_ingredients">Ingredients</string>
     <string name="pinche_proposal_steps">Steps</string>
     <string name="pinche_proposal_missing">You’re missing</string>
-    <string name="pinche_save">Save to My Recipes</string>
-    <string name="pinche_saved">Saved to My Recipes</string>
+    <string name="pinche_save">Save to My recipe book</string>
+    <string name="pinche_saved">Saved to My recipe book</string>
     <string name="pinche_save_failed">The recipe couldn’t be saved. Please try again.</string>
     <string name="pinche_shopping_list_failed">The missing items couldn’t be added to the Shopping List. Please try again.</string>
     <string name="pinche_timer_minutes">%1$d min</string>

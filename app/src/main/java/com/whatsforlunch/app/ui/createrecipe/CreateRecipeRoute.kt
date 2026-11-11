@@ -35,7 +35,7 @@ fun CreateRecipeRoute(
         if (photoAcquirer != null) viewModel.setPhotoAcquirer(photoAcquirer)
     }
     // RF-1, RF-2: precarga la Receta a editar; RF-18: si no existe, se vuelve a Mis
-    // Recetas sin abrir el formulario. RF-17: al guardar, se vuelve a Mis Recetas.
+    // Recetas sin abrir el formulario. RF-17: al guardar, se vuelve a Mi recetario.
     LaunchedEffect(recipeId) { viewModel.loadRecipe(recipeId) }
     LaunchedEffect(uiState.saved, uiState.recipeMissing) {
         if (uiState.saved || uiState.recipeMissing) onDone()
