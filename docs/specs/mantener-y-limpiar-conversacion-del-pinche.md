@@ -152,15 +152,15 @@ Then «Mi perfil» conserva lo guardado y el Pinche retoma la entrevista solo po
 
 ## Implementation Tasks
 
-- [ ] Añadir `clearConversation()` con cancelación del `Job` en curso y reset total a `PincheUiState()` (D9).
-- [ ] Guardia de generación en `onContent`, `onSuccess` y `onUnavailable` (D10).
-- [ ] Unit: limpiar restablece el estado inicial (mensajes, entrada, avisos, streaming, lastUserText).
-- [ ] Unit: limpiar con petición en curso cancela y descarta fragmentos/resultados tardíos (S4).
-- [ ] Anclar `PincheViewModel` a la Activity en `PincheRoute` (D8).
-- [ ] `PincheScreen`: `IconButton` (`Icons.Outlined.DeleteSweep`) en `TopAppBar.actions`, visible solo con `messages.isNotEmpty()` (D7), con `pinche_clear_conversation` es/en y tag `pinche_clear_conversation` (D11).
-- [ ] `PincheConversationE2ETest` con app real + `FakePincheChatClient` en Koin: S1 (navegación), S2 (limpiar y conversar), S3 (es/en + visibilidad) y S5 (perfil intacto y entrevista retomada).
-- [ ] Actualizar docs durables y registrar `Q-mantener-y-limpiar-conversacion-del-pinche-1..5`.
-- [ ] Gates: `init.ps1`, `lintDebug`, `testDebugUnitTest`, `assembleDebug`, `compileDebugAndroidTestKotlin`, paridad es/en y batería E2E.
+- [x] Añadir `clearConversation()` con cancelación del `Job` en curso y reset total a `PincheUiState()` (D9).
+- [x] Guardia de generación en `onContent`, `onSuccess` y `onUnavailable` (D10).
+- [x] Unit: limpiar restablece el estado inicial (mensajes, entrada, avisos, streaming, lastUserText).
+- [x] Unit: limpiar con petición en curso cancela y descarta fragmentos/resultados tardíos (S4).
+- [x] Anclar `PincheViewModel` a la Activity en `PincheRoute` (D8).
+- [x] `PincheScreen`: `IconButton` (`Icons.Outlined.DeleteSweep`) en `TopAppBar.actions`, visible solo con `messages.isNotEmpty()` (D7), con `pinche_clear_conversation` es/en y tag `pinche_clear_conversation` (D11).
+- [x] `PincheConversationE2ETest` con app real + `FakePincheChatClient` en Koin: S1 (navegación), S2 (limpiar y conversar), S3 (es/en + visibilidad) y S5 (perfil intacto y entrevista retomada).
+- [x] Actualizar docs durables y registrar `Q-mantener-y-limpiar-conversacion-del-pinche-1..5`.
+- [x] Gates: `init.ps1`, `lintDebug`, `testDebugUnitTest`, `assembleDebug`, `compileDebugAndroidTestKotlin`, paridad es/en y batería E2E.
 
 ## Verification Plan
 

@@ -66,6 +66,18 @@ El XML de esta pasada fue sobrescrito por la batería posterior; el recuento (ra
 2. **`emulator-5558` (Pixel_8_Pro)**: en los intentos 1 y 2 de la batería otra sesión instaló/desinstaló el paquete a mitad de la ejecución (detalle arriba). Decisión del usuario: usar **Pixel_10_Pro**.
 3. **`emulator-5554` (Pixel_10_Pro)**: el primer arranque quedó con un photopicker zombi reteniendo el foco y el `monkey` de `init.ps1` no lograba traer la app (el `pidof` de la verificación salía vacío; `am start` explícito sí la levantaba). Tras `adb reboot` el emulador se quedó sin responder adbd → proceso eliminado y AVD relanzado de cero; el segundo arranque pasó `init.ps1` con exit 0.
 
+## Capturas (L1 del validador, obtenidas el 2026-11-11 sobre el emulador con `adb` + `uiautomator`)
+
+Todas PNG válidas **1280×2856** en este directorio:
+
+- `captura-01-conversacion-con-boton-limpiar-es.png` — conversación en español con el botón «Limpiar conversación» visible en la top bar (chip de sugerencia enviada → aviso de key ausente + mensaje estático de partes pendientes).
+- `captura-02-estado-inicial-tras-limpiar-es.png` — tras pulsar el botón: saludo + chips de nuevo, sin mensajes ni botón (estado inicial, D4/D7).
+- `captura-03-conversacion-con-boton-limpiar-en.png` — la misma pantalla en inglés (idioma cambiado en Ajustes) con el botón en `Clear conversation`; el idioma se restauró a español después.
+
+## Validación independiente (feature-validator con subagente, 2026-11-11): `accept`
+
+Informe en `docs/validations/mantener-y-limpiar-conversacion-del-pinche.md`. Tier barato **re-ejecutado por el validador**: `init.ps1` exit 0, `lintDebug --rerun-tasks` 0/0, `testDebugUnitTest --rerun-tasks` 47/377/0, `assembleDebug` + `compileDebugAndroidTestKotlin` OK, paridad 342/342 + 5/5 plurals, inventario `@Test` = 256 y **E2E focalizada re-ejecutada 34/34** en `emulator-5554`. Tier caro **inspeccionado** (log de batería + recuentos del informe + XML aislado posterior sin deriva). **0 Critical/High/Medium; 3 Low**: L1 (capturas PNG — cerrado con las 3 de arriba), L2 (tareas de la spec sin marcar — cerrado: `[x]`) y L3 (XML crudos de batería/focalizada sobrescritos por reruns — patrón N1 conocido; log + informe son la evidencia). Seguridad sin hallazgos (sin secretos/permisos/dependencias, E2E con fakes y 0 llamadas de pago).
+
 ## Pendientes / huecos declarados
 
 - **S4 (limpiar con petición en curso)**: cubierta por unit con gates (`CompletableDeferred`) y proveedor no cooperativo; sin E2E — la spec lo declara así por determinismo (los gates de streaming ya viven en el `FakePincheChatClient` de `PincheE2ETest` si el validador quiere ampliarla).
