@@ -219,39 +219,47 @@ fun MyRecipesScreen(
             )
         },
         floatingActionButton = {
-            // RF-MOB3 (D3): los dos FABs aparecen juntos y solo cuando hay Recetas,
-            // con «Recetas con mi Despensa» apilado encima del de cámara.
-            if (uiState.recipes.isNotEmpty()) {
+            // RF-MOB3 (D3, enmienda del usuario 2026-11-11): «Recetas con mi
+            // Despensa» aparece solo con Datos en la Despensa y el de cámara solo
+            // con Recetas; cuando coinciden, siguen apilados con «Recetas con mi
+            // Despensa» encima del de cámara.
+            val showPantryRecipes = uiState.hasFoods
+            val showCamera = uiState.recipes.isNotEmpty()
+            if (showPantryRecipes || showCamera) {
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(WarmSpacing.md),
                 ) {
-                    FloatingActionButton(
-                        onClick = onOpenPantryRecipes,
-                        modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES),
-                        shape = CircleShape,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.MenuBook,
-                            contentDescription = stringResource(R.string.recommendations_open_accessibility),
-                        )
+                    if (showPantryRecipes) {
+                        FloatingActionButton(
+                            onClick = onOpenPantryRecipes,
+                            modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES),
+                            shape = CircleShape,
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                                contentDescription = stringResource(R.string.recommendations_open_accessibility),
+                            )
+                        }
                     }
-                    FloatingActionButton(
-                        onClick = onScanPantry,
-                        modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB)
-                            // Pulsación larga: en vez de abrir la cámara, elige una
-                            // foto de la galería y la analiza con la IA.
-                            .longPressToGallery(onGalleryRequested = onScanPantryFromGallery),
-                        shape = CircleShape,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.PhotoCamera,
-                            contentDescription = stringResource(R.string.action_scan_pantry),
-                        )
+                    if (showCamera) {
+                        FloatingActionButton(
+                            onClick = onScanPantry,
+                            modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB)
+                                // Pulsación larga: en vez de abrir la cámara, elige una
+                                // foto de la galería y la analiza con la IA.
+                                .longPressToGallery(onGalleryRequested = onScanPantryFromGallery),
+                            shape = CircleShape,
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.PhotoCamera,
+                                contentDescription = stringResource(R.string.action_scan_pantry),
+                            )
+                        }
                     }
                 }
             }

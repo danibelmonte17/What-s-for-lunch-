@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -85,7 +86,6 @@ import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroupMode
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import com.whatsforlunch.app.domain.shoppinglist.aisleKey
-import com.whatsforlunch.app.ui.components.SkilletIcon
 import com.whatsforlunch.app.ui.components.UnitDropdown
 import com.whatsforlunch.app.ui.components.unitLabel
 import com.whatsforlunch.app.ui.recipedetail.formatQuantity
@@ -651,7 +651,7 @@ private fun OriginBadge(item: ShoppingListItem) {
             horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
         ) {
             Icon(
-                imageVector = SkilletIcon,
+                imageVector = Icons.Outlined.ShoppingCart,
                 contentDescription = null,
                 modifier = Modifier.size(14.dp),
             )
@@ -686,7 +686,7 @@ private fun EmptyShoppingList(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = SkilletIcon,
+                imageVector = Icons.Outlined.ShoppingCart,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(36.dp),
