@@ -178,7 +178,7 @@ class PincheE2ETest {
         val showPinche = mutableStateOf(true)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val localeContext = baseContext.createConfigurationContext(configuration)
 
@@ -380,7 +380,7 @@ class PincheE2ETest {
         val showPinche = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val localeContext = baseContext.createConfigurationContext(configuration)
 
@@ -518,7 +518,7 @@ class PincheE2ETest {
         val pincheViewModel = viewModel(profile = profile, client = client)
         val myProfileViewModel = MyProfileViewModel(profile)
         val showProfile = mutableStateOf(false)
-        val localeContext = localizedContext(Locale("es", "ES"))
+        val localeContext = localizedContext(Locale.forLanguageTag("es-ES"))
 
         composeRule.setContent {
             val pincheState by pincheViewModel.uiState.collectAsState()
@@ -839,7 +839,7 @@ class PincheE2ETest {
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         recipes: RecipeRepository = InMemoryRecipeRepository(),
         client: FakePincheChatClient = FakePincheChatClient(emptyList()),
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onOpenSettings: () -> Unit = {},
         onOpenProfile: () -> Unit = {},
         profile: UserProfileRepository = completeProfileRepository(),
@@ -867,7 +867,7 @@ class PincheE2ETest {
 
     private fun launch(
         viewModel: PincheViewModel,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onOpenSettings: () -> Unit = {},
         onOpenProfile: () -> Unit = {},
     ) {

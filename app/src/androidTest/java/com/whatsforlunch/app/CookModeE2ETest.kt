@@ -303,7 +303,7 @@ class CookModeE2ETest {
         recipes: InMemoryRecipeRepository,
         recipeId: String,
         servings: Int?,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onBack: () -> Unit = {},
         onFinish: () -> Unit = {},
     ) {
@@ -352,7 +352,7 @@ class CookModeE2ETest {
     }
 
     private fun launchFullApp() {
-        val context = contextFor(Locale("es", "ES"))
+        val context = contextFor(Locale.forLanguageTag("es-ES"))
         composeRule.setContent {
             CompositionLocalProvider(
                 LocalContext provides context,

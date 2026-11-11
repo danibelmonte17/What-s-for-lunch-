@@ -295,7 +295,7 @@ class AiSuggestionsE2ETest {
         val showSuggestions = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val localeContext = baseContext.createConfigurationContext(configuration)
 
@@ -408,7 +408,7 @@ class AiSuggestionsE2ETest {
         val showMyRecipes = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val localeContext = baseContext.createConfigurationContext(configuration)
 
@@ -685,7 +685,7 @@ class AiSuggestionsE2ETest {
         holder: ScanDraftHolder = ScanDraftHolder(),
         suggester: RecipeSuggester = FakeRecipeSuggester(emptyList()),
         recipes: InMemoryRecipeRepository = InMemoryRecipeRepository(),
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onOpenSettings: () -> Unit = {},
     ): AiSuggestionsViewModel {
         val viewModel = AiSuggestionsViewModel(pantry, holder, suggester, recipes)

@@ -17,7 +17,7 @@ class AppLocaleControllerTest {
         )
         assertEquals(
             AppLanguage.SPANISH,
-            AppLocaleController(InMemoryLanguagePreferenceStore(), Locale("es", "ES")).language.value,
+            AppLocaleController(InMemoryLanguagePreferenceStore(), Locale.forLanguageTag("es-ES")).language.value,
         )
     }
 
@@ -28,14 +28,14 @@ class AppLocaleControllerTest {
 
         assertEquals(
             AppLanguage.ENGLISH,
-            AppLocaleController(store, Locale("es", "ES")).language.value,
+            AppLocaleController(store, Locale.forLanguageTag("es-ES")).language.value,
         )
     }
 
     @Test
     fun selectPersistsAndEmitsImmediately() {
         val store = InMemoryLanguagePreferenceStore()
-        val controller = AppLocaleController(store, Locale("es", "ES"))
+        val controller = AppLocaleController(store, Locale.forLanguageTag("es-ES"))
 
         controller.select(AppLanguage.ENGLISH)
 

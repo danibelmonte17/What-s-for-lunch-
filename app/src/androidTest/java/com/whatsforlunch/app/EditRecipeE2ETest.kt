@@ -133,7 +133,7 @@ class EditRecipeE2ETest {
         recipeId: String,
         onDone: () -> Unit = {},
         photoAcquirer: PhotoAcquirer = EditPhotoAcquirer(),
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
     ): CreateRecipeViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
@@ -489,7 +489,7 @@ class EditRecipeE2ETest {
 
     private fun showCards(
         recipe: Recipe,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onEditRecipe: (String) -> Unit,
     ) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext

@@ -77,7 +77,7 @@ class DeleteRecipeE2ETest {
 
     private fun launchScreen(
         repository: RecipeRepository,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
     ): MyRecipesViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }

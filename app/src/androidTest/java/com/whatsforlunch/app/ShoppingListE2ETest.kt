@@ -756,7 +756,7 @@ class ShoppingListE2ETest {
         selectUnit("ml")
         composeRule.onNodeWithTag(ShoppingListTestTags.SAVE_ITEM).performClick()
 
-        val expectedLine = "Leche (${formatQuantity(1500.0, Locale("es", "ES"))} ml)"
+        val expectedLine = "Leche (${formatQuantity(1500.0, Locale.forLanguageTag("es-ES"))} ml)"
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText(expectedLine).fetchSemanticsNodes().isNotEmpty()
         }
@@ -1219,7 +1219,7 @@ class ShoppingListE2ETest {
     private fun launchFullApp() {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val context = baseContext.createConfigurationContext(configuration)
         composeRule.setContent {
@@ -1302,7 +1302,7 @@ class ShoppingListE2ETest {
     private fun launchShoppingList(viewModel: ShoppingListViewModel) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val context = baseContext.createConfigurationContext(configuration)
         composeRule.setContent {
@@ -1335,7 +1335,7 @@ class ShoppingListE2ETest {
     private fun launchPinche(viewModel: PincheViewModel) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val context = baseContext.createConfigurationContext(configuration)
         composeRule.setContent {

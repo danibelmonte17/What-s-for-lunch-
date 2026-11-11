@@ -423,7 +423,7 @@ class LanguageSwitchE2ETest {
     }
 
     private companion object {
-        val SPANISH_SYSTEM: Locale = Locale("es", "ES")
+        val SPANISH_SYSTEM: Locale = Locale.forLanguageTag("es-ES")
         const val VOICE_RECIPE_ID = "tortilla"
     }
 }

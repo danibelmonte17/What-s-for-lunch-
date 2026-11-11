@@ -68,7 +68,7 @@ class MyProfileE2ETest {
     // quedan como chips; «Editar» habilita el borrado y borrar la hace desaparecer.
     @Test
     fun chipsAreAddedAndDeletedOnlyInEditMode() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openProfileTab()
 
         composeRule.onNodeWithTag(MyProfileTestTags.INPUT_ALLERGIES).performTextInput("Frutos secos")
@@ -110,7 +110,7 @@ class MyProfileE2ETest {
     // el valor persistido es ese.
     @Test
     fun dietTypeIsSingleSelectionAndPersisted() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openProfileTab()
 
         composeRule.onNodeWithTag(MyProfileTestTags.dietOption(DietType.VEGAN)).performScrollTo().performClick()
@@ -127,7 +127,7 @@ class MyProfileE2ETest {
     // desmarcarla devuelve el alta.
     @Test
     fun noneOptionClearsTheSectionAndBlocksAdding() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openProfileTab()
 
         composeRule.onNodeWithTag(MyProfileTestTags.INPUT_ALLERGIES).performTextInput("Frutos secos")
@@ -164,7 +164,7 @@ class MyProfileE2ETest {
             listOf(module { single<PincheChatClient> { MissingKeyPincheChatClient() } }),
             allowOverride = true,
         )
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
 
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PINCHE).performClick()
         composeRule.onNodeWithTag(PincheTestTags.COMPOSER).performTextInput("Dame una receta")
@@ -194,7 +194,7 @@ class MyProfileE2ETest {
     // verify 6 (S6): los textos nuevos existen en español e inglés con paridad.
     @Test
     fun screenTextsAreLocalizedInSpanish() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openProfileTab()
 
         // «Mi perfil» y «No tengo ninguna» aparecen más de una vez (pestaña/título
@@ -225,7 +225,7 @@ class MyProfileE2ETest {
     // estado vuelve a leerse desde el repositorio.
     @Test
     fun profilePersistsInRoomAfterReopeningTheScreen() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openProfileTab()
 
         composeRule.onNodeWithTag(MyProfileTestTags.INPUT_ALLERGIES).performTextInput("Frutos secos")

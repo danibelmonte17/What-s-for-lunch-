@@ -512,7 +512,7 @@ class RecipeDetailE2ETest {
         .let { baseContext ->
             baseContext.createConfigurationContext(
                 Configuration(baseContext.resources.configuration).apply {
-                    setLocale(Locale("es", "ES"))
+                    setLocale(Locale.forLanguageTag("es-ES"))
                 },
             )
         }
@@ -552,7 +552,7 @@ class RecipeDetailE2ETest {
     private fun launchFullApp() {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         val context = baseContext.createConfigurationContext(configuration)
         composeRule.setContent {

@@ -13,7 +13,7 @@ class AppLanguageTest {
     fun fromSystemSelectsEnglishOnlyForEnglishSystem() {
         assertEquals(AppLanguage.ENGLISH, AppLanguage.fromSystem(Locale.ENGLISH))
         assertEquals(AppLanguage.ENGLISH, AppLanguage.fromSystem(Locale.US))
-        assertEquals(AppLanguage.SPANISH, AppLanguage.fromSystem(Locale("es", "ES")))
+        assertEquals(AppLanguage.SPANISH, AppLanguage.fromSystem(Locale.forLanguageTag("es-ES")))
         assertEquals(AppLanguage.SPANISH, AppLanguage.fromSystem(Locale.FRANCE))
     }
 

@@ -80,7 +80,7 @@ class MatchBadgeE2ETest {
         val viewModel = MyRecipesViewModel(recipes, pantry)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val spanishContext = baseContext.createConfigurationContext(
-            Configuration(baseContext.resources.configuration).apply { setLocale(java.util.Locale("es", "ES")) },
+            Configuration(baseContext.resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag("es-ES")) },
         )
         composeRule.setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()

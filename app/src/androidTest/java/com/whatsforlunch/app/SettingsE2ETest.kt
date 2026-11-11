@@ -113,7 +113,7 @@ class SettingsE2ETest {
 
     @Test
     fun settingsOpensFromMyRecipesAndShowsPrivacyNotice() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openSettings()
 
         assertExpectedStatus()
@@ -127,7 +127,7 @@ class SettingsE2ETest {
     @Test
     fun savedKeyMarksConfiguredAndNeverRevealsTheKeyWhenReturning() {
         assumeFalse(buildKeyActive)
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openSettings()
         saveKey()
         assertFieldIsEmpty()
@@ -145,7 +145,7 @@ class SettingsE2ETest {
     @Test
     fun deletingTheKeyAsksToConfigureItAgainForAiFeatures() {
         assumeFalse(buildKeyActive)
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openSettings()
         saveKey()
 
@@ -196,7 +196,7 @@ class SettingsE2ETest {
     @Test
     fun buildProvidedKeyShowsConfiguredNoteAndHidesDelete() {
         assumeTrue(buildKeyActive)
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         openSettings()
 
         composeRule.onNodeWithTag(SettingsTestTags.STATUS)

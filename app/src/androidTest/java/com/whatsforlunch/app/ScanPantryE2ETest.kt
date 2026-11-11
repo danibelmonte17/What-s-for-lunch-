@@ -593,7 +593,7 @@ class ScanPantryE2ETest {
         analyzerResults: List<ScanAnalysisResult> = listOf(ScanAnalysisResult.Success(emptyList())),
         existing: List<PantryItem> = emptyList(),
         permissionGranted: Boolean = true,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
     ) {
         repository = InMemoryPantryRepository()
         runBlocking { existing.forEach { repository.savePantryItem(it) } }

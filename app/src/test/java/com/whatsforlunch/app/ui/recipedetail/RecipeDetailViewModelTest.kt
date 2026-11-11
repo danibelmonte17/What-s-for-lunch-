@@ -189,10 +189,10 @@ class RecipeDetailViewModelTest {
     @Test
     fun quantityFormatUsesActiveLocaleWithoutTrailingZeros() {
         // D7: separador decimal del idioma activo, sin ceros sobrantes.
-        assertEquals("0,5", formatQuantity(0.5, Locale("es", "ES")))
+        assertEquals("0,5", formatQuantity(0.5, Locale.forLanguageTag("es-ES")))
         assertEquals("0.5", formatQuantity(0.5, Locale.ENGLISH))
-        assertEquals("2", formatQuantity(2.0, Locale("es", "ES")))
-        assertEquals("0,25", formatQuantity(0.25, Locale("es", "ES")))
+        assertEquals("2", formatQuantity(2.0, Locale.forLanguageTag("es-ES")))
+        assertEquals("0,25", formatQuantity(0.25, Locale.forLanguageTag("es-ES")))
     }
 
     // RF-ER1/RF-ER2 y RD03: el Detalle arranca en las Raciones base y las filas

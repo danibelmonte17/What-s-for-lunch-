@@ -141,7 +141,7 @@ class ShoppingListManualItemTest {
     @Test
     fun editableQuantityRoundTripsThroughParsingInEsAndEn() {
         val quantities = listOf(1200.0, 1234.5, 0.1234)
-        for (locale in listOf(Locale("es", "ES"), Locale.ENGLISH)) {
+        for (locale in listOf(Locale.forLanguageTag("es-ES"), Locale.ENGLISH)) {
             for (quantity in quantities) {
                 val text = formatEditableQuantity(quantity, locale)
                 assertEquals(
@@ -156,9 +156,9 @@ class ShoppingListManualItemTest {
 
     @Test
     fun editableQuantityHasNoThousandsGroupingAndKeepsAllDecimals() {
-        assertEquals("1200", formatEditableQuantity(1200.0, Locale("es", "ES")))
-        assertEquals("1234,5", formatEditableQuantity(1234.5, Locale("es", "ES")))
-        assertEquals("0,1234", formatEditableQuantity(0.1234, Locale("es", "ES")))
+        assertEquals("1200", formatEditableQuantity(1200.0, Locale.forLanguageTag("es-ES")))
+        assertEquals("1234,5", formatEditableQuantity(1234.5, Locale.forLanguageTag("es-ES")))
+        assertEquals("0,1234", formatEditableQuantity(0.1234, Locale.forLanguageTag("es-ES")))
         assertEquals("1234.5", formatEditableQuantity(1234.5, Locale.ENGLISH))
         assertEquals("0.1234", formatEditableQuantity(0.1234, Locale.ENGLISH))
     }

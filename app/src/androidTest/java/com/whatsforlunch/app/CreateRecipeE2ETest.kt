@@ -130,7 +130,7 @@ class CreateRecipeE2ETest {
     private fun launchForm(
         repository: RecipeRepository = InMemoryRecipeRepository(),
         photoAcquirer: PhotoAcquirer = FakePhotoAcquirer(),
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
     ): RecipeRepository {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply { setLocale(locale) }
@@ -749,7 +749,7 @@ class MyRecipesCardsE2ETest {
     private fun showCards(recipes: List<Recipe>) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
-            setLocale(Locale("es", "ES"))
+            setLocale(Locale.forLanguageTag("es-ES"))
         }
         cardsContext = baseContext.createConfigurationContext(configuration)
         composeRule.setContent {

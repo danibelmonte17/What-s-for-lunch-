@@ -281,7 +281,7 @@ class PantryRecipesE2ETest {
     private fun launchRecommendations(
         recipes: InMemoryRecipeRepository,
         pantry: InMemoryPantryRepository,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         detailRecipeId: String? = null,
     ) {
         val viewModel = RecommendationsViewModel(pantry, recipes, InMemoryShoppingListRepository())

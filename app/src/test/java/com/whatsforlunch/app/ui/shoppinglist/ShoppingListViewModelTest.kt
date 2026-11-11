@@ -179,7 +179,7 @@ class ShoppingListViewModelTest {
 
         for (quantity in listOf(1200.0, 1234.5, 0.1234)) {
             viewModel.editItem(ShoppingListRules.itemIdFor("Azafrán"))
-            val quantityText = formatEditableQuantity(quantity, Locale("es", "ES"))
+            val quantityText = formatEditableQuantity(quantity, Locale.forLanguageTag("es-ES"))
             viewModel.saveManualItem(
                 name = "Azafrán",
                 quantity = ShoppingListRules.parseManualQuantity(quantityText),

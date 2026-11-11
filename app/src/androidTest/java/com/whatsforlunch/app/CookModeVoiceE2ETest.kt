@@ -193,7 +193,7 @@ class CookModeVoiceE2ETest {
 
         launchVoiceCookMode(recipes) {
             if (microphoneGranted) {
-                viewModel.onVoiceEnabled(Locale("es", "ES"))
+                viewModel.onVoiceEnabled(Locale.forLanguageTag("es-ES"))
             } else {
                 viewModel.onVoicePermissionDenied()
             }
@@ -292,7 +292,7 @@ class CookModeVoiceE2ETest {
     // handler para simular la denegación y el reintento (S7).
     private fun launchVoiceCookMode(
         recipes: InMemoryRecipeRepository,
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onVoiceToggle: (() -> Unit)? = null,
     ) {
         val context = contextFor(locale)

@@ -52,7 +52,7 @@ import com.whatsforlunch.app.ui.shoppinglist.ShoppingListViewModel
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 // Módulos Koin del scaffold (Q-arrancar-app-en-mis-recetas-4), ampliados para la

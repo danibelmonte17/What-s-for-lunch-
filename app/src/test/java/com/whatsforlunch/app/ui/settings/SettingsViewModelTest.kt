@@ -176,7 +176,7 @@ class SettingsViewModelTest {
         selected: AppLanguage? = null,
     ): AppLocaleController {
         selected?.let { store.select(it) }
-        return AppLocaleController(store, systemLocale = Locale("es", "ES"))
+        return AppLocaleController(store, systemLocale = Locale.forLanguageTag("es-ES"))
     }
 
     private class FakeAiKeyStore(var storedKey: String? = null) : AiKeyStore {

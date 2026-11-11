@@ -295,7 +295,7 @@ class CookModeTimerE2ETest {
     private fun launchTimerCookMode(
         recipes: InMemoryRecipeRepository,
         recipeId: String = "tortilla",
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
     ) {
         val context = contextFor(locale)
         val alarm = SystemRingtoneTimerAlarm(context)

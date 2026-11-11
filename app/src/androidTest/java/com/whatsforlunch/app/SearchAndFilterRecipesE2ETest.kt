@@ -53,7 +53,7 @@ class SearchAndFilterRecipesE2ETest {
 
     private fun launchScreen(
         repository: InMemoryRecipeRepository = repositoryWithRecipes(),
-        locale: Locale = Locale("es", "ES"),
+        locale: Locale = Locale.forLanguageTag("es-ES"),
         onScanPantry: () -> Unit = {},
     ): MyRecipesViewModel {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
@@ -222,7 +222,7 @@ class SearchAndFilterRecipesE2ETest {
 
     @Test
     fun searchTextsFollowTheEnglishLocale() {
-        launchScreen(locale = Locale("en", "US"))
+        launchScreen(locale = Locale.forLanguageTag("en-US"))
         waitForRecipeCount(3)
         composeRule.onNodeWithText(text(R.string.my_recipes_search_hint)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.my_recipes_filter_all)).assertIsDisplayed()
@@ -232,7 +232,7 @@ class SearchAndFilterRecipesE2ETest {
 
     @Test
     fun emptyStateTextFollowsTheSpanishLocale() {
-        launchScreen(repository = InMemoryRecipeRepository(), locale = Locale("es", "ES"))
+        launchScreen(repository = InMemoryRecipeRepository(), locale = Locale.forLanguageTag("es-ES"))
         composeRule.onNodeWithText(text(R.string.my_recipes_empty_title)).assertIsDisplayed()
     }
 

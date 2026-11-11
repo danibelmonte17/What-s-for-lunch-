@@ -75,7 +75,7 @@ class MyRecipesLocalizationE2ETest {
 
     @Test
     fun spanishEmptyStateShowsSpanishTexts() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         composeRule.onNodeWithTag(MyRecipesTestTags.TOP_BAR_TITLE).assertTextEquals("Mi recetario")
         composeRule.onNodeWithText("Tu recetario está vacío").assertIsDisplayed()
         composeRule.onNodeWithText("Comienza a guardar tus recetas favoritas o descubre qué cocinar hoy según lo que tengas en casa.")
@@ -97,7 +97,7 @@ class MyRecipesLocalizationE2ETest {
 
     @Test
     fun unsupportedLocaleFallsBackToSpanish() {
-        showApp(Locale("fr", "FR"))
+        showApp(Locale.forLanguageTag("fr-FR"))
         composeRule.onNodeWithText("Tu recetario está vacío").assertIsDisplayed()
         composeRule.onNodeWithText("Crear una receta").assertIsDisplayed()
         composeRule.onNodeWithText("Escanear despensa con IA").assertIsDisplayed()
@@ -105,7 +105,7 @@ class MyRecipesLocalizationE2ETest {
 
     @Test
     fun createRecipeOpensFormAndReturns() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         composeRule.onNodeWithTag(MyRecipesTestTags.CREATE_RECIPE).performClick()
         composeRule.onNodeWithTag(CreateRecipeTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Crear receta").assertIsDisplayed()
@@ -116,7 +116,7 @@ class MyRecipesLocalizationE2ETest {
 
     @Test
     fun scanPantryOpensProvisionalScannerAndReturns() {
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY).performClick()
         composeRule.onNodeWithTag(ScannerTestTags.SCREEN).assertIsDisplayed()
         composeRule.onNodeWithText("Escáner de la Despensa").assertIsDisplayed()
@@ -155,7 +155,7 @@ class MyRecipesLocalizationE2ETest {
     @Test
     fun spanishBottomBarAndFabsShowSpanishTexts() {
         seedRecipe()
-        showApp(Locale("es", "ES"))
+        showApp(Locale.forLanguageTag("es-ES"))
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).assertTextEquals("Recetario")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).assertTextEquals("Despensa")
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST).assertTextEquals("Lista de la Compra")

@@ -71,11 +71,13 @@ class InMemoryShoppingListRepository : ShoppingListRepository {
         }
     }
 
-    override suspend fun restoreItems(restored: List<ShoppingListItem>) {
-        if (restored.isEmpty()) return
+    override suspend fun restoreItems(items: List<ShoppingListItem>) {
+        if (items.isEmpty()) return
         mutex.withLock {
-            val restoredIds = restored.mapTo(mutableSetOf()) { it.id }
-            items.value = items.value.filterNot { it.id in restoredIds } + restored
+            val restoredIds = items.mapTo(mutableSetOf()) { it.id }
+            // `items` es el parámetro (sombrea la propiedad); la propiedad se
+            // referencia con `this.` explícito.
+            this.items.value = this.items.value.filterNot { it.id in restoredIds } + items
         }
     }
 }
