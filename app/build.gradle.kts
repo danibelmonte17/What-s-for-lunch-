@@ -19,7 +19,7 @@ fun buildConfigString(value: String): String =
 
 android {
     namespace = "com.whatsforlunch.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.whatsforlunch.app"

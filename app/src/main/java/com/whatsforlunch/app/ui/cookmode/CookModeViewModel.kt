@@ -301,7 +301,6 @@ class CookModeViewModel(
         voiceCommandSource.release()
         stepSpeaker.release()
         discardTimer()
-        super.onCleared()
     }
 
     private fun handleHeard(text: String) {
