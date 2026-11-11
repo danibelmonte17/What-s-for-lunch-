@@ -67,7 +67,7 @@ class BottomBarE2ETest {
             .assertTextEquals(localized(R.string.my_recipes_tab_label))
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY)
             .assertIsDisplayed()
-            .assertTextEquals(localized(R.string.pantry_title))
+            .assertTextEquals(localized(R.string.pantry_tab_label))
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST)
             .assertIsDisplayed()
             .assertTextEquals(localized(R.string.shopping_list_title))

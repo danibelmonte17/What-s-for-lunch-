@@ -36,9 +36,9 @@ object AppBottomBarTestTags {
 }
 
 // Pestañas de la barra inferior en su orden (RF-MOB1, D2/D7/D8): las etiquetas
-// reutilizan las claves de título de cada pantalla («Mi recetario» abre con su
-// etiqueta corta «Recetario») y la quinta pestaña («Mi perfil») la añade
-// `crear-mi-perfil` al final, tras Pinche (D4).
+// son claves cortas propias de cada pantalla («Recetario» para «Mi recetario»;
+// «Despensa» para «Mi Despensa» desde `redisenar-vista-de-la-despensa`, D17) y la
+// quinta pestaña («Mi perfil») la añade `crear-mi-perfil` al final, tras Pinche (D4).
 enum class AppTab(
     val route: String,
     @param:StringRes val labelRes: Int,
@@ -53,7 +53,7 @@ enum class AppTab(
     ),
     PANTRY(
         route = AppRoutes.PANTRY,
-        labelRes = R.string.pantry_title,
+        labelRes = R.string.pantry_tab_label,
         icon = Icons.Outlined.Inventory2,
         testTag = AppBottomBarTestTags.TAB_PANTRY,
     ),

@@ -13,4 +13,6 @@ data class PantryItemEntity(
     val name: String,
     val normalizedName: String,
     val quantity: Double?,
+    // epochDay de la fecha de caducidad opcional; NULL = sin fecha (RD28, v8).
+    val expiryDate: Long?,
 )

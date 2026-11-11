@@ -8,6 +8,7 @@ import com.whatsforlunch.app.domain.pantry.PantryItemValidation
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
 import com.whatsforlunch.app.domain.text.normalizeName
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -35,10 +36,11 @@ class RoomPantryRepository(private val dao: PantryItemDao) : PantryRepository {
             name = item.name.trim(),
             normalizedName = normalizedName,
             quantity = item.quantity?.toDouble(),
+            expiryDate = item.expiryDate?.toEpochDay(),
         )
         try {
             if (existingItem != null) {
-                dao.update(entity.id, entity.name, entity.normalizedName, entity.quantity)
+                dao.update(entity.id, entity.name, entity.normalizedName, entity.quantity, entity.expiryDate)
             } else {
                 dao.insert(entity)
             }
@@ -57,4 +59,5 @@ private fun PantryItemEntity.toDomain() = PantryItem(
     id = id,
     name = name,
     quantity = quantity?.roundToInt()?.coerceIn(PantryItemValidation.MIN_QUANTITY, PantryItemValidation.MAX_QUANTITY),
+    expiryDate = expiryDate?.let(LocalDate::ofEpochDay),
 )

@@ -66,7 +66,50 @@
     </plurals>
 
     <!-- Pantry -->
-    <string name="pantry_title">Pantry</string>
+    <string name="pantry_title">My Pantry</string>
+    <string name="pantry_tab_label">Pantry</string>
+    <string name="pantry_section_subtitle">Ingredients registered at home</string>
+    <plurals name="pantry_fresh_count">
+        <item quantity="one">%1$d fresh food</item>
+        <item quantity="other">%1$d fresh foods</item>
+    </plurals>
+    <plurals name="pantry_food_count">
+        <item quantity="one">%1$d food</item>
+        <item quantity="other">%1$d foods</item>
+    </plurals>
+    <plurals name="pantry_expiring_count">
+        <item quantity="one">%1$d expiring</item>
+        <item quantity="other">%1$d expiring</item>
+    </plurals>
+    <string name="pantry_summary_capacity">Estimated capacity at %1$d%%</string>
+    <string name="pantry_tip_label">Cooking tip:</string>
+    <string name="pantry_tip_one">You have %1$s ready to use soon.</string>
+    <string name="pantry_tip_two">You have %1$s and %2$s ready to use soon.</string>
+    <plurals name="pantry_tip_many">
+        <item quantity="one">You have %1$d food ready to use soon.</item>
+        <item quantity="other">You have %1$d foods ready to use soon.</item>
+    </plurals>
+    <string name="pantry_search_hint">Search tomatoes, eggs, flour…</string>
+    <string name="pantry_search_clear">Clear search</string>
+    <string name="pantry_no_results_title">No ingredients found</string>
+    <string name="pantry_no_results_message">Try another term or add this food directly to your inventory.</string>
+    <string name="pantry_no_results_add">+ Register new food</string>
+    <string name="pantry_freshness_expiring">Use soon</string>
+    <string name="pantry_freshness_good">In good shape</string>
+    <string name="pantry_no_quantity">No quantity</string>
+    <string name="pantry_item_menu">Options for %1$s</string>
+    <string name="pantry_expiry_label">Expiry date (optional)</string>
+    <string name="pantry_expiry_none">No expiry date</string>
+    <string name="pantry_expiry_clear">Remove date</string>
+    <string name="pantry_expiry_confirm">Save date</string>
+    <string name="pantry_expiry_today">Expires today</string>
+    <string name="pantry_expiry_tomorrow">Expires tomorrow</string>
+    <plurals name="pantry_expiry_days">
+        <item quantity="one">Expires in %1$d day</item>
+        <item quantity="other">Expires in %1$d days</item>
+    </plurals>
+    <string name="pantry_expiry_past">Expired</string>
+    <string name="pantry_expiry_long">Long shelf life</string>
     <string name="pantry_add_food">Add food</string>
     <string name="pantry_scan_food">Scan foods</string>
     <string name="pantry_add_title">Add food</string>
@@ -77,6 +120,8 @@
     <string name="pantry_quantity_value">Quantity: %1$s</string>
     <string name="pantry_quantity_decrease">Decrease quantity</string>
     <string name="pantry_quantity_increase">Increase quantity</string>
+    <string name="pantry_item_qty_decrease">Decrease quantity of %1$s</string>
+    <string name="pantry_item_qty_increase">Increase quantity of %1$s</string>
     <string name="pantry_edit_accessibility">Edit</string>
     <string name="pantry_delete_accessibility">Delete</string>
     <string name="pantry_delete_title">Delete food</string>
@@ -87,7 +132,9 @@
     <string name="pantry_save_error">The food couldn’t be saved. Please try again.</string>
     <string name="pantry_delete_error">The food couldn’t be deleted. Please try again.</string>
     <string name="pantry_empty_title">Your Pantry is empty</string>
-    <string name="pantry_empty_message">Add the foods you have at home.</string>
+    <string name="pantry_empty_message">Register the ingredients you have at home so nothing goes to waste.</string>
+    <string name="pantry_empty_add_cta">Add Food</string>
+    <string name="pantry_empty_scan_cta">Scan the pantry</string>
 
     <!-- My recipe book: cards -->
     <string name="my_recipes_card_time">%1$d min</string>

@@ -8,13 +8,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.whatsforlunch.app.data.local.RecipeDatabase
 import com.whatsforlunch.app.data.photo.PhotoStore
+import com.whatsforlunch.app.data.repository.RoomPantryRepository
 import com.whatsforlunch.app.data.repository.RoomRecipeRepository
 import com.whatsforlunch.app.data.repository.RoomUserProfileRepository
 import com.whatsforlunch.app.domain.model.DietType
 import com.whatsforlunch.app.domain.model.UserProfile
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,6 +51,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
                 RecipeDatabase.MIGRATION_6_7,
+                RecipeDatabase.MIGRATION_7_8,
             )
             .allowMainThreadQueries()
             .build()
@@ -127,6 +131,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
                 RecipeDatabase.MIGRATION_6_7,
+                RecipeDatabase.MIGRATION_7_8,
             )
             .allowMainThreadQueries()
             .build()
@@ -176,6 +181,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
                 RecipeDatabase.MIGRATION_6_7,
+                RecipeDatabase.MIGRATION_7_8,
             )
             .allowMainThreadQueries()
             .build()
@@ -242,6 +248,7 @@ class RecipeMigrationTest {
                 RecipeDatabase.MIGRATION_4_5,
                 RecipeDatabase.MIGRATION_5_6,
                 RecipeDatabase.MIGRATION_6_7,
+                RecipeDatabase.MIGRATION_7_8,
             )
             .allowMainThreadQueries()
             .build()
@@ -300,6 +307,180 @@ class RecipeMigrationTest {
             context.deleteDatabase(name)
         }
     }
+    // `redisenar-vista-de-la-despensa` (RD28): una base v7 gana la fecha de
+    // caducidad opcional de los Alimentos (`expiryDate`, NULL para los legados,
+    // que se muestran como «Larga duración») sin tocar filas ni otras tablas, y
+    // la nueva fecha se persiste y se lee tras la migración.
+    @Test
+    fun migrationFromV7AddsExpiryDateAndKeepsPantryData() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "recipe-migration-7-8.db"
+        context.deleteDatabase(name)
+        createLegacyV7Database(context, name)
+
+        val room = Room.databaseBuilder(context, RecipeDatabase::class.java, name)
+            .addMigrations(
+                RecipeDatabase.MIGRATION_1_2,
+                RecipeDatabase.MIGRATION_2_3,
+                RecipeDatabase.MIGRATION_3_4,
+                RecipeDatabase.MIGRATION_4_5,
+                RecipeDatabase.MIGRATION_5_6,
+                RecipeDatabase.MIGRATION_6_7,
+                RecipeDatabase.MIGRATION_7_8,
+            )
+            .allowMainThreadQueries()
+            .build()
+        try {
+            // Esquema exacto: la columna nueva al final de `pantry_items`.
+            val pantryColumns = buildList {
+                val cursor = room.query("PRAGMA table_info(`pantry_items`)", null)
+                while (cursor.moveToNext()) add(cursor.getString(1))
+                cursor.close()
+            }
+            assertEquals(listOf("id", "name", "normalizedName", "quantity", "expiryDate"), pantryColumns)
+
+            // Los Alimentos legados siguen intactos y sin fecha (NULL).
+            val pantryCursor = room.query(
+                "SELECT name, quantity, expiryDate FROM pantry_items ORDER BY name",
+                null,
+            )
+            val pantry = buildList {
+                while (pantryCursor.moveToNext()) {
+                    add(
+                        Triple(
+                            pantryCursor.getString(0),
+                            if (pantryCursor.isNull(1)) null else pantryCursor.getDouble(1),
+                            pantryCursor.isNull(2),
+                        ),
+                    )
+                }
+            }
+            pantryCursor.close()
+            assertEquals(
+                listOf(Triple("Arroz", null, true), Triple("Harina", 2.0, true)),
+                pantry,
+            )
+
+            // El resto de tablas queda sin cambios.
+            val recipeCursor = room.query("SELECT title FROM recipes", null)
+            assertTrue(recipeCursor.moveToFirst())
+            assertEquals("Paella", recipeCursor.getString(0))
+            recipeCursor.close()
+
+            // Escritura y lectura de la fecha nueva sobre la base migrada.
+            val repository = RoomPantryRepository(room.pantryItemDao())
+            runBlocking {
+                val arroz = repository.observePantryItems().first().single { it.name == "Arroz" }
+                assertNull(arroz.expiryDate)
+
+                val expiry = LocalDate.of(2026, 11, 20)
+                repository.savePantryItem(arroz.copy(expiryDate = expiry))
+                val reloaded = repository.observePantryItems().first().single { it.name == "Arroz" }
+                assertEquals(expiry, reloaded.expiryDate)
+            }
+        } finally {
+            room.close()
+            context.deleteDatabase(name)
+        }
+    }
+
+    // Esquema exacto de Room v7: como v6 pero `recipes` sin `cookMinutes` (D3/D6
+    // de `redisenar-formulario-de-receta`) e `ingredients` sin `optional` (D5).
+    private fun createLegacyV7Database(context: android.content.Context, name: String) {
+        val helper = FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(name)
+                .callback(object : SupportSQLiteOpenHelper.Callback(7) {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        createV7Schema(db)
+                        db.execSQL("PRAGMA user_version = 7")
+                    }
+
+                    override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+                })
+                .build(),
+        )
+        val db = helper.writableDatabase
+        db.execSQL(
+            "INSERT INTO recipes VALUES " +
+                "('mig7-1', 'Paella', '', 'LUNCH', 45, 'EASY', 4, NULL, NULL, 0, 'USER')",
+        )
+        db.execSQL("INSERT INTO ingredients VALUES (1, 'mig7-1', 'Arroz', 300.0, 'g', 0, 'mig7-1-ingredient-0')")
+        db.execSQL("INSERT INTO steps VALUES (1, 'mig7-1', 'Sofreír el arroz', 5, 0, '')")
+        // Dos Alimentos legados sin fecha de caducidad (NULL): uno con cantidad
+        // y otro sin ella. La tabla v7 tiene 4 columnas; `expiryDate` la añade
+        // MIGRATION_7_8.
+        db.execSQL("INSERT INTO pantry_items VALUES ('mig7-harina', 'Harina', 'harina', 2.0)")
+        db.execSQL("INSERT INTO pantry_items VALUES ('mig7-arroz', 'Arroz', 'arroz', NULL)")
+        db.close()
+        helper.close()
+    }
+
+    private fun createV7Schema(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recipes` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, " +
+                "`story` TEXT NOT NULL, `mealMoment` TEXT NOT NULL, `prepMinutes` INTEGER NOT NULL, " +
+                "`difficulty` TEXT NOT NULL, `baseServings` INTEGER NOT NULL, `caloriesPerServing` INTEGER, " +
+                "`photoPath` TEXT, `favorite` INTEGER NOT NULL, `origin` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ingredients` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` TEXT NOT NULL, `name` TEXT NOT NULL, `quantity` REAL NOT NULL, `unit` TEXT NOT NULL, " +
+                "`position` INTEGER NOT NULL, `domainId` TEXT NOT NULL, " +
+                "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_ingredients_recipeId` ON `ingredients` (`recipeId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `steps` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`recipeId` TEXT NOT NULL, `text` TEXT NOT NULL, `timerMinutes` INTEGER, " +
+                "`position` INTEGER NOT NULL, `ingredientIds` TEXT NOT NULL, " +
+                "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_steps_recipeId` ON `steps` (`recipeId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `pantry_items` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                "`normalizedName` TEXT NOT NULL, `quantity` REAL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_pantry_items_normalizedName` " +
+                "ON `pantry_items` (`normalizedName`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_items` " +
+                "(`id` TEXT NOT NULL, `name` TEXT NOT NULL, `normalizedName` TEXT NOT NULL, " +
+                "`quantity` REAL, `unit` TEXT NOT NULL, `aisle` TEXT, " +
+                "`completed` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_shopping_items_normalizedName` " +
+                "ON `shopping_items` (`normalizedName`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_item_sources` " +
+                "(`itemId` TEXT NOT NULL, `sourceKey` TEXT NOT NULL, `sourceTitle` TEXT NOT NULL, " +
+                "PRIMARY KEY(`itemId`, `sourceKey`), " +
+                "FOREIGN KEY(`itemId`) REFERENCES `shopping_items`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_shopping_item_sources_itemId` " +
+                "ON `shopping_item_sources` (`itemId`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `profile` " +
+                "(`id` TEXT NOT NULL, `dietType` TEXT, `allergiesNone` INTEGER NOT NULL, " +
+                "`intolerancesNone` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `profile_restrictions` " +
+                "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `section` TEXT NOT NULL, " +
+                "`value` TEXT NOT NULL)",
+        )
+    }
+
     // Esquema exacto de Room v6: como v5 más `profile` y `profile_restrictions`
     // (MIGRATION_5_6), con `recipes.cookMinutes` e `ingredients.optional` aún.
     private fun createLegacyV6Database(context: android.content.Context, name: String) {

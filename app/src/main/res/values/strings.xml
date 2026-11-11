@@ -67,7 +67,50 @@
     </plurals>
 
     <!-- Despensa -->
-    <string name="pantry_title">Despensa</string>
+    <string name="pantry_title">Mi Despensa</string>
+    <string name="pantry_tab_label">Despensa</string>
+    <string name="pantry_section_subtitle">Ingredientes registrados en casa</string>
+    <plurals name="pantry_fresh_count">
+        <item quantity="one">%1$d fresco</item>
+        <item quantity="other">%1$d frescos</item>
+    </plurals>
+    <plurals name="pantry_food_count">
+        <item quantity="one">%1$d Alimento</item>
+        <item quantity="other">%1$d Alimentos</item>
+    </plurals>
+    <plurals name="pantry_expiring_count">
+        <item quantity="one">%1$d por caducar</item>
+        <item quantity="other">%1$d por caducar</item>
+    </plurals>
+    <string name="pantry_summary_capacity">Capacidad estimada al %1$d%%</string>
+    <string name="pantry_tip_label">Consejo de cocina:</string>
+    <string name="pantry_tip_one">Tienes %1$s listo para consumir pronto.</string>
+    <string name="pantry_tip_two">Tienes %1$s y %2$s listos para consumir pronto.</string>
+    <plurals name="pantry_tip_many">
+        <item quantity="one">Tienes %1$d alimento listo para consumir pronto.</item>
+        <item quantity="other">Tienes %1$d alimentos listos para consumir pronto.</item>
+    </plurals>
+    <string name="pantry_search_hint">Buscar tomates, huevos, harina…</string>
+    <string name="pantry_search_clear">Limpiar búsqueda</string>
+    <string name="pantry_no_results_title">No se encontraron ingredientes</string>
+    <string name="pantry_no_results_message">Prueba con otro término o añade este alimento directamente a tu inventario.</string>
+    <string name="pantry_no_results_add">+ Registrar nuevo alimento</string>
+    <string name="pantry_freshness_expiring">Consumir pronto</string>
+    <string name="pantry_freshness_good">En buen estado</string>
+    <string name="pantry_no_quantity">Sin cantidad</string>
+    <string name="pantry_item_menu">Opciones de %1$s</string>
+    <string name="pantry_expiry_label">Fecha de caducidad (opcional)</string>
+    <string name="pantry_expiry_none">Sin fecha de caducidad</string>
+    <string name="pantry_expiry_clear">Quitar fecha</string>
+    <string name="pantry_expiry_confirm">Guardar fecha</string>
+    <string name="pantry_expiry_today">Caduca hoy</string>
+    <string name="pantry_expiry_tomorrow">Caduca mañana</string>
+    <plurals name="pantry_expiry_days">
+        <item quantity="one">Caduca en %1$d día</item>
+        <item quantity="other">Caduca en %1$d días</item>
+    </plurals>
+    <string name="pantry_expiry_past">Caducada</string>
+    <string name="pantry_expiry_long">Larga duración</string>
     <string name="pantry_add_food">Añadir alimento</string>
     <string name="pantry_scan_food">Escanear alimentos</string>
     <string name="pantry_add_title">Añadir alimento</string>
@@ -78,6 +121,8 @@
     <string name="pantry_quantity_value">Cantidad: %1$s</string>
     <string name="pantry_quantity_decrease">Disminuir cantidad</string>
     <string name="pantry_quantity_increase">Aumentar cantidad</string>
+    <string name="pantry_item_qty_decrease">Disminuir cantidad de %1$s</string>
+    <string name="pantry_item_qty_increase">Aumentar cantidad de %1$s</string>
     <string name="pantry_edit_accessibility">Editar</string>
     <string name="pantry_delete_accessibility">Eliminar</string>
     <string name="pantry_delete_title">Eliminar alimento</string>
@@ -87,8 +132,10 @@
     <string name="pantry_duplicate_error">Este alimento ya está en la Despensa.</string>
     <string name="pantry_save_error">No se pudo guardar el alimento. Inténtalo de nuevo.</string>
     <string name="pantry_delete_error">No se pudo eliminar el alimento. Inténtalo de nuevo.</string>
-    <string name="pantry_empty_title">Tu Despensa está vacía</string>
-    <string name="pantry_empty_message">Añade los alimentos que tienes en casa.</string>
+    <string name="pantry_empty_title">Tu despensa está vacía</string>
+    <string name="pantry_empty_message">Registra los ingredientes que tienes en casa para no desperdiciar nada.</string>
+    <string name="pantry_empty_add_cta">Añadir Alimento</string>
+    <string name="pantry_empty_scan_cta">Escanear la despensa</string>
 
     <!-- Mi recetario: tarjetas -->
     <string name="my_recipes_card_time">%1$d min</string>

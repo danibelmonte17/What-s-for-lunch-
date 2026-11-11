@@ -2,9 +2,11 @@ package com.whatsforlunch.app.data.repository
 
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.repository.PantrySaveResult
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -53,6 +55,25 @@ class InMemoryPantryRepositoryTest {
         assertEquals(1, repository.observePantryItems().first().size)
         repository.deletePantryItem("1")
         assertEquals(emptyList<PantryItem>(), repository.observePantryItems().first())
+    }
+
+    @Test
+    fun keepsExpiryDateOnSaveRenameAndClear() = runBlocking {
+        val repository = InMemoryPantryRepository()
+        val expiry = LocalDate.of(2026, 11, 20)
+        val item = PantryItem("1", "Aguacate", 2, expiry)
+
+        assertEquals(PantrySaveResult.Saved, repository.savePantryItem(item))
+        assertEquals(expiry, repository.observePantryItems().first().single().expiryDate)
+
+        val renamed = item.copy(name = "Aguacate maduro")
+        assertEquals(PantrySaveResult.Saved, repository.savePantryItem(renamed))
+        val saved = repository.observePantryItems().first().single()
+        assertEquals("Aguacate maduro", saved.name)
+        assertEquals(expiry, saved.expiryDate)
+
+        assertEquals(PantrySaveResult.Saved, repository.savePantryItem(renamed.copy(expiryDate = null)))
+        assertNull(repository.observePantryItems().first().single().expiryDate)
     }
 
     @Test
