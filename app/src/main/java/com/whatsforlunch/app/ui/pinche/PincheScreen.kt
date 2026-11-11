@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -89,6 +90,8 @@ object PincheTestTags {
     const val PROFILE_SAVED = "pinche_profile_saved"
     // Enmienda D9: burbuja transitoria con el texto que llega en streaming.
     const val STREAMING = "pinche_streaming_message"
+    // D3 (`mantener-y-limpiar-conversacion-del-pinche`): acción de la top bar.
+    const val CLEAR_CONVERSATION = "pinche_clear_conversation"
 
     fun userMessage(index: Int) = "pinche_user_message_$index"
 
@@ -118,6 +121,9 @@ fun PincheScreen(
     onAddMissingToShoppingList: (String) -> Unit = {},
     // `crear-mi-perfil` (D8): acción del mensaje que pide el perfil pendiente.
     onOpenProfile: () -> Unit = {},
+    // `mantener-y-limpiar-conversacion-del-pinche` (D2/D4): limpia la conversación
+    // sin confirmación y vuelve al estado inicial.
+    onClearConversation: () -> Unit = {},
     scrollToTopTick: Int = 0,
 ) {
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
@@ -151,6 +157,22 @@ fun PincheScreen(
             // RF-MOB5: el Pinche es destino de primer nivel y ya no muestra «Volver».
             TopAppBar(
                 title = { Text(stringResource(R.string.pinche_title)) },
+                // D2/D3/D7 (`mantener-y-limpiar-conversacion-del-pinche`): «Limpiar
+                // conversación» solo cuando hay algo que limpiar (patrón «Limpiar
+                // comprados» de la Lista de la Compra); limpieza directa (D4).
+                actions = {
+                    if (uiState.messages.isNotEmpty()) {
+                        IconButton(
+                            onClick = onClearConversation,
+                            modifier = Modifier.testTag(PincheTestTags.CLEAR_CONVERSATION),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.DeleteSweep,
+                                contentDescription = stringResource(R.string.pinche_clear_conversation),
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
