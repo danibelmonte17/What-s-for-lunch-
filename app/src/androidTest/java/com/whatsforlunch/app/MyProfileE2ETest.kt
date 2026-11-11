@@ -270,7 +270,7 @@ class MyProfileE2ETest {
         var stored: UserProfile? = null
         composeRule.waitUntil(5_000) {
             stored = runBlocking { profileRepository().observeProfile().first() }
-            stored?.let(predicate) == true
+            stored.let(predicate) == true
         }
         return requireNotNull(stored)
     }

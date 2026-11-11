@@ -14,6 +14,7 @@ internal object ScanAnalysisParser {
         return objectValue.keys().asSequence().map { name ->
             val raw = objectValue.opt(name)
             val quantity = when (raw) {
+                null -> null
                 is Number -> raw.toDouble()
                 is String -> raw.trim().toDoubleOrNull()
                 else -> null

@@ -284,6 +284,7 @@ class OpenAiCompatiblePincheChatClient(
         header("Content-Type").orEmpty().contains(EVENT_STREAM_MEDIA_TYPE)
 
     private fun messageContent(message: JSONObject): String? = when (val content = message.opt("content")) {
+        null -> null
         is String -> content
         is JSONArray -> (0 until content.length())
             .mapNotNull { index -> content.optJSONObject(index)?.optString("text")?.takeIf { it.isNotBlank() } }

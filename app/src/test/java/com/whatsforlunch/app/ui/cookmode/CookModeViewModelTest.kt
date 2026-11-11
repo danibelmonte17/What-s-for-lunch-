@@ -578,14 +578,14 @@ class CookModeViewModelTest {
             val secondStep = (viewModel.uiState.value as CookModeUiState.Cooking)
             assertEquals(1, secondStep.stepIndex)
             assertEquals(StepTimerPhase.READY, secondStep.timer!!.phase)
-            assertEquals(120, secondStep.timer!!.remainingSeconds)
+            assertEquals(120, secondStep.timer.remainingSeconds)
             assertFalse(alarm.isRinging)
 
             viewModel.previous()
             runCurrent()
             val firstStep = (viewModel.uiState.value as CookModeUiState.Cooking)
             assertEquals(StepTimerPhase.READY, firstStep.timer!!.phase)
-            assertEquals(300, firstStep.timer!!.remainingSeconds)
+            assertEquals(300, firstStep.timer.remainingSeconds)
 
             // Volver al Paso 2 también entra «Listo» (sin cuenta ni alarma heredadas).
             val startsBeforeReentering = alarm.startCount
@@ -593,7 +593,7 @@ class CookModeViewModelTest {
             runCurrent()
             val backToSecond = (viewModel.uiState.value as CookModeUiState.Cooking)
             assertEquals(StepTimerPhase.READY, backToSecond.timer!!.phase)
-            assertEquals(120, backToSecond.timer!!.remainingSeconds)
+            assertEquals(120, backToSecond.timer.remainingSeconds)
             assertEquals(startsBeforeReentering, alarm.startCount)
             assertFalse(alarm.isRinging)
         } finally {
