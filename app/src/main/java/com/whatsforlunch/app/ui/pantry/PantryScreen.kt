@@ -26,7 +26,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -167,22 +167,32 @@ fun PantryScreen(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
             ) {
-                ExtendedFloatingActionButton(
+                // FABs redondos (CircleShape) de solo icono: el texto queda como
+                // contentDescription para TalkBack y las pruebas siguen por testTag.
+                FloatingActionButton(
                     onClick = onScanFood,
-                    icon = { Icon(Icons.Outlined.PhotoCamera, contentDescription = null) },
-                    text = { Text(stringResource(R.string.pantry_scan_food)) },
                     modifier = Modifier.testTag(PantryTestTags.SCAN_FOOD),
+                    shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                )
-                ExtendedFloatingActionButton(
+                ) {
+                    Icon(
+                        Icons.Outlined.PhotoCamera,
+                        contentDescription = stringResource(R.string.pantry_scan_food),
+                    )
+                }
+                FloatingActionButton(
                     onClick = { itemToEdit = null; showEditor = true },
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                    text = { Text(stringResource(R.string.pantry_add_food)) },
                     modifier = Modifier.testTag(PantryTestTags.ADD_ITEM),
+                    shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                )
+                ) {
+                    Icon(
+                        Icons.Outlined.Add,
+                        contentDescription = stringResource(R.string.pantry_add_food),
+                    )
+                }
             }
         },
     ) { innerPadding ->

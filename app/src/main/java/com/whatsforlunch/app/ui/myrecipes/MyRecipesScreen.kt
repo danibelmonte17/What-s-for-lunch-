@@ -222,6 +222,7 @@ fun MyRecipesScreen(
                     FloatingActionButton(
                         onClick = onOpenPantryRecipes,
                         modifier = Modifier.testTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES),
+                        shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                     ) {
@@ -233,6 +234,7 @@ fun MyRecipesScreen(
                     FloatingActionButton(
                         onClick = onScanPantry,
                         modifier = Modifier.testTag(MyRecipesTestTags.SCAN_PANTRY_FAB),
+                        shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                     ) {
