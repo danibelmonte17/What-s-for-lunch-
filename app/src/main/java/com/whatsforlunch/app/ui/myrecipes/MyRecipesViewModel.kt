@@ -12,6 +12,7 @@ import com.whatsforlunch.app.domain.model.Recipe
 import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.PantryRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,11 +20,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // Estado visible de Mi recetario: el estado de la colección, las Recetas guardadas,
-// la búsqueda/filtro activos (momento y Favoritas) y el aviso de error de borrado.
+// la búsqueda/filtro activos (momento y Favoritas), el aviso de error de borrado y
+// si la Despensa tiene datos (RF-MOB3, enmienda 2026-11-11: condiciona el FAB
+// «Recetas con mi Despensa»).
 data class MyRecipesUiState(
     val state: MyRecipesState = MyRecipesState.Empty,
     val recipes: List<Recipe> = emptyList(),
@@ -33,10 +37,11 @@ data class MyRecipesUiState(
     val visibleRecipes: List<Recipe> = recipes,
     val deleteError: Boolean = false,
     val matches: Map<String, RecipeMatch> = emptyMap(),
+    val hasFoods: Boolean = false,
 )
 
 // MVVM + StateFlow (Q-arrancar-app-en-mis-recetas-1): reglas fuera de la UI.
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class MyRecipesViewModel(
     private val repository: RecipeRepository,
     private val pantryRepository: PantryRepository,
@@ -56,10 +61,17 @@ class MyRecipesViewModel(
         }
     }
 
-    private val recipesAndPantry = combine(
-        repository.observeRecipes(),
-        pantryRepository.observePantryItems(),
-    ) { recipes, pantryItems -> recipes to pantryItems }
+    // Al volver a Mi recetario (ON_RESUME del route → `refresh()`) cada emisión
+    // cancela la colección anterior y vuelve a leer Recetas y Despensa: la vista
+    // se reconstruye con los datos actuales si ha habido cambios.
+    private val refreshTick = MutableStateFlow(0)
+
+    private val recipesAndPantry = refreshTick.flatMapLatest {
+        combine(
+            repository.observeRecipes(),
+            pantryRepository.observePantryItems(),
+        ) { recipes, pantryItems -> recipes to pantryItems }
+    }
 
     // D3/RF-EBF7: el chip «Favoritas» se combina por AND con la búsqueda y el momento.
     private val activeFilters = combine(
@@ -93,6 +105,7 @@ class MyRecipesViewModel(
             matches = recipes.mapNotNull { recipe ->
                 calculateMatch(recipe, pantryItems)?.let { recipe.id to it }
             }.toMap(),
+            hasFoods = pantryItems.isNotEmpty(),
         )
     }
         .stateIn(
@@ -133,6 +146,14 @@ class MyRecipesViewModel(
 
     fun consumeDeleteError() {
         deleteError.value = false
+    }
+
+    // Refresco al volver a la vista: fuerza una consulta nueva a los repositorios
+    // para que la lista, las Coincidencias, el estado vacío y los FABs se
+    // actualicen con la información vigente (aunque los flujos de Room ya son
+    // reactivos, esto garantiza la lectura en cada ON_RESUME).
+    fun refresh() {
+        refreshTick.value++
     }
 
     private companion object {
