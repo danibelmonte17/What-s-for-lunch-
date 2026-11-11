@@ -5,7 +5,7 @@
 - `id`: redisenar-vista-de-la-despensa
 - `area`: funcional
 - `depends_on`: gestionar-alimentos-de-la-despensa, mover-escaneo-a-la-despensa (ambas `accepted`)
-- `status`: not_started (planificación, 2026-11-10)
+- `status`: not_started (planificación, sesión 128, 2026-11-11; decisiones del usuario 2026-11-10)
 - `source`: `feature_list.json`
 
 ## Goal
@@ -53,7 +53,7 @@ Del usuario (2026-11-10, registradas en `feature_list.json`): **D1** sin pestañ
 
 Given una Despensa con Alimentos, incluidos con y sin fecha de caducidad,
 When se abre la pestaña Despensa,
-Then la top bar muestra «Mi Despensa», el contenido muestra el subtítulo «Ingredientes registrados en casa» con el badge «N frescos», la tarjeta de resumen muestra «N Alimentos», «Capacidad estimada al N %» y —solo si N>0— «N por caducar», y el consejo de cocina aparece con los nombres de los Alimentos «Consumir pronto»; los Alimentos con ≤ 2 días muestran «Consumir pronto» y los demás «En buen estado».
+Then la top bar muestra «Mi Despensa», el contenido muestra el subtítulo «Ingredientes registrados en casa» con el badge «N frescos», la tarjeta de resumen muestra «N Alimentos», «Capacidad estimada al N %» y —solo si hay ≥ 1 Alimento «Consumir pronto»— «N por caducar», y el consejo de cocina aparece con los nombres de los Alimentos «Consumir pronto»; los Alimentos con ≤ 2 días muestran «Consumir pronto» y los demás «En buen estado».
 
 ### Scenario 2: Stepper inline y menú ⋮ (verify 2)
 
@@ -71,7 +71,7 @@ Then solo se lista «Tomate fresco» con filtrado en vivo; al escribir un térmi
 
 Given una Despensa sin Alimentos,
 When se abre la pestaña Despensa,
-Then se muestra «Tu despensa está vacía» con su descripción, los CTA «Añadir Alimento» (primario) y «Escanear la despensa» (tonal) en ese orden (D16) y los dos FABs apilados; sin buscador, resumen ni consejo (como `code_empty.html`).
+Then se muestra «Tu despensa está vacía» con su descripción, los CTA «Añadir Alimento» (primario) y «Escanear la despensa» (tonal) en ese orden (D16) y los dos FABs apilados; la cabecera de sección se conserva con el subtítulo y el badge «0 frescos» (D9; el prototipo dice «0 alimentos») y, como en `code_empty.html`, no hay buscador, tarjeta de resumen ni consejo.
 
 ### Scenario 5: Caducidad persistente (verify 5)
 
@@ -106,6 +106,7 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 - `.../ui/pantry/PantryRoute.kt` — enlaza `onScanFood` y los callbacks del ViewModel.
 - `.../domain/model/PantryItem.kt` — `PantryItem(id, name, quantity: Int?)` (0 = sin cantidad, no persistido).
 - `.../domain/pantry/PantryItemValidation.kt` — nombre no vacío; cantidad 0..99.
+- `.../domain/myrecipes/RecipeSearchFilter.kt` + `app/src/test/.../domain/RecipeSearchFilterTest.kt` — patrón del repo para filtrar por nombre normalizado (`filterRecipes`, «contiene»); a imitar en la Despensa.
 - `.../domain/repository/PantryRepository.kt` — puerto `observePantryItems`/`savePantryItem`/`deletePantryItem`.
 - `.../data/local/PantryItemEntity.kt`, `PantryItemDao.kt` — tabla `pantry_items(id, name, normalizedName unique, quantity REAL)`.
 - `.../data/local/RecipeDatabase.kt` — **version = 7**, `MIGRATION_6_7` vigente; `exportSchema = false`.
@@ -118,7 +119,7 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 ### Existing Patterns To Follow
 
 - Píldoras/badges como en `ui/components/MatchBadge.kt` (Surface con forma redonda, colores por rol M3, testTag aportado por la pantalla).
-- Reglas de negocio en `domain/` con tests JVM (`P25`); UI sin lógica de negocio.
+- Reglas de negocio en `domain/` con tests JVM (`P25`); UI sin lógica de negocio. El filtrado de búsqueda ya tiene patrón: función pura en dominio (`filterRecipes` en `domain/myrecipes/RecipeSearchFilter.kt`) aplicada por el ViewModel y cubierta por su test JVM.
 - Diálogos `AlertDialog` + `testTag` y stepper con `IconButton` ≥48 dp (patrón del diálogo actual y de la Lista de la Compra).
 - Migraciones Room en `RecipeDatabase` companion (`MIGRATION_X_Y`) con test en `RecipeMigrationTest`.
 - Paridad es/en de claves y plurals; textos visibles solo en `strings.xml`.
@@ -133,7 +134,7 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 
 1. **Modelo y Room**: `PantryItem.expiryDate: LocalDate?` y `PantryItemEntity.expiryDate: Long?` (epochDay). Room v8 con `MIGRATION_7_8` = `ALTER TABLE pantry_items ADD COLUMN expiryDate INTEGER` (columna nullable; sin recrear tabla). `PantryItemDao.update` incluye `expiryDate`; `RoomPantryRepository`/`InMemoryPantryRepository` lo persisten/propagan. Cantidad sin cambios (Int 0..99, null al 0).
 2. **Dominio (RD28)**: nuevo `domain/pantry/FreshnessRules.kt` puro: `Freshness { GOOD, EXPIRING_SOON }`, `freshness(expiry, today)`, `daysRemaining`, `pantryCapacityPercent(items)` (D10), `expiringCount(items)` y `expiringNames(items, limit)` (D11). `today` lo aporta la UI/ViewModel (inyectable en tests).
-3. **ViewModel**: `PantryUiState` gana `searchQuery` y `visibleItems` (filtro «contiene» sobre `normalizeName`, D18) manteniendo `items` para contadores; `saveItem` acepta `expiryDate`; nuevo `setQuantity(id, quantity)` que valida 0..99 y guarda al instante (D15).
+3. **ViewModel**: `PantryUiState` gana `searchQuery` y `visibleItems` manteniendo `items` para contadores; la regla de filtrado es una función pura `filterPantryItems(items, query)` en `domain/pantry/PantrySearchFilter.kt` —«contiene» sobre `normalizeName`, D18— siguiendo el patrón de `domain/myrecipes/RecipeSearchFilter.kt` (la UI no contiene reglas de negocio, `P25`); `saveItem` acepta `expiryDate`; nuevo `setQuantity(id, quantity)` que valida 0..99 con `PantryItemValidation` y guarda al instante (D15).
 4. **UI (PantryScreen)**: cabecera de sección (subtítulo + badge «N frescos»), tarjeta de resumen (icono `Kitchen` en círculo, «N Alimentos», capacidad, «N por caducar»), banda de consejo (`tertiaryContainer`/`onTertiaryContainer`, icono `Eco`), campo de búsqueda con icono `Search` + limpiar, y tarjeta de Alimento: miniatura 56 dp con icono `Kitchen`, nombre, píldora de frescura (`errorContainer`/`onErrorContainer` = «Consumir pronto», `secondaryContainer`/`onSecondaryContainer` = «En buen estado»), cantidad en `primary` en negrita (o «Sin cantidad», D14), texto de caducidad, stepper −/+ inline (guardado inmediato, deshabilitado en límites) y `DropdownMenu` ⋮ con «Editar» (diálogo) y «Eliminar» (confirmación existente, etiquetas `editItem(id)`/`deleteItem(id)` reutilizadas). Alta/edición con fila «Fecha de caducidad (opcional)» («Sin fecha de caducidad» o fecha) y `DatePickerDialog` de Material 3. Estados vacíos nuevos: «Tu despensa está vacía» (icono grande, descripción nueva, CTAs en orden D16) y «No se encontraron ingredientes» con «+ Registrar nuevo alimento». Sin buscador/resumen/consejo con Despensa vacía (D18). FABs intactos (D4); objetivos táctiles ≥48 dp.
 
 ### Casos límite
@@ -150,15 +151,18 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 
 - `app/src/main/java/com/whatsforlunch/app/domain/model/PantryItem.kt` — modify; añade `expiryDate: LocalDate?`.
 - `app/src/main/java/com/whatsforlunch/app/domain/pantry/FreshnessRules.kt` — create; reglas de frescura/capacidad/consejo (RD28).
+- `app/src/main/java/com/whatsforlunch/app/domain/pantry/PantrySearchFilter.kt` — create; `filterPantryItems` (D18, patrón de `RecipeSearchFilter.kt`).
+- `app/src/test/java/com/whatsforlunch/app/domain/pantry/PantrySearchFilterTest.kt` — create; filtrado «contiene», query vacía/en blanco, mayúsculas y acentos.
 - `app/src/main/java/com/whatsforlunch/app/data/local/PantryItemEntity.kt` — modify; columna `expiryDate: Long?`.
 - `app/src/main/java/com/whatsforlunch/app/data/local/PantryItemDao.kt` — modify; `update` con `expiryDate`.
 - `app/src/main/java/com/whatsforlunch/app/data/local/RecipeDatabase.kt` — modify; `version = 8` y `MIGRATION_7_8`.
 - `app/src/main/java/com/whatsforlunch/app/data/repository/RoomPantryRepository.kt` — modify; mapeo de `expiryDate`.
-- `app/src/main/java/com/whatsforlunch/app/data/repository/InMemoryPantryRepository.kt` — modify; propagación de `expiryDate`.
+- `app/src/main/java/com/whatsforlunch/app/data/repository/InMemoryPantryRepository.kt` — no changes needed; `expiryDate` se propaga solo con `PantryItem.copy` (round-trip cubierto en su test).
 - `app/src/main/java/com/whatsforlunch/app/ui/pantry/PantryViewModel.kt` — modify; `searchQuery`/`visibleItems`, `expiryDate` en `saveItem`, `setQuantity`.
+- `app/src/main/java/com/whatsforlunch/app/ui/nav/AppBottomBar.kt` — modify; la pestaña PANTRY usa la clave corta nueva `pantry_tab_label` (patrón `my_recipes_tab_label`) para que D17 («Mi Despensa» en `pantry_title`) no altere la barra inferior (alcance «sin bottom bar»; hallazgo de implementación, 2026-11-11).
 - `app/src/main/java/com/whatsforlunch/app/ui/pantry/PantryScreen.kt` — modify; rediseño completo, `PantryTestTags` nuevos.
 - `app/src/main/java/com/whatsforlunch/app/ui/pantry/PantryRoute.kt` — modify; cablea `onQuantityChange`.
-- `app/src/main/res/values/strings.xml` y `values-en/strings.xml` — modify; textos nuevos y `pantry_title`/`pantry_empty_message` (D17); paridad es/en + plurals de contadores.
+- `app/src/main/res/values/strings.xml` y `values-en/strings.xml` — modify; textos nuevos y `pantry_title`/`pantry_tab_label`/`pantry_empty_title`/`pantry_empty_message` (D17/D16); paridad es/en + plurals de contadores.
 - `app/src/test/java/com/whatsforlunch/app/domain/pantry/FreshnessRulesTest.kt` — create; cubre D8-D11, D13 y escenarios de verify 7.
 - `app/src/test/java/com/whatsforlunch/app/data/repository/InMemoryPantryRepositoryTest.kt` — modify; `expiryDate` en el round-trip.
 - `app/src/androidTest/java/com/whatsforlunch/app/PantryManagementE2ETest.kt` — modify; adaptar (menú ⋮, CTAs vacío D16) y añadir S10-S14 (resumen/consejo, stepper inline, búsqueda/sin resultados, caducidad).
@@ -169,6 +173,7 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 - `docs/build-brief.md` — modify; `P5` deja de estar «fuera del MVP».
 - `docs/technical-discovery.md` — modify; Room v8 + `MIGRATION_7_8`.
 - `docs/risks-and-open-questions.md` — modify; `Q-redisenar-vista-de-la-despensa-1` con las decisiones D8-D18.
+- `CONTEXT.md` — modify; glosario «Despensa y compra»: términos de frescura/caducidad (D2/D8/D9/D13) y Alimento con fecha de caducidad opcional.
 - `docs/specs/gestionar-alimentos-de-la-despensa.md` y `docs/specs/mover-escaneo-a-la-despensa.md` — modify; nota de enmienda al final (patrón completo) y `notes` en `feature_list.json`.
 - `uxdocs/` — **not touched** (solo lectura; `P16`/`P17`).
 
@@ -185,7 +190,7 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 - `docs/build-brief.md`: **update** — `P5` (L53) pasa a alcance de esta feature.
 - `docs/technical-discovery.md`: **update** — Room v8 y `MIGRATION_7_8`.
 - `docs/risks-and-open-questions.md`: **update** — `Q-redisenar-vista-de-la-despensa-1`.
-- `CONTEXT.md`: not needed (glosario «Despensa»/«Alimento» sin cambios de término).
+- `CONTEXT.md`: **update** — el glosario («Despensa y compra») gana los términos de frescura/caducidad («Consumir pronto», «En buen estado», «Larga duración», «N por caducar», «Capacidad estimada») y el **Alimento** se define con fecha de caducidad opcional; los términos existentes no cambian (la regla del propio glosario es que sus términos se usan tal cual en docs, UI y código).
 - `ARCHITECTURE.md` / `CONSTRAINTS.md` / `AGENTS.md`: not needed (sin capas ni reglas MUST nuevas).
 
 ## Implementation Plan
@@ -200,22 +205,22 @@ Then todos los Alimentos siguen con nombre y cantidad intactos y `expiryDate` NU
 
 - [ ] T1: `PantryItem.expiryDate` + entidad/DAO + `MIGRATION_7_8` (v8) + repositorios + `RecipeMigrationTest` v7→v8. (S8)
 - [ ] T2: `FreshnessRules` + `FreshnessRulesTest` (clasificación, textos, capacidad, nombres del consejo). (S7)
-- [ ] T3: `PantryViewModel`: `searchQuery`/`visibleItems`, `saveItem` con fecha, `setQuantity` con validación. (S1, S2, S3)
+- [ ] T3: `PantrySearchFilter` + `PantrySearchFilterTest` y `PantryViewModel`: `searchQuery`/`visibleItems`, `saveItem` con fecha, `setQuantity` con `PantryItemValidation`. (S1, S2, S3)
 - [ ] T4: `PantryScreen`: cabecera, tarjeta de resumen y consejo. (S1)
 - [ ] T5: `PantryScreen`: buscador + estados «No se encontraron ingredientes» y «Tu despensa está vacía» (D16). (S3, S4)
 - [ ] T6: `PantryScreen`: tarjeta rediseñada (miniatura, píldoras, cantidad, caducidad, stepper inline, menú ⋮). (S2)
 - [ ] T7: Diálogo de alta/edición con fecha de caducidad (DatePicker M3 + «Sin fecha de caducidad»). (S5)
 - [ ] T8: strings es/en + plurals + testTags; paridad de claves. (S6)
 - [ ] T9: E2E: adaptar `PantryManagementE2ETest`/`PantryLocalizationE2ETest` y añadir S10-S14; `InMemoryPantryRepositoryTest`. (S1-S6)
-- [ ] T10: docs durables (RD28, DESIGN, build-brief, technical-discovery, risks) + enmiendas en specs aceptadas y `notes` de `feature_list.json`.
+- [ ] T10: docs durables (RD28, DESIGN, build-brief, technical-discovery, risks, CONTEXT) + enmiendas en specs aceptadas y `notes` de `feature_list.json`.
 
 ## Verification Plan
 
-- `./init.ps1` — «Entorno listo» (no debe arrancar procesos largos).
+- `./init.ps1` (Windows) / `./init.sh` (Linux/macOS) — «Entorno listo» (checks no bloqueantes; no debe arrancar procesos largos).
 - `./gradlew lintDebug` — 0 errores (sin warnings nuevos).
-- `./gradlew testDebugUnitTest` — `FreshnessRulesTest`, `InMemoryPantryRepositoryTest` y suite completa en verde.
+- `./gradlew testDebugUnitTest` — `FreshnessRulesTest`, `PantrySearchFilterTest`, `InMemoryPantryRepositoryTest` y suite completa en verde.
 - `./gradlew assembleDebug` — BUILD SUCCESSFUL.
-- `./gradlew connectedDebugAndroidTest` focalizada en `PantryManagementE2ETest` + `PantryLocalizationE2ETest` + `RecipeMigrationTest` (verify 1-6 y 8) y batería completa sin regresión.
+- `./gradlew connectedDebugAndroidTest` focalizada en `PantryManagementE2ETest` + `PantryLocalizationE2ETest` + `RecipeMigrationTest` (verify 1-6 y 8) y batería completa sin regresión con `./e2e.ps1` (Windows) / `./e2e.sh` (Linux/macOS), los scripts E2E persistentes del harness que exige `AGENTS.md` para la aceptación (wrappers de `connectedDebugAndroidTest`, `docs/technical-discovery.md` §Comandos).
 - Manual adb/uiautomator en emulador API 30+ (es y en): resumen/consejo/contador, stepper inline con persistencia, búsqueda con resultados y «sin resultados», estado vacío con CTAs en orden D16, alta con fecha y persistencia tras reiniciar; capturas PNG 1280×2856.
 
 ## Evidence To Capture

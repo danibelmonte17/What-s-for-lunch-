@@ -192,3 +192,7 @@ Then el FAB de cámara y el CTA del estado vacío «Escanear la Despensa» sigue
 - [ ] Persistent E2E coverage was added/updated: `ShoppingListE2ETest` S7 reescrita y `PantryManagementE2ETest` ampliada (comportamiento observable de usuario), o justificación documentada de por qué basta la cobertura existente.
 - [ ] `feature_list.json` y `PROGRESS.md` fueron actualizados correctamente (solo `status`/`evidence` en la lista).
 - [ ] No unrelated product behavior or extra feature work was added (sin `mover-opciones-a-bottom-bar`, sin cambios en dominio/Room/Escáner).
+
+---
+
+**Enmienda `redisenar-vista-de-la-despensa` (2026-11-11, patrón completo)**: el orden de los CTAs del estado vacío de la Despensa se invierte (D16): **«Añadir Alimento» (primario) primero** y «Escanear la despensa» (tonal) debajo —antes «Escanear alimentos» primero (D3)—, siguiendo `uxdocs/chefencasa_despensa/code_empty.html`. Los dos FABs apilados («Escanear alimentos» encima con icono `PhotoCamera`, «Añadir alimento» abajo), las claves `pantry_scan_food`/`pantry_add_food`, `launchSingleTop` (D5) y el estado vacío de la Lista de la Compra (D2) quedan intactos; la etiqueta de la pestaña de la barra inferior pasa a la clave corta `pantry_tab_label` («Despensa»/«Pantry», patrón `my_recipes_tab_label`) para que el título «Mi Despensa» de D17 no la altere.
