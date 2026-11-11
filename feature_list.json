@@ -1080,6 +1080,39 @@
       ],
       "notes": "Decisión del usuario (2026-11-09): el Pinche pregunta en el chat, una respuesta a la vez, los temas del perfil que necesita rellenar antes de recomendar algo y el modelo rellena esos datos por el usuario. Nueva feature (no se reabre crear-mi-perfil): modifica su comportamiento aceptado (RD26/D8, «no se llama a la IA con el perfil incompleto») sin reescribir su spec ni su evidencia histórica; su spec y sus notas quedan enmendadas desde esta entrada. Cambia la línea roja S08 de docs/build-brief.md, que hay que actualizar en el mismo cambio. Sin cambios de esquema de Room (se reescribe la fila única del perfil). Quedan para la spec: guardado directo por el tool con resumen visible vs confirmación previa del usuario antes de persistir (datos de salud), el tope de vueltas HTTP de la entrevista (MAX_HTTP_CALLS), el idioma en que se guardan las chips de texto libre (sin traducir) y el mapeo del tipo de alimentación al enum con rechazo de valores desconocidos.",
       "status": "accepted"
+    },
+    {
+      "id": "redisenar-vista-de-la-despensa",
+      "area": "funcional",
+      "title": "Rediseñar la vista de la Despensa",
+      "user_visible_behavior": "La Despensa adopta el diseño de uxdocs/chefencasa_despensa: cabecera de sección «Mi Despensa» con subtítulo y badge de recuento, tarjeta de resumen con el número de Alimentos, la capacidad estimada y los Alimentos por caducar, consejo de cocina, buscador con filtrado en vivo y tarjetas de Alimento con miniatura, píldora de frescura, cantidad, caducidad, stepper −/+ inline y menú de opciones con editar y eliminar. Los estados vacíos siguen el prototipo: «Tu despensa está vacía» con sus dos acciones y «No se encontraron ingredientes» al filtrar sin resultados. Los dos botones flotantes se conservan; no hay pestañas de ubicación.",
+      "depends_on": [
+        "gestionar-alimentos-de-la-despensa",
+        "mover-escaneo-a-la-despensa"
+      ],
+      "steps": [
+        "Añadir la fecha de caducidad opcional al Alimento y a su diálogo de alta/edición, con migración Room y sin tocar nombre ni cantidad (revisa P5)",
+        "Implementar las reglas de frescura en domain/ (píldora «Consumir pronto»/«En buen estado», badge «X frescos», contador «N por caducar» y el texto «Caduca en X días») con sus tests unitarios",
+        "Rediseñar la cabecera de sección («Mi Despensa», subtítulo y badge de recuento) y la tarjeta de resumen (recuento de Alimentos, capacidad estimada y «N por caducar»), sin botones de acción",
+        "Añadir el buscador de la Despensa con filtrado en vivo por nombre del Alimento",
+        "Añadir el consejo de cocina determinista a partir de los Alimentos por caducar",
+        "Rediseñar la tarjeta de Alimento: miniatura con icono, nombre con píldora de frescura, cantidad, línea de caducidad, stepper −/+ inline y menú ⋮ con editar y eliminar, conservando los dos FABs",
+        "Rediseñar los estados vacíos según el prototipo: «Tu despensa está vacía» con sus acciones y «No se encontraron ingredientes» con «+ Registrar nuevo alimento» al filtrar sin resultados",
+        "Actualizar textos es/en, testTags, tests E2E/unit y las specs y docs durables (domain-model, DESIGN, build-brief) con enmiendas en las features aceptadas afectadas"
+      ],
+      "verification": [
+        "E2E: con Alimentos con y sin fecha de caducidad, comprobar las píldoras de frescura, los textos de caducidad y los contadores de la cabecera y del resumen",
+        "E2E: usar el stepper −/+ de la tarjeta con los límites 0 y 99 y comprobar que la cantidad se guarda al momento; abrir el menú ⋮ y comprobar que editar y eliminar siguen funcionando con confirmación",
+        "E2E: buscar un Alimento por nombre y comprobar el filtrado en vivo y el estado «No se encontraron ingredientes» con su acción de alta",
+        "E2E: con la Despensa vacía, comprobar el estado «Tu despensa está vacía» con sus dos acciones",
+        "E2E: dar de alta y editar un Alimento con fecha de caducidad y comprobar que persiste tras reiniciar la app",
+        "E2E: comprobar que los dos FABs se conservan y que los textos nuevos existen en español e inglés",
+        "Unit: las reglas de frescura clasifican y formatean correctamente (umbrales, contadores y textos de caducidad)",
+        "Migración: una base v7 con Alimentos migra a v8 sin perder datos y con los Alimentos sin fecha válidos"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-10): (D1) sin pestañas de zona Nevera/Despensa/Congelador (RD11 y P37 intactos); (D2) se adopta la caducidad completa —fecha opcional por Alimento, píldoras de frescura, contadores y consejo de cocina—, lo que revisa P5 («seguimiento de caducidad, fuera del MVP») y exige actualizar docs/build-brief.md; (D3) la cantidad sigue siendo entera 0..99 sin unidad (RD13 intacto; las unidades y decimales del prototipo no se adoptan); (D4) se conservan los dos FABs como acciones principales y la tarjeta de resumen no repite botones —el stepper −/+ inline y el menú ⋮ de la tarjeta sí se adoptan, enmienda el diseño aceptado de gestionar-alimentos-de-la-despensa—; (D5) la cabecera es solo de la vista («Mi Despensa» + subtítulo + badge), sin marca ChefEnCasa ni avatar; (D6, superada por D7) el buscador quedó fuera en un primer momento y (D7, decisión posterior del usuario, 2026-11-10) se incluye con filtrado en vivo para que el estado «No se encontraron ingredientes» del prototipo sea alcanzable; los estados vacíos «Tu despensa está vacía» y «No se encontraron ingredientes» se adoptan según uxdocs/chefencasa_despensa (code_empty.html y code.html). La bottom bar, el «Historial de compras» del prototipo y el estado vacío de filtrado de Mis Recetas quedan fuera de alcance. Quedan para la spec: la fórmula de «Capacidad estimada», los umbrales exactos de frescura, los textos de caducidad (hoy/mañana/N días/Larga duración), la fuente del consejo de cocina y el comportamiento del stepper en los límites (el prototipo sugiere «¿Añadir a lista de la compra?» al bajar de 1).",
+      "status": "not_started"
     }
   ]
 }
