@@ -1120,6 +1120,31 @@
       ],
       "notes": "Decisiones del usuario (2026-11-10): (D1) sin pestañas de zona Nevera/Despensa/Congelador (RD11 y P37 intactos); (D2) se adopta la caducidad completa —fecha opcional por Alimento, píldoras de frescura, contadores y consejo de cocina—, lo que revisa P5 («seguimiento de caducidad, fuera del MVP») y exige actualizar docs/build-brief.md; (D3) la cantidad sigue siendo entera 0..99 sin unidad (RD13 intacto; las unidades y decimales del prototipo no se adoptan); (D4) se conservan los dos FABs como acciones principales y la tarjeta de resumen no repite botones —el stepper −/+ inline y el menú ⋮ de la tarjeta sí se adoptan, enmienda el diseño aceptado de gestionar-alimentos-de-la-despensa—; (D5) la cabecera es solo de la vista («Mi Despensa» + subtítulo + badge), sin marca ChefEnCasa ni avatar; (D6, superada por D7) el buscador quedó fuera en un primer momento y (D7, decisión posterior del usuario, 2026-11-10) se incluye con filtrado en vivo para que el estado «No se encontraron ingredientes» del prototipo sea alcanzable; los estados vacíos «Tu despensa está vacía» y «No se encontraron ingredientes» se adoptan según uxdocs/chefencasa_despensa (code_empty.html y code.html). La bottom bar, el «Historial de compras» del prototipo y el estado vacío de filtrado de Mis Recetas quedan fuera de alcance. Quedan para la spec: la fórmula de «Capacidad estimada», los umbrales exactos de frescura, los textos de caducidad (hoy/mañana/N días/Larga duración), la fuente del consejo de cocina y el comportamiento del stepper en los límites (el prototipo sugiere «¿Añadir a lista de la compra?» al bajar de 1).",
       "status": "accepted"
+    },
+    {
+      "id": "mantener-y-limpiar-conversacion-del-pinche",
+      "area": "funcional",
+      "title": "Mantener la conversación con el Pinche y poder limpiarla",
+      "user_visible_behavior": "La conversación con el Pinche se conserva mientras dura la ejecución de la app: cambiar de pestaña o abrir otra pantalla y volver no la borra. La top bar de la pantalla Pinche incluye un botón que limpia la conversación actual y empieza una nueva desde el estado inicial.",
+      "depends_on": [
+        "resolver-dudas-con-pinche",
+        "rellenar-perfil-con-el-pinche"
+      ],
+      "steps": [
+        "Que la conversación del Pinche (mensajes, Propuestas, avisos y estado de streaming) sobreviva a la navegación entre pestañas y destinos mientras la app esté abierta, sin persistirla en disco (sigue solo en memoria)",
+        "Añadir un botón en la top bar de la pantalla Pinche que limpia la conversación actual y devuelve la pantalla a su estado inicial para empezar de nuevo",
+        "Definir el comportamiento del limpiado con una petición en curso (streaming) y su efecto sobre el estado de entrevista del perfil en el chat",
+        "Actualizar los textos es/en, los testTags y los tests unitarios y E2E afectados (PincheE2ETest) manteniendo la paridad de claves entre locales"
+      ],
+      "verification": [
+        "E2E: enviar un mensaje al Pinche, cambiar a otra pestaña y volver, y comprobar que la conversación sigue intacta",
+        "E2E: con varios mensajes en la conversación, pulsar el botón de la top bar y comprobar que la pantalla vuelve al estado inicial y que se puede conversar de nuevo",
+        "E2E: comprobar el texto del botón y su content-description en español e inglés",
+        "Unit: limpiar la conversación restablece el estado del ViewModel (mensajes, entrada, avisos y streaming) al inicial"
+      ],
+      "evidence": [],
+      "notes": "Decisiones del usuario (2026-11-11): (D1) la conversación se mantiene mientras dure la ejecución de la app —en memoria, sin persistencia entre sesiones; docs/build-brief.md:60 («Historial de conversación entre sesiones» fuera del MVP) sigue vigente y hay que precisarlo («mientras dura la pantalla» → «mientras la app está abierta») al implementar—; (D2) un botón en la top bar de Pinche limpia la conversación actual y empieza de nuevo. Quedan para la spec: icono y textos del botón (papelera vs «Nueva conversación»), confirmación previa vs limpieza directa, comportamiento si hay una respuesta en streaming, alcance del limpiado sobre la entrevista del perfil de rellenar-perfil-con-el-pinche (RD26), mecanismo de ámbito de la conversación (ViewModel con otro store owner vs holder en memoria) y coordinación con la E2E existente de PincheE2ETest. Fuera de alcance: persistir la conversación entre sesiones de la app y el dictado por voz en el Pinche (⚠ S04).",
+      "status": "not_started"
     }
   ]
 }

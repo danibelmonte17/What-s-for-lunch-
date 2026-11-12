@@ -9,7 +9,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -270,7 +270,7 @@ class MyProfileE2ETest {
         var stored: UserProfile? = null
         composeRule.waitUntil(5_000) {
             stored = runBlocking { profileRepository().observeProfile().first() }
-            stored?.let(predicate) == true
+            stored.let(predicate) == true
         }
         return requireNotNull(stored)
     }

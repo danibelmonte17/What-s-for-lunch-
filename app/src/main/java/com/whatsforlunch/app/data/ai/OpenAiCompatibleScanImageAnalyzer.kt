@@ -43,11 +43,9 @@ class OpenAiCompatibleScanImageAnalyzer(
                         Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms")
                         return@withContext ScanAnalysisResult.Failed(AiFailureCause.PROVIDER_ERROR)
                     }
-                    val body = response.body?.string()
-                    if (body == null) {
-                        Log.w(TAG, "POST $endpoint -> HTTP ${response.code} in ${elapsed}ms without body")
-                        return@withContext ScanAnalysisResult.Failed(AiFailureCause.INVALID_RESPONSE)
-                    }
+                    // En OkHttp 5 `Response.body` es no-nulable: el chequeo de
+                    // cuerpo nulo era código muerto.
+                    val body = response.body.string()
                     val content = messageContent(body)
                     if (content == null) {
                         Log.w(
@@ -107,6 +105,7 @@ class OpenAiCompatibleScanImageAnalyzer(
         val choices = JSONObject(body).optJSONArray("choices") ?: return@runCatching null
         val message = choices.optJSONObject(0)?.optJSONObject("message") ?: return@runCatching null
         when (val content = message.opt("content")) {
+            null -> null
             is String -> content
             is JSONArray -> (0 until content.length())
                 .mapNotNull { index -> content.optJSONObject(index)?.optString("text")?.takeIf { it.isNotBlank() } }

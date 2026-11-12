@@ -6,7 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -43,9 +43,11 @@ import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 
 // verify 1–2 · RF-MOB1..RF-MOB7: la barra inferior con sus 5 pestañas y sus
-// destinos, la top bar de Mi recetario solo con «Ajustes», los dos FABs apilados
-// solo con Recetas, la pestaña activa resaltada, «Volver» retirado en las
-// pantallas de pestañas y un back stack coherente (D1–D8).
+// destinos, la top bar de Mi recetario solo con «Ajustes», los FABs con su
+// condición de visibilidad («Recetas con mi Despensa» con Datos en la Despensa y
+// el de cámara con Recetas, apilados cuando coinciden), la pestaña activa
+// resaltada, «Volver» retirado en las pantallas de pestañas y un back stack
+// coherente (D1–D8; D3 enmendada el 2026-11-11).
 @RunWith(AndroidJUnit4::class)
 class BottomBarE2ETest {
 
@@ -110,8 +112,17 @@ class BottomBarE2ETest {
     @Test
     fun topBarKeepsOnlySettingsAndPantryRecipesOpensFromTheFab() {
         seedRecipe(Recipe(id = "tortilla", title = "Tortilla"))
+        // RF-MOB3 (enmienda 2026-11-11): ese FAB exige Datos en la Despensa.
+        seedPantry("Tomate fresco")
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Espera acotada por la composición del FAB «Recetas con mi Despensa»: con
+        // Receta y Despensa sembradas el estado combinado tarda un frame en
+        // reflejar `hasFoods` y la aserción de debajo perdía la carrera (corrección
+        // de la fusión con develop 2026-11-12; la aserción no se debilita).
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_SETTINGS).assertIsDisplayed()
@@ -183,7 +194,8 @@ class BottomBarE2ETest {
         assertEquals(Lifecycle.State.DESTROYED, composeRule.activityRule.scenario.state)
     }
 
-    // S5 (RF-MOB3, D3): sin Recetas no aparece ningún botón flotante.
+    // S5 (RF-MOB3, D3): sin Recetas ni Datos en la Despensa no aparece ningún
+    // botón flotante.
     @Test
     fun emptyStateShowsNoFloatingButtons() {
         composeRule.onNodeWithTag(MyRecipesTestTags.EMPTY_TITLE).assertIsDisplayed()
@@ -192,13 +204,19 @@ class BottomBarE2ETest {
         composeRule.onAllNodesWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).assertCountEquals(0)
     }
 
-    // S5 (RF-MOB3, D3): con Recetas aparecen los dos FABs juntos, «Recetas con mi
-    // Despensa» apilado encima del de cámara.
+    // S5 (RF-MOB3, D3, enmienda 2026-11-11): con Recetas y Datos en la Despensa
+    // aparecen los dos FABs apilados, «Recetas con mi Despensa» encima del de cámara.
     @Test
     fun recipesShowBothFloatingButtonsStacked() {
         seedRecipe(Recipe(id = "tortilla", title = "Tortilla"))
+        seedPantry("Tomate fresco")
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Espera acotada por la composición del FAB «Recetas con mi Despensa» (ver
+        // topBarKeeps…; corrección de la fusión con develop 2026-11-12).
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).assertIsDisplayed()
@@ -211,6 +229,54 @@ class BottomBarE2ETest {
             "«Recetas con mi Despensa» debe quedar apilado encima del FAB de cámara",
             pantryRecipesTop < cameraTop,
         )
+    }
+
+    // RF-MOB3 (enmienda 2026-11-11): con Datos en la Despensa y sin Recetas solo
+    // aparece el FAB «Recetas con mi Despensa» (el de cámara exige Recetas).
+    @Test
+    fun pantryWithoutRecipesShowsOnlyThePantryRecipesFab() {
+        seedPantry("Tomate fresco")
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.SCAN_PANTRY_FAB).assertCountEquals(0)
+
+        // Conserva su destino hacia la pantalla «Recetas con mi Despensa».
+        composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).performClick()
+        composeRule.onNodeWithTag(RecommendationsTestTags.SCREEN).assertIsDisplayed()
+    }
+
+    // RF-MOB3 (enmienda 2026-11-11): con Recetas y la Despensa vacía solo aparece
+    // el FAB de cámara (el de «Recetas con mi Despensa» exige Datos en la Despensa).
+    @Test
+    fun recipesWithoutPantryShowOnlyTheCameraFab() {
+        seedRecipe(Recipe(id = "tortilla", title = "Tortilla"))
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(MyRecipesTestTags.SCAN_PANTRY_FAB).assertIsDisplayed()
+        composeRule.onAllNodesWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).assertCountEquals(0)
+    }
+
+    // ON_RESUME (enmienda 2026-11-11): cada vez que volvemos a Mi recetario la
+    // vista se refresca y muestra la información nueva si la hay.
+    @Test
+    fun returningToMyRecipesShowsTheLatestData() {
+        seedRecipe(Recipe(id = "tortilla", title = "Tortilla"))
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Se cambia de pestaña y aparece una Receta nueva mientras estamos fuera.
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY).performClick()
+        composeRule.onNodeWithTag(PantryTestTags.SCREEN).assertIsDisplayed()
+        seedRecipe(Recipe(id = "arroz", title = "Arroz con leche"))
+
+        composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_MY_RECIPES).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Arroz con leche").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Tortilla").assertIsDisplayed()
     }
 
     // RF-MOB5: ninguna pantalla de pestaña muestra «Volver» ni su equivalente

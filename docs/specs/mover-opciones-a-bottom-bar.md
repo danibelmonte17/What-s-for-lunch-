@@ -232,3 +232,14 @@ Then con la lista vacía no aparece ningún FAB (siguen las acciones del estado 
 - [ ] Persistent E2E coverage was added/updated (obligatorio: cambia navegación y comportamiento visible).
 - [ ] `feature_list.json` and `../../../../PROGRESS.md` were updated correctly.
 - [ ] No unrelated product behavior or extra feature work was added.
+
+## Enmienda (2026-11-11, decisión del usuario; cambio directo sin nueva entrada en `feature_list.json`)
+
+La condición D3/RF-MOB3 de **«juntos y solo cuando hay Recetas»** queda enmendada:
+
+- **«Recetas con mi Despensa» aparece solo cuando la Despensa tiene datos** (`MyRecipesUiState.hasFoods`, `pantryItems.isNotEmpty()`), con independencia de que haya Recetas.
+- **El FAB de cámara conserva su condición actual**: solo con Recetas (y sus CTAs del estado vacío intactos).
+- **Los dos dejan de estar obligatoriamente juntos**: si coinciden (Recetas + Despensa), siguen apilados en el mismo orden («Recetas con mi Despensa» encima); si solo hay Despensa, aparece únicamente el de «Recetas con mi Despensa» (también sobre el estado vacío); si solo hay Recetas, únicamente el de cámara.
+- `Q-mover-opciones-a-bottom-bar-3` (`docs/risks-and-open-questions.md`) queda anotada con esta decisión posterior.
+- **ON_RESUME en Mi recetario** (misma petición del usuario, 2026-11-11): `MyRecipesRoute` observa el ciclo de vida del destino con `LifecycleEventObserver` (mismo patrón que `CookModeRoute`) y, en cada `ON_RESUME` —al volver de otra pestaña o de una pantalla empujada—, llama a `MyRecipesViewModel.refresh()`, que reinicia la colección de `observeRecipes()`/`observePantryItems()` (`flatMapLatest` sobre un tick) y reconstruye la vista completa (lista, Coincidencias, estado vacío y FABs) con los datos vigentes.
+- Cobertura: `MyRecipesHasFoodsTest` (unit, 2 tests), `MyRecipesRefreshTest` (unit, 2 tests) y en `BottomBarE2ETest` los casos nuevos `pantryWithoutRecipesShowsOnlyThePantryRecipesFab`, `recipesWithoutPantryShowOnlyTheCameraFab` y `returningToMyRecipesShowsTheLatestData`, más `recipesShowBothFloatingButtonsStacked` y `topBarKeepsOnlySettingsAndPantryRecipesOpensFromTheFab` adaptados para sembrar también la Despensa.

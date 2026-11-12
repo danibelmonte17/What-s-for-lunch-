@@ -3,7 +3,7 @@ package com.whatsforlunch.app.ui.nav
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
@@ -54,7 +54,7 @@ enum class AppTab(
     PANTRY(
         route = AppRoutes.PANTRY,
         labelRes = R.string.pantry_tab_label,
-        icon = Icons.Outlined.Inventory2,
+        icon = Icons.Outlined.Kitchen,
         testTag = AppBottomBarTestTags.TAB_PANTRY,
     ),
     SHOPPING_LIST(

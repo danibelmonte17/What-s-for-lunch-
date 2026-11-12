@@ -60,6 +60,7 @@ internal object RecipeSuggestionParser {
     private fun text(value: JSONObject, key: String): String? = value.opt(key) as? String
 
     private fun number(value: JSONObject, key: String): Double? = when (val raw = value.opt(key)) {
+        null -> null
         is Number -> raw.toDouble()
         is String -> raw.trim().toDoubleOrNull()
         else -> null

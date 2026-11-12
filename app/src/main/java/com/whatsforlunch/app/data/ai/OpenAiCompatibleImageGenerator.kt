@@ -34,7 +34,7 @@ class OpenAiCompatibleImageGenerator(
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) return@withContext ImageGenerationResult.Failed(AiFailureCause.PROVIDER_ERROR)
-                    val body = response.body?.string() ?: return@withContext ImageGenerationResult.Failed(AiFailureCause.INVALID_RESPONSE)
+                    val body = response.body.string()
                     val bytes = parseImage(body) ?: return@withContext ImageGenerationResult.Failed(AiFailureCause.INVALID_RESPONSE)
                     ImageGenerationResult.Success(bytes)
                 }
@@ -71,7 +71,7 @@ class OpenAiCompatibleImageGenerator(
         val request = Request.Builder().url(url).get().build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) return@runCatching null
-            response.body?.bytes()
+            response.body.bytes()
         }
     }.getOrNull()
 
