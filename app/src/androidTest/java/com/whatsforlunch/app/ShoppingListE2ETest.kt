@@ -33,6 +33,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
@@ -417,6 +418,33 @@ class ShoppingListE2ETest {
             ) and hasText("Arroz con tomate"),
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Harina (1 ud)").assertIsDisplayed()
+    }
+
+    // Petición de UI: en «Pasillo de Super» el badge de Origen ocupa una sola
+    // línea con ellipsis; un título de Receta largo no estira la fila.
+    @Test
+    fun originBadgeStaysOnOneLineInTheAisleTab() {
+        val repository = InMemoryShoppingListRepository()
+        runBlocking {
+            repository.addMissing(
+                sourceKey = "tortilla-larga",
+                sourceTitle = "Tortilla de patatas con cebolla y pimiento asado",
+                ingredients = listOf(RecipeIngredient(name = "Huevos", quantity = 12.0, unit = "ud")),
+            )
+        }
+        val viewModel = ShoppingListViewModel(repository)
+        launchShoppingList(viewModel)
+
+        composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertIsOn()
+        val badge = composeRule.onNodeWithTag(
+            ShoppingListTestTags.origin(ShoppingListRules.itemIdFor("Huevos")),
+        )
+        badge.assertIsDisplayed()
+        // Una sola línea de `labelSmall` + el padding de la píldora (~20 dp); con
+        // dos líneas la píldora pasaría de 34 dp.
+        val bounds = badge.getUnclippedBoundsInRoot()
+        val height = bounds.bottom - bounds.top
+        assertTrue("el badge de Origen debe ocupar una sola línea, mide $height", height < 30.dp)
     }
 
     // S6: borrado con aviso «Ítem eliminado» y «Deshacer» que restaura el ítem.
