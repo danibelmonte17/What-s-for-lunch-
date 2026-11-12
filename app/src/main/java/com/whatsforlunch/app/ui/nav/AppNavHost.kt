@@ -37,7 +37,7 @@ import com.whatsforlunch.app.ui.shoppinglist.ShoppingListRoute
 object AppRoutes {
     const val MY_RECIPES = "my_recipes"
     const val CREATE_RECIPE = "create_recipe?recipeId={recipeId}"
-    const val SCAN_PANTRY = "scan_pantry"
+    const val SCAN_PANTRY = "scan_pantry?pickFromGallery={pickFromGallery}"
     const val PANTRY_RECIPES = "pantry_recipes"
     const val PANTRY = "pantry"
     const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
@@ -49,12 +49,18 @@ object AppRoutes {
     const val MY_PROFILE = "my_profile"
     const val RECIPE_ID_ARG = "recipeId"
     const val SERVINGS_ARG = "servings"
+    const val PICK_FROM_GALLERY_ARG = "pickFromGallery"
 
     fun createRecipe(): String = "create_recipe"
 
     fun editRecipe(recipeId: String): String = "create_recipe?$RECIPE_ID_ARG=$recipeId"
 
     fun recipeDetail(recipeId: String): String = "recipe_detail/$recipeId"
+
+    // Pulsación larga en un botón de escaneo: el Escáner recibe la flag y lanza el
+    // selector de fotos de la galería al entrar (sin permiso de cámara).
+    fun scanPantry(pickFromGallery: Boolean = false): String =
+        "scan_pantry?$PICK_FROM_GALLERY_ARG=$pickFromGallery"
 
     // RF-CPP4: las Raciones viajan como texto opcional (patrón de `recipeId` en el
     // formulario); sin argumento el Modo Cocina usa las Raciones base.
@@ -121,7 +127,10 @@ fun WhatsForLunchApp(
             composable(AppRoutes.MY_RECIPES) {
                 MyRecipesRoute(
                     onCreateRecipe = { navController.navigate(AppRoutes.createRecipe()) },
-                    onScanPantry = { navController.navigate(AppRoutes.SCAN_PANTRY) },
+                    onScanPantry = { navController.navigate(AppRoutes.scanPantry()) },
+                    onScanPantryFromGallery = {
+                        navController.navigate(AppRoutes.scanPantry(pickFromGallery = true))
+                    },
                     onEditRecipe = { recipeId -> navController.navigate(AppRoutes.editRecipe(recipeId)) },
                     onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
                     onOpenPantryRecipes = { navController.navigate(AppRoutes.PANTRY_RECIPES) },
@@ -178,8 +187,17 @@ fun WhatsForLunchApp(
                 onFinish = { navController.popBackStack() },
             )
         }
-        composable(AppRoutes.SCAN_PANTRY) {
+        composable(
+            route = AppRoutes.SCAN_PANTRY,
+            arguments = listOf(
+                navArgument(AppRoutes.PICK_FROM_GALLERY_ARG) {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { entry ->
             ScannerRoute(
+                pickFromGallery = entry.arguments?.getBoolean(AppRoutes.PICK_FROM_GALLERY_ARG) ?: false,
                 onBack = { navController.popBackStack() },
                 // D5: `launchSingleTop` evita duplicar la Despensa en el back stack
                 // cuando el Escáner se abre desde ella (MY_RECIPES → PANTRY →
@@ -240,7 +258,10 @@ fun WhatsForLunchApp(
         // vacío abren el Escáner.
         composable(AppRoutes.PANTRY) {
             PantryRoute(
-                onScanFood = { navController.navigate(AppRoutes.SCAN_PANTRY) },
+                onScanFood = { navController.navigate(AppRoutes.scanPantry()) },
+                onScanFoodFromGallery = {
+                    navController.navigate(AppRoutes.scanPantry(pickFromGallery = true))
+                },
                 scrollToTopTick = scrollToTopTick,
             )
         }
