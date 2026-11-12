@@ -540,6 +540,7 @@ class RecipeDetailE2ETest {
                         onBack = onBack,
                         onStartCooking = { _, _ -> },
                         onServingsChange = viewModel::setServings,
+                        onAddMissingToShoppingList = {},
                     )
                 }
             }

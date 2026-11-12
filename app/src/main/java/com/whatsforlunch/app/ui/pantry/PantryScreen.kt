@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
@@ -81,6 +83,8 @@ import com.whatsforlunch.app.domain.pantry.ExpiryText
 import com.whatsforlunch.app.domain.pantry.Freshness
 import com.whatsforlunch.app.domain.pantry.FreshnessRules
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
+import com.whatsforlunch.app.ui.components.longPressToGallery
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 import java.time.Instant
@@ -160,6 +164,7 @@ fun PantryScreen(
     onErrorConsumed: () -> Unit,
     onSaveCompletedConsumed: () -> Unit,
     modifier: Modifier = Modifier,
+    onScanFoodFromGallery: () -> Unit = {},
     scrollToTopTick: Int = 0,
 ) {
     var itemToEdit by remember { mutableStateOf<PantryItem?>(null) }
@@ -230,7 +235,10 @@ fun PantryScreen(
                 // contentDescription para TalkBack y las pruebas siguen por testTag.
                 FloatingActionButton(
                     onClick = onScanFood,
-                    modifier = Modifier.testTag(PantryTestTags.SCAN_FOOD),
+                    modifier = Modifier.testTag(PantryTestTags.SCAN_FOOD)
+                        // Pulsación larga: en vez de abrir la cámara, elige una
+                        // foto de la galería y la analiza con la IA.
+                        .longPressToGallery(onGalleryRequested = onScanFoodFromGallery),
                     shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -274,16 +282,22 @@ fun PantryScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Surface(
-                            modifier = Modifier.size(96.dp),
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .testTag(MyRecipesTestTags.EMPTY_ICON_CONTAINER),
                         ) {
-                            Icon(
-                                Icons.Outlined.Kitchen,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(24.dp),
-                            )
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Filled.Kitchen,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .testTag(MyRecipesTestTags.EMPTY_ICON),
+                                )
+                            }
                         }
                         Text(
                             stringResource(R.string.pantry_empty_title),
@@ -319,7 +333,11 @@ fun PantryScreen(
                                 contentColor = MaterialTheme.colorScheme.onSurface,
                             ),
                             modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm)
-                                .heightIn(min = 52.dp).testTag(PantryTestTags.SCAN_FOOD_CTA),
+                                .heightIn(min = 52.dp)
+                                // Pulsación larga: en vez de abrir la cámara, elige una
+                                // foto de la galería y la analiza con la IA (de develop).
+                                .longPressToGallery(onGalleryRequested = onScanFoodFromGallery)
+                                .testTag(PantryTestTags.SCAN_FOOD_CTA),
                         ) {
                             Icon(Icons.Outlined.DocumentScanner, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(WarmSpacing.xs))

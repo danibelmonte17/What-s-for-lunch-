@@ -315,6 +315,7 @@ class PantryRecipesE2ETest {
                                 uiState = detailState,
                                 onBack = { showDetail.value = false },
                                 onStartCooking = { _, _ -> },
+                                onAddMissingToShoppingList = {},
                             )
                         }
                         showAiSuggestions.value -> {
@@ -339,6 +340,7 @@ class PantryRecipesE2ETest {
                                 showDetail.value = true
                             },
                             onSuggestWithAi = { showAiSuggestions.value = true },
+                            onAddMissingToShoppingList = {},
                         )
                     }
                 }

@@ -7,6 +7,7 @@
     <string name="my_recipes_empty_message">Comienza a guardar tus recetas favoritas o descubre qué cocinar hoy según lo que tengas en casa.</string>
     <string name="action_create_recipe">Crear una receta</string>
     <string name="action_scan_pantry">Escanear despensa con IA</string>
+    <string name="action_pick_from_gallery">Elegir foto de la galería</string>
     <string name="action_back">Volver</string>
     <string name="action_dismiss">Cerrar</string>
 
@@ -415,6 +416,7 @@
     <string name="pinche_profile_open">Abrir Mi perfil</string>
     <string name="pinche_profile_saved">He guardado en «Mi perfil»: %1$s</string>
     <string name="pinche_profile_saved_none">ninguna</string>
+    <string name="pinche_clear_conversation">Limpiar conversación</string>
 
     <!-- Mi perfil (crear-mi-perfil) -->
     <string name="my_profile_title">Mi perfil</string>

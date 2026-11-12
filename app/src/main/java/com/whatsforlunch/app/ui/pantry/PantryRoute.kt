@@ -8,6 +8,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun PantryRoute(
     onScanFood: () -> Unit,
+    onScanFoodFromGallery: () -> Unit = {},
     scrollToTopTick: Int = 0,
     viewModel: PantryViewModel = koinViewModel(),
 ) {
@@ -15,6 +16,7 @@ fun PantryRoute(
     PantryScreen(
         uiState = uiState,
         onScanFood = onScanFood,
+        onScanFoodFromGallery = onScanFoodFromGallery,
         onSaveItem = viewModel::saveItem,
         onQuantityChange = viewModel::setQuantity,
         onSearchChange = viewModel::setSearchQuery,

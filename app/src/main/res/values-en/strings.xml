@@ -6,6 +6,7 @@
     <string name="my_recipes_empty_message">Start saving your favorite recipes or discover what to cook today with what you have at home.</string>
     <string name="action_create_recipe">Create a recipe</string>
     <string name="action_scan_pantry">Scan your Pantry with AI</string>
+    <string name="action_pick_from_gallery">Pick photo from gallery</string>
     <string name="action_back">Back</string>
     <string name="action_dismiss">Dismiss</string>
 
@@ -413,6 +414,7 @@
     <string name="pinche_profile_open">Open My profile</string>
     <string name="pinche_profile_saved">Saved in “My profile”: %1$s</string>
     <string name="pinche_profile_saved_none">none</string>
+    <string name="pinche_clear_conversation">Clear conversation</string>
 
     <!-- My profile (crear-mi-perfil) -->
     <string name="my_profile_title">My profile</string>

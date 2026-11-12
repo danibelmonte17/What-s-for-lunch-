@@ -139,58 +139,66 @@ class ScannerViewModel(
                 null
             }
             if (image == null) {
-                _uiState.value = _uiState.value.copy(
+                applyAnalysisFailure(ScannerNotice.ANALYSIS_FAILED)
+                return@launch
+            }
+            analyzeImage(image, language)
+        }
+    }
+
+    /**
+     * Same AI call as [captureAndAnalyze] for a photo picked from the gallery on a
+     * long press: no camera permission and no preview are involved, and a null image
+     * (unreadable file) is reported as a failed analysis.
+     */
+    fun analyzePickedImage(image: ByteArray?, language: String) {
+        val state = _uiState.value
+        if (state.isAnalyzing || state.isSaving) return
+        if (image == null) {
+            applyAnalysisFailure(ScannerNotice.ANALYSIS_FAILED)
+            return
+        }
+        _uiState.value = state.copy(isAnalyzing = true, notice = null)
+        viewModelScope.launch { analyzeImage(image, language) }
+    }
+
+    private suspend fun analyzeImage(image: ByteArray, language: String) {
+        val result = try {
+            scanImageAnalyzer.analyze(image, language)
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            ScanAnalysisResult.Failed(AiFailure.fromException(exception))
+        } catch (exception: LinkageError) {
+            ScanAnalysisResult.Failed(AiFailure.fromException(exception))
+        }
+        when (result) {
+            is ScanAnalysisResult.Success -> {
+                val hasFoods = result.foods.any { it.name.isNotBlank() }
+                val merged = ScanAnalysis.mergeProposals(_uiState.value.items, result.foods)
+                _uiState.value = recalculateItems(_uiState.value, merged).copy(
                     isAnalyzing = false,
                     isScannerExpanded = false,
                     cameraPreviewReady = false,
-                    manualMode = true,
-                    notice = ScannerNotice.ANALYSIS_FAILED,
+                    manualMode = false,
+                    notice = if (hasFoods) null else ScannerNotice.NO_DETECTIONS,
                 )
-                return@launch
             }
-            val result = try {
-                scanImageAnalyzer.analyze(image, language)
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (exception: Exception) {
-                ScanAnalysisResult.Failed(AiFailure.fromException(exception))
-            } catch (exception: LinkageError) {
-                ScanAnalysisResult.Failed(AiFailure.fromException(exception))
-            }
-            when (result) {
-                is ScanAnalysisResult.Success -> {
-                    val hasFoods = result.foods.any { it.name.isNotBlank() }
-                    val merged = ScanAnalysis.mergeProposals(_uiState.value.items, result.foods)
-                    _uiState.value = recalculateItems(_uiState.value, merged).copy(
-                        isAnalyzing = false,
-                        isScannerExpanded = false,
-                        cameraPreviewReady = false,
-                        manualMode = false,
-                        notice = if (hasFoods) null else ScannerNotice.NO_DETECTIONS,
-                    )
-                }
 
-                ScanAnalysisResult.MissingApiKey -> {
-                    _uiState.value = _uiState.value.copy(
-                        isAnalyzing = false,
-                        isScannerExpanded = false,
-                        cameraPreviewReady = false,
-                        manualMode = true,
-                        notice = ScannerNotice.AI_KEY_MISSING,
-                    )
-                }
+            ScanAnalysisResult.MissingApiKey -> applyAnalysisFailure(ScannerNotice.AI_KEY_MISSING)
 
-                is ScanAnalysisResult.Failed -> {
-                    _uiState.value = _uiState.value.copy(
-                        isAnalyzing = false,
-                        isScannerExpanded = false,
-                        cameraPreviewReady = false,
-                        manualMode = true,
-                        notice = result.cause.toNotice(),
-                    )
-                }
-            }
+            is ScanAnalysisResult.Failed -> applyAnalysisFailure(result.cause.toNotice())
         }
+    }
+
+    private fun applyAnalysisFailure(notice: ScannerNotice) {
+        _uiState.value = _uiState.value.copy(
+            isAnalyzing = false,
+            isScannerExpanded = false,
+            cameraPreviewReady = false,
+            manualMode = true,
+            notice = notice,
+        )
     }
 
     private fun AiFailureCause.toNotice(): ScannerNotice = when (this) {

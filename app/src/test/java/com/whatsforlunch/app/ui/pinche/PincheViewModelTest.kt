@@ -28,6 +28,8 @@ import com.whatsforlunch.app.domain.repository.RecipeRepository
 import com.whatsforlunch.app.domain.repository.ShoppingListRepository
 import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.domain.suggestion.RecipeSuggestion
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -590,10 +592,74 @@ class PincheViewModelTest {
         assertTrue(client.lastTurns.none { it.text.isBlank() })
     }
 
+    // D2/D4/D9 (`mantener-y-limpiar-conversacion-del-pinche`): limpiar devuelve
+    // el estado al inicial completo (mensajes, entrada, avisos, streaming y
+    // lastUserText), sin tocar nada persistido.
+    @Test
+    fun clearConversationResetsTheStateToTheInitialOne() = runTest {
+        val viewModel = viewModel(client = FakePincheChatClient(listOf(PincheReplyResult.MissingApiKey)))
+
+        viewModel.onInputChange("Hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        // Estado «sucio»: mensaje del usuario, aviso de key ausente y borrador.
+        val dirty = viewModel.uiState.value
+        assertEquals(1, dirty.messages.size)
+        assertEquals(PincheNotice.AI_KEY_MISSING, dirty.notice)
+        assertEquals("Hola", dirty.lastUserText)
+        viewModel.onInputChange("borrador sin enviar")
+
+        viewModel.clearConversation()
+
+        assertEquals(PincheUiState(), viewModel.uiState.value)
+    }
+
+    // D5/D10: con una petición en curso, limpiar cancela el turno y todo lo que
+    // llegue después —fragmento o resultado— se descarta (aquí un «proveedor» no
+    // cooperativo que completa pese a la cancelación).
+    @Test
+    fun clearConversationCancelsTheRequestAndDiscardsLateWrites() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        var cancelled = false
+        val client = object : PincheChatClient {
+            override suspend fun reply(
+                turns: List<PincheTurn>,
+                language: String,
+                profile: UserProfile,
+                onContent: (String) -> Unit,
+            ): PincheReplyResult {
+                onContent("respuesta parcial")
+                try {
+                    gate.await()
+                } catch (exception: CancellationException) {
+                    cancelled = true
+                    onContent("fragmento tardío")
+                }
+                return success("respuesta tardía")
+            }
+        }
+        val viewModel = viewModel(client = client)
+
+        viewModel.onInputChange("hola")
+        viewModel.send("es")
+        advanceUntilIdle()
+
+        assertEquals("respuesta parcial", viewModel.uiState.value.streamingText)
+        assertTrue(viewModel.uiState.value.isSending)
+
+        viewModel.clearConversation()
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(cancelled)
+        assertEquals(PincheUiState(), viewModel.uiState.value)
+    }
+
     private fun viewModel(
         pantry: InMemoryPantryRepository = InMemoryPantryRepository(),
         recipes: RecipeRepository = InMemoryRecipeRepository(),
-        client: FakePincheChatClient = FakePincheChatClient(emptyList()),
+        client: PincheChatClient = FakePincheChatClient(emptyList()),
         shoppingList: ShoppingListRepository = InMemoryShoppingListRepository(),
         profile: UserProfileRepository = completeProfileRepository(),
     ) = PincheViewModel(pantry, recipes, client, shoppingList, profile)

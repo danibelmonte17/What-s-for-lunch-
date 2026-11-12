@@ -199,6 +199,7 @@ class PincheE2ETest {
                             onQuickSuggestion = { pincheViewModel.sendQuickSuggestion(it, "es") },
                             onRetry = { pincheViewModel.retry("es") },
                             onSaveProposal = pincheViewModel::saveProposal,
+                            onAddMissingToShoppingList = {},
                             onClearNotice = pincheViewModel::clearNotice,
                         )
                     } else {
@@ -406,6 +407,7 @@ class PincheE2ETest {
                                     onQuickSuggestion = { pincheViewModel.sendQuickSuggestion(it, "es") },
                                     onRetry = { pincheViewModel.retry("es") },
                                     onSaveProposal = pincheViewModel::saveProposal,
+                                    onAddMissingToShoppingList = {},
                                     onClearNotice = pincheViewModel::clearNotice,
                                 )
                             } else {
@@ -550,6 +552,7 @@ class PincheE2ETest {
                             onQuickSuggestion = { text -> pincheViewModel.sendQuickSuggestion(text, "es") },
                             onRetry = { pincheViewModel.retry("es") },
                             onSaveProposal = pincheViewModel::saveProposal,
+                            onAddMissingToShoppingList = {},
                             onClearNotice = pincheViewModel::clearNotice,
                             onOpenProfile = { showProfile.value = true },
                         )
@@ -891,6 +894,7 @@ class PincheE2ETest {
                         onQuickSuggestion = { text -> viewModel.sendQuickSuggestion(text, language) },
                         onRetry = { viewModel.retry(language) },
                         onSaveProposal = viewModel::saveProposal,
+                        onAddMissingToShoppingList = {},
                         onClearNotice = viewModel::clearNotice,
                         onOpenProfile = onOpenProfile,
                     )
