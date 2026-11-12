@@ -343,7 +343,7 @@ class ShoppingListE2ETest {
                 ),
             ),
         )
-        val listViewModel = ShoppingListViewModel(shoppingList)
+        val listViewModel = ShoppingListViewModel(shoppingList, pantry)
         val showList = mutableStateOf(false)
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
         val configuration = Configuration(baseContext.resources.configuration).apply {
@@ -372,6 +372,8 @@ class ShoppingListE2ETest {
                             onToggleCompleted = listViewModel::toggleCompleted,
                             onSetGroupMode = listViewModel::setGroupMode,
                             onClearCompleted = listViewModel::clearCompleted,
+                            onAddCompletedToPantry = listViewModel::addCompletedToPantry,
+                            onDismissPantryNotice = listViewModel::dismissPantryNotice,
                         )
                     } else {
                         PincheRoute(onOpenSettings = {}, viewModel = viewModel)
@@ -432,7 +434,7 @@ class ShoppingListE2ETest {
                 ingredients = listOf(RecipeIngredient(name = "Huevos", quantity = 12.0, unit = "ud")),
             )
         }
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         launchShoppingList(viewModel)
 
         composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertIsOn()
@@ -458,7 +460,7 @@ class ShoppingListE2ETest {
                 ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
             )
         }
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         launchShoppingList(viewModel)
 
         val itemId = ShoppingListRules.itemIdFor("Azafrán")
@@ -925,7 +927,7 @@ class ShoppingListE2ETest {
                 ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
             )
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         // D1: el modo por defecto es «Pasillo de Super».
         composeRule.onNodeWithTag(ShoppingListTestTags.GROUP_MODE_AISLE).assertIsOn()
@@ -979,7 +981,7 @@ class ShoppingListE2ETest {
                 ),
             )
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
         selectRecipeGrouping()
 
         composeRule.onNode(
@@ -1025,7 +1027,7 @@ class ShoppingListE2ETest {
                 repository.saveManualItem(id = null, name = name, quantity = 1.0, unit = "ud", aisle = null)
             }
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         composeRule.onNodeWithTag(ShoppingListTestTags.PROGRESS_TEXT)
             .assertIsDisplayed()
@@ -1070,7 +1072,7 @@ class ShoppingListE2ETest {
                 ingredients = listOf(RecipeIngredient(name = "Harina", quantity = 500.0, unit = "g")),
             )
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
         selectRecipeGrouping()
 
         val harina = ShoppingListRules.itemIdFor("Harina")
@@ -1103,7 +1105,7 @@ class ShoppingListE2ETest {
             repository.saveManualItem(id = null, name = "Pan", quantity = 1.0, unit = "ud", aisle = null)
             repository.saveManualItem(id = null, name = "Leche", quantity = 1.0, unit = "l", aisle = null)
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         val pan = ShoppingListRules.itemIdFor("Pan")
         composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
@@ -1128,7 +1130,7 @@ class ShoppingListE2ETest {
         runBlocking {
             repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "uds", aisle = null)
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         composeRule.onAllNodesWithTag(ShoppingListTestTags.CLEAR_COMPLETED).assertCountEquals(0)
         val pan = ShoppingListRules.itemIdFor("Pan")
@@ -1158,7 +1160,7 @@ class ShoppingListE2ETest {
                 ),
             )
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         val azafran = ShoppingListRules.itemIdFor("Azafrán")
         val harina = ShoppingListRules.itemIdFor("Harina")
@@ -1218,7 +1220,7 @@ class ShoppingListE2ETest {
                 aisle = Aisle.DAIRY,
             )
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         val azafran = ShoppingListRules.itemIdFor("Azafrán")
         // «Pasillo»: sin etiqueta de Pasillo, con badge de una fuente y multi.
@@ -1276,7 +1278,7 @@ class ShoppingListE2ETest {
         runBlocking {
             repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "uds", aisle = null)
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         val pan = ShoppingListRules.itemIdFor("Pan")
         composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
@@ -1314,7 +1316,7 @@ class ShoppingListE2ETest {
             repository.saveManualItem(id = null, name = "Café", quantity = 1.0, unit = "cucharadas", aisle = null)
             repository.saveManualItem(id = null, name = "Toallitas", quantity = null, unit = "", aisle = null)
         }
-        launchShoppingList(ShoppingListViewModel(repository))
+        launchShoppingList(ShoppingListViewModel(repository, InMemoryPantryRepository()))
 
         // Ítem nuevo: «ud» preseleccionado y las cinco opciones del enum (D1).
         composeRule.onNodeWithTag(ShoppingListTestTags.ADD_ITEM).performClick()
@@ -1349,6 +1351,57 @@ class ShoppingListE2ETest {
             composeRule.onAllNodesWithTag(ShoppingListTestTags.EDIT_DIALOG).fetchSemanticsNodes().isEmpty()
         }
         composeRule.onNodeWithText("Toallitas").assertIsDisplayed()
+    }
+
+    // Petición de UI (RD29): el FAB «Añadir a la Despensa» (icono Kitchen) solo
+    // aparece con ítems marcados, pide confirmación en un modal y, al confirmar,
+    // suma la cantidad en la Despensa y quita esos ítems de la Lista.
+    @Test
+    fun completedItemsAreMovedToThePantryFromTheKitchenFab() {
+        val repository = InMemoryShoppingListRepository()
+        val pantry = InMemoryPantryRepository()
+        runBlocking {
+            repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "ud", aisle = null)
+            repository.saveManualItem(id = null, name = "Leche", quantity = 1.0, unit = "l", aisle = null)
+            pantry.savePantryItem(PantryItem(id = "pan-en-casa", name = "Pan", quantity = 3))
+        }
+        launchShoppingList(ShoppingListViewModel(repository, pantry))
+
+        // Sin ítems marcados no aparece el FAB de la Despensa.
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.ADD_TO_PANTRY).assertCountEquals(0)
+
+        val pan = ShoppingListRules.itemIdFor("Pan")
+        composeRule.onNodeWithTag(ShoppingListTestTags.check(pan)).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_TO_PANTRY).assertIsDisplayed()
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_TO_PANTRY).performClick()
+
+        // Modal con el recuento de marcados.
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_TO_PANTRY_DIALOG).assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "1 artículo marcado se añadirá a tu Despensa y se quitará de la Lista de la Compra.",
+        ).assertIsDisplayed()
+
+        // Cancelar no cambia nada.
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_TO_PANTRY_CANCEL).performClick()
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.ADD_TO_PANTRY_DIALOG).assertCountEquals(0)
+        assertEquals(2, composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size)
+
+        // Confirmar mueve el ítem marcado (3 + 2 = 5) y deja el resto en la Lista.
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_TO_PANTRY).performClick()
+        composeRule.onNodeWithTag(ShoppingListTestTags.ADD_TO_PANTRY_CONFIRM).performClick()
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(ShoppingListTestTags.ITEM).fetchSemanticsNodes().size == 1
+        }
+        composeRule.onNodeWithText("Leche (1 l)").assertIsDisplayed()
+        // Sin marcados, el FAB de la Despensa desaparece.
+        composeRule.onAllNodesWithTag(ShoppingListTestTags.ADD_TO_PANTRY).assertCountEquals(0)
+        composeRule.onNodeWithText("1 artículo añadido a la Despensa").assertIsDisplayed()
+
+        val saved = runBlocking { pantry.observePantryItems().first() }
+        assertEquals(1, saved.size)
+        assertEquals("pan-en-casa", saved.single().id)
+        assertEquals(5, saved.single().quantity)
     }
 
     // --- Helpers -----------------------------------------------------------------
@@ -1462,6 +1515,8 @@ class ShoppingListE2ETest {
                         onToggleCompleted = viewModel::toggleCompleted,
                         onSetGroupMode = viewModel::setGroupMode,
                         onClearCompleted = viewModel::clearCompleted,
+                        onAddCompletedToPantry = viewModel::addCompletedToPantry,
+                        onDismissPantryNotice = viewModel::dismissPantryNotice,
                     )
                 }
             }
