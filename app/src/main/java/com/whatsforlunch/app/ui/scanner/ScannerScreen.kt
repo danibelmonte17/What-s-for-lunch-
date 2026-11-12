@@ -60,6 +60,7 @@ import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.ScanDraftItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
+import com.whatsforlunch.app.ui.components.longPressToGallery
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 
@@ -82,6 +83,7 @@ object ScannerTestTags {
     const val DUPLICATE_MARK_PREFIX = "scanner_duplicate_mark"
     const val MANUAL_NAME = "scanner_manual_name"
     const val MANUAL_ADD = "scanner_manual_add"
+    const val GALLERY_PROGRESS = "scanner_gallery_progress"
     const val SAVE = "scanner_save"
     const val EXIT_DIALOG = "scanner_exit_dialog"
     const val EXIT_CANCEL = "scanner_exit_cancel"
@@ -103,6 +105,7 @@ fun ScannerScreen(
     onBack: () -> Unit,
     onOpenScanner: () -> Unit,
     onCloseScanner: () -> Unit,
+    onPickPhotoFromGallery: () -> Unit = {},
     onCapture: () -> Unit,
     onRequestExit: () -> Boolean,
     onConfirmExit: () -> Unit,
@@ -180,6 +183,12 @@ fun ScannerScreen(
                             onClick = onOpenScanner,
                             enabled = !uiState.isAnalyzing && !uiState.isSaving,
                             modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm).heightIn(min = 52.dp)
+                                // Pulsación larga: en vez de abrir la cámara, elige una
+                                // foto de la galería y la analiza con la IA.
+                                .longPressToGallery(
+                                    enabled = !uiState.isAnalyzing && !uiState.isSaving,
+                                    onGalleryRequested = onPickPhotoFromGallery,
+                                )
                                 .testTag(ScannerTestTags.SCANNER_TOGGLE),
                         ) {
                             Icon(Icons.Outlined.CameraAlt, contentDescription = null)
@@ -187,6 +196,22 @@ fun ScannerScreen(
                                 stringResource(R.string.scanner_open_camera),
                                 modifier = Modifier.padding(start = WarmSpacing.xs),
                             )
+                        }
+                        // Análisis de una foto de galería: el panel de cámara está
+                        // cerrado, así que el progreso se muestra aquí.
+                        if (uiState.isAnalyzing) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.sm)
+                                    .testTag(ScannerTestTags.GALLERY_PROGRESS),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                Text(
+                                    stringResource(R.string.scanner_analyzing),
+                                    modifier = Modifier.padding(start = WarmSpacing.sm),
+                                )
+                            }
                         }
                     }
                     AnimatedVisibility(

@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.pantry.PantryItemValidation
+import com.whatsforlunch.app.ui.components.longPressToGallery
 import com.whatsforlunch.app.ui.theme.WarmRadius
 import com.whatsforlunch.app.ui.theme.WarmSpacing
 
@@ -105,6 +106,7 @@ fun PantryScreen(
     onErrorConsumed: () -> Unit,
     onSaveCompletedConsumed: () -> Unit,
     modifier: Modifier = Modifier,
+    onScanFoodFromGallery: () -> Unit = {},
     scrollToTopTick: Int = 0,
 ) {
     var itemToEdit by remember { mutableStateOf<PantryItem?>(null) }
@@ -171,7 +173,10 @@ fun PantryScreen(
                 // contentDescription para TalkBack y las pruebas siguen por testTag.
                 FloatingActionButton(
                     onClick = onScanFood,
-                    modifier = Modifier.testTag(PantryTestTags.SCAN_FOOD),
+                    modifier = Modifier.testTag(PantryTestTags.SCAN_FOOD)
+                        // Pulsación larga: en vez de abrir la cámara, elige una
+                        // foto de la galería y la analiza con la IA.
+                        .longPressToGallery(onGalleryRequested = onScanFoodFromGallery),
                     shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -229,6 +234,9 @@ fun PantryScreen(
                 Button(
                     onClick = onScanFood,
                     modifier = Modifier.fillMaxWidth().padding(top = WarmSpacing.lg).heightIn(min = 52.dp)
+                        // Pulsación larga: en vez de abrir la cámara, elige una
+                        // foto de la galería y la analiza con la IA.
+                        .longPressToGallery(onGalleryRequested = onScanFoodFromGallery)
                         .testTag(PantryTestTags.SCAN_FOOD_CTA),
                 ) { Text(stringResource(R.string.pantry_scan_food)) }
                 OutlinedButton(
