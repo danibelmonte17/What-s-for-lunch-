@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -281,6 +282,7 @@ fun PantryScreen(
                         modifier = Modifier.fillMaxWidth().padding(WarmSpacing.lg),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
+                        Spacer(modifier = Modifier.height(32.dp))
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.surfaceContainer,
