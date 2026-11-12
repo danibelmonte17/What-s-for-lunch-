@@ -1,0 +1,9 @@
+=== Smoke test de pago - mejorar-prompts-y-contratos-de-ia (2026-11-12 13:26) ===
+Endpoint: https://inference.devexpert.io/v1 | Key: AI_API_KEY de local.properties (no registrada)
+[sugerencias] HTTP 400 en 727 ms con json_schema -> FALLO AUTOMATICO a json_object (RF-MPC3): Error en el servidor remoto: (400) Solicitud incorrecta.
+[sugerencias] format=json_object (tras fallback) | HTTP 0 | 14262 ms | finish=
+[sugerencias] contenido (max 500 chars): Referencia a objeto no establecida como instancia de un objeto.
+[escaner] HTTP 400 en 303 ms con json_schema -> FALLO AUTOMATICO a json_object (RF-MPC3): Error en el servidor remoto: (400) Solicitud incorrecta.
+[escaner] format=json_object (tras fallback) | HTTP 0 | 3006 ms | finish=
+[escaner] contenido (max 500 chars): Referencia a objeto no establecida como instancia de un objeto.
+[imagen] HTTP 0 | 3245 ms | ERROR: Referencia a objeto no establecida como instancia de un objeto.
