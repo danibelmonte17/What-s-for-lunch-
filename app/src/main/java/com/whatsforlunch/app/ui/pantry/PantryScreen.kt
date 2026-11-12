@@ -689,31 +689,11 @@ private fun PantryItemCard(
                     modifier = Modifier.testTag(PantryTestTags.itemExpiry(item.id)),
                 )
             }
+            // Controles de la fila: menú ⋮ arriba pegado a la derecha y stepper −/+
+            // en la fila de abajo. Esta columna (48 + 48 dp) es lo más alto de la
+            // tarjeta, así que el «Row» externo centrado la deja pegada a los bordes
+            // superior e inferior de la tarjeta.
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { onQuantityChange(item.id, quantity - 1) },
-                        enabled = quantity > PantryItemValidation.MIN_QUANTITY,
-                        modifier = Modifier.size(48.dp)
-                            .testTag(PantryTestTags.itemQuantityDecrease(item.id)),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Remove,
-                            contentDescription = stringResource(R.string.pantry_item_qty_decrease, item.name),
-                        )
-                    }
-                    IconButton(
-                        onClick = { onQuantityChange(item.id, quantity + 1) },
-                        enabled = quantity < PantryItemValidation.MAX_QUANTITY,
-                        modifier = Modifier.size(48.dp)
-                            .testTag(PantryTestTags.itemQuantityIncrease(item.id)),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Add,
-                            contentDescription = stringResource(R.string.pantry_item_qty_increase, item.name),
-                        )
-                    }
-                }
                 Box {
                     IconButton(
                         onClick = { menuOpen = true },
@@ -753,6 +733,30 @@ private fun PantryItemCard(
                             modifier = Modifier.testTag(PantryTestTags.deleteItem(item.id)).semantics {
                                 contentDescription = "$deleteLabel ${item.name}"
                             },
+                        )
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { onQuantityChange(item.id, quantity - 1) },
+                        enabled = quantity > PantryItemValidation.MIN_QUANTITY,
+                        modifier = Modifier.size(48.dp)
+                            .testTag(PantryTestTags.itemQuantityDecrease(item.id)),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Remove,
+                            contentDescription = stringResource(R.string.pantry_item_qty_decrease, item.name),
+                        )
+                    }
+                    IconButton(
+                        onClick = { onQuantityChange(item.id, quantity + 1) },
+                        enabled = quantity < PantryItemValidation.MAX_QUANTITY,
+                        modifier = Modifier.size(48.dp)
+                            .testTag(PantryTestTags.itemQuantityIncrease(item.id)),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Add,
+                            contentDescription = stringResource(R.string.pantry_item_qty_increase, item.name),
                         )
                     }
                 }
