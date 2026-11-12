@@ -843,12 +843,6 @@ private fun IngredientRow(row: IngredientFieldUiState, index: Int, actions: Crea
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(WarmSpacing.xs),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.DragIndicator,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(18.dp),
-            )
             OutlinedTextField(
                 value = row.name,
                 onValueChange = { actions.onIngredientNameChange(row.key, it) },
