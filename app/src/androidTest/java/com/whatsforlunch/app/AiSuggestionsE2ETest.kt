@@ -325,6 +325,7 @@ class AiSuggestionsE2ETest {
                             onBack = {},
                             onOpenRecipe = {},
                             onSuggestWithAi = { showSuggestions.value = true },
+                            onAddMissingToShoppingList = {},
                         )
                     }
                 }

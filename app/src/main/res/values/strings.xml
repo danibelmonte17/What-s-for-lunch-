@@ -369,6 +369,7 @@
     <string name="pinche_profile_open">Abrir Mi perfil</string>
     <string name="pinche_profile_saved">He guardado en «Mi perfil»: %1$s</string>
     <string name="pinche_profile_saved_none">ninguna</string>
+    <string name="pinche_clear_conversation">Limpiar conversación</string>
 
     <!-- Mi perfil (crear-mi-perfil) -->
     <string name="my_profile_title">Mi perfil</string>

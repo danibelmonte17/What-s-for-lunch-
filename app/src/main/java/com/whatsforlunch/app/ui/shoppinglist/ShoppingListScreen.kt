@@ -76,6 +76,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.whatsforlunch.app.R
 import com.whatsforlunch.app.domain.model.Aisle
@@ -659,6 +660,11 @@ private fun OriginBadge(item: ShoppingListItem) {
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
+                // Una sola línea con ellipsis: el título largo de la Receta no
+                // estira la fila en «Pasillo de Super» (el texto completo sigue
+                // disponible para TalkBack vía el contentDescription de la píldora).
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

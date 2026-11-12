@@ -57,7 +57,7 @@ El desglose por sesiones de implementación vive en `feature_list.json`; este do
 - **Catálogo compartido entre usuarios** — las Recetas aceptadas van solo a Mi recetario del usuario (`P32`).
 - **Dictado por voz en el Pinche** — llega con la voz del Modo Cocina y la Lista de la Compra (`⚠ S04`); esta versión del Pinche es solo texto.
 - **Enviar los Faltantes del Pinche a la Lista de la Compra** — la Ficha solo los muestra; el alta llega con `anadir-faltantes-a-la-lista`.
-- **Historial de conversación entre sesiones** — la conversación del Pinche vive solo en memoria mientras dura la pantalla.
+- **Historial de conversación entre sesiones** — la conversación del Pinche vive solo en memoria **mientras la app está abierta**: sobrevive a cambiar de pestaña o abrir otra pantalla y volver, y la top bar ofrece «Limpiar conversación» para empezar una nueva (`mantener-y-limpiar-conversacion-del-pinche`); al cerrar la app se pierde.
 - **Desglose por ubicaciones físicas** (nevera/vinagrera/especiero del PRD) — solo existe la Despensa (`P37`).
 
 ### Fuera del producto (no es su propósito)

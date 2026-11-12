@@ -21,6 +21,7 @@ import com.whatsforlunch.app.domain.repository.UserProfileRepository
 import com.whatsforlunch.app.domain.text.normalizeName
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -84,6 +85,12 @@ data class PincheUiState(
  * (D1): una respuesta con Propuesta y partes pendientes no pinta la Ficha y añade
  * el mensaje estático con «Abrir Mi perfil»; sin key o con fallo, además del aviso,
  * se añade ese mismo mensaje (degradación, S5).
+ *
+ * `mantener-y-limpiar-conversacion-del-pinche` (D8): la instancia vive en el
+ * ViewModelStore de la **Activity** (no en la entrada `pinche` del back stack)
+ * para sobrevivir a los cambios de pestaña, y `clearConversation()` (D4/D5)
+ * devuelve el estado al inicial cancelando la petición en curso; la generación
+ * (D10) descarta los escritos que lleguen tarde.
  */
 class PincheViewModel(
     private val pantryRepository: PantryRepository,
@@ -95,6 +102,13 @@ class PincheViewModel(
 
     private val _uiState = MutableStateFlow(PincheUiState())
     val uiState: StateFlow<PincheUiState> = _uiState.asStateFlow()
+
+    // `mantener-y-limpiar-conversacion-del-pinche` (D8-D10): la petición en curso
+    // se guarda para poder cancelarla al limpiar, y la generación identifica a qué
+    // conversación pertenece cada escrito —los fragmentos o resultados que
+    // lleguen tras un limpiado se descartan.
+    private var requestJob: Job? = null
+    private var conversationGeneration: Int = 0
 
     fun onInputChange(text: String) {
         _uiState.value = _uiState.value.copy(input = text.take(PincheChatProtocol.MAX_USER_MESSAGE_CHARS))
@@ -146,11 +160,14 @@ class PincheViewModel(
             },
             notice = null,
         )
+        // D10: un fallo que llegue tras un limpiado no pinta nada en la nueva
+        // conversación (el guardado en sí es un efecto ya lanzado y no se cancela).
+        val generation = conversationGeneration
         viewModelScope.launch {
             val saved = runCatching {
                 recipeRepository.saveRecipe(PincheProposalRules.proposalToRecipe(proposal.recipe))
             }.isSuccess
-            if (!saved) {
+            if (!saved && generation == conversationGeneration) {
                 _uiState.value = _uiState.value.copy(
                     messages = _uiState.value.messages.map { message ->
                         if (message.id == messageId) {
@@ -167,6 +184,23 @@ class PincheViewModel(
 
     fun clearNotice() {
         _uiState.value = _uiState.value.copy(notice = null)
+    }
+
+    /**
+     * D2/D4 (`mantener-y-limpiar-conversacion-del-pinche`): limpia la conversación
+     * **sin confirmación** y devuelve la pantalla al estado inicial (saludo y
+     * chips). Cancela la petición en curso (D5) y, con la generación, descarta
+     * los escritos tardíos (D10). No toca «Mi perfil» ni ningún dato persistido
+     * (D6): Fichas guardadas en Mis Recetas y Faltantes en la Lista de la Compra
+     * siguen intactos.
+     */
+    fun clearConversation() {
+        // La generación se incrementa antes de cancelar: cualquier escrito que se
+        // ejecute durante la cancelación ya pertenece a la conversación anterior.
+        conversationGeneration++
+        requestJob?.cancel()
+        requestJob = null
+        _uiState.value = PincheUiState()
     }
 
     /**
@@ -191,6 +225,9 @@ class PincheViewModel(
                 if (current.id == messageId) current.copy(addedToList = true) else current
             },
         )
+        // D10: igual que en `saveProposal`, un fallo tardío no ensucia la nueva
+        // conversación.
+        val generation = conversationGeneration
         viewModelScope.launch {
             val added = runCatching {
                 shoppingListRepository.addMissing(
@@ -199,7 +236,7 @@ class PincheViewModel(
                     ingredients = ingredients,
                 )
             }.isSuccess
-            if (!added) {
+            if (!added && generation == conversationGeneration) {
                 _uiState.value = _uiState.value.copy(
                     messages = _uiState.value.messages.map { current ->
                         if (current.id == messageId) current.copy(addedToList = false) else current
@@ -211,7 +248,8 @@ class PincheViewModel(
     }
 
     private fun runRequest(language: String) {
-        viewModelScope.launch {
+        val generation = conversationGeneration
+        requestJob = viewModelScope.launch {
             // RD26/RD27 (`rellenar-perfil-con-el-pinche`): el gate previo se retiró;
             // la entrevista de perfil vive en el system prompt y la guarda de la
             // Propuesta en `onSuccess`. Siempre que haya texto se llama al cliente.
@@ -229,8 +267,12 @@ class PincheViewModel(
                 // D9: el texto visible de la ronda llega por `onContent` (hilo IO);
                 // en blanco = sin burbuja transitoria.
                 pincheChatClient.reply(turns, language, profile) { fragment ->
-                    _uiState.update { state ->
-                        state.copy(streamingText = fragment.ifBlank { null })
+                    // D10 (`mantener-y-limpiar-conversacion-del-pinche`): un
+                    // fragmento de una conversación ya limpiada no pinta nada.
+                    if (generation == conversationGeneration) {
+                        _uiState.update { state ->
+                            state.copy(streamingText = fragment.ifBlank { null })
+                        }
                     }
                 }
             } catch (exception: CancellationException) {
@@ -239,9 +281,9 @@ class PincheViewModel(
                 PincheReplyResult.Failed
             }
             when (result) {
-                is PincheReplyResult.Success -> onSuccess(result)
-                PincheReplyResult.MissingApiKey -> onUnavailable(PincheNotice.AI_KEY_MISSING, profile)
-                PincheReplyResult.Failed -> onUnavailable(PincheNotice.FAILED, profile)
+                is PincheReplyResult.Success -> onSuccess(result, generation)
+                PincheReplyResult.MissingApiKey -> onUnavailable(PincheNotice.AI_KEY_MISSING, profile, generation)
+                PincheReplyResult.Failed -> onUnavailable(PincheNotice.FAILED, profile, generation)
             }
         }
     }
@@ -254,8 +296,12 @@ class PincheViewModel(
      * D11 (enmienda): si el stream se cortó a mitad, el texto recibido se
      * **conserva** como burbuja del asistente (ya cortado con `streamingText`,
      * sin el JSON de la Propuesta) y viaja en el contexto de un reintento.
+     *
+     * D10 (`mantener-y-limpiar-conversacion-del-pinche`): con la generación
+     * desactualizada el aviso no se pinta —la conversación ya se limpió.
      */
-    private fun onUnavailable(notice: PincheNotice, profile: UserProfile) {
+    private fun onUnavailable(notice: PincheNotice, profile: UserProfile, generation: Int) {
+        if (generation != conversationGeneration) return
         val pending = UserProfileRules.pendingParts(profile)
         val partial = _uiState.value.streamingText
         var messages = _uiState.value.messages
@@ -285,7 +331,10 @@ class PincheViewModel(
     private suspend fun currentProfile(): UserProfile =
         runCatching { userProfileRepository.observeProfile().first() }.getOrDefault(UserProfile.empty)
 
-    private suspend fun onSuccess(result: PincheReplyResult.Success) {
+    private suspend fun onSuccess(result: PincheReplyResult.Success, generation: Int) {
+        // D10 (`mantener-y-limpiar-conversacion-del-pinche`): una respuesta que
+        // llega tras limpiar la conversación se descarta entera.
+        if (generation != conversationGeneration) return
         val text = result.reply.text
         val proposal = result.reply.proposal
         if (text.isBlank() && proposal == null) {

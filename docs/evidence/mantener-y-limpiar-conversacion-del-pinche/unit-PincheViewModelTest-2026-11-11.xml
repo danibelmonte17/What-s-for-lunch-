@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" tests="27" skipped="0" failures="0" errors="0" timestamp="2026-11-11T18:46:58.110Z" hostname="DESKTOP-L8O8BPE" time="0.033">
+  <properties/>
+  <testcase name="successWithProposalComputesMissingRequiredIngredientsFromThePantry" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.002"/>
+  <testcase name="savingTheProposalStoresADraftAndMarksTheCardAsSaved" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.002"/>
+  <testcase name="failedStreamKeepsThePartialTextAsAnAssistantBubble" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.002"/>
+  <testcase name="inputAndSendAreTruncatedToFiveHundredCharacters" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="missingIngredientsAreNotRecalculatedWhenThePantryChanges" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="failedTurnWithPendingPartsAddsTheStaticRequest" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="successWithoutTextAndProposalIsTreatedAsFailure" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="theKeptPartialTextTravelsInTheRetryContext" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="blankInputIsIgnoredAndDoesNotCallTheClient" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="profileSavedAddsTheSummaryBeforeTheReply" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="proposalWithCompleteProfileShowsTheCard" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.0"/>
+  <testcase name="proposalWithPendingPartsIsNotPaintedAndAddsTheStaticRequest" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="missingApiKeyShowsTheKeyNotice" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="staticProfileMessagesNeverTravelToTheModel" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="failedSaveRevertsTheCardAndShowsTheSaveNotice" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.002"/>
+  <testcase name="streamingFragmentsUpdateTheTransientBubbleUntilTheFinalReply" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="addingMissingUsesBaseQuantitiesAndMarksTheProposalAsAdded" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.002"/>
+  <testcase name="sendAddsTheUserBubbleAndTheAssistantAnswer" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.0"/>
+  <testcase name="clearConversationResetsTheStateToTheInitialOne" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="completeProfileIsSentToTheClient" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="failedTurnShowsNoticeAndRetryDoesNotDuplicateTheUserBubble" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="clearConversationCancelsTheRequestAndDiscardsLateWrites" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.004"/>
+  <testcase name="failedShoppingListAddRevertsTheCardAndShowsTheNotice" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="missingApiKeyWithCompleteProfileKeepsOnlyTheNotice" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.002"/>
+  <testcase name="quickSuggestionsOnlyWorkWithAnEmptyConversation" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.0"/>
+  <testcase name="missingApiKeyWithPendingPartsAddsTheStaticRequest" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <testcase name="emptyProfileStillCallsTheClientAndShowsTheAnswer" classname="com.whatsforlunch.app.ui.pinche.PincheViewModelTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

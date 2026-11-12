@@ -367,6 +367,7 @@
     <string name="pinche_profile_open">Open My profile</string>
     <string name="pinche_profile_saved">Saved in “My profile”: %1$s</string>
     <string name="pinche_profile_saved_none">none</string>
+    <string name="pinche_clear_conversation">Clear conversation</string>
 
     <!-- My profile (crear-mi-perfil) -->
     <string name="my_profile_title">My profile</string>
