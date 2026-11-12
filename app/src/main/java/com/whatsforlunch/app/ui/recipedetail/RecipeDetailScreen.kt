@@ -134,7 +134,9 @@ fun RecipeDetailScreen(
     onStartCooking: (String, Int) -> Unit,
     modifier: Modifier = Modifier,
     onServingsChange: (Int) -> Unit = {},
-    onAddMissingToShoppingList: () -> Unit = {},
+    // Sin valor por defecto: el cableado debe ser explícito en cada call site
+    // (ver comentario en `PincheRoute`; la misma regresión de cableado).
+    onAddMissingToShoppingList: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val addedMessage = stringResource(R.string.recipe_detail_added_to_list)

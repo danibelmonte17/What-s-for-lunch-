@@ -49,6 +49,10 @@ fun PincheRoute(
         onQuickSuggestion = { text -> viewModel.sendQuickSuggestion(text, language) },
         onRetry = { viewModel.retry(language) },
         onSaveProposal = viewModel::saveProposal,
+        // `anadir-faltantes-a-la-lista` (RF-AFL4): cableado obligatorio. El
+        // parámetro ya no tiene valor por defecto en `PincheScreen`, de modo que
+        // una pérdida del cableado no compila (regresión que lo dejó en no-op).
+        onAddMissingToShoppingList = viewModel::addMissingToShoppingList,
         onClearNotice = viewModel::clearNotice,
         onClearConversation = viewModel::clearConversation,
         onOpenProfile = onOpenProfile,

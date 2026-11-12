@@ -118,7 +118,9 @@ fun PincheScreen(
     onSaveProposal: (String) -> Unit,
     onClearNotice: () -> Unit,
     modifier: Modifier = Modifier,
-    onAddMissingToShoppingList: (String) -> Unit = {},
+    // Sin valor por defecto: el cableado debe ser explícito en cada call site
+    // (ver comentario en `PincheRoute`).
+    onAddMissingToShoppingList: (String) -> Unit,
     // `crear-mi-perfil` (D8): acción del mensaje que pide el perfil pendiente.
     onOpenProfile: () -> Unit = {},
     // `mantener-y-limpiar-conversacion-del-pinche` (D2/D4): limpia la conversación

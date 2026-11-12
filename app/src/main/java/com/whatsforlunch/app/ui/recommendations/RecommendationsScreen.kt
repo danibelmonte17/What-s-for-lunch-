@@ -85,7 +85,9 @@ fun RecommendationsScreen(
     onOpenRecipe: (String) -> Unit,
     onSuggestWithAi: () -> Unit,
     modifier: Modifier = Modifier,
-    onAddMissingToShoppingList: (String) -> Unit = {},
+    // Sin valor por defecto: el cableado debe ser explícito en cada call site
+    // (ver comentario en `PincheRoute`; la misma regresión de cableado).
+    onAddMissingToShoppingList: (String) -> Unit,
 ) {
     Scaffold(
         modifier = modifier.testTag(RecommendationsTestTags.SCREEN),

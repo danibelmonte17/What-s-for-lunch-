@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -70,6 +71,7 @@ import com.whatsforlunch.app.ui.components.optionTag
 import com.whatsforlunch.app.ui.myrecipes.MyRecipesTestTags
 import com.whatsforlunch.app.ui.nav.AppBottomBarTestTags
 import com.whatsforlunch.app.ui.nav.WhatsForLunchApp
+import com.whatsforlunch.app.ui.pinche.PincheRoute
 import com.whatsforlunch.app.ui.pinche.PincheScreen
 import com.whatsforlunch.app.ui.pinche.PincheTestTags
 import com.whatsforlunch.app.ui.pinche.PincheViewModel
@@ -101,7 +103,8 @@ private object ShoppingNoOpPhotoStore : PhotoStore {
 // sus badges y «Deshacer», el estado vacío, la idempotencia por fuente y la
 // migración 2→3 de Room. S1–S10 de agrupar-y-completar-la-lista: agrupación por
 // Pasillo/Receta, checkbox y progreso, «Limpiar comprados» con «Deshacer» y el
-// contenido de fila según el modo.
+// contenido de fila según el modo. `pincheRouteAddsMissingItemsAndTheListShowsThemGrouped`
+// cubre el cableado de la ruta real del Pinche (regresión que lo dejó en no-op).
 @RunWith(AndroidJUnit4::class)
 class ShoppingListE2ETest {
 
@@ -312,6 +315,108 @@ class ShoppingListE2ETest {
             listOf(PincheProposalRules.proposalRecipeId("Arroz con tomate")),
             items.single().sources.map { it.sourceKey },
         )
+    }
+
+    // Regresión de cableado (`anadir-faltantes-a-la-lista`): monta la **ruta
+    // real** del Pinche (no solo la pantalla) para que el cableado perdido de
+    // «Añadir faltantes a la Lista de la Compra» —que quedaba en no-op y dejaba
+    // la Lista vacía— vuelva a fallar en verde; y comprueba que los ítems
+    // aparecen en la Lista agrupados por Pasillo y por Receta (RD20).
+    @Test
+    fun pincheRouteAddsMissingItemsAndTheListShowsThemGrouped() {
+        val shoppingList = InMemoryShoppingListRepository()
+        val pantry = InMemoryPantryRepository().apply {
+            runBlocking { savePantryItem(PantryItem("tomate", "Tomate")) }
+        }
+        val viewModel = PincheViewModel(
+            pantry,
+            InMemoryRecipeRepository(),
+            ShoppingFakePincheClient(listOf(PincheReplyResult.Success(PincheReply("Prueba esto.", proposal())))),
+            shoppingList,
+            // Perfil completo: sin partes pendientes la IA sí responde (RD26).
+            InMemoryUserProfileRepository(
+                UserProfile(
+                    allergies = listOf("Frutos secos"),
+                    intolerancesNone = true,
+                    dietType = DietType.OMNIVORE,
+                ),
+            ),
+        )
+        val listViewModel = ShoppingListViewModel(shoppingList)
+        val showList = mutableStateOf(false)
+        val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val configuration = Configuration(baseContext.resources.configuration).apply {
+            setLocale(Locale.forLanguageTag("es-ES"))
+        }
+        val context = baseContext.createConfigurationContext(configuration)
+        composeRule.setContent {
+            val pincheState by viewModel.uiState.collectAsState()
+            val listState by listViewModel.uiState.collectAsState()
+            CompositionLocalProvider(
+                LocalContext provides context,
+                LocalConfiguration provides context.resources.configuration,
+                LocalResources provides context.resources,
+            ) {
+                WhatsForLunchTheme {
+                    if (showList.value) {
+                        ShoppingListScreen(
+                            uiState = listState,
+                            onDeleteItem = listViewModel::deleteItem,
+                            onUndoDelete = listViewModel::undoDelete,
+                            onUndoExpired = listViewModel::dismissUndo,
+                            onAddItem = listViewModel::addItem,
+                            onEditItem = listViewModel::editItem,
+                            onDismissEditor = listViewModel::dismissEditor,
+                            onSaveItem = listViewModel::saveManualItem,
+                            onToggleCompleted = listViewModel::toggleCompleted,
+                            onSetGroupMode = listViewModel::setGroupMode,
+                            onClearCompleted = listViewModel::clearCompleted,
+                        )
+                    } else {
+                        PincheRoute(onOpenSettings = {}, viewModel = viewModel)
+                    }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(PincheTestTags.COMPOSER).performClick()
+        composeRule.onNodeWithTag(PincheTestTags.COMPOSER).performTextReplacement("Dame una receta")
+        composeRule.onNodeWithTag(PincheTestTags.SEND).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(PincheTestTags.proposalCard(1))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(PincheTestTags.ADD_MISSING).performScrollTo().performClick()
+        composeRule.onNodeWithTag(PincheTestTags.ADDED_MISSING_LABEL)
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertIsNotEnabled()
+
+        // El alta en el repositorio termina antes de pintar la Lista.
+        composeRule.waitUntil(5_000) {
+            runBlocking { shoppingList.observeItems().first() }.isNotEmpty()
+        }
+
+        showList.value = true
+        composeRule.waitForIdle()
+
+        // «Pasillo de Super» (RD20): el ítem nace sin Pasillo → «Sin clasificar».
+        composeRule.onNodeWithText("Harina (1 ud)").assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(ShoppingListTestTags.groupHeader("")) and hasText("Sin clasificar"),
+        ).assertIsDisplayed()
+
+        // «Por Receta» (RD20): el grupo con el título de la Propuesta del Pinche.
+        selectRecipeGrouping()
+        composeRule.onNode(
+            hasTestTag(
+                ShoppingListTestTags.groupHeader(
+                    PincheProposalRules.proposalRecipeId("Arroz con tomate"),
+                ),
+            ) and hasText("Arroz con tomate"),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Harina (1 ud)").assertIsDisplayed()
     }
 
     // S6: borrado con aviso «Ítem eliminado» y «Deshacer» que restaura el ítem.
