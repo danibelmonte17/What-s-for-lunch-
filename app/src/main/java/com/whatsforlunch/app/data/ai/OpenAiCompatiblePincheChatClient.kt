@@ -201,12 +201,7 @@ class OpenAiCompatiblePincheChatClient(
                 } catch (_: Exception) {
                     UNAVAILABLE_FUNCTION_RESULT
                 }
-                messages.put(
-                    JSONObject()
-                        .put("role", "tool")
-                        .put("tool_call_id", call.id)
-                        .put("content", result),
-                )
+                messages.put(PincheChatProtocol.toolResultMessage(call.id, result))
             }
         }
     }

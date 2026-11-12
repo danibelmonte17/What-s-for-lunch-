@@ -131,7 +131,7 @@ val appModule = module {
     viewModel { RecommendationsViewModel(get(), get(), get()) }
     viewModel { AiSuggestionsViewModel(get(), get(), get(), get()) }
     viewModel { PincheViewModel(get(), get(), get(), get(), get()) }
-    viewModel { ShoppingListViewModel(get()) }
+    viewModel { ShoppingListViewModel(get(), get()) }
     // «Mi perfil» (`crear-mi-perfil`): mutaciones vía UserProfileRules.
     viewModel { MyProfileViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), BuildConfig.AI_API_KEY.isNotBlank(), get()) }

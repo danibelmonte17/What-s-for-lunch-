@@ -403,6 +403,17 @@
     </plurals>
     <string name="shopping_list_clear_completed">Clear purchased</string>
     <string name="shopping_list_items_removed">Purchased items removed</string>
+    <string name="shopping_list_add_to_pantry">Add to pantry</string>
+    <string name="shopping_list_add_to_pantry_title">Add to pantry?</string>
+    <plurals name="shopping_list_add_to_pantry_message">
+        <item quantity="one">%1$d selected item will be added to your pantry and removed from the Shopping List.</item>
+        <item quantity="other">%1$d selected items will be added to your pantry and removed from the Shopping List.</item>
+    </plurals>
+    <string name="shopping_list_add_to_pantry_confirm">Add</string>
+    <plurals name="shopping_list_added_to_pantry">
+        <item quantity="one">1 item added to the pantry</item>
+        <item quantity="other">%1$d items added to the pantry</item>
+    </plurals>
     <string name="recipe_detail_match_banner">You have %1$d%% of the ingredients at home!</string>
     <string name="recipe_detail_add_to_list">Add to list</string>
     <string name="recipe_detail_added_to_list">Added to the Shopping List</string>

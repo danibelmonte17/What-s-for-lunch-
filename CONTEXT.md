@@ -12,7 +12,7 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 
 **Comando de voz**: frase exacta que el Modo Cocina reconoce para actuar: «Siguiente», «Repetir» o «Pausar tiempo» (y «Next», «Repeat», «Pause timer» en inglés).
 **Ingrediente**: componente de una Receta, con cantidad y unidad de lista cerrada (ud, g, kg, ml, l —`unificar-unidades`—; las unidades legadas guardadas se muestran como texto). Todos los Ingredientes cuentan en la Coincidencia y en los Faltantes: no hay obligatorios ni opcionales (`redisenar-formulario-de-receta`).
-**Lista de la Compra**: ítems que faltan por comprar, agrupables por Pasillo o por Receta.
+**Lista de la Compra**: ítems que faltan por comprar, agrupables por Pasillo o por Receta; los marcados con su checkbox se pasan a la Despensa desde la propia Lista con confirmación en modal (RD29).
 **Mi perfil**: apartado en su propia pestaña con las restricciones dietéticas del usuario —**Alergias** e **Intolerancias o enfermedades que limitan la dieta** como chips con «No tengo ninguna», y **Tipo de alimentación** en selección única— que el Pinche usa en sus propuestas y **rellena por chat antes de proponer** cuando faltan partes: una pregunta a la vez y cada respuesta se guarda con `save_profile` (RD25/RD26/RD27). Son datos de salud que solo salen del dispositivo al chatear con el Pinche (`RK03`).
 **Mi recetario**: Recetas del usuario (creadas a mano, aceptadas desde una Sugerencia o guardadas desde el Pinche) y pantalla de entrada de la app (antes «Mis Recetas»).
 **Modo Cocina**: guía de una Receta paso a paso, manos libres, con temporizadores y voz.
@@ -37,7 +37,7 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 
 **Capacidad estimada**: porcentaje de la capacidad de referencia de la Despensa (40 Alimentos) que ocupan los Alimentos registrados; **«N por caducar»** cuenta los «Consumir pronto» y **«N frescos»** el total (RD28).
 **Coincidencia**: porcentaje de ingredientes de una Receta presentes en la Despensa (todos cuentan: sin obligatorios ni opcionales, `redisenar-formulario-de-receta`).
-**Despensa**: todos los alimentos del hogar en un único listado. No hay desglose por ubicaciones físicas. Es independiente de la Lista de la Compra: la Despensa es lo que hay y la Lista es lo que falta por comprar.
+**Despensa**: todos los alimentos del hogar en un único listado. No hay desglose por ubicaciones físicas. Es independiente de la Lista de la Compra: la Despensa es lo que hay y la Lista es lo que falta por comprar —salvo el paso de la Lista a la Despensa con los ítems marcados (RD29)—.
 **Faltante**: Ingrediente de una Receta o de una Propuesta del Pinche que no está en la Despensa. Todos los Ingredientes pueden ser Faltantes (`redisenar-formulario-de-receta`).
 **Escaneo**: captura con la cámara que detecta Alimentos y los propone para la Despensa.
 **Escáner**: pantalla y flujo donde se escanea la Despensa para obtener Sugerencias.

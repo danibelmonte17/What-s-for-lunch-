@@ -405,6 +405,17 @@
     </plurals>
     <string name="shopping_list_clear_completed">Limpiar comprados</string>
     <string name="shopping_list_items_removed">Ítems comprados eliminados</string>
+    <string name="shopping_list_add_to_pantry">Añadir a la Despensa</string>
+    <string name="shopping_list_add_to_pantry_title">¿Añadir a la Despensa?</string>
+    <plurals name="shopping_list_add_to_pantry_message">
+        <item quantity="one">%1$d artículo marcado se añadirá a tu Despensa y se quitará de la Lista de la Compra.</item>
+        <item quantity="other">%1$d artículos marcados se añadirán a tu Despensa y se quitarán de la Lista de la Compra.</item>
+    </plurals>
+    <string name="shopping_list_add_to_pantry_confirm">Añadir</string>
+    <plurals name="shopping_list_added_to_pantry">
+        <item quantity="one">1 artículo añadido a la Despensa</item>
+        <item quantity="other">%1$d artículos añadidos a la Despensa</item>
+    </plurals>
     <string name="recipe_detail_match_banner">¡Tienes el %1$d%% de ingredientes en casa!</string>
     <string name="recipe_detail_add_to_list">Añadir a la lista</string>
     <string name="recipe_detail_added_to_list">Añadido a la Lista de la Compra</string>

@@ -26,6 +26,8 @@ fun ShoppingListRoute(
         onToggleCompleted = viewModel::toggleCompleted,
         onSetGroupMode = viewModel::setGroupMode,
         onClearCompleted = viewModel::clearCompleted,
+        onAddCompletedToPantry = viewModel::addCompletedToPantry,
+        onDismissPantryNotice = viewModel::dismissPantryNotice,
         scrollToTopTick = scrollToTopTick,
         modifier = modifier,
     )

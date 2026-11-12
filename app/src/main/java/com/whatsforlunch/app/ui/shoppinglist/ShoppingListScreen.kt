@@ -1,5 +1,6 @@
 package com.whatsforlunch.app.ui.shoppinglist
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -64,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -126,6 +129,10 @@ object ShoppingListTestTags {
     const val GROUP_MODE_AISLE = "shopping_list_group_mode_aisle"
     const val GROUP_MODE_RECIPE = "shopping_list_group_mode_recipe"
     const val CLEAR_COMPLETED = "shopping_list_clear_completed"
+    const val ADD_TO_PANTRY = "shopping_list_add_to_pantry_fab"
+    const val ADD_TO_PANTRY_DIALOG = "shopping_list_add_to_pantry_dialog"
+    const val ADD_TO_PANTRY_CONFIRM = "shopping_list_add_to_pantry_confirm"
+    const val ADD_TO_PANTRY_CANCEL = "shopping_list_add_to_pantry_cancel"
 
     fun item(id: String) = "${ITEM}_$id"
 
@@ -167,6 +174,8 @@ fun ShoppingListScreen(
     onToggleCompleted: (String) -> Unit,
     onSetGroupMode: (ShoppingGroupMode) -> Unit,
     onClearCompleted: () -> Unit,
+    onAddCompletedToPantry: () -> Unit,
+    onDismissPantryNotice: () -> Unit,
     modifier: Modifier = Modifier,
     scrollToTopTick: Int = 0,
 ) {
@@ -175,6 +184,9 @@ fun ShoppingListScreen(
     val completedRemovedMessage = stringResource(R.string.shopping_list_items_removed)
     val undoLabel = stringResource(R.string.shopping_list_undo)
     val pendingUndo = uiState.pendingUndo
+    // RD29: diálogo de confirmación del paso a la Despensa (vive en la pantalla;
+    // la acción la resuelve el ViewModel).
+    var showPantryConfirm by remember { mutableStateOf(false) }
     // RF-MOB6: tocar la pestaña activa devuelve el contenido a su primera posición.
     val itemListState = rememberLazyListState()
 
@@ -189,6 +201,24 @@ fun ShoppingListScreen(
         } else {
             onUndoExpired()
         }
+    }
+    // RD29: aviso de «Añadido a la Despensa» como Toast (sin «Deshacer»): el
+    // destino ya es la Despensa y los ítems ya no están en la Lista.
+    val pantryAddedCount = uiState.pantryAddedCount
+    val pantryAddedMessage = if (pantryAddedCount != null) {
+        pluralStringResource(
+            R.plurals.shopping_list_added_to_pantry,
+            pantryAddedCount,
+            pantryAddedCount,
+        )
+    } else {
+        null
+    }
+    val context = LocalContext.current
+    LaunchedEffect(pantryAddedMessage) {
+        if (pantryAddedMessage == null) return@LaunchedEffect
+        Toast.makeText(context, pantryAddedMessage, Toast.LENGTH_SHORT).show()
+        onDismissPantryNotice()
     }
     // RF-MOB6: el trigger lo eleva la barra (extraída a WhatsForLunchApp); el
     // valor inicial no desplaza nada.
@@ -235,20 +265,43 @@ fun ShoppingListScreen(
         },
 
         floatingActionButton = {
-            // FAB redondo (CircleShape) de solo icono con los colores primarios:
-            // el texto queda como contentDescription para TalkBack y las pruebas
-            // siguen por testTag.
-            FloatingActionButton(
-                onClick = onAddItem,
-                modifier = Modifier.testTag(ShoppingListTestTags.ADD_ITEM),
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+            // RD29: dos FABs apilados junto a la esquina — «Añadir a la Despensa»
+            // encima, solo con ≥1 ítem marcado, y el existente «Añadir ítem»
+            // abajo (su condición no cambia).
+            val hasCompleted = uiState.items.any { it.completed }
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
             ) {
-                Icon(
-                    Icons.Outlined.Add,
-                    contentDescription = stringResource(R.string.shopping_list_add_item),
-                )
+                if (hasCompleted) {
+                    FloatingActionButton(
+                        onClick = { showPantryConfirm = true },
+                        modifier = Modifier.testTag(ShoppingListTestTags.ADD_TO_PANTRY),
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Kitchen,
+                            contentDescription = stringResource(R.string.shopping_list_add_to_pantry),
+                        )
+                    }
+                }
+                // FAB redondo (CircleShape) de solo icono con los colores primarios:
+                // el texto queda como contentDescription para TalkBack y las pruebas
+                // siguen por testTag.
+                FloatingActionButton(
+                    onClick = onAddItem,
+                    modifier = Modifier.testTag(ShoppingListTestTags.ADD_ITEM),
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
+                    Icon(
+                        Icons.Outlined.Add,
+                        contentDescription = stringResource(R.string.shopping_list_add_item),
+                    )
+                }
             }
         },
         snackbarHost = {
@@ -279,39 +332,49 @@ fun ShoppingListScreen(
                     .padding(innerPadding),
             )
         } else {
-            Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                ShoppingProgressCard(
-                    progress = uiState.progress,
-                    mode = uiState.mode,
-                    onModeChange = onSetGroupMode,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = WarmSpacing.md)
-                        .padding(top = WarmSpacing.md),
-                )
-                LazyColumn(
-                    state = itemListState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = WarmSpacing.md)
-                        .testTag(ShoppingListTestTags.LIST),
-                    contentPadding = PaddingValues(vertical = WarmSpacing.md),
-                    verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
-                ) {
-                    uiState.groups.forEach { group ->
-                        item(key = "group:${group.key}") {
-                            ShoppingGroupHeader(group = group, mode = uiState.mode)
-                        }
-                        items(group.items, key = { "item:${group.key}:${it.id}" }) { item ->
-                            ShoppingItemRow(
-                                item = item,
-                                mode = uiState.mode,
-                                onToggleCompleted = { onToggleCompleted(item.id) },
-                                onEdit = { onEditItem(item.id) },
-                                onDelete = { onDeleteItem(item.id) },
-                            )
-                        }
+            LazyColumn(
+                state = itemListState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = WarmSpacing.md)
+                    .testTag(ShoppingListTestTags.LIST),
+                contentPadding = PaddingValues(vertical = WarmSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(WarmSpacing.sm),
+            ) {
+                // Petición de UI: la tarjeta de progreso —contador «N de M artículos
+                // en la cesta», porcentaje, barra y tabs «Agrupar por»— vive dentro
+                // del LazyColumn, así que hace scroll con las filas.
+                item(key = "progress") {
+                    ShoppingProgressCard(
+                        progress = uiState.progress,
+                        mode = uiState.mode,
+                        onModeChange = onSetGroupMode,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            // Mantiene el ritmo previo (16 dp de contentPadding + 8 dp
+                            // de la cabecera) entre la tarjeta y el primer grupo.
+                            .padding(bottom = WarmSpacing.sm),
+                    )
+                }
+                uiState.groups.forEach { group ->
+                    item(key = "group:${group.key}") {
+                        ShoppingGroupHeader(group = group, mode = uiState.mode)
                     }
+                    items(group.items, key = { "item:${group.key}:${it.id}" }) { item ->
+                        ShoppingItemRow(
+                            item = item,
+                            mode = uiState.mode,
+                            onToggleCompleted = { onToggleCompleted(item.id) },
+                            onEdit = { onEditItem(item.id) },
+                            onDelete = { onDeleteItem(item.id) },
+                        )
+                    }
+                }
+                // Respiro final para que la última fila no quede tapada por los dos
+                // FABs apilados (88 dp, el mismo valor que usa Mis Recetas).
+                item(key = "spacer") {
+                    Spacer(modifier = Modifier.height(88.dp))
                 }
             }
         }
@@ -322,6 +385,51 @@ fun ShoppingListScreen(
             item = uiState.editing,
             onDismiss = onDismissEditor,
             onSave = onSaveItem,
+        )
+    }
+
+    // RD29: confirmación explícita antes de pasar los ítems marcados a la
+    // Despensa (se borran de la Lista porque ya están en la Despensa).
+    if (showPantryConfirm) {
+        val completedCount = uiState.items.count { it.completed }
+        AlertDialog(
+            onDismissRequest = { showPantryConfirm = false },
+            modifier = Modifier.testTag(ShoppingListTestTags.ADD_TO_PANTRY_DIALOG),
+            title = {
+                Text(stringResource(R.string.shopping_list_add_to_pantry_title))
+            },
+            text = {
+                Text(
+                    pluralStringResource(
+                        R.plurals.shopping_list_add_to_pantry_message,
+                        completedCount,
+                        completedCount,
+                    ),
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPantryConfirm = false
+                        onAddCompletedToPantry()
+                    },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(ShoppingListTestTags.ADD_TO_PANTRY_CONFIRM),
+                ) {
+                    Text(stringResource(R.string.shopping_list_add_to_pantry_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showPantryConfirm = false },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag(ShoppingListTestTags.ADD_TO_PANTRY_CANCEL),
+                ) {
+                    Text(stringResource(R.string.shopping_list_cancel))
+                }
+            },
         )
     }
 }

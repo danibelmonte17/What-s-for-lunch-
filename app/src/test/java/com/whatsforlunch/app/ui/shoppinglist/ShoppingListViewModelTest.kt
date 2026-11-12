@@ -1,7 +1,9 @@
 package com.whatsforlunch.app.ui.shoppinglist
 
+import com.whatsforlunch.app.data.repository.InMemoryPantryRepository
 import com.whatsforlunch.app.data.repository.InMemoryShoppingListRepository
 import com.whatsforlunch.app.domain.model.Aisle
+import com.whatsforlunch.app.domain.model.PantryItem
 import com.whatsforlunch.app.domain.model.RecipeIngredient
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingGroupMode
 import com.whatsforlunch.app.domain.shoppinglist.ShoppingListRules
@@ -9,6 +11,7 @@ import com.whatsforlunch.app.domain.shoppinglist.ShoppingProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -50,7 +53,7 @@ class ShoppingListViewModelTest {
                 RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g"),
             ),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -68,7 +71,7 @@ class ShoppingListViewModelTest {
             sourceTitle = "Paella",
             ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -95,7 +98,7 @@ class ShoppingListViewModelTest {
             sourceTitle = "Paella",
             ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -113,7 +116,7 @@ class ShoppingListViewModelTest {
     @Test
     fun addItemOpensTheEditorAndSavingStoresTheManualItem() = runTest {
         val repository = InMemoryShoppingListRepository()
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -140,7 +143,7 @@ class ShoppingListViewModelTest {
             sourceTitle = "Paella",
             ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -171,7 +174,7 @@ class ShoppingListViewModelTest {
             sourceTitle = "Paella",
             ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -203,7 +206,7 @@ class ShoppingListViewModelTest {
             ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
         )
         repository.saveManualItem(id = null, name = "Toallitas", quantity = null, unit = "", aisle = null)
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -233,7 +236,7 @@ class ShoppingListViewModelTest {
                 RecipeIngredient(name = "Mariscos", quantity = 300.0, unit = "g"),
             ),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -273,7 +276,7 @@ class ShoppingListViewModelTest {
                 RecipeIngredient(name = "Sal", quantity = 1.0, unit = "g"),
             ),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -312,7 +315,7 @@ class ShoppingListViewModelTest {
             sourceTitle = "Paella",
             ingredients = listOf(RecipeIngredient(name = "Azafrán", quantity = 1.0, unit = "g")),
         )
-        val viewModel = ShoppingListViewModel(repository)
+        val viewModel = ShoppingListViewModel(repository, InMemoryPantryRepository())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { }
         }
@@ -328,5 +331,97 @@ class ShoppingListViewModelTest {
         val item = viewModel.uiState.value.items.single()
         assertTrue(item.completed)
         assertEquals(2.0, item.quantity!!, 0.0001)
+    }
+
+    // --- pasar marcados a la Despensa (RD29) ---------------------------------
+
+    @Test
+    fun addCompletedToPantrySavesOnlyTheMarkedItemsAndRemovesThem() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.saveManualItem(id = null, name = "Pan", quantity = 2.0, unit = "ud", aisle = null)
+        repository.saveManualItem(id = null, name = "Leche", quantity = 1.0, unit = "l", aisle = null)
+        repository.saveManualItem(id = null, name = "Arroz", quantity = 1.0, unit = "kg", aisle = null)
+        val pantry = InMemoryPantryRepository()
+        val viewModel = ShoppingListViewModel(repository, pantry)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+
+        viewModel.toggleCompleted(ShoppingListRules.itemIdFor("Pan"))
+        advanceUntilIdle()
+        viewModel.toggleCompleted(ShoppingListRules.itemIdFor("Leche"))
+        advanceUntilIdle()
+
+        viewModel.addCompletedToPantry()
+        advanceUntilIdle()
+
+        // Solo los marcados salen de la Lista y llegan a la Despensa.
+        assertEquals(listOf("Arroz"), viewModel.uiState.value.items.map { it.name })
+        assertEquals(
+            listOf("Leche", "Pan"),
+            pantry.observePantryItems().first().map { it.name },
+        )
+        assertEquals(2, viewModel.uiState.value.pantryAddedCount)
+        // Sin «Deshacer»: el destino ya es la Despensa (RD29).
+        assertNull(viewModel.uiState.value.pendingUndo)
+
+        viewModel.dismissPantryNotice()
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.pantryAddedCount)
+    }
+
+    @Test
+    fun addCompletedToPantrySumsIntoAnExistingPantryItem() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.saveManualItem(id = null, name = "Tomate", quantity = 2.0, unit = "ud", aisle = null)
+        val pantry = InMemoryPantryRepository()
+        pantry.savePantryItem(PantryItem(id = "tomate", name = "Tomate", quantity = 3))
+        val viewModel = ShoppingListViewModel(repository, pantry)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+        viewModel.toggleCompleted(ShoppingListRules.itemIdFor("Tomate"))
+        advanceUntilIdle()
+
+        viewModel.addCompletedToPantry()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.items.isEmpty())
+        // RD13 sobre el Alimento existente: id y nombre intactos, 3 + 2 = 5 y
+        // una sola fila.
+        val saved = pantry.observePantryItems().first()
+        assertEquals(1, saved.size)
+        assertEquals("tomate", saved.single().id)
+        assertEquals("Tomate", saved.single().name)
+        assertEquals(5, saved.single().quantity)
+    }
+
+    @Test
+    fun addCompletedToPantryRoundsAndCapsTheQuantity() = runTest {
+        val repository = InMemoryShoppingListRepository()
+        repository.saveManualItem(id = null, name = "Harina", quantity = 50.0, unit = "g", aisle = null)
+        repository.saveManualItem(id = null, name = "Sal", quantity = 0.4, unit = "kg", aisle = null)
+        val pantry = InMemoryPantryRepository()
+        pantry.savePantryItem(PantryItem(id = "harina", name = "Harina", quantity = 60))
+        val viewModel = ShoppingListViewModel(repository, pantry)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { }
+        }
+        advanceUntilIdle()
+        viewModel.toggleCompleted(ShoppingListRules.itemIdFor("Harina"))
+        advanceUntilIdle()
+        viewModel.toggleCompleted(ShoppingListRules.itemIdFor("Sal"))
+        advanceUntilIdle()
+
+        viewModel.addCompletedToPantry()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.items.isEmpty())
+        val saved = pantry.observePantryItems().first().associateBy { it.name }
+        // Recorte al máximo 99 (60 + 50 → 99) y «0,4» → sin cantidad.
+        assertEquals(99, saved.getValue("Harina").quantity)
+        assertNull(saved.getValue("Sal").quantity)
     }
 }

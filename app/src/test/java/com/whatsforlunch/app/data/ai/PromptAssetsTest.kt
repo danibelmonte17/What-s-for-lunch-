@@ -61,7 +61,7 @@ class PromptAssetsTest {
 
     // `crear-mi-perfil` (D6): el bloque de perfil rellena tipo de alimentación y
     // restricciones, con «No tengo ninguna» como «ninguna»/«none» y el texto libre
-    // del usuario literal en ambos idiomas.
+    // del usuario literal en ambos idiomas; los valores van delimitados (RF-MPC1).
     @Test
     fun profilePromptFillsDietAndRestrictions() {
         val profile = UserProfile(
@@ -70,27 +70,27 @@ class PromptAssetsTest {
             dietType = DietType.VEGAN,
         )
         val es = renderProfilePrompt(source.template("pinche_profile", "es"), profile, "es")
-        assertTrue(es.contains("Tipo de alimentación: Vegana"))
-        assertTrue(es.contains("Alergias: Frutos secos"))
-        assertTrue(es.contains("Intolerancias o enfermedades que limitan la dieta: Diabetes"))
+        assertTrue(es.contains("Tipo de alimentación: <<<Vegana>>>"))
+        assertTrue(es.contains("Alergias: <<<Frutos secos>>>"))
+        assertTrue(es.contains("Intolerancias o enfermedades que limitan la dieta: <<<Diabetes>>>"))
         assertFalse(es.contains(DIET_PLACEHOLDER))
         assertFalse(es.contains(ALLERGIES_PLACEHOLDER))
         assertFalse(es.contains(INTOLERANCES_PLACEHOLDER))
 
         val en = renderProfilePrompt(source.template("pinche_profile", "en"), profile, "en")
-        assertTrue(en.contains("Diet type: Vegan"))
+        assertTrue(en.contains("Diet type: <<<Vegan>>>"))
         // El texto libre del usuario no se traduce.
-        assertTrue(en.contains("Allergies: Frutos secos"))
-        assertTrue(en.contains("Intolerances or medical conditions that limit the diet: Diabetes"))
+        assertTrue(en.contains("Allergies: <<<Frutos secos>>>"))
+        assertTrue(en.contains("Intolerances or medical conditions that limit the diet: <<<Diabetes>>>"))
 
         val noneProfile = UserProfile(allergiesNone = true, intolerancesNone = true, dietType = DietType.OMNIVORE)
         val noneEs = renderProfilePrompt(source.template("pinche_profile", "es"), noneProfile, "es")
-        assertTrue(noneEs.contains("Tipo de alimentación: Omnívora"))
-        assertTrue(noneEs.contains("Alergias: ninguna"))
-        assertTrue(noneEs.contains("Intolerancias o enfermedades que limitan la dieta: ninguna"))
+        assertTrue(noneEs.contains("Tipo de alimentación: <<<Omnívora>>>"))
+        assertTrue(noneEs.contains("Alergias: <<<ninguna>>>"))
+        assertTrue(noneEs.contains("Intolerancias o enfermedades que limitan la dieta: <<<ninguna>>>"))
         val noneEn = renderProfilePrompt(source.template("pinche_profile", "en"), noneProfile, "en")
-        assertTrue(noneEn.contains("Allergies: none"))
-        assertTrue(noneEn.contains("Diet type: Omnivore"))
+        assertTrue(noneEn.contains("Allergies: <<<none>>>"))
+        assertTrue(noneEn.contains("Diet type: <<<Omnivore>>>"))
     }
 
     // `rellenar-perfil-con-el-pinche` (D4): el system prompt describe tres
@@ -147,16 +147,54 @@ class PromptAssetsTest {
     @Test
     fun dishPhotoPromptsFillDishAndStory() {
         assertEquals(
-            "Fotografía gastronómica apetitosa del plato \"Tortilla\". Con cebolla.",
+            "Fotografía gastronómica apetitosa del plato \"<<<Tortilla>>>\". Luz natural, " +
+                "primer plano apetitoso, fondo neutro, sin texto, sin marcas de agua y sin personas " +
+                "ni manos; el plato debe reflejar los ingredientes del título y de la historia. " +
+                "<<<Con cebolla.>>>",
             renderDishPhotoPrompt("Tortilla", "Con cebolla", "es", source),
         )
         assertEquals(
-            "Appetizing food photography of the dish \"Omelette\". With onion.",
+            "Appetizing food photography of the dish \"<<<Omelette>>>\". Natural light, " +
+                "appetizing close-up, neutral background, no text, no watermarks and no people " +
+                "or hands; the dish should reflect the ingredients from the title and the story. " +
+                "<<<With onion.>>>",
             renderDishPhotoPrompt("Omelette", "With onion", "en", source),
         )
         assertEquals(
-            "Fotografía gastronómica apetitosa del plato \"Tortilla\".",
+            "Fotografía gastronómica apetitosa del plato \"<<<Tortilla>>>\". Luz natural, " +
+                "primer plano apetitoso, fondo neutro, sin texto, sin marcas de agua y sin personas " +
+                "ni manos; el plato debe reflejar los ingredientes del título y de la historia.",
             renderDishPhotoPrompt("Tortilla", " ", "es", source),
         )
+    }
+
+    // RF-MPC1: los pares es/en tienen los mismos marcadores y las secciones
+    // system/user coinciden; los prompts con datos del usuario llevan la nota de
+    // «dato del usuario» (no en dish_photo: es un prompt de imagen y la meta-
+    // instrucción contaminaría el resultado).
+    @Test
+    fun promptPairsKeepTheSameMarkersAndSectionsInBothLanguages() {
+        val placeholders = Regex("""\{[A-Z_]+\}""")
+        names.forEach { name ->
+            val es = source.template(name, "es")
+            val en = source.template(name, "en")
+            assertEquals(
+                "$name: marcadores distintos es/en",
+                placeholders.findAll(es).map { it.value }.toSet(),
+                placeholders.findAll(en).map { it.value }.toSet(),
+            )
+            assertEquals(
+                "$name: secciones system/user distintas es/en",
+                es.contains(USER_SECTION_MARKER),
+                en.contains(USER_SECTION_MARKER),
+            )
+        }
+        val notes = mapOf("es" to "dato del usuario", "en" to "user data")
+        listOf("suggestion", "pantry_scan", "pinche_profile").forEach { name ->
+            languages.forEach { language ->
+                val template = source.template(name, language)
+                assertTrue("$name ($language) sin la nota de dato del usuario", template.contains(notes.getValue(language)))
+            }
+        }
     }
 }
