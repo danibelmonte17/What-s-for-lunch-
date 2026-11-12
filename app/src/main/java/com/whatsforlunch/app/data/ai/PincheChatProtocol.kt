@@ -208,6 +208,15 @@ internal object PincheChatProtocol {
         return `object`.opt(key) as? Boolean ?: throw FieldTypeError()
     }
 
+    // Mensaje de resultado de tool para el historial (guía de IA del usuario
+    // 2026-11-12, RF-MPC10): siempre rol `tool` con su `tool_call_id`, nunca como
+    // mensaje del usuario, para que el modelo distinga instrucciones de datos.
+    fun toolResultMessage(callId: String, content: String): JSONObject =
+        JSONObject()
+            .put("role", "tool")
+            .put("tool_call_id", callId)
+            .put("content", content)
+
     // RD27/D2: lo realmente persistido (valores finales) y lo que sigue pendiente,
     // para que el modelo sepa qué preguntar después.
     fun saveProfileToolResult(saved: List<SavedProfilePart>, pending: List<PendingProfilePart>): String {

@@ -11,6 +11,7 @@ import com.whatsforlunch.app.domain.profile.SavedProfilePart
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -32,6 +33,18 @@ class PincheChatProtocolTest {
         assertEquals(false, parameters.getBoolean("additionalProperties"))
         val recipes = tools.getJSONObject(1).getJSONObject("function").getJSONObject("parameters")
         assertEquals(0, recipes.getJSONObject("properties").length())
+    }
+
+    // RF-MPC10 (guía de IA del usuario): los resultados de tools viajan siempre con
+    // rol `tool` y su `tool_call_id`, nunca como mensaje del usuario.
+    @Test
+    fun toolResultMessageKeepsTheToolRoleAndItsCallId() {
+        val message = PincheChatProtocol.toolResultMessage("call_42", "{\"items\":[]}")
+
+        assertEquals("tool", message.getString("role"))
+        assertEquals("call_42", message.getString("tool_call_id"))
+        assertEquals("{\"items\":[]}", message.getString("content"))
+        assertNotEquals("user", message.getString("role"))
     }
 
     // RD27 (`rellenar-perfil-con-el-pinche`): la tercera tool es `save_profile`,
