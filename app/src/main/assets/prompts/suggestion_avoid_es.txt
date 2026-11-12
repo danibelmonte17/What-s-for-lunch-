@@ -1,1 +1,1 @@
-No propongas recetas iguales ni equivalentes a estas que ya tengo: {RECIPES}.
+No propongas recetas iguales ni equivalentes a estas que ya tengo: {RECIPES}. Tampoco variantes menores ni renombradas del mismo plato; ante la duda, propón otra cosa distinta.

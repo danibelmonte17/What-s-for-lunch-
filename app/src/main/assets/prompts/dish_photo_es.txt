@@ -1,1 +1,1 @@
-Fotografía gastronómica apetitosa del plato "{DISH}".{STORY}
+Fotografía gastronómica apetitosa del plato "{DISH}". Luz natural, primer plano apetitoso, fondo neutro, sin texto, sin marcas de agua y sin personas ni manos; el plato debe reflejar los ingredientes del título y de la historia.{STORY}

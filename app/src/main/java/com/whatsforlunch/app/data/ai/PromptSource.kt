@@ -46,6 +46,26 @@ internal const val CONTRACT_PLACEHOLDER = "{RECIPE_CONTRACT}"
 internal const val DISH_PLACEHOLDER = "{DISH}"
 internal const val STORY_PLACEHOLDER = "{STORY}"
 
+// Separador de secciones system/user dentro de un prompt (guía de IA del usuario,
+// 2026-11-12, RF-MPC1): lo que va antes de la marca viaja como mensaje `system` y
+// lo de después como `user`. Un prompt sin marca viaja entero en un solo mensaje.
+// La marca opcional `@@system@@` documenta la sección en el asset pero se retira
+// al componer: nunca debe llegar literal al modelo.
+internal const val USER_SECTION_MARKER = "@@user@@"
+internal const val SYSTEM_SECTION_MARKER = "@@system@@"
+
+// Delimitador de datos del usuario en los prompts (RF-MPC1): el modelo debe tratar
+// lo que aparece entre <<< y >>> como dato del usuario, no como instrucción.
+internal fun wrapUserData(value: String): String = "<<<${value.trim()}>>>"
+
+internal fun splitSystemUser(template: String): Pair<String, String> {
+    val index = template.indexOf(USER_SECTION_MARKER)
+    val system = if (index < 0) template else template.take(index)
+    val user = if (index < 0) "" else template.drop(index + USER_SECTION_MARKER.length)
+    return system.removePrefix(SYSTEM_SECTION_MARKER).trim() to user.trim()
+}
+
+
 // Marcadores del bloque de perfil del Pinche (`crear-mi-perfil`, D6).
 internal const val DIET_PLACEHOLDER = "{DIET_TYPE}"
 internal const val ALLERGIES_PLACEHOLDER = "{ALLERGIES}"
@@ -71,16 +91,20 @@ internal fun renderPrompt(template: String): String =
  * (`crear-mi-perfil`, D6). El texto libre de las chips viaja **literal** (no se
  * traduce); las secciones marcadas «No tengo ninguna» se escriben como
  * «ninguna»/«none» y el vocabulario de tipos de alimentación es es/en propio de
- * este bloque (los textos de UI viven en strings.xml con paridad).
+ * este bloque (los textos de UI viven en strings.xml con paridad). Los valores
+ * se delimitan con `<<<`/`>>>` para que el modelo los trate como dato (RF-MPC1).
  */
 internal fun renderProfilePrompt(
     template: String,
     profile: UserProfile,
     language: String,
 ): String = template
-    .replace(DIET_PLACEHOLDER, profile.dietType?.let { dietTypeName(it, language) } ?: notChosen(language))
-    .replace(ALLERGIES_PLACEHOLDER, sectionText(profile.allergies, profile.allergiesNone, language))
-    .replace(INTOLERANCES_PLACEHOLDER, sectionText(profile.intolerances, profile.intolerancesNone, language))
+    .replace(
+        DIET_PLACEHOLDER,
+        wrapUserData(profile.dietType?.let { dietTypeName(it, language) } ?: notChosen(language)),
+    )
+    .replace(ALLERGIES_PLACEHOLDER, wrapUserData(sectionText(profile.allergies, profile.allergiesNone, language)))
+    .replace(INTOLERANCES_PLACEHOLDER, wrapUserData(sectionText(profile.intolerances, profile.intolerancesNone, language)))
     .trim()
 
 // Vocabulario cerrado es/en del tipo de alimentación (`crear-mi-perfil` D2 y
@@ -128,9 +152,11 @@ internal fun renderDishPhotoPrompt(
     language: String,
     source: PromptSource,
 ): String {
-    val dish = title.ifBlank { story }.trim()
+    val dish = wrapUserData(title.ifBlank { story }.trim())
     val trimmedStory = story.trim()
-    val storyPart = if (trimmedStory.isEmpty()) "" else " $trimmedStory."
+    // Sin nota «dato del usuario»: en un prompt de generación de imagen la meta-
+    // instrucción contaminaría el resultado; solo se delimitan los datos (RF-MPC1).
+    val storyPart = if (trimmedStory.isEmpty()) "" else " ${wrapUserData("$trimmedStory.")}"
     return source.dishPhotoPrompt(language)
         .replace(DISH_PLACEHOLDER, dish)
         .replace(STORY_PLACEHOLDER, storyPart)

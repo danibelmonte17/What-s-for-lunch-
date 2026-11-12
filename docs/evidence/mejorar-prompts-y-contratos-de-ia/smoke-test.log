@@ -1,0 +1,6 @@
+=== Smoke test de pago (intento 3, forma OpenAI json_schema) - mejorar-prompts-y-contratos-de-ia (2026-11-12 13:33) ===
+Endpoint: https://inference.devexpert.io/v1 | Key: AI_API_KEY de local.properties (no registrada)
+[sugerencias] format=json_schema ACEPTADO (sin fallback) | HTTP 200 | 14904 ms | finish=
+[sugerencias] contenido (max 500 chars): {"s":[{"t":"Arroz meloso de tomate y queso","st":"Un arroz cremoso y reconfortante que aprovecha el tomate maduro y el queso para lograr un plato sencillo y lleno de sabor.","mm":"LUNCH","pm":35,"df":"EASY","bs":2,"kcal":520,"i":[{"n":"arroz","q":200,"u":"g"},{"n":"tomate","q":1,"u":"unidad"},{"n":"queso","q":80,"u":"g"},{"n":"aceite de oliva","q":2,"u":"cucharadas"},{"n":"agua","q":600,"u":"ml"},{"n":"sal","q":1,"u":"pizca"},{"n":"pimienta negra","q":1,"u":"pizca"},{"n":"orégano","q":1,"u":"cuc
+[escaner] format=json_schema ACEPTADO (sin fallback) | HTTP 200 | 5020 ms | finish=
+[escaner] contenido (max 500 chars): {"plátano":5}

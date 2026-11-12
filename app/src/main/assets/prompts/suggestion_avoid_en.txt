@@ -1,1 +1,1 @@
-Do not propose recipes that are the same as or equivalent to these I already have: {RECIPES}.
+Do not propose recipes that are the same as or equivalent to these I already have: {RECIPES}. Nor minor variants or renamings of the same dish; when in doubt, propose something else.

@@ -1,1 +1,1 @@
-Appetizing food photography of the dish "{DISH}".{STORY}
+Appetizing food photography of the dish "{DISH}". Natural light, appetizing close-up, neutral background, no text, no watermarks and no people or hands; the dish should reflect the ingredients from the title and the story.{STORY}
