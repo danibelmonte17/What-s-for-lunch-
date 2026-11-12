@@ -69,7 +69,7 @@ class BottomBarE2ETest {
             .assertTextEquals(localized(R.string.my_recipes_tab_label))
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_PANTRY)
             .assertIsDisplayed()
-            .assertTextEquals(localized(R.string.pantry_title))
+            .assertTextEquals(localized(R.string.pantry_tab_label))
         composeRule.onNodeWithTag(AppBottomBarTestTags.TAB_SHOPPING_LIST)
             .assertIsDisplayed()
             .assertTextEquals(localized(R.string.shopping_list_title))
@@ -116,6 +116,13 @@ class BottomBarE2ETest {
         seedPantry("Tomate fresco")
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Espera acotada por la composición del FAB «Recetas con mi Despensa»: con
+        // Receta y Despensa sembradas el estado combinado tarda un frame en
+        // reflejar `hasFoods` y la aserción de debajo perdía la carrera (corrección
+        // de la fusión con develop 2026-11-12; la aserción no se debilita).
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_SETTINGS).assertIsDisplayed()
@@ -205,6 +212,11 @@ class BottomBarE2ETest {
         seedPantry("Tomate fresco")
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithTag(MyRecipesTestTags.RECIPE_CARD).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Espera acotada por la composición del FAB «Recetas con mi Despensa» (ver
+        // topBarKeeps…; corrección de la fusión con develop 2026-11-12).
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag(MyRecipesTestTags.OPEN_PANTRY_RECIPES).assertIsDisplayed()

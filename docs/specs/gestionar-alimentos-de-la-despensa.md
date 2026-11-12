@@ -290,3 +290,7 @@ La revisión 2026-10-20 se ejecuta como delta sobre lo ya entregado: los pasos 1
 - [ ] Cobertura E2E actualizada y suite completa en verde.
 - [ ] `feature_list.json` y `PROGRESS.md` actualizados correctamente; la feature solo vuelve a `accepted` tras esta validación.
 - [ ] No se añadió comportamiento de producto ni trabajo de otras features.
+
+---
+
+**Enmienda `redisenar-vista-de-la-despensa` (2026-11-11, patrón completo)**: la tarjeta de Alimento de la Despensa adopta el rediseño de esa feature (RD28): miniatura con icono, píldora de frescura, cantidad, línea de caducidad, stepper −/+ inline que guarda al instante (0..99) y menú ⋮ con «Editar»/«Eliminar» **en lugar de los iconos de editar/eliminar por fila**; el Alimento gana **fecha de caducidad opcional** (Room v8, `MIGRATION_7_8`) y el diálogo de alta/edición conserva el nombre y la cantidad 0..99 y añade la fila de fecha con DatePicker. El stepper del diálogo, la validación de nombre/cantidad, el rechazo de duplicados (Q-gestionar-alimentos-de-la-despensa-3) y la confirmación de borrado quedan intactos; la cantidad sigue sin unidad (RD13).

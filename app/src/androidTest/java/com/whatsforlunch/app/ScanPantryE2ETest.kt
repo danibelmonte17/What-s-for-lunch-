@@ -626,9 +626,13 @@ class ScanPantryE2ETest {
                     when {
                         leftScanner.value -> androidx.compose.material3.Text("Scanner parent", Modifier.testTag(LEFT_AFTER_EXIT))
                         showPantry.value -> PantryScreen(
-                            uiState = PantryUiState(items = pantryItems),
+                            // `visibleItems` lo calcula el ViewModel en producción;
+                            // al montar el estado a mano hay que pasarlo (query vacía).
+                            uiState = PantryUiState(items = pantryItems, visibleItems = pantryItems),
                             onScanFood = {},
-                            onSaveItem = { _, _, _ -> },
+                            onSaveItem = { _, _, _, _ -> },
+                            onQuantityChange = { _, _ -> },
+                            onSearchChange = {},
                             onDeleteItem = {},
                             onErrorConsumed = {},
                             onSaveCompletedConsumed = {},

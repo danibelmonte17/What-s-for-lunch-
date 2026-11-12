@@ -18,6 +18,8 @@ fun PantryRoute(
         onScanFood = onScanFood,
         onScanFoodFromGallery = onScanFoodFromGallery,
         onSaveItem = viewModel::saveItem,
+        onQuantityChange = viewModel::setQuantity,
+        onSearchChange = viewModel::setSearchQuery,
         onDeleteItem = viewModel::deleteItem,
         onErrorConsumed = viewModel::clearError,
         onSaveCompletedConsumed = viewModel::clearSaveCompleted,

@@ -20,8 +20,8 @@ interface PantryItemDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(item: PantryItemEntity)
 
-    @Query("UPDATE pantry_items SET name = :name, normalizedName = :normalizedName, quantity = :quantity WHERE id = :id")
-    suspend fun update(id: String, name: String, normalizedName: String, quantity: Double?): Int
+    @Query("UPDATE pantry_items SET name = :name, normalizedName = :normalizedName, quantity = :quantity, expiryDate = :expiryDate WHERE id = :id")
+    suspend fun update(id: String, name: String, normalizedName: String, quantity: Double?, expiryDate: Long?): Int
 
     @Query("DELETE FROM pantry_items WHERE id = :id")
     suspend fun deleteById(id: String): Int

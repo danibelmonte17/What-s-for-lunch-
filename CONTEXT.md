@@ -29,7 +29,13 @@ Glosario y lenguaje compartido de **What's for Lunch?**. Cada término significa
 
 ### Despensa y compra
 
-**Alimento**: cada producto detectado o añadido a la Despensa (p. ej. «Tomate fresco»).
+**Alimento**: cada producto detectado o añadido a la Despensa (p. ej. «Tomate fresco»), con cantidad opcional (entero 0..99) y **fecha de caducidad opcional** (RD28).
+
+**Frescura**: clasificación de un Alimento por su fecha de caducidad: **«Consumir pronto»** (≤ 2 días restantes, con la fecha pasada y hoy incluidos) o **«En buen estado»** (más de 2 días o sin fecha); la píldora de la tarjeta de la Despensa la muestra (RD28).
+
+**Caducidad**: fecha opcional de un Alimento; la tarjeta la traduce en **«Caducada»**, **«Caduca hoy»**, **«Caduca mañana»** o **«Caduca en N días»**, y **«Larga duración»** cuando no hay fecha (RD28).
+
+**Capacidad estimada**: porcentaje de la capacidad de referencia de la Despensa (40 Alimentos) que ocupan los Alimentos registrados; **«N por caducar»** cuenta los «Consumir pronto» y **«N frescos»** el total (RD28).
 **Coincidencia**: porcentaje de ingredientes de una Receta presentes en la Despensa (todos cuentan: sin obligatorios ni opcionales, `redisenar-formulario-de-receta`).
 **Despensa**: todos los alimentos del hogar en un único listado. No hay desglose por ubicaciones físicas. Es independiente de la Lista de la Compra: la Despensa es lo que hay y la Lista es lo que falta por comprar.
 **Faltante**: Ingrediente de una Receta o de una Propuesta del Pinche que no está en la Despensa. Todos los Ingredientes pueden ser Faltantes (`redisenar-formulario-de-receta`).

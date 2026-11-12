@@ -50,7 +50,7 @@ El desglose por sesiones de implementación vive en `feature_list.json`; este do
 - **Cuentas, registro y login** — el MVP usa sesión local con datos en el dispositivo (`P31`).
 - **Sincronización entre dispositivos y hogar compartido** — la pareja que comparte nevera y lista llega después (`P7`).
 - **Backend y base de datos en servidor** — queda como fase posterior (`P34`; su stack en `docs/technical-discovery.md`); el MVP es 100% cliente (`P33`).
-- **Seguimiento de caducidad de alimentos** — fuera del MVP, posible ampliación futura (`P5`).
+- **Seguimiento de caducidad de alimentos** — en alcance desde `redisenar-vista-de-la-despensa` (2026-11-11): fecha de caducidad opcional por Alimento con píldoras de frescura, contadores y consejo de cocina (RD28); `P5` queda cubierto por esa feature.
 - **Precios y coste estimado por receta** — la app no muestra precios en ninguna vista (`P12`, `⚠ S02`).
 - **Tablet, escritorio y PWA web** — el MVP es solo Android (`P20`).
 - **Publicación en Play Store** — distribución por APK instalada a mano (`P28`).

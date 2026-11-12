@@ -16,7 +16,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 // `crear-mi-perfil`, D1) sin tocar las tablas existentes. La versión 7 elimina
 // `cookMinutes` de `recipes` (D3) sumándolo a `prepMinutes` (D6) y `optional` de
 // `ingredients` (D5: todos los Ingredientes cuentan), y normaliza los
-// temporizadores de Paso a `NULL` cuando son 0 (D10).
+// temporizadores de Paso a `NULL` cuando son 0 (D10). La versión 8 añade la
+// fecha de caducidad opcional de los Alimentos (`pantry_items.expiryDate`,
+// RD28) con `ALTER TABLE` sin tocar filas existentes.
 @Database(
     entities = [
         RecipeEntity::class,
@@ -28,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProfileEntity::class,
         ProfileRestrictionEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class RecipeDatabase : RoomDatabase() {
@@ -198,6 +200,18 @@ abstract class RecipeDatabase : RoomDatabase() {
                         "ON `ingredients` (`recipeId`)",
                 )
                 db.execSQL("UPDATE `steps` SET `timerMinutes` = NULL WHERE `timerMinutes` = 0")
+            }
+        }
+
+        /**
+         * Adds the optional food expiry date (`expiryDate`, epoch day; NULL for
+         * legacy foods, shown as «Larga duración») on top of v7
+         * (`redisenar-vista-de-la-despensa`, RD28), without touching existing
+         * pantry rows or any other table.
+         */
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `pantry_items` ADD COLUMN `expiryDate` INTEGER")
             }
         }
     }
