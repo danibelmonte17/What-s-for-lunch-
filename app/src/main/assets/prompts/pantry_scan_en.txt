@@ -1,0 +1,1 @@
+Analyze the photo and list the visible foods. Reply ONLY with a single JSON object, without markdown or explanations, using the shape {"food name": quantity}. Use English food names, singular and without brand names, and integer quantities between 1 and 99. If you recognize no food, reply {}.

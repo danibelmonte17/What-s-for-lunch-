@@ -1,0 +1,331 @@
+﻿com.whatsforlunch.app.CreateRecipeViewModelTest — tests=7 failures=0 errors=0 skipped=0
+    savedDraftKeepsStableIdsAndStepLinksWhenReopened
+    recipesWithoutStepLinksAreValidAndCanGainLinks
+    togglingStepIngredientsAssignsRemovesAndKeepsIngredientOrder
+    newIngredientRowsGetUniqueStableIds
+    editingIngredientKeepsItsStepLinks
+    removingIngredientClearsItsLinksFromEveryStep
+    publishValidationDoesNotRequireStepLinks
+com.whatsforlunch.app.data.ai.AiEndpointsTest — tests=6 failures=0 errors=0 skipped=0
+    customBaseBuildsImageEndpoint
+    blankBaseBuildsDefaultChatEndpoint
+    trailingSlashIsNormalized
+    fullEndpointIsNotDuplicated
+    customBaseBuildsChatEndpointWithoutDuplicatingSlashOrPath
+    blankBaseUsesDevExpertDefault
+com.whatsforlunch.app.data.ai.AiFailureTest — tests=2 failures=0 errors=0 skipped=0
+    nonIoExceptionsFallBackToInvalidResponse
+    ioExceptionsAreClassifiedAsNoConnection
+com.whatsforlunch.app.data.ai.PincheChatProtocolTest — tests=9 failures=0 errors=0 skipped=0
+    toolsExposeOnlyTheTwoReadOnlyFunctionsWithoutParameters
+    parseReplyFallsBackToTheFirstJsonObjectWithoutABlock
+    pantryResultKeepsNullQuantity
+    plainTextWithoutJsonKeepsTheWholeText
+    invalidProposalLeavesOnlyTheText
+    pantryResultCapsAtOneHundredItemsAndKeepsNameAndQuantity
+    toolCallsReadIdAndNameAndIgnoreArguments
+    recipesResultCapsRecipesAndIngredientsAndOmitsStepsAndQuantities
+    parseReplySeparatesTextAndUsesTheFirstRecipeBlockOnly
+com.whatsforlunch.app.data.ai.PinchePromptsTest — tests=3 failures=0 errors=0 skipped=0
+    spanishPromptIsRenderedWithTheSharedContractAndCurrentInstructions
+    englishPromptIsRenderedWithTheSharedContractAndCurrentInstructions
+    unknownLanguageFallsBackToSpanish
+com.whatsforlunch.app.data.ai.PriorityAiKeyProviderTest — tests=4 failures=0 errors=0 skipped=0
+    blankBuildKeyFallsBackToStoredKey
+    buildKeyIsTrimmed
+    noBuildKeyAndNoStoredKeyReturnsNull
+    buildKeyWinsOverStoredKey
+com.whatsforlunch.app.data.ai.PromptAssetsTest — tests=5 failures=0 errors=0 skipped=0
+    everyPromptExistsForSpanishAndEnglish
+    suggestionPromptsKeepTheirTokensAndTheSharedContract
+    renderedPromptsNeverKeepTheContractPlaceholder
+    scanPromptsAreLocalized
+    dishPhotoPromptsFillDishAndStory
+com.whatsforlunch.app.data.ai.RecipeSuggestionParserTest — tests=6 failures=0 errors=0 skipped=0
+    missingProposalArrayIsAnEmptySuccessfulAnswer
+    toleratesMarkdownFencesAndSurroundingText
+    recoversOnlyTheFirstJsonObject
+    keepsMalformedValuesForDomainNormalization
+    missingObjectIsAParseFailure
+    parsesTheCompactRecipeJson
+com.whatsforlunch.app.data.ai.ScanAnalysisParserTest — tests=6 failures=0 errors=0 skipped=0
+    nonNumericQuantitiesBecomeNullForDomainNormalization
+    emptyObjectIsAnEmptySuccessfulAnalysis
+    parsesPlainJsonObject
+    toleratesMarkdownFencesAndSurroundingText
+    recoversOnlyTheFirstJsonObject
+    missingObjectIsAParseFailure
+com.whatsforlunch.app.data.ai.SuggestionPromptTest — tests=3 failures=0 errors=0 skipped=0
+    englishPromptUsesTheEnglishAntiDuplicatesSection
+    promptWithoutExistingRecipesHasNoAntiDuplicatesSection
+    spanishPromptListsExistingRecipesAndAsksToAvoidThem
+com.whatsforlunch.app.data.repository.InMemoryPantryRepositoryTest — tests=5 failures=0 errors=0 skipped=0
+    savesAndObservesItems
+    rejectsNormalizedDuplicateOnCreateAndRename
+    updatesExistingItemWithoutAddingAnotherRow
+    acceptsZeroAndMaximumIntegerQuantitiesAndRejectsValuesOutsideRange
+    deleteRemovesItemAndMissingIdIsNoOp
+com.whatsforlunch.app.data.repository.InMemoryRecipeRepositoryDeleteTest — tests=2 failures=0 errors=0 skipped=0
+    deletingMissingRecipeIsANoOp
+    deletingRecipePermanentlyRemovesItFromObservedRecipes
+com.whatsforlunch.app.domain.cookmode.CookModeRulesTest — tests=6 failures=0 errors=0 skipped=0
+    baseServingsKeepTheStoredPrecision
+    outOfRangeServingsAreClampedBeforeScaling
+    orphanAndBlankIdsAreDiscarded
+    rowsFollowRecipeIngredientOrderAndScaleQuantities
+    unknownStepIndexShowsNoRows
+    stepWithoutLinksShowsNoRowsInsteadOfAllIngredients
+com.whatsforlunch.app.domain.cookmode.StepTimerTest — tests=9 failures=0 errors=0 skipped=0
+    addMinuteFromFinishedResumesTheCountdownAtSixtySeconds
+    tickDecrementsOneSecondAndReachesFinishedAtZero
+    startPauseResumeMoveOnlyBetweenTheirPhases
+    addMinuteExtendsBothMetaAndCountdownWithoutChangingThePhase
+    zeroMinuteMetaReachesFinishedAtTheFirstTick
+    initialIsReadyWithItsMetaAndNeverStartsAlone
+    stopAlarmReturnsToReadyWithTheCurrentMeta
+    resetRestoresTheCurrentMetaAndLeavesItRunning
+    tickOutsideRunningIsANoOp
+com.whatsforlunch.app.domain.match.CompatibleRecipesTest — tests=6 failures=0 errors=0 skipped=0
+    ignoresRecipesBelowThresholdIncluding84
+    draftsAndPublishedRecipesEnterEqually
+    keepsRecipesAtOrAboveRoundedThresholdOrderedByMatchThenTitleThenId
+    pantryItemsWithZeroQuantityCountAsAvailable
+    usesRoundedPercentageForThresholdSoElevenOfThirteenEnters
+    recipesWithoutRequiredIngredientsNeverEnter
+com.whatsforlunch.app.domain.match.RecipeMatchTest — tests=5 failures=0 errors=0 skipped=0
+    roundsHalfUpAndRecognizesNormalizedNames
+    requiredPantryItemWithZeroQuantityCountsAsAvailable
+    emptyPantryIsZeroAndAllRequiredItemsIsFullMatch
+    recipeWithoutRequiredIngredientsHasNoMatch
+    calculatesPresenceOnlyFromRequiredIngredients
+com.whatsforlunch.app.domain.MyRecipesStateTest — tests=3 failures=0 errors=0 skipped=0
+    nonEmptyCatalogWithoutVisibleRecipesProducesNoResultsState
+    catalogWithRecipesProducesWithRecipesState
+    emptyCatalogProducesEmptyState
+com.whatsforlunch.app.domain.pantry.PantryItemValidationTest — tests=4 failures=0 errors=0 skipped=0
+    quantityAcceptsIntegerBoundsAndZeroRepresentsNoQuantity
+    quantityOutsideIntegerBoundsIsRejected
+    nameNormalizationTrimsCaseAndDiacritics
+    nameMustContainNonWhitespaceCharacters
+com.whatsforlunch.app.domain.pinche.PincheProposalRulesTest — tests=6 failures=0 errors=0 skipped=0
+    savingTheSameProposalTwiceProducesTheSameId
+    proposalToRecipeBuildsADraftWithSuggestionOriginAndNoPhoto
+    missingRequiredNormalizesAccentsCaseAndSpacesAndAvoidsDuplicates
+    proposalRecipeIdIsStableAndDoesNotReuseTheSuggestionPrefix
+    missingRequiredKeepsOnlyAbsentRequiredIngredientsInRecipeOrder
+    emptyPantryMakesEveryRequiredIngredientMissing
+com.whatsforlunch.app.domain.RecipeSearchFilterTest — tests=4 failures=0 errors=0 skipped=0
+    ignoresCaseAccentsAndOuterWhitespace
+    blankQueryReturnsAllRecipesInInputOrder
+    searchesTitlesAndIngredientNames
+    combinesTextAndMomentAndKeepsRepositoryOrderIncludingDrafts
+com.whatsforlunch.app.domain.RecipeValidationTest — tests=8 failures=0 errors=0 skipped=0
+    publishIsBlockedWithoutPhotoOrTitle
+    draftOnlyRequiresTitle
+    publishIsBlockedByAnInvalidIngredient
+    servingsAreLimitedTo1To12
+    publishIsBlockedByAnInvalidStep
+    publishSucceedsWithTitlePhotoValidIngredientAndStep
+    publishIsBlockedWithoutIngredientsOrSteps
+    timesMustBeNonNegativeMinutes
+com.whatsforlunch.app.domain.scanner.ScanAnalysisTest — tests=6 failures=0 errors=0 skipped=0
+    duplicateProposalsInsideOneResponseFuseAndSumQuantities
+    newProposalsEnterWithTheirQuantityAndBlankNamesAreDiscarded
+    invalidQuantitiesBecomeNoQuantityAndAboveMaximumAreCapped
+    duplicateProposalSumIsCappedAtMaximum
+    invalidProposalQuantityKeepsTheFoodWithoutQuantity
+    successivePhotosAccumulateWithoutOverwritingUserEdits
+com.whatsforlunch.app.domain.scanner.ScanDetectionsTest — tests=8 failures=0 errors=0 skipped=0
+    manualDuplicateCanRetainExistingChipWithoutCreatingAnother
+    sumIntoAddsChipQuantityToExistingQuantity
+    updateQuantityClampsToIntegerBounds
+    pantryMatchesUseNormalizedNames
+    sumIntoCapsTotalAtMaximumWithoutWarning
+    conversionTreatsZeroAsNoQuantityAndKeepsMaximumQuantity
+    sumIntoTreatsNoQuantityAsAdditiveNeutral
+    renameCollisionKeepsEditedChipNameAndQuantity
+com.whatsforlunch.app.domain.servings.ServingsScalingTest — tests=7 failures=0 errors=0 skipped=0
+    scalesQuantityLinearlyWithServings
+    ingredientAtBaseServingsKeepsItsQuantity
+    servingsOutsideRangeCannotScaleBeyondLimits
+    roundsScaledQuantityToAtMostOneDecimal
+    invalidBaseServingsLeavesQuantityUnscaled
+    clampsServingsToAllowedRange
+    quantityWithoutAmountStaysWithoutAmount
+com.whatsforlunch.app.domain.suggestion.SuggestionAcceptanceTest — tests=6 failures=0 errors=0 skipped=0
+    onlyRecipesAboveSixtyPercentAreSentToThePrompt
+    noSelectedFoodsMeansNoRecipesToAvoid
+    recipeWithoutRequiredIngredientsIsNotSentToThePrompt
+    acceptingTheSameSuggestionTwiceProducesTheSameRecipeId
+    suggestionRecipeIdIsStablePerNormalizedTitle
+    acceptingCreatesADraftSuggestionRecipeWithoutPhoto
+com.whatsforlunch.app.domain.suggestion.SuggestionRulesTest — tests=9 failures=0 errors=0 skipped=0
+    invalidQuantitiesBecomeOneAndBlankIngredientNamesAreDropped
+    duplicateTitlesKeepTheFirstProposal
+    matchCountsOnlyRequiredIngredientsAgainstSelectedFoods
+    discardsBlankTitleOrEmptyIngredientsOrSteps
+    proposalWithoutRequiredIngredientsHasNoBadge
+    unknownTokensAndOutOfRangeValuesFallBackToDefaults
+    baseServingsWithinRangeAreKept
+    onlyThreeSuggestionsAreKept
+    normalizesCompleteProposal
+com.whatsforlunch.app.domain.voice.VoiceCommandParserTest — tests=7 failures=0 errors=0 skipped=0
+    substringsAndExtraWordsAreNotCommands
+    otherLanguagesFallBackToSpanish
+    blankOrPunctuationOnlyTranscriptsAreNotCommands
+    englishCommandsMatchTheExactPhrase
+    theInactiveLanguageIsIgnored
+    spanishCommandsMatchTheExactPhrase
+    normalizationIgnoresCaseAccentsAndPunctuation
+com.whatsforlunch.app.InMemoryShoppingListRepositoryTest — tests=7 failures=0 errors=0 skipped=0
+    addMissingIsIdempotentForTheSameSource
+    saveManualItemCreatesItemsAndMergesDuplicateNames
+    setCompletedTogglesOnlyTheCompletedFlag
+    restoreItemsBringsBackABulkWithSourcesAndCompletedState
+    manualEditKeepsTheOriginsOfContributedItems
+    deletedItemCanBeRestoredWithItsQuantityUnitAndOrigins
+    differentSourcesAccumulateAndKeepEveryOrigin
+com.whatsforlunch.app.ShoppingListFlowTest — tests=1 failures=0 errors=0 skipped=0
+    savingTheProposalAndRepeatingFromTheDraftDoesNotDuplicateTheItem
+com.whatsforlunch.app.ShoppingListManualItemTest — tests=9 failures=0 errors=0 skipped=0
+    quantityAcceptsCommaOrDotAndBlankMeansNoQuantity
+    manualSaveOnAnExistingNameEditsItKeepingNameAndSources
+    invalidDataLeavesTheListUnchanged
+    manualSaveCreatesANewItemWithoutSourcesAndWithItsAisle
+    nameMustNotBeBlankAfterNormalizing
+    editableQuantityRoundTripsThroughParsingInEsAndEn
+    manualSaveByIdReplacesOnlyQuantityUnitAndAisle
+    editableQuantityHasNoThousandsGroupingAndKeepsAllDecimals
+    quantityIsOptionalAndMustBeFiniteGreaterThanZero
+com.whatsforlunch.app.ShoppingListRulesTest — tests=17 failures=0 errors=0 skipped=0
+    repeatingTheSameSourceIsANoOpAndDoesNotDoubleTheQuantity
+    duplicateNamesInsideOneContributionUseTheFirstOccurrence
+    itemsAreMatchedByNormalizedNameAcrossSources
+    differentUnitsKeepTheItemQuantityButStillRegisterTheSource
+    groupItemsByRecipeReplicatesMultiSourceItemsAndPutsNoSourceLast
+    groupItemsKeepsCompletedRowsInTheirSortPosition
+    itemIdIsStableForTheNormalizedName
+    progressCountsUniqueItemsOnceAndRoundsToTheNearestInteger
+    zeroQuantityCreatesAnItemWithoutVisibleQuantity
+    missingRequiredKeepsOnlyAbsentRequiredIngredientsInRecipeOrder
+    groupItemsOrdersRecipeGroupsByNormalizedTitleWithSourceKeyAsTieBreak
+    differentSourcesWithTheSameUnitSumTheirQuantities
+    groupItemsByAisleSkipsEmptyAisles
+    missingRequiredNormalizesNamesAndAvoidsDuplicates
+    contributionsKeepTheCompletedStateOfMergedItems
+    contributionCreatesANewItemWithoutAisleAndNotCompleted
+    groupItemsByAislePutsTheAislesInEnumOrderAndUncategorizedLast
+com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsViewModelTest — tests=13 failures=0 errors=0 skipped=0
+    requestSendsOnlyExistingRecipesAboveSixtyPercentToThePrompt
+    successfulEmptyAnswerShowsEmptyState
+    scannerStillExposesItsChipsThroughTheSharedHolder
+    aNewRequestStartsEverySuggestionAsProposed
+    selectionMergesScanChipsAndPantryWithEverythingPreselected
+    acceptingTheSameSuggestionTwiceKeepsASingleRecipe
+    acceptingSavesTheSuggestionAsADraftWithSuggestionOrigin
+    failureShowsNoticeAndRetryRequestsAgain
+    discardingKeepsTheCardVisibleWithoutSavingAnything
+    eachFailureCauseMapsToItsOwnSuggestionsNoticeAndCanBeCleared
+    deselectingEveryFoodDisablesTheRequestAndAvoidsCallingTheAi
+    successListsSuggestionsWithClientMatchAgainstSelectedFoods
+    missingApiKeyReturnsToSelectionWithKeyNotice
+com.whatsforlunch.app.ui.cookmode.CookModeViewModelTest — tests=30 failures=0 errors=0 skipped=0
+    clearingTheViewModelSilencesTheAlarmAndDiscardsTheTimer
+    voiceUnavailableWhenTtsCannotPrepareShowsNoticeAndStaysOff
+    startingTheTimerDecrementsOneSecondPerTick
+    nextCommandAdvancesTheStepAndAnnouncesIt
+    nextAndPreviousStayWithinTheStepRange
+    unknownRecipeShowsNotFound
+    pauseTimerCommandPausesTheCountdownAndNeverResumes
+    addMinuteExtendsMetaAndCountdownWithoutInterrupting
+    pausingFreezesTheCountdownAndResumingContinues
+    inheritedServingsOutOfRangeAreClamped
+    changingStepDiscardsTheTimerAndSilencesTheAlarm
+    withoutServingsArgumentTheRowsUseBaseServings
+    reachingZeroStartsTheAlarmAndAddMinuteSilencesItAndExtends
+    unknownTranscriptIsIgnoredAndKeepsListening
+    permissionDeniedShowsNoticeAndVoiceStaysOff
+    timerStartsReadyWithItsMetaAndNeverStartsAlone
+    theAlarmCutsTheSpeechBeforeRinging
+    hostStopCutsVoiceAndHostStartResumesListeningWithoutReannouncing
+    enablingVoicePreparesTtsStartsRecognitionAndAnnouncesTheStep
+    stopAlarmReturnsToReadyWithTheCurrentMeta
+    resetRestoresTheCurrentMetaAndLeavesItRunning
+    stepWithoutTimerMinutesHasNoTimer
+    cookingStartsAtFirstStepWithRowsScaledToTheInheritedServings
+    voiceIsOffByDefaultWithNoNotice
+    recipeWithoutStepsShowsNotFoundBecauseCookingModeDoesNotExistForIt
+    voiceIsOffByDefaultWhenTheModeIsReopened
+    nextCommandOnTheLastStepFinishesAndTurnsVoiceOff
+    repeatCommandAnnouncesTheCurrentStepAgain
+    clearingTheViewModelReleasesBothVoiceEngines
+    commandsUnavailableWhenRecognitionCannotStartShowsNotice
+com.whatsforlunch.app.ui.myrecipes.MyRecipesSearchDebounceTest — tests=2 failures=0 errors=0 skipped=0
+    selectingAnotherMomentReplacesTheActiveFilterImmediately
+    searchAppliesOnceThreeHundredMillisecondsAfterTheLastKeystroke
+com.whatsforlunch.app.ui.pinche.PincheViewModelTest — tests=13 failures=0 errors=0 skipped=0
+    successWithProposalComputesMissingRequiredIngredientsFromThePantry
+    savingTheProposalStoresADraftAndMarksTheCardAsSaved
+    inputAndSendAreTruncatedToFiveHundredCharacters
+    missingIngredientsAreNotRecalculatedWhenThePantryChanges
+    successWithoutTextAndProposalIsTreatedAsFailure
+    blankInputIsIgnoredAndDoesNotCallTheClient
+    missingApiKeyShowsTheKeyNotice
+    failedSaveRevertsTheCardAndShowsTheSaveNotice
+    addingMissingUsesBaseQuantitiesAndMarksTheProposalAsAdded
+    sendAddsTheUserBubbleAndTheAssistantAnswer
+    failedTurnShowsNoticeAndRetryDoesNotDuplicateTheUserBubble
+    failedShoppingListAddRevertsTheCardAndShowsTheNotice
+    quickSuggestionsOnlyWorkWithAnEmptyConversation
+com.whatsforlunch.app.ui.recipedetail.RecipeDetailViewModelTest — tests=9 failures=0 errors=0 skipped=0
+    recipeWithoutRequiredIngredientsHasNoMatch
+    detailStartsAtBaseServingsAndScalesIngredientRows
+    servingsSelectionNeverLeavesAllowedRange
+    emptyPantryShowsZeroPercentBadge
+    matchReactsToPantryChangesWithoutLeavingTheScreen
+    quantityFormatUsesActiveLocaleWithoutTrailingZeros
+    unknownRecipeIdShowsNotFoundState
+    addingMissingUsesTheVisibleScaledQuantitiesAndDoesNotDouble
+    detailShowsMatchPercentageFromRequiredIngredients
+com.whatsforlunch.app.ui.recommendations.RecommendationsViewModelTest — tests=6 failures=0 errors=0 skipped=0
+    hasFoodsFollowsThePersistedPantryOnly
+    emptyOrIncompletePantryYieldsNoRecommendations
+    stateRecalculatesWhenPantryChangesWithoutRecreatingTheViewModel
+    addingMissingStoresBaseQuantitiesAndHidesTheMissingLine
+    listsOnlyCompatibleRecipesInDomainOrder
+    stateRecalculatesWhenRecipesChangeAndTracksEmptyPantry
+com.whatsforlunch.app.ui.scanner.ScannerViewModelTest — tests=14 failures=0 errors=0 skipped=0
+    saveSumsMatchedChipQuantityIntoExistingPantryItem
+    exitAsksBeforeDiscardingManualChips
+    openingAndClosingScannerTogglesTheExpandedPanel
+    saveAppliesAllSumsAndCreatesOnlyUnmatchedItems
+    permissionDenialContinuesInManualMode
+    successfulCaptureMergesAiProposalsIntoEditableChips
+    missingApiKeyKeepsManualEntryAndShowsSpecificNotice
+    analysisFailureShowsNoticeAndAllowsManualRetry
+    duplicateRepositoryResultIsNotReportedAsSuccessfulSave
+    manualDuplicateKeepsExistingChipAndQuantityStepperClamps
+    successiveCapturesAccumulateWithoutOverwritingUserEdits
+    failedOrEmptyCaptureIsReportedAsAnalysisFailure
+    zeroDetectionsCollapseScannerAndShowSpecificNotice
+    eachFailureCauseMapsToItsOwnScannerNotice
+com.whatsforlunch.app.ui.settings.SettingsViewModelTest — tests=8 failures=0 errors=0 skipped=0
+    buildKeyConfiguresSettingsEvenWithEmptyStore
+    deleteClearsConfiguredState
+    deletingStoredKeyKeepsConfiguredWhenBuildKeyIsActive
+    buildKeyWinsAndDisablesDelete
+    configuredStatePersistsAcrossViewModelInstances
+    storedKeyCanBeDeletedWhenBuildKeyIsNotActive
+    blankFieldCannotBeSaved
+    saveTrimsKeyAndMarksConfiguredWithoutRevealingIt
+com.whatsforlunch.app.ui.shoppinglist.ShoppingListViewModelTest — tests=10 failures=0 errors=0 skipped=0
+    clearCompletedRemovesOnlyCompletedItemsAndUndoRestoresThemAll
+    toggleCompletedMarksTheItemAndUpdatesTheProgress
+    dismissingUndoKeepsTheItemDeleted
+    editingKeepsLargeAndPreciseQuantitiesExactly
+    groupModeDefaultsToAisleAndSwitchesTheGroups
+    itemsAreSortedByNormalizedName
+    addItemOpensTheEditorAndSavingStoresTheManualItem
+    editItemPreloadsTheDialogAndInvalidDataIsIgnored
+    deletingAnItemExposesItForUndoAndUndoRestoresIt
+    editingAnItemKeepsItsCompletedState

@@ -1,0 +1,18 @@
+# Evidencia de audio — S1 sobre el build final
+
+- **Feature**: `gestionar-temporizador-de-paso`
+- **Fecha**: 2026-10-29 11:34 local (dispositivo en GMT: 10:34) · `emulator-5554` Pixel_10_Pro API 37
+- **Comando del pase**: `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.whatsforlunch.app.CookModeTimerE2ETest#alarmRingsWhenTheCountdownReachesZero"` → **1/1 verde** (XML conservado en `e2e-s1-audio-2026-10-29.xml`: `tests=1 failures=0`, 2026-10-29T10:35 dispositivo)
+- **Captura**: `adb shell dumpsys audio` muestreado cada 200 ms durante el pase; se conserva el ciclo del reproductor de la app.
+
+```
+10-29 10:34:54:274 new player piid:85295 uid/pid:10253/25361 package:com.whatsforlunch.app type:android.media.MediaPlayer
+10-29 10:34:54:427 player piid:85295 new AudioAttributes: usage=USAGE_NOTIFICATION_RINGTONE content=CONTENT_TYPE_SONIFICATION
+10-29 10:34:54:516 releasing player piid:85295, uid:10253
+10-29 10:34:54:518 new player piid:85303 uid/pid:10253/25361 package:com.whatsforlunch.app type:android.media.MediaPlayer
+10-29 10:34:54:531 player piid:85303 new AudioAttributes: usage=USAGE_ALARM content=CONTENT_TYPE_SONIFICATION
+10-29 10:34:54:554 player piid:85303 event:started
+10-29 10:34:54:768 releasing player piid:85303, uid:10253
+```
+
+La primera sonda (`USAGE_NOTIFICATION_RINGTONE`, piid 85295) es la comprobación interna de `Ringtone` al resolver el URI; el reproductor efectivo de la alarma es el segundo (piid 85303) con `USAGE_ALARM` y `CONTENT_TYPE_SONIFICATION`. En S1 no se pulsa «Detener»: el `@After` del test silencia la alarma y limpia el ViewModel a los pocos cientos de milisegundos, por eso el reproductor se libera en el mismo segundo; en uso real el bucle lo mantiene hasta «Detener» (D8).

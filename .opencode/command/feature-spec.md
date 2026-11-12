@@ -1,10 +1,10 @@
 ---
-description: Redacta, retrabaja, audita o revisa la spec de una feature.
+description: Redacta o actualiza la spec de una feature.
 agent: build
 ---
 
-Carga `feature-spec` y sigue el modo solicitado. Para auditar, usa el modo auditoría; no lo combines con la redacción en la misma pasada.
+Carga la skill `feature-spec` con la herramienta de skills y sigue sus instrucciones al pie de la letra para toda esta sesión.
 
 Petición del usuario: $ARGUMENTS
 
-Si el usuario no ha indicado un id de feature, elige la primera lista para planificar según el criterio de selección de la skill. Si pide revisar, usa el Modo revisión sin escribir nada.
+Si el usuario no ha indicado un id de feature, elige la primera lista para planificar según el criterio de selección de la skill. La validación independiente del resultado no es de esta skill: corresponde a `feature-validator`.

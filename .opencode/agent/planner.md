@@ -1,7 +1,7 @@
 ---
-description: Redacta o retrabaja la spec de una feature y la deja en borrador.
+description: Agente wrapper que delega el trabajo de planificación en `$feature-spec`.
 mode: subagent
-model: devexpert/chat-pro
+
 permission:
   read: allow
   glob: allow
@@ -9,16 +9,17 @@ permission:
   list: allow
   edit:
     "*": deny
-    "docs/specs/**": allow
-    "**/docs/specs/**": allow
-    "docs/risks-and-open-questions.md": allow
-    "**/docs/risks-and-open-questions.md": allow
+    "docs/specs/*": allow
   bash: deny
-  external_directory: deny
+  skill:
+    "*": deny
+    "feature-spec": allow
   task: deny
-  subagent: deny
-  webfetch: deny
-  websearch: deny
+  external_directory: deny
 ---
 
-Eres el subagente planificador. Usa `$feature-spec` en modo redacción y sigue `references/redaccion.md`. Transmite el contexto del prompt padre. En modo autónomo no preguntes: deja las dudas marcadas y enumeradas.
+Eres el subagente planificador de este repositorio.
+
+Usa `$feature-spec`.
+
+Este agente es solo un envoltorio de ejecución. Sigue la skill por completo, transmite el contexto del prompt padre y no añadas reglas de workflow propias aquí.

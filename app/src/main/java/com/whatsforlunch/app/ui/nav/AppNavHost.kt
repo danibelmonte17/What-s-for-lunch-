@@ -1,48 +1,273 @@
 package com.whatsforlunch.app.ui.nav
 
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.whatsforlunch.app.R
-import com.whatsforlunch.app.ui.crearreceta.CrearRecetaRoute
-import com.whatsforlunch.app.ui.misrecetas.MisRecetasRoute
+import androidx.navigation.navArgument
+import com.whatsforlunch.app.ui.aisuggestions.AiSuggestionsRoute
+import com.whatsforlunch.app.ui.cookmode.CookModeRoute
+import com.whatsforlunch.app.ui.createrecipe.CreateRecipeRoute
+import com.whatsforlunch.app.ui.myrecipes.MyRecipesRoute
+import com.whatsforlunch.app.ui.myprofile.MyProfileRoute
+import com.whatsforlunch.app.ui.pantry.PantryRoute
+import com.whatsforlunch.app.ui.pinche.PincheRoute
+import com.whatsforlunch.app.ui.recommendations.RecommendationsRoute
+import com.whatsforlunch.app.ui.recipedetail.RecipeDetailRoute
+import com.whatsforlunch.app.ui.scanner.ScannerRoute
+import com.whatsforlunch.app.ui.settings.SettingsRoute
+import com.whatsforlunch.app.ui.shoppinglist.ShoppingListRoute
 
-// Rutas de navegación. Mis Recetas es el destino inicial (RF-4, P18).
+// Rutas de navegación. Mi recetario es el destino inicial (RF-4, P18). El formulario
+// de Receta acepta un id opcional: null = alta, con id = edición (RF-1). El Detalle
+// de Receta abre por id desde la tarjeta (RF-DR1) y su CTA abre el Modo Cocina real
+// con el id de la Receta y las Raciones elegidas (RF-CPP5, RD22).
 object AppRoutes {
-    const val MIS_RECETAS = "mis_recetas"
-    const val CREAR_RECETA = "crear_receta"
-    const val ESCANEAR_DESPENSA = "escanear_despensa"
+    const val MY_RECIPES = "my_recipes"
+    const val CREATE_RECIPE = "create_recipe?recipeId={recipeId}"
+    const val SCAN_PANTRY = "scan_pantry?pickFromGallery={pickFromGallery}"
+    const val PANTRY_RECIPES = "pantry_recipes"
+    const val PANTRY = "pantry"
+    const val RECIPE_DETAIL = "recipe_detail/{recipeId}"
+    const val COOK_MODE = "cook_mode/{recipeId}?servings={servings}"
+    const val SETTINGS = "settings"
+    const val AI_SUGGESTIONS = "ai_suggestions"
+    const val PINCHE = "pinche"
+    const val SHOPPING_LIST = "shopping_list"
+    const val MY_PROFILE = "my_profile"
+    const val RECIPE_ID_ARG = "recipeId"
+    const val SERVINGS_ARG = "servings"
+    const val PICK_FROM_GALLERY_ARG = "pickFromGallery"
+
+    fun createRecipe(): String = "create_recipe"
+
+    fun editRecipe(recipeId: String): String = "create_recipe?$RECIPE_ID_ARG=$recipeId"
+
+    fun recipeDetail(recipeId: String): String = "recipe_detail/$recipeId"
+
+    // Pulsación larga en un botón de escaneo: el Escáner recibe la flag y lanza el
+    // selector de fotos de la galería al entrar (sin permiso de cámara).
+    fun scanPantry(pickFromGallery: Boolean = false): String =
+        "scan_pantry?$PICK_FROM_GALLERY_ARG=$pickFromGallery"
+
+    // RF-CPP4: las Raciones viajan como texto opcional (patrón de `recipeId` en el
+    // formulario); sin argumento el Modo Cocina usa las Raciones base.
+    fun cookMode(recipeId: String, servings: Int): String = "cook_mode/$recipeId?$SERVINGS_ARG=$servings"
 }
 
+// RF-MOB4 (D5): la navegación por pestañas deja el back stack [my_recipes, pestaña
+// actual]; `popUpTo` descarta la pestaña anterior y `launchSingleTop` evita
+// duplicar entradas (back repetido nunca apila otra Mi recetario). Mi recetario
+// vuelve a su entrada existente y conserva búsqueda, momento y «Favoritas».
+private fun NavHostController.openTab(tab: AppTab) {
+    navigate(tab.route) {
+        popUpTo(AppRoutes.MY_RECIPES) { inclusive = false }
+        launchSingleTop = true
+    }
+}
+
+// Pestaña activa según la ruta del back stack; `null` en los destinos empujados
+// (Detalle, Modo Cocina, Formulario, Escáner, Sugerencias, Ajustes), donde la
+// barra inferior no se muestra (D4).
+private fun routeTab(route: String?): AppTab? = when (route) {
+    AppRoutes.MY_RECIPES -> AppTab.MY_RECIPES
+    AppRoutes.PANTRY -> AppTab.PANTRY
+    AppRoutes.SHOPPING_LIST -> AppTab.SHOPPING_LIST
+    AppRoutes.PINCHE -> AppTab.PINCHE
+    AppRoutes.MY_PROFILE -> AppTab.MY_PROFILE
+    else -> null
+}
+
+// RF-MOB6: la barra vive una sola vez sobre el NavHost (no se recrea al cambiar
+// de pestaña) y tocar la pestaña activa incrementa este contador; cada pantalla
+// lo observa y vuelve su lista al inicio sin resetear datos.
 @Composable
 fun WhatsForLunchApp(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = AppRoutes.MIS_RECETAS,
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentTab = routeTab(navBackStackEntry?.destination?.route)
+    var scrollToTopTick by remember { mutableIntStateOf(0) }
+
+    Scaffold(
         modifier = modifier,
-    ) {
-        composable(AppRoutes.MIS_RECETAS) {
-            MisRecetasRoute(
-                onCreateRecipe = { navController.navigate(AppRoutes.CREAR_RECETA) },
-                onScanPantry = { navController.navigate(AppRoutes.ESCANEAR_DESPENSA) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        bottomBar = {
+            currentTab?.let { tab ->
+                AppBottomBar(
+                    selectedTab = tab,
+                    onTabSelected = { selected -> navController.openTab(selected) },
+                    onReselect = { scrollToTopTick++ },
+                )
+            }
+        },
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = AppRoutes.MY_RECIPES,
+            modifier = Modifier
+                .padding(innerPadding)
+                // Los insets ya cubiertos por la barra/padding no se reaplican
+                // dentro de las pantallas (evita doble espacio inferior).
+                .consumeWindowInsets(innerPadding),
+        ) {
+            composable(AppRoutes.MY_RECIPES) {
+                MyRecipesRoute(
+                    onCreateRecipe = { navController.navigate(AppRoutes.createRecipe()) },
+                    onScanPantry = { navController.navigate(AppRoutes.scanPantry()) },
+                    onScanPantryFromGallery = {
+                        navController.navigate(AppRoutes.scanPantry(pickFromGallery = true))
+                    },
+                    onEditRecipe = { recipeId -> navController.navigate(AppRoutes.editRecipe(recipeId)) },
+                    onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
+                    onOpenPantryRecipes = { navController.navigate(AppRoutes.PANTRY_RECIPES) },
+                    onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+                    scrollToTopTick = scrollToTopTick,
+                )
+            }
+        composable(
+            route = AppRoutes.CREATE_RECIPE,
+            arguments = listOf(
+                navArgument(AppRoutes.RECIPE_ID_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            CreateRecipeRoute(
+                onDone = { navController.popBackStack() },
+                recipeId = entry.arguments?.getString(AppRoutes.RECIPE_ID_ARG),
             )
         }
-        composable(AppRoutes.CREAR_RECETA) {
-            CrearRecetaRoute(onDone = { navController.popBackStack() })
-        }
-        composable(AppRoutes.ESCANEAR_DESPENSA) {
-            ProvisionalScreen(
-                title = stringResource(R.string.action_scan_pantry),
-                testTag = ProvisionalTestTags.SCANNER_SCREEN,
+        composable(
+            route = AppRoutes.RECIPE_DETAIL,
+            arguments = listOf(
+                navArgument(AppRoutes.RECIPE_ID_ARG) { type = NavType.StringType },
+            ),
+        ) { entry ->
+            RecipeDetailRoute(
+                recipeId = entry.arguments?.getString(AppRoutes.RECIPE_ID_ARG).orEmpty(),
                 onBack = { navController.popBackStack() },
+                onStartCooking = { recipeId, servings ->
+                    navController.navigate(AppRoutes.cookMode(recipeId, servings))
+                },
             )
+        }
+        // RF-CPP1 (RD22): pantalla real «Modo Cocina» que sustituye al destino
+        // provisional; «Volver» y «Terminar» regresan al Detalle (D2/D7).
+        composable(
+            route = AppRoutes.COOK_MODE,
+            arguments = listOf(
+                navArgument(AppRoutes.RECIPE_ID_ARG) { type = NavType.StringType },
+                navArgument(AppRoutes.SERVINGS_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            CookModeRoute(
+                recipeId = entry.arguments?.getString(AppRoutes.RECIPE_ID_ARG).orEmpty(),
+                servings = entry.arguments?.getString(AppRoutes.SERVINGS_ARG)?.toIntOrNull(),
+                onBack = { navController.popBackStack() },
+                onFinish = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = AppRoutes.SCAN_PANTRY,
+            arguments = listOf(
+                navArgument(AppRoutes.PICK_FROM_GALLERY_ARG) {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { entry ->
+            ScannerRoute(
+                pickFromGallery = entry.arguments?.getBoolean(AppRoutes.PICK_FROM_GALLERY_ARG) ?: false,
+                onBack = { navController.popBackStack() },
+                // D5: `launchSingleTop` evita duplicar la Despensa en el back stack
+                // cuando el Escáner se abre desde ella (MY_RECIPES → PANTRY →
+                // SCAN_PANTRY); con la entrada desde Mi recetario el comportamiento
+                // no cambia.
+                onSaved = {
+                    // RF-MOB4 (D5): tras guardar se aterriza en la pestaña Despensa
+                    // con el back stack [my_recipes, pantry]; el Escáner no queda en
+                    // la pila y el back vuelve a Mi recetario. `openTab` aplica
+                    // `launchSingleTop`, así que la Despensa no se duplica al
+                    // escanear desde ella (`mover-escaneo-a-la-despensa`, D5).
+                    navController.openTab(AppTab.PANTRY)
+                },
+            )
+        }
+        // RF-SDR1/RF-SDR6: «Recetas con mi Despensa» sustituye a la sección que vivía
+        // dentro del Escáner (RF-MRC5); Detalle y Sugerencias vuelven aquí (D7).
+        composable(AppRoutes.PANTRY_RECIPES) {
+            RecommendationsRoute(
+                onBack = { navController.popBackStack() },
+                onOpenRecipe = { recipeId -> navController.navigate(AppRoutes.recipeDetail(recipeId)) },
+                onSuggestWithAi = { navController.navigate(AppRoutes.AI_SUGGESTIONS) },
+            )
+        }
+        // RF-SRC1: destino real de Sugerencias, que sustituye al provisional.
+        composable(AppRoutes.AI_SUGGESTIONS) {
+            AiSuggestionsRoute(
+                onBack = { navController.popBackStack() },
+                onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+            )
+        }
+        // RF-PCH1: el Pinche es una pestaña de la barra inferior (RF-MOB1). Con el
+        // perfil pendiente pide sus secciones y «Abrir Mi perfil» salta a la
+        // pestaña del perfil (`crear-mi-perfil`, D8).
+        composable(AppRoutes.PINCHE) {
+            PincheRoute(
+                onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) },
+                onOpenProfile = { navController.openTab(AppTab.MY_PROFILE) },
+                scrollToTopTick = scrollToTopTick,
+            )
+        }
+        // `crear-mi-perfil` (D4): «Mi perfil» es la quinta pestaña, al final de la
+        // barra; sus restricciones las consume el Pinche.
+        composable(AppRoutes.MY_PROFILE) {
+            MyProfileRoute(
+                scrollToTopTick = scrollToTopTick,
+            )
+        }
+        // RD18: la Lista de la Compra es una pestaña de la barra inferior y su
+        // estado vacío ya no lleva al Escáner: el escaneo vive en la Despensa
+        // (`mover-escaneo-a-la-despensa`, D2).
+        composable(AppRoutes.SHOPPING_LIST) {
+            ShoppingListRoute(
+                scrollToTopTick = scrollToTopTick,
+            )
+        }
+        // La Despensa es donde se escanean los Alimentos (D1): su FAB y su estado
+        // vacío abren el Escáner.
+        composable(AppRoutes.PANTRY) {
+            PantryRoute(
+                onScanFood = { navController.navigate(AppRoutes.scanPantry()) },
+                onScanFoodFromGallery = {
+                    navController.navigate(AppRoutes.scanPantry(pickFromGallery = true))
+                },
+                scrollToTopTick = scrollToTopTick,
+            )
+        }
+        composable(AppRoutes.SETTINGS) {
+            SettingsRoute(onBack = { navController.popBackStack() })
+        }
         }
     }
 }

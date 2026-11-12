@@ -75,10 +75,10 @@ class SystemPhotoAcquirer(
         }
     }
 
-    override suspend fun generate(prompt: String): PhotoResult = when (val result = imageGenerator.generate(prompt)) {
+    override suspend fun generate(prompt: String): PhotoResult = when (val result: ImageGenerationResult = imageGenerator.generate(prompt)) {
         is ImageGenerationResult.Success -> PhotoResult.Success(result.bytes)
-        ImageGenerationResult.MissingApiKey -> PhotoResult.MissingApiKey
-        ImageGenerationResult.Failed -> PhotoResult.GenerationFailed
+        is ImageGenerationResult.MissingApiKey -> PhotoResult.MissingApiKey
+        is ImageGenerationResult.Failed -> PhotoResult.GenerationFailed(cause = result.cause)
     }
 
     private fun hasCameraPermission(): Boolean =
@@ -104,9 +104,9 @@ class SystemPhotoAcquirer(
     }
 
     private companion object {
-        const val GALLERY_KEY = "crear_receta_pick_gallery"
-        const val PERMISSION_KEY = "crear_receta_request_camera"
-        const val CAMERA_KEY = "crear_receta_take_photo"
+        const val GALLERY_KEY = "create_recipe_pick_gallery"
+        const val PERMISSION_KEY = "create_recipe_request_camera"
+        const val CAMERA_KEY = "create_recipe_take_photo"
         const val CAPTURE_DIR = "captures"
     }
 }

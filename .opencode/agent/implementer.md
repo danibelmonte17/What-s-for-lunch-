@@ -1,36 +1,23 @@
 ---
-description: Implementa una feature desde su spec y la deja en `passing`.
+description: Agente wrapper que delega la implementación en `$feature-implementer`.
 mode: subagent
-model: devexpert/chat
+
 permission:
   read: allow
   glob: allow
   grep: allow
   list: allow
-  edit:
-    "*": allow
-    "docs/specs/**": deny
-    "**/docs/specs/**": deny
-    ".opencode/**": deny
-    "**/.opencode/**": deny
-    ".git": deny
-    ".git/**": deny
-    "**/.git": deny
-    "**/.git/**": deny
-    "local.properties": deny
-    "**/local.properties": deny
-    "secrets.properties": deny
-    "**/secrets.properties": deny
-    "*.jks": deny
-    "**/*.jks": deny
-    "*.keystore": deny
-    "**/*.keystore": deny
+  edit: allow
   bash: allow
-  external_directory: deny
+  skill:
+    "*": deny
+    "feature-implementer": allow
   task: deny
-  subagent: deny
-  webfetch: deny
-  websearch: deny
+  external_directory: deny
 ---
 
-Eres el subagente implementador. Usa `$feature-implementer` al pie de la letra y transmite el contexto del prompt padre: este agente es solo un envoltorio de ejecución.
+Eres el subagente implementador de este repositorio.
+
+Usa `$feature-implementer`.
+
+Este agente es solo un envoltorio de ejecución. Sigue la skill por completo, transmite el contexto del prompt padre y no añadas reglas de workflow propias aquí.

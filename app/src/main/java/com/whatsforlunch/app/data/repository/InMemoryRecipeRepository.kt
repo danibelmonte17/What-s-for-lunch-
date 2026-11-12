@@ -13,7 +13,13 @@ class InMemoryRecipeRepository : RecipeRepository {
 
     override fun observeRecipes(): Flow<List<Recipe>> = recipes.asStateFlow()
 
+    override suspend fun getRecipe(id: String): Recipe? = recipes.value.firstOrNull { it.id == id }
+
     override suspend fun saveRecipe(recipe: Recipe) {
         recipes.value = recipes.value.filterNot { it.id == recipe.id } + recipe
+    }
+
+    override suspend fun deleteRecipe(id: String) {
+        recipes.value = recipes.value.filterNot { it.id == id }
     }
 }

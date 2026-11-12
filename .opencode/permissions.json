@@ -1,0 +1,75 @@
+{
+  "$schema": "https://opencode.ai/schemas/permissions.json",
+  "version": "1.0",
+  "description": "Configuración de permisos de OpenCode para denegar el acceso a archivos y datos sensibles del proyecto.",
+  "permissions": {
+    "read": {
+      "deny": [
+        "local.properties",
+        "**/*.env",
+        "**/*.env.*",
+        "**/*.jks",
+        "**/*.keystore",
+        "**/*.p12",
+        "**/*.pfx",
+        "**/*.pem",
+        "**/*.key",
+        "**/*.crt",
+        "**/secrets.*",
+        "**/secrets/*",
+        "**/*secret*",
+        "**/*credentials*",
+        "**/google-services.json",
+        "**/GoogleService-Info.plist",
+        "**/id_rsa",
+        "**/id_ed25519"
+      ]
+    },
+    "edit": {
+      "deny": [
+        "local.properties",
+        "**/*.env",
+        "**/*.env.*",
+        "**/*.jks",
+        "**/*.keystore",
+        "**/*.p12",
+        "**/*.pfx",
+        "**/*.pem",
+        "**/*.key",
+        "**/*.crt",
+        "**/secrets.*",
+        "**/secrets/*",
+        "**/*secret*",
+        "**/*credentials*",
+        "**/google-services.json",
+        "**/GoogleService-Info.plist",
+        "**/id_rsa",
+        "**/id_ed25519"
+      ]
+    },
+    "grep": {
+      "deny": [
+        "local.properties",
+        "**/*.env",
+        "**/*.env.*",
+        "**/*.jks",
+        "**/*.keystore",
+        "**/secrets.*",
+        "**/google-services.json",
+        "**/GoogleService-Info.plist"
+      ]
+    },
+    "glob": {
+      "deny": [
+        "local.properties",
+        "**/*.env",
+        "**/*.env.*",
+        "**/*.jks",
+        "**/*.keystore",
+        "**/secrets.*",
+        "**/google-services.json",
+        "**/GoogleService-Info.plist"
+      ]
+    }
+  }
+}

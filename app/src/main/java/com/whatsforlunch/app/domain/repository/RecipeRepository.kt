@@ -8,6 +8,13 @@ import kotlinx.coroutines.flow.Flow
 interface RecipeRepository {
     fun observeRecipes(): Flow<List<Recipe>>
 
+    // Lee una Receta concreta con sus Ingredientes y Pasos para abrir el formulario en
+    // modo edición; null si no existe (RF-2, RF-18).
+    suspend fun getRecipe(id: String): Recipe?
+
     // Guarda (crea o actualiza) una Receta y sus Ingredientes y Pasos.
     suspend fun saveRecipe(recipe: Recipe)
+
+    // Elimina definitivamente la Receta y no hace nada si el id no existe (RD04).
+    suspend fun deleteRecipe(id: String)
 }

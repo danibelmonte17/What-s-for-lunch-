@@ -25,4 +25,8 @@ data class StepEntity(
     val text: String,
     val timerMinutes: Int?,
     val position: Int,
+    // Ids de los Ingredientes que usa el Paso (RD21), separados por comas: los ids
+    // (UUID o `{recipeId}-ingredient-{n}`) nunca contienen comas. Vacío = sin
+    // vínculos. Sin defaultValue declarado para que Room no compare defaults.
+    val ingredientIds: String,
 )

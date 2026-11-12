@@ -1,56 +1,105 @@
 ---
 name: harness-starter
-description: >-
-  Prepara un proyecto especificado para ser implementado por sesiones: backlog
-  verificable, reglas de agente, bitácora de progreso y scripts de arranque
-  multiplataforma. Invocación manual únicamente: úsala solo cuando el usuario
-  la pida por su nombre. No decide qué se construye ni escribe código de la
-  aplicación.
-disable-model-invocation: true
+description: Create or update the minimal startup harness for a software repository after product discovery and before implementation. Use when the user says to use harness-starter, prepare the initial repo harness, create AGENTS/init/progress/feature list, or move from discovery docs to a coding-agent-ready repository. The skill reads existing discovery docs, derives only AGENTS.md, init.sh, PROGRESS.md, and feature_list.json, and must not reopen discovery, implement product code, initialize frameworks, install dependencies, or create extra harness documents.
 ---
 
-# Harness-Starter
+# Harness Starter
 
-Actúas como **arquitecto de software** centrado en el andamiaje operativo. No escribes código de la aplicación.
+Use this skill to create the smallest useful repo harness after discovery is complete. The output should let an agent answer: what is this project, how do I start it, what is the next feature, and how do I verify work.
 
-Un agente que implementa por sesiones no recuerda la anterior: solo persiste lo que está en disco. Por eso el harness son doce artefactos, cada uno con una función propia: el backlog, el estado y la historia, más los scripts de arranque y de verificación (dos plataformas cada uno). El estado verificado y el historial están separados para que las sesiones lean solo la cabecera y no arrastren todo el historial a su contexto. Los scripts separan responsabilidades: arrancar la app (`init`), comprobar el estilo (`lint`), correr los tests rápidos (`unit`) y la verificación de extremo a extremo (`e2e`). Si una regla vive en dos sitios acaban contradiciéndose, así que no las repitas entre archivos.
+## Hard Rules
 
-| Archivo | Función |
-|---|---|
-| `AGENTS.md` | Reglas: qué leer, cómo trabajar y cuándo algo está hecho |
-| `feature_list.json` | Backlog: funcionalidades, dependencias y cómo verificar cada una |
-| `PROGRESS.md` | Estado verificado y por dónde seguir (lo que se lee cada sesión) |
-| `docs/progress-history.md` | Historial de sesiones, solo se añade; nunca se lee entero |
-| `init.sh` / `init.ps1` | Arranque: instalar, preparar y dejar la app corriendo (Linux/macOS y Windows) |
-| `lint.sh` / `lint.ps1` | Verificación estática (lint y, en web, tipos) |
-| `unit.sh` / `unit.ps1` | Tests unitarios rápidos |
-| `e2e.sh` / `e2e.ps1` | Tests instrumentados y de extremo a extremo (mobile: emulador/dispositivo; web: navegador) |
+- Do not implement product code.
+- Do not initialize frameworks, install dependencies, or modify application source.
+- Do not reopen product discovery unless the discovery docs are missing or contradictory enough to block the harness.
+- Create or update only the minimal startup harness:
+  - `../../../AGENTS.md`
+  - `init.sh`
+  - `../../../PROGRESS.md`
+  - `feature_list.json`
+- Do not create `../../../ARCHITECTURE.md`, clean-state checklists, evaluator rubrics, quality documents, implementation plans, issue backlogs, or extra docs unless the user explicitly asks after this skill finishes.
+- Keep `../../../AGENTS.md` short and routing-oriented. It is a landing page, not an encyclopedia.
+- Preserve the repository's document language and style. If unclear, infer from existing discovery docs; ask only if there is no evidence.
+- If any target file already exists, read it first and update conservatively. Do not overwrite useful human-authored content.
 
-## 1. Reunir contexto
+## Inputs To Read First
 
-Lee los documentos de especificación del proyecto que existan: `CONTEXT.md`, `DESIGN.md`, `docs/build-brief.md`, `docs/domain-model.md`, `docs/risks-and-open-questions.md` y `docs/technical-discovery.md`. De ellos reúne tú la información que necesites para construir el harness.
+Read available discovery docs before generating artifacts:
 
-No reabras el descubrimiento, no preguntes al usuario y no inventes nada: cada comando, puerto, ruta, funcionalidad y criterio de verificación del harness tiene que salir de los documentos. Un dato supuesto acabaría tratado como cierto por el agente que implementa.
+1. `../../../CONTEXT.md`
+2. `../../../docs/build-brief.md` or `../../../docs/product-brief.md`
+3. `../../../docs/domain-model.md`
+4. `../../../docs/risks-and-open-questions.md`
+5. Optional if present:
+   - `../../../docs/user-and-access-model.md`
+   - `../../../docs/technical-discovery.md`
+   - `../../../docs/mvp-scope.md`
+   - `../../../docs/adr/*.md`
 
-Si falta algo que necesitas, o una pregunta abierta impide definir una funcionalidad o su verificación sin suponer, añádelo a `docs/risks-and-open-questions.md` (formato en `references/plantillas.md`, sección 9), sin borrar ni reescribir lo que ya contiene. Si hay faltas, no generes el harness: dile al usuario qué falta para que lo resuelva con `build-brief` y vuelva a ejecutar esta skill. Si falta `docs/build-brief.md`, no generes nada ni escribas nada y remite a `build-brief`.
+If none of these exist, stop and tell the user to run `$build-brief` first.
 
-## 2. Generar los artefactos
+## Workflow
 
-Lee `references/plantillas.md` (plantilla y criterios de cada archivo) y crea los doce artefactos: los cuatro de estado/backlog en la raíz más `docs/progress-history.md`, y los cuatro scripts de arranque y verificación en su par `.sh`/`.ps1`. Lo esencial:
+### 1. Inspect Current State
 
-- **`feature_list.json`**: es JSON y no Markdown para que un agente no pueda alterar el esquema ni borrar casos sin que se note. Antes de escribirlo lee `references/slicing.md`: cada funcionalidad es un slice del tamaño de una sesión, con un `id` que es un nombre único y legible (`registrar-cuenta`), `depends_on` hacia las anteriores de la lista, `steps` (qué implementar), `verify` (comprobaciones observables de extremo a extremo) y un `status` que nace en `not_started`. Cubre el MVP completo y nada de su lista de exclusiones.
-- **`init.sh` / `init.ps1`**: arranque. Mismas etapas en ambos (instalar, preparar entorno, arrancar, verificar), mismos puertos y variables; solo cambia la sintaxis. En mobile instala y deja la app corriendo (Android: `assembleDebug` + `adb install` + `am start`); en web arranca el servidor. La etapa de verificación hace una comprobación real (health check, app instalada o artefacto generado) y falla con código distinto de 0. **No ejecuta tests ni lint.** Idempotentes, válidos desde un checkout limpio y con rutas resueltas desde la ubicación del propio script. En PowerShell, `$ErrorActionPreference` no cubre los comandos nativos: comprueba `$LASTEXITCODE` tras cada uno.
-- **`lint.sh`/`lint.ps1`, `unit.sh`/`unit.ps1`, `e2e.sh`/`e2e.ps1`**: un script por tipo de verificación, con su par idéntico en `.sh` y `.ps1`. Cada uno corre el comando de su stack (Android: `lintDebug`, `testDebugUnitTest`, `connectedDebugAndroidTest`; web: eslint + tsc, vitest/jest, Playwright/Puppeteer), sale con código distinto de 0 al fallar y no arranca entorno. El comando sale de los documentos del proyecto; el `.sh` y el `.ps1` del mismo tipo usan el mismo comando.
-- **`PROGRESS.md`**: la cabecera que lee cada sesión. Contiene *Estado verificado*, *Siguiente paso* y *Riesgos y preguntas abiertas*, que se reescriben al cerrar cada sesión y recogen solo lo comprobado, no lo que se cree, más un puntero corto al historial. Nunca crece sin control.
-- **`docs/progress-history.md`**: el historial. Se arranca con la sesión 0 (estado inicial, riesgos y preguntas abiertas que afecten, y primera tarea recomendada) y a partir de ahí solo se añaden entradas de sesión, en orden, sin borrar las anteriores. Ninguna sesión lo lee entero.
-- **`AGENTS.md`**: protocolo de trabajo, no contexto de producto (eso vive en `CONTEXT.md` y `docs/`). Tres bloques: qué leer, cómo trabajar y cuándo algo está hecho. La lectura se divide en lo que se lee siempre y lo que se consulta según la funcionalidad, para no gastar contexto en lo que no toca. Solo nombra archivos que existen en el proyecto.
+Check whether each target file already exists. For existing files, preserve intent and only fix gaps needed for this minimal harness.
 
-## 3. Revisión post-flight
+### 2. Derive The Minimal Harness
 
-Ejecuta `python scripts/validar_harness.py <raíz-del-proyecto>`. Comprueba JSON y esquema, que todas las funcionalidades nacen en `not_started` (como mucho una `in_progress`), que los ids son nombres únicos y las dependencias válidas, que `init.sh` e `init.ps1` tienen las mismas etapas y puertos, que existen los cuatro pares de scripts (`init`/`lint`/`unit`/`e2e`) y pasan la comprobación de sintaxis, que no quedan marcadores sin rellenar ni credenciales, y que `AGENTS.md` no cita archivos inexistentes. Corrige y repite hasta que no haya errores. Los avisos de granularidad (descripciones que parecen unir varios comportamientos, menos de 10 o más de 30 funcionalidades) son para revisar: divide, fusiona o justifícalo en la sesión 0 de `docs/progress-history.md`.
+Create/update the four target files using `references/artifact-templates.md`:
 
-Si no hay PowerShell disponible, el script avisa de que `init.ps1` no se pudo validar sintácticamente: revísalo a mano. Comprueba también a mano que `AGENTS.md` no contradice las líneas rojas de `docs/build-brief.md`.
+- `../../../AGENTS.md`: project landing page and operating rules.
+- `init.sh`: standard startup/verification path, even if initially provisional.
+- `../../../PROGRESS.md`: current verified state and lightweight session log.
+- `feature_list.json`: machine-readable feature state with verification and evidence fields.
 
-## 4. Entrega
+### 3. Keep Scope Tight
 
-Resumen breve: archivos creados, cuántas funcionalidades hay en `feature_list.json` y primera tarea recomendada para la siguiente sesión.
+The feature list should contain session-sized feature slices, not epics and not low-level chores. Each feature must represent user-visible or system-verifiable behavior that is plausibly completable and verifiable in one focused agent session.
+
+Granularity rule from Learn Harness Engineering: too broad will not finish; too narrow creates management overhead. Prefer slices like `Learner can request a magic-link sign-in email` over epics like `Magic-link auth and enrollment API`.
+
+Use this operational slicing test before writing `feature_list.json`:
+
+- If a feature title contains multiple domains joined by "and" / "/" / commas, split it.
+- If a feature would require multiple independent screens, endpoints, jobs, or integrations to verify, split it.
+- If a feature cannot be verified with one small scenario plus the standard repo gate, split it.
+- If a non-trivial MVP produces fewer than 10 features, treat that as a smell: perform another slicing pass or explicitly explain why the project is genuinely that small.
+- For a product MVP with authentication, roles, content/data, user workflows, and integrations, expect roughly 12-30 session-sized features, not 5-8 broad milestones.
+
+At most one feature may be `in_progress`. Prefer all features `not_started` unless the repo already has active work.
+
+Use `depends_on` to express execution prerequisites. The order of items in `feature_list.json` is only the preferred plan order when multiple features are otherwise ready. Do not add numeric priority fields: stable feature identity comes from `id`, and dependency references use those ids.
+
+### 4. Handle Missing Technical Commands
+
+If the app is not bootstrapped yet, `init.sh` should be honest and provisional:
+
+- confirm the directory,
+- report that product bootstrap is pending,
+- list expected future commands when known,
+- exit successfully only if this is intentional for the pre-bootstrap phase.
+
+Do not invent working commands that do not exist.
+
+### 5. Quality Check
+
+Before finishing, verify:
+
+- `../../../AGENTS.md` answers: what is the project, how to start, how to verify.
+- `feature_list.json` is valid JSON.
+- Every feature has `id`, `area`, `title`, `user_visible_behavior`, `depends_on`, `status`, `verification`, `evidence`, and `notes`.
+- Every `depends_on` entry references an existing feature `id`, does not reference itself, and does not create a dependency cycle.
+- No feature is an epic/milestone such as "auth and enrollment API", "adaptive dashboard", "review flow", "content import", or "certificate generation and public verification" unless it has first been split into smaller verifiable slices.
+- For non-trivial MVPs, the feature count is not suspiciously low. If there are fewer than 10 features, run a second slicing pass before finishing.
+- `../../../PROGRESS.md` names the standard startup and verification paths, even if provisional.
+- `init.sh` is executable or tell the user to run `chmod +x init.sh` if tooling prevented changing mode.
+- No extra files were created.
+
+## Teaching Note
+
+When explaining the result, emphasize the progression:
+
+`Build Brief -> minimal repo harness -> technical bootstrap -> implementation`
+
+The student should not need a long prompt. The value of the skill is that `$harness-starter` already knows this phase's rules.

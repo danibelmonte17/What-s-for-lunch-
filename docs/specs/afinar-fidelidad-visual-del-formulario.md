@@ -27,7 +27,7 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 
 - RF-1: CUANDO el usuario abre el formulario, EL SISTEMA muestra, en este orden, la cabecera, la portada de foto, la información básica, la rejilla de métricas, los ingredientes, los pasos, el favorito y el dock de acciones.
 - RF-2: EL SISTEMA presenta la foto en una portada a ancho completo con los controles de foto (galería, cámara y generar con IA) al pie de la portada.
-- RF-3: EL SISTEMA muestra en la cabecera el título del formulario, el distintivo de estado de la Receta (Borrador/Publicada) y la acción «Guardar».
+- RF-3: EL SISTEMA muestra en la cabecera el título del formulario y el distintivo de estado de la Receta (Borrador/Publicada).
 - RF-4: EL SISTEMA presenta el momento culinario como una fila de chips con los cuatro momentos (Desayuno, Almuerzo, Cena, Postre).
 - RF-5: EL SISTEMA presenta tiempo, dificultad y raciones como una rejilla de tres bloques, cada uno con su icono y su control de ajuste.
 - RF-6: EL SISTEMA presenta cada fila de Ingrediente en línea dentro de la sección, con nombre, cantidad, unidad y marca de opcional.
@@ -45,7 +45,7 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 - RF-18: EL SISTEMA muestra en cada tarjeta el título y una fila de metadatos con el tiempo total (preparación + cocción), la dificultad y las raciones, cada uno con su icono.
 - RF-19: EL SISTEMA muestra en cada tarjeta el distintivo de estado (Borrador/Publicada) como una píldora.
 - RF-20: EL SISTEMA usa `surface-container-lowest` (#FFFFFF), esquinas de 0.75rem y sombra cálida ámbar-carbón (`uxdocs/DESIGN.md` §Ambient Shadow Character) en las tarjetas de Mis Recetas.
-- RF-21: CUANDO el usuario pulsa «Guardar» en la cabecera, EL SISTEMA guarda la Receta como Borrador, con el mismo comportamiento que «Guardar Borrador» del dock.
+- RF-21: EL SISTEMA no muestra «Guardar» en la cabecera del formulario: el guardado se realiza solo desde el dock («Guardar Borrador»/«Publicar Receta» en el alta y en un Borrador, «Guardar cambios» en una Publicada).
 - RF-22: SI una Receta no tiene foto, ENTONCES EL SISTEMA muestra el badge del momento culinario junto al título de la tarjeta.
 
 ## Requisitos no funcionales
@@ -61,7 +61,7 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 - Requisitos de Publicar incumplidos → Publicar deshabilitado y lista junto al dock → RF-14, RF-15; cumplidos → habilitado → RF-16.
 - Tarjeta sin foto → arranca por el título y el badge del momento va junto a él → RF-17, RF-22.
 - Tarjeta con tiempo total 0 o Borrador sin metadatos → muestra los valores por defecto sin ocultar la fila → RF-18.
-- Cabecera con «Guardar» y sin título → no guarda y señala el título obligatorio → RF-21.
+- Cabecera sin «Guardar»: el guardado queda solo en el dock, que exige título para «Guardar Borrador» → RF-21.
 
 ## Fuera de alcance
 
@@ -77,7 +77,7 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 
 ## Dudas abiertas
 
-- Ninguna. Resueltas Q-afinar-fidelidad-visual-del-formulario-1 (asa decorativa, sin reordenado; RF-6) y Q-afinar-fidelidad-visual-del-formulario-2 (botón «Guardar» de cabecera como Borrador; RF-21), en `docs/risks-and-open-questions.md`.
+- Ninguna. Resueltas Q-afinar-fidelidad-visual-del-formulario-1 (asa decorativa, sin reordenado; RF-6) y Q-afinar-fidelidad-visual-del-formulario-2 (botón «Guardar» de cabecera como Borrador; RF-21), esta última revisada el 2026-10-19 por Q-editar-receta-5 (se elimina el botón de cabecera en todos los modos), en `docs/risks-and-open-questions.md`.
 
 ## Trazabilidad
 
@@ -87,12 +87,13 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 | RF-9 a RF-13 | `steps`: corregir divergencias de rol de token | verify 1 (muestreo de píxeles) | captura del formulario |
 | RF-14 a RF-16 | `verify` 2; impacto en `crear-receta` | verify 2 + escenario E2E de estado | informe E2E + captura |
 | RF-17 a RF-20, RF-22 | `steps`: alinear las tarjetas de Mis Recetas | verify 1 (muestreo de píxeles) | captura de Mis Recetas |
-| RF-21 | Q-afinar-fidelidad-visual-del-formulario-2 | escenario E2E: «Guardar» de cabecera crea un Borrador | informe E2E |
+| RF-21 | Q-afinar-fidelidad-visual-del-formulario-2, revisada por Q-editar-receta-5 | escenario E2E: la cabecera no dibuja «Guardar» y el dock guarda el Borrador | informe E2E |
 
 ## Registro de iteraciones
 
 - Parte A nacida con las respuestas del usuario (rediseño estructural completo, tarjetas con metadatos, Publicar deshabilitado) y las dudas resueltas (asa decorativa, botón «Guardar» de cabecera como Borrador → RF-21).
 - Retrabajo tras auditoría (A RETRABAJAR intento 1): RF-22 fija el badge cuando la Receta no tiene foto (hallazgo 1) con caso límite y verificación; RF-13/RF-20 citan la sombra de `uxdocs/DESIGN.md` §Ambient Shadow Character; RF-15 concreta requisitos y ubicación junto al dock; se comprime la spec (verbosidad) y se adelanta la tarea de iconos y textos (T2, prerrequisito).
+- Revisión 2026-10-19 (Q-editar-receta-5, pedido del usuario): se elimina «Guardar» de la cabecera en todos los modos para no duplicar el guardado del dock; RF-3 y RF-21 se reescriben, el caso límite y la trazabilidad se alinean y `CrearRecetaE2ETest` pasa a afirmar su ausencia. Regresión re-ejecutada en la sesión 23 (`lint`/`unit`/`e2e` en verde, 44 tests) y recogida en el informe de validación.
 
 # PARTE B · PLAN
 
@@ -118,7 +119,7 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 ## Enfoque técnico
 
 - **Estilo compartido**: contenedor de sección (`surfaceContainerLowest`, radio 1rem, sombra de `uxdocs/DESIGN.md`), chip seleccionado en `primary`/`onPrimary` y campos rellenos (`surfaceContainerLow`, foco `primary`) corrigen RF-9 a RF-13 en un solo sitio.
-- **Formulario**: reordenar `CrearRecetaScreen` en cabecera (acción «Guardar» que reutiliza el guardado de Borrador, RF-21), portada, información básica, rejilla de métricas, ingredientes (asa decorativa, Q-afinar-fidelidad-visual-del-formulario-1), pasos con número circular, favorito y dock fijo en el `bottomBar` (RF-1 a RF-8).
+- **Formulario**: reordenar `CrearRecetaScreen` en cabecera (título y distintivo, sin «Guardar»: el guardado vive en el dock, RF-21), portada, información básica, rejilla de métricas, ingredientes (asa decorativa, Q-afinar-fidelidad-visual-del-formulario-1), pasos con número circular, favorito y dock fijo en el `bottomBar` (RF-1 a RF-8).
 - **Publicar**: exponer en `CrearRecetaUiState` si el formulario cumple `RecipeValidation.validateForPublish`; `Button(enabled = uiState.canPublish)` y lista de requisitos junto al dock mientras esté deshabilitado (RF-14 a RF-16).
 - **Tarjetas**: `RecipeCard` con portada y badge de momento superpuesto (o junto al título sin foto, RF-22), título, metadatos con iconos (tiempo `prepMinutes + cookMinutes`, dificultad, raciones) y píldora de estado sobre `surfaceContainerLowest` (RF-17 a RF-20).
 - **Impacto cruzado en `crear-receta`**: actualizar RF-15/RF-16 de `docs/specs/crear-receta.md` y los tres tests E2E citados, y re-ejecutar `unit`/`e2e` como regresión.
@@ -145,16 +146,16 @@ para poder usarlos sin fricción y percibir una sola app coherente.
 
 - [x] T1: contenedor de sección, chip de selección y campos rellenos con los roles de token correctos. (cubre RF-9 a RF-13)
 - [x] T2: dependencia de iconos (`material-icons-extended`) y textos es/en; prerrequisito de T3 y T5. (cubre NFR-1)
-- [x] T3: rediseño estructural del formulario (cabecera con «Guardar», portada, métricas, ingredientes, pasos, favorito y dock). (cubre RF-1 a RF-8, RF-21)
+- [x] T3: rediseño estructural del formulario (cabecera con título y distintivo, portada, métricas, ingredientes, pasos, favorito y dock). (cubre RF-1 a RF-8, RF-21)
 - [x] T4: estado «puede publicar», botón deshabilitado y lista junto al dock. (cubre RF-14 a RF-16)
 - [x] T5: tarjetas de Mis Recetas con foto, metadatos, píldora y badge sin foto. (cubre RF-17 a RF-20, RF-22)
-- [ ] T6: adaptar la spec y los tests E2E de `crear-receta` y re-ejecutar su regresión. (cubre el criterio de finalización)
+- [x] T6: adaptar la spec y los tests E2E de `crear-receta` y re-ejecutar su regresión. (cubre el criterio de finalización)
 - [x] T7: tests E2E de fidelidad, estado deshabilitado y tarjeta sin foto. (cubre el plan de verificación)
 
 ## Plan de verificación
 
 - `./lint.sh` y `./unit.sh` → exit 0.
-- E2E de `CrearRecetaE2ETest`: Publicar deshabilitado sin requisitos y habilitado con ellos (RF-14, RF-16), lista junto al dock (RF-15), presencia de bloques/iconos (RF-1 a RF-8) y «Guardar» de cabecera crea Borrador (RF-21).
+- E2E de `CrearRecetaE2ETest`: Publicar deshabilitado sin requisitos y habilitado con ellos (RF-14, RF-16), lista junto al dock (RF-15), presencia de bloques/iconos (RF-1 a RF-8) y cabecera sin «Guardar» con guardado desde el dock (RF-21).
 - E2E de tarjetas: foto/badge, metadatos, píldora de estado y badge junto al título sin foto (RF-17 a RF-20, RF-22).
 - UI (solo el validador): 2 capturas en emulador API 30+ comparadas por muestreo de píxeles con los prototipos y `DESIGN.md` (NFR-4); regresión de `crear-receta` (`unit`/`e2e`) en verde. No se tocan los scripts del harness.
 
@@ -200,3 +201,11 @@ Hallazgos del intento 1 resueltos: badge sin foto fijado en RF-22, caso límite 
 ### Siguiente acción
 
 Continuar (APTA): la spec pasa a `ready` y queda lista para implementación.
+
+---
+
+## Enmienda — `redisenar-formulario-de-receta` (2026-11-09)
+
+Decisión posterior del usuario (D1/D2/D3/D5 de `docs/specs/redisenar-formulario-de-receta.md`): el rediseño de «Detalles de cocina» **diverge a propósito del prototipo** —dos bloques (fila con el reloj de Tiempo de preparación y Raciones, Nivel en horizontal debajo) en lugar de los tres bloques con campos de minutos, sin campo de Cocción y sin casilla «Opcional» en la fila de Ingrediente—, y la fila de Paso cambia su temporizador por el reloj con «Sin temporizador». La fidelidad del resto del formulario (portada, básicos, secciones, dock de guardado único) se mantiene.
+
+*Enmienda añadida al final por `redisenar-formulario-de-receta`, sin reescribir la historia ni las evidencias históricas de esta spec.*
